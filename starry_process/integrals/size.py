@@ -80,7 +80,7 @@ class SizeIntegral(object):
         self._amp_factor1 = self._sign * np.exp(self.amp_mu + 0.5 * self.amp_sigma ** 2)
         self._amp_factor2 = np.exp(2 * self.amp_mu + 2 * self.amp_sigma ** 2)
 
-    def _s(self, sigma, amp):
+    def _s(self, sigma, amp, sign):
         # Compute the integrals recursively
         IP = np.zeros(self.ydeg + 1)
         ID = np.zeros(self.ydeg + 1)
@@ -92,7 +92,7 @@ class SizeIntegral(object):
         ID[0] = 0.0
         ID[1] = 1.0
         s[0] = 1.0 - amp
-        s[2] = -amp * np.sqrt(3) * IP[1]
+        s[2] = sign * amp * np.sqrt(3) * IP[1]
 
         # Recurse
         for n in range(2, self.ydeg + 1):
@@ -106,18 +106,21 @@ class SizeIntegral(object):
                 - b * IP[n - 2]
             )
             ID[n] = c * IP[n - 1] + ID[n - 2]
-            s[n * n + n] = -amp * np.sqrt(2 * n + 1) * IP[n]
+            s[n * n + n] = sign * amp * np.sqrt(2 * n + 1) * IP[n]
 
         return s / s[0]
 
-    def integral1(self, sigma_mu=None, sigma_sigma=None, amp_mu=None, amp_sigma=None):
+    def integral1(
+        self, sigma_mu=None, sigma_sigma=None, amp_mu=None, amp_sigma=None, sign=None
+    ):
         if (
             sigma_mu is not None
             or sigma_sigma is not None
             or amp_mu is not None
             or amp_sigma is not None
+            or sign is not None
         ):
-            self.set_params(sigma_mu, sigma_sigma, amp_mu, amp_sigma)
+            self.set_params(sigma_mu, sigma_sigma, amp_mu, amp_sigma, sign)
         S = np.zeros(self.N)
         inds = self.ls * (self.ls + 1)
         S[inds] = self._amp_factor1 * self._term.dot(self._sigma_basis_vec)
@@ -132,7 +135,7 @@ class SizeIntegral(object):
         sigma = np.exp(self.sigma_mu)
         x = -np.exp(self.amp_mu)
         amp = x / (x - 1)
-        assert np.allclose(S, self._s(sigma, amp))
+        assert np.allclose(S, self._s(sigma, amp, self._sign))
 
     def _test_integral1(self, sigma_sigma=0.1, amp_sigma=0.5):
         ls = np.array(self.ls)
@@ -153,14 +156,15 @@ class SizeIntegral(object):
             s += self._s(sigma[k], amp[k]) / nsamples
         assert np.allclose(s, S, atol=1e-3)
 
-    def integral2(self, sigma_mu=None, sigma_sigma=None, amp_mu=None, amp_sigma=None):
+    def integral2(self, sigma_mu=None, sigma_sigma=None, amp_mu=None, amp_sigma=None, sign=None):
         if (
             sigma_mu is not None
             or sigma_sigma is not None
             or amp_mu is not None
             or amp_sigma is not None
+            or sign is not None
         ):
-            self.set_params(sigma_mu, sigma_sigma, amp_mu, amp_sigma)
+            self.set_params(sigma_mu, sigma_sigma, amp_mu, amp_sigma, sign)
         S = np.zeros((self.N, self.N))
         for l1 in self.ls:
             i = l1 * (l1 + 1)
@@ -175,11 +179,11 @@ class SizeIntegral(object):
         S[:, 0] = S[0, :]
         return S
 
-    def _test_integral2(self, sigma_sigma=0.1, amp_sigma=0.5):
+    def _test_integral2(self, sigma_sigma=0.1, amp_sigma=0.5, sign=1):
         ls = np.array(self.ls)
         self.ls = np.arange(self.ydeg + 1)
         S = self.integral2(
-            sigma_mu=-3, sigma_sigma=sigma_sigma, amp_mu=-2.3, amp_sigma=amp_sigma
+            sigma_mu=-3, sigma_sigma=sigma_sigma, amp_mu=-2.3, amp_sigma=amp_sigma, sign=sign
         )
         self.ls = ls
         np.random.seed(1)
@@ -191,7 +195,7 @@ class SizeIntegral(object):
         amp = x / (x - 1)
         s = np.zeros((nsamples, self.N))
         for k in range(nsamples):
-            s[k] = self._s(sigma[k], amp[k])
+            s[k] = self._s(sigma[k], amp[k], sign)
         mu = np.mean(s, axis=0).reshape(-1, 1)
         Snum = np.cov(s.T) + mu.dot(mu.T)
         assert np.allclose(S, Snum, atol=1e-3)

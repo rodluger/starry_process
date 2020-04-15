@@ -17,7 +17,7 @@ alpha = 2
 beta = 0.5
 
 # Log spot size distribution
-ln_sigma_mu = -3
+ln_sigma_mu = -1.5
 ln_sigma_sigma = 0.1
 
 # Log spot amplitude distribution
