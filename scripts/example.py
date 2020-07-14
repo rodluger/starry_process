@@ -17,8 +17,8 @@ alpha = 2
 beta = 0.5
 
 # Log spot size distribution
-ln_sigma_mu = -1.5
-ln_sigma_sigma = 0.1
+ln_sigma_mu = -5
+ln_sigma_sigma = 0.01
 
 # Log spot amplitude distribution
 ln_amp_mu = -2.3
@@ -28,6 +28,9 @@ ln_amp_sigma = 0.1
 sign = 1
 
 # Instantiate the starry process
+
+print("1")
+
 sp = SP(
     ydeg,
     alpha=alpha,
@@ -43,6 +46,8 @@ sp = SP(
 # of the starry process
 mu = sp.mu_y
 cov = sp.cov_y
+
+print("2")
 
 # Plot them
 fig, ax = plt.subplots(1, 2, figsize=(12, 5))

@@ -35,7 +35,6 @@ class LongitudeIntegral(object):
         self._q = wigner.VectorDot(self._R, self._vector)
 
     def _precompute(self):
-        # TODO: Check for stability here.
         self._term = np.zeros((4 * self.ydeg + 1, 4 * self.ydeg + 1))
         for i in range(4 * self.ydeg + 1):
             for j in range(0, 4 * self.ydeg + 1, 2):
