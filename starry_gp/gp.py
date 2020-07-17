@@ -1,6 +1,7 @@
 from .spot import SpotIntegral
 from .latitude import LatitudeIntegral
 from .longitude import LongitudeIntegral
+from .transform import eigen
 import numpy as np
 from scipy.linalg import cho_factor, cho_solve
 
@@ -38,6 +39,11 @@ class YlmGP(object):
         # Compute the covariance
         matrix = self.S.second_moment()
         matrix = self.P.second_moment(matrix)
+
+        # Trick to lower the size of the matrix
+        # (NOT an approximation!)
+        matrix = eigen(matrix @ matrix.T)
+
         matrix = self.L.second_moment(matrix)
         EyyT = matrix @ matrix.T
         Ey = self.mu.reshape(-1, 1)

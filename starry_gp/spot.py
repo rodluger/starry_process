@@ -1,5 +1,5 @@
+from .transform import eigen
 import numpy as np
-from scipy.linalg import eigh
 
 
 class SpotIntegral(object):
@@ -86,9 +86,7 @@ class SpotIntegral(object):
         self.Q *= np.exp(2 * mu_lna + 2 * sig_lna ** 2)
 
         # Eigendecomposition of Q
-        w, self.U = eigh(self.Q)
-        self.U = self.U @ np.diag(np.sqrt(np.maximum(0, w)))
-        self.U = self.U[:, ::-1]
+        self.U = eigen(self.Q)
 
     def first_moment(self):
         """

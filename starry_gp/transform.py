@@ -11,6 +11,15 @@ else:
     eigvals = "subset_by_index"
 
 
+def eigen(Q, n=None):
+    N = Q.shape[0]
+    if n is None:
+        n = N
+    w, U = eigh(Q, **{eigvals: (N - n, N - 1)})
+    U = U @ np.diag(np.sqrt(np.maximum(0, w)))
+    return U[:, ::-1]
+
+
 class TransformIntegral(object):
     def __init__(self, ydeg, **wigner_kwargs):
         self.ydeg = ydeg
@@ -24,9 +33,7 @@ class TransformIntegral(object):
         raise NotImplementedError("Must be subclassed.")
 
     def _compute_U(self):
-        w, self.U = eigh(self.Q, **{eigvals: (self.N - self.n, self.N - 1)})
-        self.U = self.U @ np.diag(np.sqrt(np.maximum(0, w)))
-        self.U = self.U[:, ::-1]
+        self.U = eigen(self.Q, self.n)
 
     def _compute_t(self):
         self.t = [np.zeros((self.n, self.n)) for l in range(self.ydeg + 1)]
