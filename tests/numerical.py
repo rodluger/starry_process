@@ -1,10 +1,13 @@
 import numpy as np
+import theano
+import theano.tensor as tt
+import starry
 
 
-__all__ = ["R"]
+__all__ = ["R", "spot", "get_spot_function"]
 
 
-def dlmn(l, s1, c1, c2, tgbet2, s3, c3, D, R):
+def _dlmn(l, s1, c1, c2, tgbet2, s3, c3, D, R):
 
     iinf = 1 - l
     isup = -iinf
@@ -154,6 +157,69 @@ def R(ydeg, phi, cos_alpha=0, sin_alpha=1, cos_gamma=0, sin_gamma=-1, tol=1e-12)
         tgbet2 = (1.0 - c2) / s2
 
     for l in range(2, ydeg + 1):
-        dlmn(l, s1, c1, c2, tgbet2, s3, c3, D, R)
+        _dlmn(l, s1, c1, c2, tgbet2, s3, c3, D, R)
 
     return R
+
+
+def spot(ydeg, sigma, amp, sign=-1):
+    # Compute the integrals recursively
+    IP = np.zeros(ydeg + 1)
+    ID = np.zeros(ydeg + 1)
+    s = np.zeros((ydeg + 1) * (ydeg + 1))
+
+    # Seeding values
+    IP[0] = 1.0
+    IP[1] = 1.0 - sigma * np.sqrt(2 / np.pi)
+    ID[0] = 0.0
+    ID[1] = 1.0
+    s[0] = 0.0
+    s[2] = np.sqrt(3) * IP[1]
+
+    # Recurse
+    for n in range(2, ydeg + 1):
+        c = 2.0 * n - 1.0
+        a = c / n
+        b = a - 1
+        IP[n] = (
+            a * sigma ** 2 * ID[n - 1]
+            - a * sigma * np.sqrt(2 / np.pi)
+            + a * IP[n - 1]
+            - b * IP[n - 2]
+        )
+        ID[n] = c * IP[n - 1] + ID[n - 2]
+        s[n * n + n] = np.sqrt(2 * n + 1) * IP[n]
+
+    # Normalize
+    norm = sign * amp / (1.0 - amp)
+    return s * norm
+
+
+def get_spot_function(ydeg, sign=-1):
+    """
+    Return a compiled function for spot generation.
+    
+    """
+
+    def _y(ydeg, amp, sigma, lat, lon):
+        """Return the Ylm expansion of a spotted star,
+            normalized so the mean of the *process* is unity.
+        
+        Args:
+            amp: Amplitude of the spot.
+            sigma: Spot size (std. dev. of gaussian).
+            lat: Spot latitude in degrees.
+            lon: Spot longitude in degrees.
+
+        """
+        map = starry.Map(ydeg)
+        map.add_spot(amp=sign * amp, sigma=sigma, lat=lat, lon=lon)
+        y = map.amp * map.y
+        y = tt.set_subtensor(y[0], 0)
+        return y / (1 - amp)
+
+    amp = tt.dscalar()
+    sigma = tt.dscalar()
+    lat = tt.dscalar()
+    lon = tt.dscalar()
+    return theano.function([amp, sigma, lat, lon], _y(ydeg, amp, sigma, lat, lon))

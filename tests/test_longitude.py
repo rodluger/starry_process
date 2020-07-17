@@ -1,5 +1,5 @@
 from starry_gp.longitude import LongitudeIntegral
-from wigner import R
+from numerical import R
 import numpy as np
 from scipy.integrate import quad
 from tqdm import tqdm
@@ -43,7 +43,8 @@ def test_second_moment(ydeg=3):
 
     # Get analytic integral
     L = LongitudeIntegral(ydeg)
-    C = L.second_moment(sqrtS)
+    A = L.second_moment(sqrtS)
+    C = A @ A.T
 
     # Integrate numerically
     C_num = np.zeros((N, N))

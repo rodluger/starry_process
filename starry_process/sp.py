@@ -151,9 +151,9 @@ class SP(object):
         alpha=40.0,
         beta=20.0,
         ln_sigma_mu=np.log(0.05),
-        ln_sigma_sigma=0.0,
+        ln_sigma_sigma=0.1,
         ln_amp_mu=np.log(0.01),
-        ln_amp_sigma=0.0,
+        ln_amp_sigma=0.1,
         sign=-1,
         **kwargs
     ):

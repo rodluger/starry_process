@@ -1,5 +1,5 @@
 from starry_gp.latitude import LatitudeIntegral
-from wigner import R
+from numerical import R
 import numpy as np
 from scipy.integrate import quad
 from scipy.stats import beta as Beta
@@ -47,7 +47,8 @@ def test_second_moment(ydeg=3, alpha=2.0, beta=2.0):
     # Get analytic integral
     L = LatitudeIntegral(ydeg)
     L.set_params(alpha=alpha, beta=beta)
-    C = L.second_moment(sqrtS)
+    A = L.second_moment(sqrtS)
+    C = A @ A.T
 
     # Integrate numerically
     C_num = np.zeros((N, N))

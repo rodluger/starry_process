@@ -55,10 +55,8 @@ class TransformIntegral(object):
 
     def second_moment(self, sqrtS):
         """Compute the second moment of the distribution."""
-        sqrtC = np.zeros((self.N, self.n, self.N))
+        sqrtC = np.zeros((self.N, self.n, sqrtS.shape[-1]))
         for l in range(self.ydeg + 1):
             i = slice(l ** 2, (l + 1) ** 2)
             sqrtC[i] = self.T[l] @ sqrtS[i]
-        A = sqrtC.reshape(self.N, -1)
-        C = A @ A.T
-        return C
+        return sqrtC.reshape(self.N, -1)
