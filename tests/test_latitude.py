@@ -6,7 +6,7 @@ from scipy.stats import beta as Beta
 from tqdm import tqdm
 
 
-def test_first_moment(ydeg=3, alpha=2.0, beta=2.0):
+def test_first_moment(ydeg=3, mu_beta=0.5, nu_beta=0.01):
 
     # Random vector
     np.random.seed(0)
@@ -15,11 +15,13 @@ def test_first_moment(ydeg=3, alpha=2.0, beta=2.0):
 
     # Get analytic integral
     L = LatitudeIntegral(ydeg)
-    L.set_params(alpha=alpha, beta=beta)
+    L.set_params(mu_beta=mu_beta, nu_beta=nu_beta)
     mu = L.first_moment(s)
 
     # Integrate numerically
     mu_num = np.zeros(N)
+    alpha = mu_beta * (1 / nu_beta - 1)
+    beta = (1 - mu_beta) * (1 / nu_beta - 1)
     for n in tqdm(range(N)):
 
         def func(phi):
@@ -36,7 +38,7 @@ def test_first_moment(ydeg=3, alpha=2.0, beta=2.0):
     assert np.allclose(mu, mu_num)
 
 
-def test_second_moment(ydeg=3, alpha=2.0, beta=2.0):
+def test_second_moment(ydeg=3, mu_beta=0.5, nu_beta=0.01):
 
     # Random matrix
     np.random.seed(0)
@@ -46,12 +48,14 @@ def test_second_moment(ydeg=3, alpha=2.0, beta=2.0):
 
     # Get analytic integral
     L = LatitudeIntegral(ydeg)
-    L.set_params(alpha=alpha, beta=beta)
+    L.set_params(mu_beta=mu_beta, nu_beta=nu_beta)
     A = L.second_moment(sqrtS)
     C = A @ A.T
 
     # Integrate numerically
     C_num = np.zeros((N, N))
+    alpha = mu_beta * (1 / nu_beta - 1)
+    beta = (1 - mu_beta) * (1 / nu_beta - 1)
     for n1 in tqdm(range(N)):
         for n2 in range(N):
 

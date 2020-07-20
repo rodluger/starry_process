@@ -17,8 +17,8 @@ class YlmGP(object):
 
     def set_params(
         self,
-        alpha=40.0,
-        beta=20.0,
+        mu_beta=0.5,
+        nu_beta=0.01,
         mu_lns=np.log(0.05),
         sig_lns=0.1,
         mu_lna=np.log(0.01),
@@ -30,7 +30,7 @@ class YlmGP(object):
         self.S.set_params(
             mu_lns=mu_lns, sig_lns=sig_lns, mu_lna=mu_lna, sig_lna=sig_lna, sign=sign
         )
-        self.P.set_params(alpha=alpha, beta=beta)
+        self.P.set_params(mu_beta=mu_beta, nu_beta=nu_beta)
 
         # Compute the mean
         vector = self.S.first_moment()
@@ -50,20 +50,13 @@ class YlmGP(object):
         Ey = self.mu.reshape(-1, 1)
         self.cov = EyyT - Ey @ Ey.T
 
-        if False:
-            self._cho_cov = cho_factor(self.cov, lower=True)
-            self._norm = -np.sum(np.log(np.diag(self._cho_cov[0]))) - 0.5 * len(
-                self.mu
-            ) * np.log(2 * np.pi)
-
-    def log_likelihood(self, y):
-        r = y - self.mu
-        CInvy = cho_solve(self._cho_cov, y)
-        return r.T.dot(CInvy) + self._norm
+        # Discard the constant term (=0)
+        self.mu = self.mu[1:]
+        self.cov = self.cov[1:, 1:]
 
     def draw(self, ndraws=1):
         npts = self.cov.shape[0]
-        L = np.tril(self._cho_cov[0])
+        L = np.tril(cho_factor(self.cov, lower=True)[0])
         u = np.random.randn(npts, ndraws)
         x = np.dot(L, u) + self.mu[:, None]
         return x.T
