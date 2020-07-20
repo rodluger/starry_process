@@ -8,6 +8,7 @@ from scipy.linalg import cho_factor, cho_solve
 
 class YlmGP(object):
     def __init__(self, ydeg, **kwargs):
+        assert ydeg > 0, "Degree of map must be > 0."
         self.ydeg = ydeg
         self.S = SpotIntegral(ydeg)
         self.P = LatitudeIntegral(ydeg)
