@@ -31,5 +31,3 @@ class LatitudeIntegral(TransformIntegral):
         self._c_op.compute(alpha, beta)
         self.q = self._c_op.q
         self.Q = self._c_op.Q
-
-        breakpoint()
