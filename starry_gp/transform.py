@@ -12,12 +12,32 @@ else:
 
 
 def eigen(Q, n=None):
+    """
+    
+    """
     N = Q.shape[0]
     if n is None:
         n = N
     w, U = eigh(Q, **{eigvals: (N - n, N - 1)})
     U = U @ np.diag(np.sqrt(np.maximum(0, w)))
     return U[:, ::-1]
+
+
+def get_alpha_beta(mu, nu):
+    """
+    Compute the parameters `alpha` and `beta` of a Beta distribution,
+    given its mean `mu` and normalized variance `nu`.
+
+    The mean `mu` is the mean of the Beta distribution, valid in (0, 1).
+    The normalized variance `nu` is the variance of the Beta distribution
+    divided by `mu * (1 - mu)`, valid in `(0, 1)`.
+
+    """
+    assert mu > 0 and mu < 1, "mean must be in (0, 1)."
+    assert nu > 0 and nu < 1, "variance must be in (0, 1)."
+    alpha = mu * (1 / nu - 1)
+    beta = (1 - mu) * (1 / nu - 1)
+    return alpha, beta
 
 
 class TransformIntegral(object):

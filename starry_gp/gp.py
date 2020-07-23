@@ -17,20 +17,17 @@ class YlmGP(object):
 
     def set_params(
         self,
-        mu_beta=0.5,
-        nu_beta=0.01,
-        mu_lns=np.log(0.05),
-        sig_lns=0.1,
-        mu_lna=np.log(0.01),
-        sig_lna=0.1,
-        sign=-1,
-        **kwargs
+        mu_lat=0.5,
+        nu_lat=0.01,
+        mu_s=0.1,
+        nu_s=0.01,
+        mu_a=-3.0,
+        nu_a=1.0,
+        **kwargs,
     ):
         # Set params for each integral
-        self.S.set_params(
-            mu_lns=mu_lns, sig_lns=sig_lns, mu_lna=mu_lna, sig_lna=sig_lna, sign=sign
-        )
-        self.P.set_params(mu_beta=mu_beta, nu_beta=nu_beta)
+        self.S.set_params(mu_s=mu_s, nu_s=nu_s, mu_a=mu_a, nu_a=nu_a)
+        self.P.set_params(mu_lat=mu_lat, nu_lat=nu_lat)
 
         # Compute the mean
         vector = self.S.first_moment()

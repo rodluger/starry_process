@@ -1,5 +1,6 @@
-from .transform import eigen
+from .transform import eigen, get_alpha_beta
 import numpy as np
+from scipy.special import hyp2f1
 
 
 class SpotIntegral(object):
@@ -8,85 +9,36 @@ class SpotIntegral(object):
     Computes the first two moments of the distribution over spherical
     harmonic coefficients given a distribution of spot sizes and amplitudes.
 
-    The spot size `sigma` is distributed according to
+    The spot size `s` is Beta-distributed:
 
-        ln_s ~ N(mu_lns, sig_lns)
+        s ~ Beta(alpha, beta)
     
-    with
+    where `alpha` and `beta` are parametrized in terms of `mu` and `nu`:
 
-        sigma = exp(ln_s)
+        alpha = mu * (1 / nu - 1)
+        beta = (1 - mu) * (1 / nu - 1)
 
-    The parameter `sigma` is the standard deviation of the two-dimensional
-    Gaussian in the quantity `cos(theta)`, where `theta` is the angle between
-    a point on the spot and the center of the spot, measured along the
-    surface of the sphere.
+    where `mu` and `nu` are the mean and (normalized) variance of the
+    distribution.
 
-    The spot amplitude is distributed according to
+    The spot amplitude `a` is log-normally distributed:
 
-        ln_a ~ N(mu_lna, sig_lna)
-
-    with
-
-        amp = 1 / (1 + exp(-ln_a))
-
-    The parameter `amp` is the integral over the intensity deficit (or excess)
-    over the spot.
-
-    Setting `sign = -1` (the default) results in dark spots; setting
-    `sign = 1` results in bright spots.
+        a ~ LogNormal(mu, nu)
 
     """
 
     def __init__(self, ydeg):
         self.ydeg = ydeg
         self.N = (ydeg + 1) ** 2
-        l = np.arange(ydeg + 1)
+        l = np.arange(1, ydeg + 1)
         self.i = l * (l + 1)
         self.ij = np.ix_(self.i, self.i)
         self.set_params()
 
-        # Coefficients of the polynomial expansion of sigma for each Ylm
-        self.coeffs = np.zeros((self.ydeg + 1, self.ydeg + 1))
-
-        # Compute the integrals recursively
-        IP = np.zeros((self.ydeg + 1, self.ydeg + 1))
-        ID = np.zeros((self.ydeg + 1, self.ydeg + 1))
-
-        # Seeding values
-        IP[0, 0] = 1.0
-        IP[1, 0] = 1.0
-        IP[1, 1] = -np.sqrt(2 / np.pi)
-        ID[1, 0] = 1.0
-        self.coeffs[0] = 0  # IP[0]
-        self.coeffs[1] = np.sqrt(3) * IP[1]
-
-        # Recurse
-        for n in range(2, self.ydeg + 1):
-            C = 2.0 * n - 1.0
-            A = C / n
-            B = A - 1
-            IP[n] = A * np.roll(ID[n - 1], 2) + A * IP[n - 1] - B * IP[n - 2]
-            IP[n, 1] -= A * np.sqrt(2 / np.pi)
-            ID[n] = C * IP[n - 1] + ID[n - 2]
-            self.coeffs[n] = np.sqrt(2 * n + 1) * IP[n]
-
-    def set_params(self, mu_lns=-3.0, sig_lns=0.1, mu_lna=-2.3, sig_lna=0.1, sign=-1):
-
-        # Sigma Taylor basis
-        n = np.arange(2 * self.ydeg + 1)
-        tmp = np.exp(n * mu_lns + 0.5 * (n * sig_lns) ** 2)
-        self.q = tmp[: self.ydeg + 1]
-        self.Q = np.zeros((self.ydeg + 1, self.ydeg + 1))
-        for n in range(self.ydeg + 1):
-            for m in range(self.ydeg + 1):
-                self.Q[n, m] = tmp[n + m]
-
-        # Amplitude integrals
-        self.q *= sign * np.exp(mu_lna + 0.5 * sig_lna ** 2)
-        self.Q *= np.exp(2 * mu_lna + 2 * sig_lna ** 2)
-
-        # Eigendecomposition of Q
-        self.U = eigen(self.Q)
+    def set_params(self, mu_s=0.1, nu_s=0.01, mu_a=-3.0, nu_a=1.0):
+        self.alpha_s, self.beta_s = get_alpha_beta(mu_s, nu_s)
+        self._ampfac1 = -np.exp(mu_a + 0.5 * nu_a)
+        self._ampfac2 = np.exp(2 * mu_a + 2 * nu_a)
 
     def first_moment(self):
         """
@@ -94,8 +46,12 @@ class SpotIntegral(object):
         and amplitude distribution.
 
         """
+        s = np.zeros(self.ydeg)
+        for k in range(self.ydeg):
+            l = k + 1
+            s[k] = hyp2f1(self.alpha_s, l ** 2, self.alpha_s + self.beta_s, -1)
         S = np.zeros(self.N)
-        S[self.i] = self.coeffs @ self.q
+        S[self.i] = s * self._ampfac1
         return S
 
     def second_moment(self):
@@ -106,6 +62,14 @@ class SpotIntegral(object):
             C @ C.T = E[x^2]
 
         """
+        c = np.zeros((self.ydeg, self.ydeg))
+        for k1 in range(self.ydeg):
+            l1 = k1 + 1
+            for k2 in range(self.ydeg):
+                l2 = k2 + 1
+                c[k1, k2] = hyp2f1(
+                    self.alpha_s, l1 ** 2 + l2 ** 2, self.alpha_s + self.beta_s, -1
+                )
         C = np.zeros((self.N, self.N))
-        C[self.ij] = self.coeffs @ self.U
-        return C
+        C[self.ij] = c * self._ampfac2
+        return eigen(C)
