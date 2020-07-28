@@ -1,0 +1,837 @@
+\begin{center}
+    \begin{longtable}{W{c}{1cm} W{l}{9cm} W{l}{2cm}}
+        \caption{%
+            List of common symbols used in this paper.
+        }
+        \label{tab:symbols}
+        \\
+        %
+        \toprule
+        \multicolumn{1}{c}{\textbf{Symbol}}
+         &
+        \multicolumn{1}{c}{\textbf{Description}}
+         &
+        \multicolumn{1}{c}{\textbf{Reference}}
+        \\
+        \midrule
+        \endfirsthead
+        %
+        \multicolumn{3}{c}%
+        {{\bfseries \tablename\ \thetable{}}. (continued from previous page)}
+        \\[0.5em]
+        \toprule
+        \multicolumn{1}{c}{\textbf{Symbol}}
+         &
+        \multicolumn{1}{c}{\textbf{Definition}}
+         &
+        \multicolumn{1}{c}{\textbf{Reference}}
+        \\
+        \midrule
+        \endhead
+        \bottomrule
+        %
+        \endfoot
+        %
+        \endlastfoot
+        %
+        %
+        %
+        %
+        \midrule
+        \multicolumn{3}{c}{\emph{Frames of reference}}
+        \\
+        \midrule
+        %
+        $\mathcal{F}_0$
+         & frame in which surface map is specified
+         & \S\ref{sec:starry-review}
+        \\
+        %
+        $\mathcal{F}$
+         & observer (sky) frame
+         & \S\ref{sec:starry-review}
+        \\
+        %
+        $\mathcal{F}'$
+         & integration frame (occultor present)
+         & \S\ref{sec:solution-occ}
+        \\
+        %
+        $\mathcal{F}''$
+         & integration frame (no occultor)
+         & \S\ref{sec:solution-no-occ}
+        \\
+        %
+        %
+        \midrule
+        \multicolumn{3}{c}{\emph{Lines \& surfaces}}
+        \\
+        \midrule
+        %
+        $S$
+         & region of integration enclosed by $\mathcal{PQT}$
+         & \S\ref{sec:solution-occ}
+        \\
+        %
+        $\mathcal{P}$
+         & integration path along occultor limb
+         & \S\ref{sec:solution-occ}
+        \\
+        %
+        %
+        $\mathcal{Q}$
+         & integration path along body limb
+         & \S\ref{sec:solution-occ}
+        \\
+        %
+        %
+        $\mathcal{T}$
+         & integration path along terminator
+         & \S\ref{sec:solution-occ}
+        \\
+        %
+        \midrule
+        \multicolumn{3}{c}{\emph{Special functions}}
+        \\
+        \midrule
+        %
+        $\atantwo$
+         & quadrant-aware arctangent
+         & (\ref{eq:theta})
+        \\
+        %
+        $F$
+         & incomplete elliptic integral of the first kind
+         & (\ref{eq:F})
+        \\
+        %
+        ${_2}F_1$
+         & Gauss hypergeometric function
+         & \S\ref{sec:W}
+        \\
+        %
+        $E$
+         & incomplete elliptic integral of the second kind
+         & (\ref{eq:E})
+        \\
+        %
+        $\Gamma$
+         & gamma function
+         & \S\ref{sec:solution-no-occ}
+        \\
+        $\Pi$
+         & incomplete elliptic integral of the third kind
+         & (\ref{eq:Pi})
+        \\
+        %
+        \midrule
+        \multicolumn{3}{c}{\emph{Operators \& symbols}}
+        \\
+        \midrule
+        %
+        $V$
+         & Vieta summation operator
+         & (\ref{eq:V})
+        \\
+        %
+        $\Delta$
+         & pairwise difference operator
+         & (\ref{eq:pairdiff})
+        \\
+        %
+        $\int_{\pmb{\phi}}$
+         & vectorized integral
+         & (\ref{eq:vint})
+        \\
+    \end{longtable}
+\end{center}
+
+%\vfill
+%\pagebreak
+
+\begin{center}
+    \begin{longtable}{W{c}{1cm} W{l}{9cm} W{l}{2cm}}
+        \caption{%
+            List of common scalar quantities used in this paper.
+        }
+        \label{tab:scalars}
+        \\
+        %
+        \toprule
+        \multicolumn{1}{c}{\textbf{Symbol}}
+         &
+        \multicolumn{1}{c}{\textbf{Description}}
+         &
+        \multicolumn{1}{c}{\textbf{Reference}}
+        \\
+        \midrule
+        \endfirsthead
+        %
+        \multicolumn{3}{c}%
+        {{\bfseries \tablename\ \thetable{}}. (continued from previous page)}
+        \\[0.5em]
+        \toprule
+        \multicolumn{1}{c}{\textbf{Symbol}}
+         &
+        \multicolumn{1}{c}{\textbf{Definition}}
+         &
+        \multicolumn{1}{c}{\textbf{Reference}}
+        \\
+        \midrule
+        \endhead
+        \bottomrule
+        %
+        \endfoot
+        %
+        %\endlastfoot
+        %
+        %
+        %
+        %
+        \midrule
+        \multicolumn{3}{c}{\emph{Integers}}
+        \\
+        \midrule
+        %
+        $l$
+         & spherical harmonic degree
+         & (\ref{eq:l-m})
+        \\
+        %
+        $m$
+         & spherical harmonic order
+         & (\ref{eq:l-m})
+        \\
+        %
+        $n$
+         & vector index
+         & ---
+        %
+        \\
+        %
+        $\mu$
+         & spherical harmonic index, $\mu = l - m$
+         & (\ref{eq:mu-nu})
+        \\
+        %
+        $\nu$
+         & spherical harmonic index, $\nu = l + m$
+         & (\ref{eq:mu-nu})
+        \\
+        \midrule
+        \multicolumn{3}{c}{\emph{Coordinates}}
+        \\
+        \midrule
+        %
+        $x$
+         & Cartesian $x$ coordinate on the plane of the sky
+         & ---
+        \\
+        $y$
+         & Cartesian $y$ coordinate on the plane of the sky
+         & ---
+        \\
+        $z$
+         & Cartesian $z$ coordinate, $z = \sqrt{1 - x^2 - y^2}$
+         & (\ref{eq:z})
+        %
+        \\
+        \pagebreak % HACK
+        %
+        \midrule
+        \multicolumn{3}{c}{\emph{Geometrical parameters}}
+        \\
+        \midrule
+        %
+        $b$
+         & semi-minor axis of terminator ellipse
+         & (\ref{eq:b})
+        \\
+        %
+        $b_c$
+         & complement of $b$, $b_c \equiv \sqrt{1 - b^2}$
+         & \S\ref{sec:adapting-starry}
+        \\
+        %
+        $b_o$
+         & occultor impact parameter, $b_o= \sqrt{x_o^2 + y_o^2}$
+         & \S\ref{sec:starry-review}
+        \\
+        %
+        $k^2$
+         & elliptic parameter
+         & (\ref{eq:k2})
+        \\
+        %
+        $\text{I}$
+         & body inclination
+         & \S\ref{sec:starry-review}
+        \\
+        %
+        $n$
+         & elliptic characteristic
+         & (\ref{eq:n})
+        %
+        \\
+        %
+        $r_o$
+         & occultor radius
+         & \S\ref{sec:starry-review}
+        \\
+        %
+        $r_s$
+         & distance to illumination source, $r_s = \sqrt{x_s^2 + y_s^2 + z_s^2}$
+         & \S\ref{sec:adapting-starry}
+        \\
+        $x_o$
+         & occultor $x$ position
+         & \S\ref{sec:starry-review}
+        \\
+        $x_s$
+         & illumination source $x$ position
+         & \S\ref{sec:adapting-starry}
+        \\
+        %
+        $y_o$
+         & occultor $y$ position
+         & \S\ref{sec:starry-review}
+        \\
+        $y_s$
+         & illumination source $y$ position
+         & \S\ref{sec:adapting-starry}
+        \\
+        $z_s$
+         & illumination source $z$ position
+         & \S\ref{sec:adapting-starry}
+        \\
+        %
+        $\Lambda$
+         & body obliquity
+         & \S\ref{sec:starry-review}
+        \\
+        %
+        $\theta$
+         & angle of rotation of the terminator ellipse
+         & (\ref{eq:theta'}), (\ref{eq:theta''})
+        \\
+        %
+        $\Theta$
+         & body rotational phasse
+         & \S\ref{sec:starry-review}
+        \\
+        \midrule
+        \multicolumn{3}{c}{\emph{Intensities \& fluxes}}
+        \\
+        \midrule
+        %
+        $a$
+         & orbital semi-major axis
+         & \S\ref{sec:extended}
+        \\
+        $A$
+         & albedo (spherical)
+         & (\ref{eq:albedo})
+        \\
+        %
+        $f$
+         & reflected flux during an occultation
+         & \S\ref{sec:solution-occ}
+        \\
+        %
+        $f_0$
+         & reflected flux outside of an occultation
+         & (\ref{eq:f0})
+        \\
+        %
+        $\hat{f}_0$
+         & complement of reflected flux outside of an occultation
+         & (\ref{eq:f0hat})
+        \\
+        %
+        $f_1$--$f_{14}$
+         & case-dependent reflected flux during occultation
+         & \S\ref{sec:solution-occ}
+        \\
+        %
+        $f_I$
+         & intensity-weighted flux during an occultation
+         & (\ref{eq:fI})
+        \\
+        %
+        $f_T$
+         & thermal flux during an occultation
+         & (\ref{eq:sTARRy})
+        \\
+        %
+        $f_{T_0}$
+         & thermal flux outside of an occultation
+         & (\ref{eq:rTA1Ry})
+        \\
+        %
+        $f_S$
+         & reflected flux over integration region $S$
+         & (\ref{eq:fS})
+        \\
+        %
+        $I$
+         & polynomial intensity at a point on the surface
+         & (\ref{eq:illum_poly})
+        \\
+        $\mathcal{I}$
+         & true intensity at a point on the surface
+         & (\ref{eq:illum})
+        \\
+        $R_p$
+         & planet radius
+         & \S\ref{sec:extended}
+        \\
+        $R_\star$
+         & stellar radius
+         & \S\ref{sec:extended}
+        \\
+        $\vartheta_i$
+         & polar angle of incidence
+         & Figure~\ref{fig:scattering}
+        \\
+        $\vartheta_r$
+         & polar angle of reflection
+         & Figure~\ref{fig:scattering}
+        \\
+        $\sigma$
+         & Oren-Nayar surface roughness coefficient
+         & \S\ref{sec:nonlambertian}
+        \\
+        $\tau$
+         & Angular extent of terminator past $\nicefrac{\pi}{2}$
+         & (\ref{eq:tau})
+        \\
+        $\phi_i$
+         & azimuthal angle of incidence
+         & Figure~\ref{fig:scattering}
+        \\
+        $\phi_r$
+         & azimuthal angle of reflection
+         & Figure~\ref{fig:scattering}
+        \\
+        %
+        %
+        %
+    \end{longtable}
+\end{center}
+
+\vfill
+\pagebreak
+
+\begin{center}
+    \begin{longtable}{W{c}{1cm} W{l}{9cm} W{l}{2cm}}
+        \caption{%
+            List of common vector quantities used in this paper.
+        }
+        \label{tab:vectors}
+        \\
+        %
+        \toprule
+        \multicolumn{1}{c}{\textbf{Symbol}}
+         &
+        \multicolumn{1}{c}{\textbf{Description}}
+         &
+        \multicolumn{1}{c}{\textbf{Reference}}
+        \\
+        \midrule
+        \endfirsthead
+        %
+        \multicolumn{3}{c}%
+        {{\bfseries \tablename\ \thetable{}}. (continued from previous page)}
+        \\[0.5em]
+        \toprule
+        \multicolumn{1}{c}{\textbf{Symbol}}
+         &
+        \multicolumn{1}{c}{\textbf{Definition}}
+         &
+        \multicolumn{1}{c}{\textbf{Reference}}
+        \\
+        \midrule
+        \endhead
+        \bottomrule
+        %
+        \endfoot
+        %
+        %\endlastfoot
+        %
+        %
+        %
+        %
+        \midrule
+        \multicolumn{3}{c}{\emph{Bases}}
+        \\
+        \midrule
+        %
+        $\bg$
+         & Green's basis
+         & (\ref{eq:bg})
+        \\
+        %
+        $\bp$
+         & polynomial basis
+         & (\ref{eq:bp})
+        \\
+        %
+        $\by$
+         & spherical harmonic basis
+         & (\ref{eq:by})
+        \\
+        %
+        \midrule
+        \multicolumn{3}{c}{\emph{Angles \& angular parameters}}
+        \\
+        \midrule
+        %
+        $\mathbf{q}$
+         & cosine-like parameter of $\valpha$
+         & (\ref{eq:q})
+        \\
+        %
+        $\valpha$
+         & modified angle along occultor limb
+         & (\ref{eq:alpha})
+        \\
+        %
+        $\vlambda$
+         & angle along occulted body limb
+         & \S\ref{sec:qT}
+        \\
+        %
+        $\pmb{\phi}$
+         & angle along occultor limb
+         & \S\ref{sec:pT}
+        \\
+        %
+        $\vxi$
+         & angle along terminator
+         & \S\ref{sec:tT}
+        \\
+        %
+        %
+        \midrule
+        \multicolumn{3}{c}{\emph{Integrals}}
+        \\
+        \midrule
+        %
+        $\rTe$
+         & unocculted solution in emitted light
+         & \S\ref{sec:starry-review}
+        \\
+        %
+        $\sTe$
+         & occultation solution in emitted light
+         & \S\ref{sec:starry-review}
+        \\
+        %
+        $\viI$
+         & helper integral
+         & (\ref{eq:I})
+        \\
+        %
+        $\viJ$
+         & helper integral
+         & (\ref{eq:J})
+        \\
+        %
+        $\mathbbb{k}$
+         & helper integral
+         & (\ref{eq:HJK})
+        \\
+        %
+        $\pT$
+         & primitive integral
+         & (\ref{eq:pT})
+        \\
+        %
+        $\qT$
+         & primitive integral
+         & (\ref{eq:qT})
+        \\
+        %
+        $\rT$
+         & unocculted solution in reflected light
+         & (\ref{eq:rT})
+        \\
+        %
+        $\sT$
+         & occultation solution in reflected light
+         & (\ref{eq:sT})
+        \\
+        %
+        $\tT$
+         & primitive integral
+         & (\ref{eq:tT})
+        \\
+        %
+        $\viU$
+         & helper integral
+         & (\ref{eq:U})
+        \\
+        %
+        $\viW$
+         & helper integral
+         & (\ref{eq:W})
+        \\
+        %
+        \midrule
+        \multicolumn{3}{c}{\emph{Other vector quantities}}
+        \\
+        \midrule
+        %
+        $\mathbf{a}$
+         & vector of albedo values on a discrete surface grid
+         & (\ref{eq:Py})
+        %
+        \\
+        %
+        $\mathbf{d}$
+         & data vector
+         & \S\ref{sec:linearity}
+        %
+        \\
+        %
+        $\mathbf{f}$
+         & vector of flux values
+         & \S\ref{sec:linearity}
+        %
+        \\
+        %
+        $\mathbf{i}$
+         & illumination profile in polynomial basis
+         & (\ref{eq:ivec})
+        \\
+        %
+        $\mathbf{x}''$
+         & solution to quartic in terminator frame
+         & (\ref{eq:quartic})
+        \\
+        %
+        $\mathbf{y}$
+         & vector of spherical harmonic coefficients
+         & \S\ref{sec:starry-review}
+        \\
+        %
+        $\pmb{\mu}$
+         & prior mean
+         & \S\ref{sec:linearity}
+        %
+    \end{longtable}
+\end{center}
+
+\vfill
+\pagebreak
+
+\begin{center}
+    \begin{longtable}{W{c}{1cm} W{l}{9cm} W{l}{2cm}}
+        \caption{%
+            List of common matrices used in this paper.
+        }
+        \label{tab:matrices}
+        \\
+        %
+        \toprule
+        \multicolumn{1}{c}{\textbf{Symbol}}
+         &
+        \multicolumn{1}{c}{\textbf{Description}}
+         &
+        \multicolumn{1}{c}{\textbf{Reference}}
+        \\
+        \midrule
+        \endfirsthead
+        %
+        \multicolumn{3}{c}%
+        {{\bfseries \tablename\ \thetable{}}. (continued from previous page)}
+        \\[0.5em]
+        \toprule
+        \multicolumn{1}{c}{\textbf{Symbol}}
+         &
+        \multicolumn{1}{c}{\textbf{Definition}}
+         &
+        \multicolumn{1}{c}{\textbf{Reference}}
+        \\
+        \midrule
+        \endhead
+        \bottomrule
+        %
+        \endfoot
+        %
+        %\endlastfoot
+        %
+        %
+        %
+        %
+        \midrule
+        \multicolumn{3}{c}{\emph{Linear operators}}
+        \\
+        \midrule
+        %
+        $\mathbf{A}$
+         & change of basis matrix: $\by \rightarrow \bg$
+         & \S\ref{sec:starry-review}
+        \\
+        %
+        $\mathbf{A_1}$
+         & change of basis matrix: $\by \rightarrow \bp$
+         & \S\ref{sec:starry-review}
+        \\
+        %
+        $\mathbf{A_2}$
+         & change of basis matrix: $\bp \rightarrow \bg$
+         & \S\ref{sec:adapting-starry}
+        \\
+        %
+        $\mathbf{C}$
+         & posterior covariance matrix
+         & \S\ref{sec:linearity}
+        %
+        \\
+        %
+        $\mathbf{I}$
+         & illumination operator
+         & (\ref{eq:Imat})
+        \\
+        %
+        $\mathbf{P}$
+         & pixelization operator
+         & (\ref{eq:Py})
+        \\
+        %
+        $\mathbf{P}^+$
+         & inverse pixelization operator
+         & (\ref{eq:PInv})
+        \\
+        %
+        $\mathbf{R}$
+         & rotation matrix: $\mathcal{F}_0 \rightarrow \mathcal{F}$
+         & \S\ref{sec:starry-review}
+        \\
+        %
+        $\mathbf{R'}$
+         & rotation matrix: $\mathcal{F} \rightarrow \mathcal{F}'$
+         & \S\ref{sec:starry-review}
+        \\
+        %
+        $\mathbf{R''}$
+         & rotation matrix: $\mathcal{F} \rightarrow \mathcal{F}''$
+         & \S\ref{sec:starry-review}
+        \\
+        $\mathbf{X}$
+         & \starry design matrix
+         & \S\ref{sec:linearity}
+        %
+        \\
+        $\pmb{\Lambda}$
+         & prior covariance matrix
+         & \S\ref{sec:linearity}
+        \\
+        $\pmb{\Sigma}$
+         & data covariance matrix
+         & \S\ref{sec:linearity}
+        %
+        \\
+        %
+        \midrule
+        \multicolumn{3}{c}{\emph{Integrals}}
+        \\
+        \midrule
+        %
+        $\mathbf{G}$
+         & anti-exterior derivative of $\bg$
+         & (\ref{eq:G})
+        \\
+        %
+        $\mathbbb{H}$
+         & helper integral
+         & (\ref{eq:H})
+        \\
+        %
+        $\mathbbb{L}$
+         & helper integral
+         & (\ref{eq:HJK})
+        \\
+        %
+        $\mathbbb{M}$
+         & helper integral
+         & (\ref{eq:HJK})
+        \\
+    \end{longtable}
+\end{center}
+
+\begin{center}
+    \begin{longtable}{W{c}{1cm} W{l}{11cm} W{l}{1cm}}
+        \caption{%
+            Tolerance parameters used in the code.
+        }
+        \label{tab:tolerance}
+        \\
+        %
+        \toprule
+        \multicolumn{1}{c}{\textbf{Symbol}}
+         &
+        \multicolumn{1}{c}{\textbf{Description}}
+         &
+        \multicolumn{1}{c}{\textbf{Value}}
+        \\
+        \midrule
+        \endhead
+        \bottomrule
+        %
+        \endfoot
+        %
+        $\epsilon_{0}$
+         & If $\xi$ is this close to $\frac{n\pi}{2}$, compute $\mathbb{t}_2$
+        in the limit $\xi = \frac{n\pi}{2}$
+         & \STARRYANGLETOL
+        \\
+        $\epsilon_{1}$
+         & If $|\sin\theta|$ or $|\cos\theta|$ are less than this value, set
+        to this value
+         & \STARRYTTOL
+        \\
+        $\epsilon_{2}$
+         & If $k^2$ is within this value of unity, nudge it away
+         & \STARRYKTWOONETOL
+        \\
+        $\epsilon_{3}$
+         & If $|b_o - r_o|$ is less than this value, nudge $b_o$
+        away from $r_o$
+         & \STARRYBOEQUALSROTOL
+        \\
+        $\epsilon_{4}$
+         & If $b_o$ is within this amount of $r_o - 1$, nudge it away
+         & \STARRYCOMPLETEOCCTOL
+        \\
+        $\epsilon_{5}$
+         & If $b_o$ is within this amount of $r_o + 1$, nudge it away
+         & \STARRYNOOCCTOL
+        \\
+        $\epsilon_{6}$
+         & If $|\sin\alpha|$ is less than this value, set to this value
+         & \STARRYMINSINALPHA
+        \\
+        $\epsilon_{7}$
+         & If $b$ is within this value of zero, nudge it away
+         & \STARRYBZEROTOL
+        \\
+        $\epsilon_{8}$
+         & If $b_o$ is within this amount of $1 - r_o$, nudge it away
+         & \STARRYGRAZINGTOL
+        \\
+        $\epsilon_{9}$
+         & If two quartic roots are this close, eliminate one of them
+         & \STARRYROOTTOLDUP
+        \\
+        $\epsilon_{10}$
+         & If $b$ is within this value of unity, set it to unity
+         & \STARRYBONETOL
+        \\
+        $\epsilon_{11}$
+         & If $\theta$ is within this amount of $\frac{\pi}{2}$ when $r_o = 1$,
+        nudge it away
+         & \STARRYTHETAUNITRADIUSTOL
+    \end{longtable}
+\end{center}

@@ -1,0 +1,230 @@
+% !TeX root = ./ms.tex
+\documentclass[modern]{aastex62}
+
+% Load the corTeX style definitions
+\input{cortex}
+
+% Load custom style
+\input{style}
+
+% Bibliography
+\bibliographystyle{aasjournal}
+
+\usepackage{etoolbox}
+\makeatletter % we need to patch \env@cases that has @ in its name
+\patchcmd{\env@cases}{\quad}{\qquad\qquad}{}{}
+\makeatother
+
+\usepackage{enumitem}
+
+% Begin!
+\begin{document}
+
+% Title
+\title{%
+    \textbf{
+        Interpretable Gaussian Processes for Stellar Light Curves
+    }
+}
+
+% Author list
+\author[0000-0002-0296-3826]{Rodrigo Luger}\altaffiliation{Flatiron Fellow}
+\email{rluger@flatironinstitute.org}
+\affil{Center~for~Computational~Astrophysics, Flatiron~Institute, New~York, NY}
+\affil{Virtual~Planetary~Laboratory, University~of~Washington, Seattle, WA}
+%
+
+\keywords{methods: analytic}
+
+% \begin{abstract}
+%     Abstract here.
+%     %
+%     \href{https://github.com/rodluger/starry_process}{\color{linkcolor}\faGithub}
+% \end{abstract}
+
+%
+\section{The Spot Expansion}
+\label{sec:spot}
+%
+We adopt the following expression for the spherical harmonic coefficient
+of degree $l$ and order $m$ in the expansion of a spot at
+$\theta = \varphi = 0$:
+%
+\begin{align}
+    \label{eq:ylm0}
+    y_{lm}(\delta, r, \theta = 0, \varphi = 0) =
+    \begin{cases}
+        1 - \dfrac{\delta c r}{2 (1 + c r)}
+         & l = m = 0    \\[2em]
+        -\dfrac{\delta c r \left( 2 + c r \right)}
+        {2 \sqrt{2l + 1} (1 + c r)^{l + 1}}
+         & l > 0, m = 0 \\[2em]
+        0
+         & m \ne 0
+    \end{cases}
+\end{align}
+%
+where $\delta \in [-\infty, 1]$ is the fractional decrease in the brightness
+at the center of the spot and $r \in [0, 1]$ is a normalized spot radius.
+The quantity $c$ is a normalization constant for the radius (see below).
+
+The expression in Equation~(\ref{eq:ylm0}) is convenient because it satisfies
+three important properties:
+%
+\begin{enumerate}[itemsep=2pt,parsep=1pt,label=\textbf{\arabic*}]
+    \item The surface intensity monotonically increases away from the spot center
+    \item The surface intensity at the spot center is $1 - \delta$
+    \item The surface intensity at the antipode of the spot center is unity
+\end{enumerate}
+%
+These properties may be demonstrated by considering the expression for the
+surface intensity at a given point $(\theta, \varphi)$:
+%
+\begin{align}
+    I(\theta, \varphi)
+     & =
+    \sum\limits_{l=0}^\infty \sum\limits_{m=-l}^l
+    y_{lm} Y_{lm}(\theta, \varphi) \\
+     & = \sum\limits_{l=0}^\infty
+    y_{l0} \sqrt{2l + 1} P_l(\cos\theta)
+\end{align}
+%
+where $P_l$ is the Legendre polynomial of degree $l$ and we have implicitly
+assumed a normalization such that the integral of our expansion over
+the unit sphere is $4\pi$.
+Combining this with Equation~(\ref{eq:ylm0}) and rearranging, we may write
+%
+\begin{align}
+    \label{eq:Igen}
+    I(\theta, \varphi) =
+    1 + \dfrac{\delta c r}{2}
+    -
+    \dfrac{\delta c r \left( 2 + c r \right)}{2 (1 + c r)}
+    \sum\limits_{l=0}^\infty \left(\dfrac{1}{1 + c r}\right)^l P_l(\cos\theta)
+    \quad.
+\end{align}
+%
+The summation in Equation~(\ref{eq:Igen}) has a closed-form expression in
+terms of the generating function of the Legendre polynomials:
+%
+\begin{align}
+    \label{eq:gen}
+    \sum\limits_{l=0}^\infty t^l P_l(\cos\theta) = \frac{1}{\sqrt{1 + t^2 - 2 t \cos\theta}}
+    \quad,
+\end{align}
+%
+so we may express the intensity in the fairly simple form
+%
+\begin{align}
+    \label{eq:Ifinal}
+    I(\theta, \varphi) = A - \frac{B}{\sqrt{C - \cos\theta}}
+    \quad,
+\end{align}
+%
+where
+%
+\begin{align}
+    A & = 1 + \dfrac{\delta c r}{2}                      \\
+    B & = \delta c r (2 + cr) \sqrt{\dfrac{1}{8 + 8 cr}} \\
+    C & = \dfrac{1 + (1 + c r)^2}{2 + 2 c r}
+\end{align}
+%
+are positive constants.
+
+Differentiating Equation~(\ref{eq:Ifinal}) with respect to $\theta$, we have
+%
+\begin{align}
+    \label{eq:Ideriv}
+    \dfrac{\mathrm{d}I(\theta, \varphi)}{\mathrm{d}\theta} & =
+    -\frac{B\sin\theta}{2(C - \cos\theta)^\frac{3}{2}}
+    \quad,
+\end{align}
+%
+which is zero only for $\theta = 0$ (for which $I(\theta, \varphi)$ is
+minimized) and $\theta = \pi$ (for which it is maximized). The intensity
+therefore increases monotonically from the spot center to the antipode,
+as stated in \textbf{1}. The value at the minimum is
+%
+\begin{align}
+    I_{\mathrm{min}} & = A - \dfrac{B}{\sqrt{C - 1}} \\
+                     & = 1 - \delta
+    \quad,
+\end{align}
+%
+as stated in \textbf{2}, and the value at the maximum is
+%
+\begin{align}
+    I_{\mathrm{max}} & = A - \dfrac{B}{\sqrt{C + 1}} \\
+                     & = 1
+    \quad,
+\end{align}
+%
+as stated in \textbf{3}.
+
+% At the spot center, $\theta = 0$, so $\cos\theta = 1$. Since $P_l(1) = 1$ for
+% all $l$, we have
+% %
+% \begin{align}
+%     I(0)
+%      & =
+%     \sum\limits_{l=0}^\infty y_{l0} \sqrt{2l + 1} \\
+%      & =
+%     1 - \dfrac{\delta c r}{2 (1 + c r)}
+%     -
+%     \dfrac{\delta c r (2 + c r)}{2 (1 + c r)}
+%     \sum\limits_{l=1}^\infty
+%     \dfrac{1}
+%     {(1 + c r)^{l}}                               \\
+%      & =
+%     1 -
+%     \delta
+%     \left[
+%         \dfrac{c r}{2 (1 + c r)}
+%         - \dfrac{2 + c r}{2(1 + c r)}
+%         \right]                                   \\
+%      & = 1 - \delta
+%     \quad,
+% \end{align}
+% %
+% as stated in \textbf{2}, where we made use of the fact that
+% %
+% \begin{align}
+%     \sum\limits_{l=1}^\infty
+%     \dfrac{1}
+%     {(1 + x)^{l}} = \frac{1}{x}
+%     \quad.
+% \end{align}
+% %
+% Finally, at the antipode, $\theta = \pi$,
+% $\cos\theta = -1$, and $P_l(\cos\theta) = (-1)^l$, so
+% %
+% \begin{align}
+%     I(\pi)
+%      & =
+%     \sum\limits_{l=0}^\infty y_{l0} (-1)^l \sqrt{2l + 1} \\
+%      & =
+%     1 - \dfrac{\delta c r}{2 (1 + c r)}
+%     -
+%     \dfrac{\delta c r (2 + c r)}{2 (1 + c r)}
+%     \sum\limits_{l=1}^\infty
+%     \dfrac{(-1)^l}
+%     {(1 + c r)^{l}}                                      \\
+%      & =
+%     1 - \dfrac{\delta c r}{2 (1 + c r)}
+%     +
+%     \dfrac{\delta c r}{2 (1 + c r)}                      \\
+%      & = 1
+%     \quad,
+% \end{align}
+% as stated in \textbf{3}, where we made use of the fact that
+% %
+% \begin{align}
+%     \sum\limits_{l=1}^\infty
+%     \dfrac{(-1)^l}
+%     {(1 + x)^{l}} = -\frac{1}{2 + x}
+%     \quad.
+% \end{align}
+%
+%\bibliography
+
+\end{document}

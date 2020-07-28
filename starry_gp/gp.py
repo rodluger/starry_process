@@ -19,14 +19,14 @@ class YlmGP(object):
         self,
         mu_lat=0.5,
         nu_lat=0.01,
-        mu_s=0.1,
-        nu_s=0.01,
-        mu_a=-3.0,
-        nu_a=1.0,
+        mu_r=0.025,
+        nu_r=0.005,
+        mu_d=-0.5,
+        nu_d=1.0,
         **kwargs,
     ):
         # Set params for each integral
-        self.S.set_params(mu_s=mu_s, nu_s=nu_s, mu_a=mu_a, nu_a=nu_a)
+        self.S.set_params(mu_r=mu_r, nu_r=nu_r, mu_d=mu_d, nu_d=nu_d)
         self.P.set_params(mu_lat=mu_lat, nu_lat=nu_lat)
 
         # Compute the mean
@@ -38,7 +38,7 @@ class YlmGP(object):
         matrix = self.S.second_moment()
         matrix = self.P.second_moment(matrix)
 
-        # Trick to lower the size of the matrix
+        # Lower the dimension of the decomposition
         # (NOT an approximation!)
         matrix = eigen(matrix @ matrix.T)
 
@@ -46,10 +46,6 @@ class YlmGP(object):
         EyyT = matrix @ matrix.T
         Ey = self.mu.reshape(-1, 1)
         self.cov = EyyT - Ey @ Ey.T
-
-        # Discard the constant term (=0)
-        self.mu = self.mu[1:]
-        self.cov = self.cov[1:, 1:]
 
     def draw(self, ndraws=1):
         npts = self.cov.shape[0]
