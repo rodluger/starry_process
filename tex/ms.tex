@@ -323,13 +323,13 @@ form in terms of the hypergeometric function ${_2F_1}$:
      & =
     \begin{dcases}
         1 -
-        \dfrac{(1 - b) \alpha c}{2(\alpha + \beta)} F_l
+        \dfrac{(1 - b) \alpha c}{2(\alpha + \beta)} G_0^1
          &
         \qquad
         l = m = 0    \\[2em]
         -\dfrac{(1 - b) \alpha c}{\sqrt{2l + 1} (\alpha + \beta)}
         \left[
-            F_l + \dfrac{(\alpha + 1)c}{2(\alpha + \beta + 1)} G_l
+            G_l^1 + \dfrac{(\alpha + 1)c}{2(\alpha + \beta + 1)} G_l^2
             \right]
          &
         \qquad
@@ -343,29 +343,19 @@ form in terms of the hypergeometric function ${_2F_1}$:
 where we define
 %
 \begin{align}
-    \begin{split}
-        F_l & \equiv {_2F_1}(l + 1, \alpha + 1; \alpha + \beta + 1; -c)
-        \\[1em]
-        G_l & \equiv {_2F_1}(l + 1, \alpha + 2; \alpha + \beta + 2; -c)
-        \quad.
-    \end{split}
+    G_l^k & \equiv {_2F_1}(l + 1, \alpha + k; \alpha + \beta + k; -c)
+    \quad.
 \end{align}
 %
 Note that for a given value of $\alpha$, $\beta$, and $c$, we need only compute
-$F_0$, $F_1$, $G_0$, and $G_1$ directly, since the remaining terms may be
+$G_0^1$, $G_1^1$, $G_0^2$, and $G_1^2$ directly, since the remaining terms may be
 obtained recursively:
 %
 \begin{align}
-    \begin{split}
-        F_l &=
-        \dfrac{\alpha + \beta + 1 - l}{2l}F_{l - 2}
-        - \dfrac{2\alpha + \beta + 2 - 3l}{2l}F_{l - 1}
-        \\[1em]
-        G_l &=
-        \dfrac{\alpha + \beta + 2 - l}{2l}G_{l - 2}
-        - \dfrac{2\alpha + \beta + 4 - 3l}{2l}G_{l - 1}
-        \quad.
-    \end{split}
+    G_l^k & =
+    \dfrac{\alpha + \beta + k - l}{2l}G_{l - 2}^k
+    - \dfrac{2\alpha + \beta + 2k - 3l}{2l}G_{l - 1}^k
+    \quad.
 \end{align}
 %
 We may now evaluate the integral in Equation~(\ref{eq:Erb}):
@@ -377,7 +367,7 @@ We may now evaluate the integral in Equation~(\ref{eq:Erb}):
         \int\limits_0^\infty
         \left(
         1 -
-        \dfrac{(1 - b) \alpha c}{2(\alpha + \beta)} F_l
+        \dfrac{(1 - b) \alpha c}{2(\alpha + \beta)} G_0^1
         \right)
         \\
         \qquad\qquad\times
@@ -396,7 +386,7 @@ We may now evaluate the integral in Equation~(\ref{eq:Erb}):
         \\
         \qquad\qquad\times
         \left[
-            F_l + \dfrac{(\alpha + 1)c}{2(\alpha + \beta + 1)} G_l
+            G_l^1 + \dfrac{(\alpha + 1)c}{2(\alpha + \beta + 1)} G_l^2
             \right]
         \\
         \qquad\qquad\times
@@ -421,13 +411,13 @@ integrals may also be expressed in closed form:
      & =
     \begin{dcases}
         1 -
-        \dfrac{\gamma \alpha c}{2(\alpha + \beta)} F_l
+        \dfrac{\gamma \alpha c}{2(\alpha + \beta)} G_0^1
          &
         \qquad
         l = m = 0    \\[2em]
         -\dfrac{\gamma \alpha c}{\sqrt{2l + 1} (\alpha + \beta)}
         \left[
-            F_l + \dfrac{(\alpha + 1)c}{2(\alpha + \beta + 1)} G_l
+            G_l^1 + \dfrac{(\alpha + 1)c}{2(\alpha + \beta + 1)} G_l^2
             \right]
          &
         \qquad
@@ -500,7 +490,7 @@ Expanding Equation~(\ref{eq:Er2}), we obtain
         \mathrm{d} r
          &
         \quad\quad
-        \parbox[t]{\linewidth}{$l = l',              \\m = m' = 0$}
+        \parbox[t]{\linewidth}{$l = l',               \\m = m' = 0$}
         \\[2em]
         %
         -\dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
@@ -514,7 +504,7 @@ Expanding Equation~(\ref{eq:Er2}), we obtain
         \mathrm{d} r
          &
         \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-3em}$l > 0,  \\l' = 0, \\m = m' = 0$}
+        \parbox[t]{\linewidth}{\vspace{-3em}$l > 0,   \\l' = 0, \\m = m' = 0$}
         \\[2em]
         %
         -\dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
@@ -528,10 +518,10 @@ Expanding Equation~(\ref{eq:Er2}), we obtain
         \mathrm{d} r
          &
         \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-3em}$l = 0,  \\l' > 0, \\m = m' = 0$}
+        \parbox[t]{\linewidth}{\vspace{-3em}$l = 0,   \\l' > 0, \\m = m' = 0$}
         \\[2em]
         %
-        -\dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+        \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
         \int\limits_0^1
         \dfrac{(1 - b)^2 c^2 r^2 \left( 2 + c r \right)^2 r^{\alpha - 1}
             (1 - r)^{\beta - 1}}
@@ -539,7 +529,7 @@ Expanding Equation~(\ref{eq:Er2}), we obtain
         \mathrm{d} r
          &
         \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-1.5em}$l > 0 \\l' > 0 \\m = m' = 0$}
+        \parbox[t]{\linewidth}{\vspace{-1.5em}$l > 0, \\l' > 0, \\m = m' = 0$}
         \\[2em]
         %
         0
@@ -548,7 +538,82 @@ Expanding Equation~(\ref{eq:Er2}), we obtain
         \quad.
     \end{dcases}
 \end{align}
-
+%
+These integrals again reduce to closed form expressions:
+%
+\begin{align}
+    \mathrm{E}_r \big[ y_{lm} y_{l'm'} \big]
+     & =
+    \begin{dcases}
+        1 + \frac{\left(\alpha +1\right) \alpha
+            \left(1-b\right)^2 c^2}{4 \left(c+1\right)
+            \left(\alpha + \beta \right)}
+        \\[0.75em]
+        \quad\quad\quad\quad\quad
+        -\frac{\alpha  \left(1-b\right) c}{\alpha +\beta }
+        \\[0.75em]
+        \quad\quad\quad\quad\quad
+        \times
+        \bigg[G_0^1
+            +
+            \frac{\left(\alpha +1\right) \left(1-b\right)
+                c \left(\alpha +\beta +\alpha  c+c\right)}{4 \left(c+1\right)
+                \left(\alpha +\beta +1\right)} G_0^2\bigg]
+         &
+        \quad\quad
+        \parbox[t]{\linewidth}{\vspace{-4.75em}$l = l', \\m = m' = 0$}
+        \\[2em]
+        %
+        -\frac{\alpha (1-b) c}{2 \sqrt{2 l+1} (\alpha +\beta )}
+        \\[0.75em]
+        \quad\quad\quad\quad\quad
+        \times
+        \bigg[
+            2G_l^1
+            + \dfrac{c(\alpha + 1)}{\alpha + \beta + 1} G_l^2
+            \\[0.75em]
+        \qquad
+        -\dfrac{c(1-b)(\alpha + 1)}{\alpha + \beta + 1} G_{l+1}^2
+        \\[0.75em]
+        \qquad
+        -\dfrac{c^2(1-b)(\alpha + 1)(\alpha + 2)}{2(\alpha + \beta + 1)(\alpha + \beta + 2)} G_{l+1}^3
+        \bigg]
+         &
+        \quad\quad
+        \parbox[t]{\linewidth}{\vspace{-7.5em}$l > 0,   \\l' = 0, \\m = m' = 0$}
+        \\[2em]
+        %
+        \textrm{same as previous case, but with $l \rightarrow l'$}
+         &
+        \quad\quad
+        \parbox[t]{\linewidth}{\vspace{-2em}$l = 0,     \\l' > 0, \\m = m' = 0$}
+        \\[2em]
+        %
+        \frac{\alpha  (\alpha +1) (1-b)^2 c^2}{(\alpha +\beta )
+            (\alpha +\beta +1) \sqrt{(2 l+1) (2 p+1)}}
+        \\[0.75em]
+        \quad\quad\quad\quad\quad
+        \times
+        \bigg[
+        G_{l+l'+1}^2
+        +
+        \frac{c(\alpha + 2)}{\alpha + \beta + 2}G_{l+l'+1}^3
+        \\[0.75em]
+        \qquad
+        +
+        \frac{c^2(\alpha + 2)(\alpha + 3)}{4(\alpha + \beta + 2)(\alpha + \beta + 3)}G_{l+l'+1}^4
+        \bigg]
+         &
+        \quad\quad
+        \parbox[t]{\linewidth}{\vspace{-5.25em}$l > 0,  \\l' > 0, \\m = m' = 0$}
+        \\[2em]
+        %
+        0
+         &
+        \quad\quad m, m' \ne 0
+        \quad.
+    \end{dcases}
+\end{align}
 %\bibliography
 
 \end{document}
