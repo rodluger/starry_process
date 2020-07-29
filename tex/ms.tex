@@ -46,13 +46,15 @@
 \section{The Spot Expansion}
 \label{sec:spot}
 %
+\subsection{Preliminaries}
+%
 We adopt the following expression for the spherical harmonic coefficient
 of degree $l$ and order $m$ in the expansion of a spot at
 $\theta = \varphi = 0$:
 %
 \begin{align}
     \label{eq:ylm0}
-    y_{lm}(\delta, r, \theta = 0, \varphi = 0) =
+    y_{lm}(r, \delta) =
     \begin{cases}
         1 - \dfrac{\delta c r}{2 (1 + c r)}
          & l = m = 0    \\[2em]
@@ -64,29 +66,33 @@ $\theta = \varphi = 0$:
     \end{cases}
 \end{align}
 %
-where $\delta \in [-\infty, 1]$ is the fractional decrease in the brightness
-at the center of the spot and $r \in [0, 1]$ is a normalized spot radius.
-The quantity $c$ is a normalization constant for the radius (see below).
-
+where $\delta \in [-\infty, 1]$ is the spot contrast (the fractional
+decrease in the brightness
+at the center of the spot) and $r \in (0, 1]$ is the normalized spot radius.
+The quantity $c \in (0, \infty)$ is a normalization constant for the radius
+(more details below).
 The expression in Equation~(\ref{eq:ylm0}) is convenient because it satisfies
-three important properties:
+four important properties:
 %
 \begin{enumerate}[itemsep=2pt,parsep=1pt,label=\textbf{\arabic*}]
     \item The surface intensity monotonically increases away from the spot center
     \item The surface intensity at the spot center is $1 - \delta$
     \item The surface intensity at the antipode of the spot center is unity
+    \item The size of the spot increases monotonically with $r$
 \end{enumerate}
 %
 These properties may be demonstrated by considering the expression for the
 surface intensity at a given point $(\theta, \varphi)$:
 %
 \begin{align}
-    I(\theta, \varphi)
-     & =
-    \sum\limits_{l=0}^\infty \sum\limits_{m=-l}^l
-    y_{lm} Y_{lm}(\theta, \varphi) \\
-     & = \sum\limits_{l=0}^\infty
-    y_{l0} \sqrt{2l + 1} P_l(\cos\theta)
+    \begin{split}
+        I(\theta, \varphi)
+        & =
+        \sum\limits_{l=0}^\infty \sum\limits_{m=-l}^l
+        y_{lm} Y_{lm}(\theta, \varphi) \\
+        & = \sum\limits_{l=0}^\infty
+        y_{l0} \sqrt{2l + 1} P_l(\cos\theta)
+    \end{split}
 \end{align}
 %
 where $P_l$ is the Legendre polynomial of degree $l$ and we have implicitly
@@ -117,16 +123,17 @@ so we may express the intensity in the fairly simple form
 %
 \begin{align}
     \label{eq:Ifinal}
-    I(\theta, \varphi) = A - \frac{B}{\sqrt{C - \cos\theta}}
+    I(\theta, \varphi) & = A - \frac{B}{\sqrt{C - \cos\theta}}
     \quad,
-\end{align}
-%
-where
-%
-\begin{align}
-    A & = 1 + \dfrac{\delta c r}{2}                      \\
-    B & = \delta c r (2 + cr) \sqrt{\dfrac{1}{8 + 8 cr}} \\
-    C & = \dfrac{1 + (1 + c r)^2}{2 + 2 c r}
+    %
+    \\
+    \intertext{where}
+    %
+    \begin{split}
+        A & = 1 + \dfrac{\delta c r}{2}                      \\
+        B & = \delta c r (2 + cr) \sqrt{\dfrac{1}{8 + 8 cr}} \\
+        C & = \dfrac{1 + (1 + c r)^2}{2 + 2 c r}
+    \end{split}
 \end{align}
 %
 are positive constants.
@@ -146,85 +153,402 @@ therefore increases monotonically from the spot center to the antipode,
 as stated in \textbf{1}. The value at the minimum is
 %
 \begin{align}
-    I_{\mathrm{min}} & = A - \dfrac{B}{\sqrt{C - 1}} \\
-                     & = 1 - \delta
-    \quad,
+    \begin{split}
+        I_{\mathrm{min}} & = A - \dfrac{B}{\sqrt{C - 1}} \\
+        & = 1 - \delta
+        \quad,
+    \end{split}
 \end{align}
 %
 as stated in \textbf{2}, and the value at the maximum is
 %
 \begin{align}
-    I_{\mathrm{max}} & = A - \dfrac{B}{\sqrt{C + 1}} \\
-                     & = 1
-    \quad,
+    \begin{split}
+        I_{\mathrm{max}} & = A - \dfrac{B}{\sqrt{C + 1}} \\
+        & = 1
+        \quad,
+    \end{split}
 \end{align}
 %
 as stated in \textbf{3}.
-
-% At the spot center, $\theta = 0$, so $\cos\theta = 1$. Since $P_l(1) = 1$ for
-% all $l$, we have
-% %
-% \begin{align}
-%     I(0)
-%      & =
-%     \sum\limits_{l=0}^\infty y_{l0} \sqrt{2l + 1} \\
-%      & =
-%     1 - \dfrac{\delta c r}{2 (1 + c r)}
-%     -
-%     \dfrac{\delta c r (2 + c r)}{2 (1 + c r)}
-%     \sum\limits_{l=1}^\infty
-%     \dfrac{1}
-%     {(1 + c r)^{l}}                               \\
-%      & =
-%     1 -
-%     \delta
-%     \left[
-%         \dfrac{c r}{2 (1 + c r)}
-%         - \dfrac{2 + c r}{2(1 + c r)}
-%         \right]                                   \\
-%      & = 1 - \delta
-%     \quad,
-% \end{align}
-% %
-% as stated in \textbf{2}, where we made use of the fact that
-% %
-% \begin{align}
-%     \sum\limits_{l=1}^\infty
-%     \dfrac{1}
-%     {(1 + x)^{l}} = \frac{1}{x}
-%     \quad.
-% \end{align}
-% %
-% Finally, at the antipode, $\theta = \pi$,
-% $\cos\theta = -1$, and $P_l(\cos\theta) = (-1)^l$, so
-% %
-% \begin{align}
-%     I(\pi)
-%      & =
-%     \sum\limits_{l=0}^\infty y_{l0} (-1)^l \sqrt{2l + 1} \\
-%      & =
-%     1 - \dfrac{\delta c r}{2 (1 + c r)}
-%     -
-%     \dfrac{\delta c r (2 + c r)}{2 (1 + c r)}
-%     \sum\limits_{l=1}^\infty
-%     \dfrac{(-1)^l}
-%     {(1 + c r)^{l}}                                      \\
-%      & =
-%     1 - \dfrac{\delta c r}{2 (1 + c r)}
-%     +
-%     \dfrac{\delta c r}{2 (1 + c r)}                      \\
-%      & = 1
-%     \quad,
-% \end{align}
-% as stated in \textbf{3}, where we made use of the fact that
-% %
-% \begin{align}
-%     \sum\limits_{l=1}^\infty
-%     \dfrac{(-1)^l}
-%     {(1 + x)^{l}} = -\frac{1}{2 + x}
-%     \quad.
-% \end{align}
+Finally, to show \textbf{4}, let us compute the half width at half minimum
+$\Delta\theta$ of the intensity profile:
 %
+\begin{align}
+    1 - \left(A - \dfrac{B}{\sqrt{C - \cos{\Delta\theta}}}\right) =
+    \dfrac{1}{2}\delta
+\end{align}
+%
+Solving for $\Delta\theta$ yields
+%
+\begin{align}
+    \Delta\theta =
+    \cos^{-1} \left[ \dfrac{2 + 3 c r (2 + c r)}{2 (1 + c r)^3} \right]
+    \quad.
+\end{align}
+%
+Differentiation with respect to $r$ yields
+%
+\begin{align}
+    \dfrac{\mathrm{d}\Delta\theta}{\mathrm{d}r} =
+    \frac{3 c^2 r \left(2 + c r\right)}{\left(1 + c r\right)^4
+        \sqrt{\frac{c^2 r^2 \left(2 + c r\right)^2 \left(1 + 2 c r\right)
+                \left(3 + 2 c r\right)}{\left(1 + c r\right)^6}}}
+    \quad,
+\end{align}
+%
+which is positive definite for all $c, r > 0$.
+
+\subsection{Distributions over $r$ and $\delta$}
+%
+We model the normalized spot radius $r$ as a random variable drawn from
+a Beta distribution, whose PDF is given by
+%
+\begin{align}
+    p \big(r \, \big| \, \alpha, \beta \big)
+     & =
+    \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+    r^{\alpha - 1}
+    (1 - r)^{\beta - 1}
+    \quad,
+\end{align}
+%
+where $\Gamma$ is the Gamma function and $\alpha$ and $\beta$ are
+hyperparameters characterizing the shape of the distribution.
+%
+Since we require the brghtness $b = 1 - \delta$ at the center of the spot to
+be non-negative, it is convenient to parametrize the distribution of $b$
+instead of $\delta$. We model $b$ as a random variable drawn from a log-normal
+distribution:
+%
+\begin{align}
+    p \big(b \, \big| \, \mu, \nu \big)
+     & =
+    \frac{1}{b\sqrt{2\pi\nu}}
+    \exp\left[
+        -\dfrac{\left(\ln b - \mu\right)^2}{2\nu}
+        \right]
+    \quad,
+\end{align}
+%
+where $\mu$ and $\nu$ are the mean and variance of the log-normal, respectively.
+The joint distribution over $r$ and $b$ is therefore separable,
+by construction:
+%
+\begin{align}
+    p \big( r, b \, \big| \, \alpha, \beta, \mu, \nu \big)
+     & =
+    p \big(r \, \big| \, \alpha, \beta \big)
+    \,
+    p \big(b \, \big| \, \mu, \nu \big)
+    \quad.
+\end{align}
+%
+
+\subsection{First moment}
+%
+The first moment of the distribution of $y_{lm}$ over $r$ and $b$ is
+%
+\begin{align}
+    \label{eq:Erb}
+    \begin{split}
+        \mathrm{E} \big[ y_{lm} \big] &=
+        \int\limits_0^\infty \int\limits_0^1
+        y_{lm} (r, 1 - b)
+        p \big(r, 1 - b \, \big| \, \alpha, \beta, \mu, \nu \big)
+        \mathrm{d} r
+        \,
+        \mathrm{d} b
+        \\
+        &=
+        \int\limits_0^\infty
+        \mathrm{E}_r \big[ y_{lm} \big]
+        p \big(b \, \big| \, \mu, \nu \big)
+        \mathrm{d} b
+        \quad,
+    \end{split}
+    %
+    \\
+    \intertext{where}
+    \label{eq:Er}
+    %
+    \mathrm{E}_r \big[ y_{lm} \big]
+     & =
+    \int\limits_0^1
+    y_{lm} (r, 1 - b)
+    p \big(r \, \big| \, \alpha, \beta \big)
+    \mathrm{d} r
+    \quad.
+\end{align}
+%
+Expanding Equation~(\ref{eq:Er}), we obtain
+%
+\begin{align}
+    \mathrm{E}_r \big[ y_{lm} \big]
+     & =
+    \begin{dcases}
+        \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+        \int\limits_0^1
+        \left(
+        1 - \dfrac{(1 - b) c r}{2 (1 + c r)}
+        \right)
+        r^{\alpha - 1}
+        (1 - r)^{\beta - 1}
+        \mathrm{d} r
+         &
+        \qquad
+        l = m = 0    \\[2em]
+        -\dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+        \int\limits_0^1
+        \dfrac{(1 - b) c r \left( 2 + c r \right)r^{\alpha - 1}
+        (1 - r)^{\beta - 1}}
+        {2 \sqrt{2l + 1} (1 + c r)^{l + 1}}
+        \mathrm{d} r
+         &
+        \qquad
+        l > 0, m = 0 \\[2em]
+        0
+         &
+        \qquad m \ne 0
+        \quad.
+    \end{dcases}
+\end{align}
+%
+Thanks to the dependence of the spherical harmonic coefficients on only
+powers of $r$ and $(1 + cr)$, the integrals above may be expressed in closed
+form in terms of the hypergeometric function ${_2F_1}$:
+%
+\begin{align}
+    \mathrm{E}_r \big[ y_{lm} \big]
+     & =
+    \begin{dcases}
+        1 -
+        \dfrac{(1 - b) \alpha c}{2(\alpha + \beta)} F_l
+         &
+        \qquad
+        l = m = 0    \\[2em]
+        -\dfrac{(1 - b) \alpha c}{\sqrt{2l + 1} (\alpha + \beta)}
+        \left[
+            F_l + \dfrac{(\alpha + 1)c}{2(\alpha + \beta + 1)} G_l
+            \right]
+         &
+        \qquad
+        l > 0, m = 0 \\[2em]
+        0
+         &
+        \qquad m \ne 0
+    \end{dcases}
+\end{align}
+%
+where we define
+%
+\begin{align}
+    \begin{split}
+        F_l & \equiv {_2F_1}(l + 1, \alpha + 1; \alpha + \beta + 1; -c)
+        \\[1em]
+        G_l & \equiv {_2F_1}(l + 1, \alpha + 2; \alpha + \beta + 2; -c)
+        \quad.
+    \end{split}
+\end{align}
+%
+Note that for a given value of $\alpha$, $\beta$, and $c$, we need only compute
+$F_0$, $F_1$, $G_0$, and $G_1$ directly, since the remaining terms may be
+obtained recursively:
+%
+\begin{align}
+    \begin{split}
+        F_l &=
+        \dfrac{\alpha + \beta + 1 - l}{2l}F_{l - 2}
+        - \dfrac{2\alpha + \beta + 2 - 3l}{2l}F_{l - 1}
+        \\[1em]
+        G_l &=
+        \dfrac{\alpha + \beta + 2 - l}{2l}G_{l - 2}
+        - \dfrac{2\alpha + \beta + 4 - 3l}{2l}G_{l - 1}
+        \quad.
+    \end{split}
+\end{align}
+%
+We may now evaluate the integral in Equation~(\ref{eq:Erb}):
+%
+\begin{align}
+    \mathrm{E} \big[ y_{lm} \big] & =
+    \begin{dcases}
+        \frac{1}{b\sqrt{2\pi\nu}}
+        \int\limits_0^\infty
+        \left(
+        1 -
+        \dfrac{(1 - b) \alpha c}{2(\alpha + \beta)} F_l
+        \right)
+        \\
+        \qquad\qquad\times
+        \exp\left[
+            -\dfrac{\left(\ln b - \mu\right)^2}{2\nu}
+            \right]
+        \mathrm{d} b
+         &
+        \qquad\qquad
+        l = m = 0
+        \\
+        -
+        \frac{1}{b\sqrt{2\pi\nu}}
+        \int\limits_0^\infty
+        \dfrac{(1 - b) \alpha c}{\sqrt{2l + 1} (\alpha + \beta)}
+        \\
+        \qquad\qquad\times
+        \left[
+            F_l + \dfrac{(\alpha + 1)c}{2(\alpha + \beta + 1)} G_l
+            \right]
+        \\
+        \qquad\qquad\times
+        \exp\left[
+            -\dfrac{\left(\ln b - \mu\right)^2}{2\nu}
+            \right]
+        \mathrm{d} b
+         &
+        \qquad\qquad
+        l > 0, m = 0 \\[2em]
+        0
+         &
+        \qquad\qquad m \ne 0
+    \end{dcases}
+\end{align}
+%
+Most of the terms in the integrands above are constants, so these
+integrals may also be expressed in closed form:
+%
+\begin{align}
+    \mathrm{E} \big[ y_{lm} \big]
+     & =
+    \begin{dcases}
+        1 -
+        \dfrac{\gamma \alpha c}{2(\alpha + \beta)} F_l
+         &
+        \qquad
+        l = m = 0    \\[2em]
+        -\dfrac{\gamma \alpha c}{\sqrt{2l + 1} (\alpha + \beta)}
+        \left[
+            F_l + \dfrac{(\alpha + 1)c}{2(\alpha + \beta + 1)} G_l
+            \right]
+         &
+        \qquad
+        l > 0, m = 0 \\[2em]
+        0
+         &
+        \qquad m \ne 0
+    \end{dcases}
+\end{align}
+%
+where we define
+%
+\begin{align}
+    \gamma \equiv 1 - \exp\left[ \mu + \frac{1}{2}\nu\right]
+    \quad.
+\end{align}
+%
+
+\subsection{Second moment}
+%
+The second moment of the distribution of $y_{lm}$ over $r$ and $b$ is
+%
+\begin{align}
+    \label{eq:Erb2}
+    \begin{split}
+        \mathrm{E} \big[ y_{lm} y_{l'm'} \big] &=
+        \int\limits_0^\infty \int\limits_0^1
+        y_{lm} (r, 1 - b)
+        y_{l'm'} (r, 1 - b)
+        p \big(r, 1 - b \, \big| \, \alpha, \beta, \mu, \nu \big)
+        \mathrm{d} r
+        \,
+        \mathrm{d} b
+        \\
+        &=
+        \int\limits_0^\infty
+        \mathrm{E}_r \big[ y_{lm} y_{l'm'} \big]
+        p \big(b \, \big| \, \mu, \nu \big)
+        \mathrm{d} b
+        \quad,
+    \end{split}
+    %
+    \\
+    \intertext{where}
+    \label{eq:Er2}
+    %
+    \mathrm{E}_r \big[ y_{lm} y_{l'm'} \big]
+     & =
+    \int\limits_0^1
+    y_{lm} (r, 1 - b)
+    y_{l'm'} (r, 1 - b)
+    p \big(r \, \big| \, \alpha, \beta \big)
+    \mathrm{d} r
+    \quad.
+\end{align}
+%
+Expanding Equation~(\ref{eq:Er2}), we obtain
+%
+\begin{align}
+    \mathrm{E}_r \big[ y_{lm} y_{l'm'} \big]
+     & =
+    \begin{dcases}
+        \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+        \int\limits_0^1
+        \left(
+        1 - \dfrac{(1 - b) c r}{2 (1 + c r)}
+        \right)^2
+        r^{\alpha - 1}
+        (1 - r)^{\beta - 1}
+        \mathrm{d} r
+         &
+        \quad\quad
+        \parbox[t]{\linewidth}{$l = l',              \\m = m' = 0$}
+        \\[2em]
+        %
+        -\dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+        \int\limits_0^1
+        \left(1 - \dfrac{(1 - b) c r}{2 (1 + c r)}\right)
+        \\
+        \qquad\qquad\quad\quad\times
+        \dfrac{(1 - b) c r \left( 2 + c r \right) r^{\alpha - 1}
+            (1 - r)^{\beta - 1}}
+        {2 \sqrt{2l + 1} (1 + c r)^{l + 1}}
+        \mathrm{d} r
+         &
+        \quad\quad
+        \parbox[t]{\linewidth}{\vspace{-3em}$l > 0,  \\l' = 0, \\m = m' = 0$}
+        \\[2em]
+        %
+        -\dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+        \int\limits_0^1
+        \left(1 - \dfrac{(1 - b) c r}{2 (1 + c r)}\right)
+        \\
+        \qquad\qquad\quad\quad\times
+        \dfrac{(1 - b) c r \left( 2 + c r \right) r^{\alpha - 1}
+            (1 - r)^{\beta - 1}}
+        {2 \sqrt{2l' + 1} (1 + c r)^{l' + 1}}
+        \mathrm{d} r
+         &
+        \quad\quad
+        \parbox[t]{\linewidth}{\vspace{-3em}$l = 0,  \\l' > 0, \\m = m' = 0$}
+        \\[2em]
+        %
+        -\dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+        \int\limits_0^1
+        \dfrac{(1 - b)^2 c^2 r^2 \left( 2 + c r \right)^2 r^{\alpha - 1}
+            (1 - r)^{\beta - 1}}
+        {4 \sqrt{(2l + 1)(2l' + 1)} (1 + c r)^{l + l' + 2}}
+        \mathrm{d} r
+         &
+        \quad\quad
+        \parbox[t]{\linewidth}{\vspace{-1.5em}$l > 0 \\l' > 0 \\m = m' = 0$}
+        \\[2em]
+        %
+        0
+         &
+        \quad\quad m, m' \ne 0
+        \quad.
+    \end{dcases}
+\end{align}
+
 %\bibliography
 
 \end{document}
