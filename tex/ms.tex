@@ -449,7 +449,7 @@ Expanding Equation~(\ref{eq:Er2}), we obtain
         \mathrm{d} r
          &
         \quad\quad
-        \parbox[t]{\linewidth}{$l = l',               \\m = m' = 0$}
+        \parbox[t]{\linewidth}{$l = l' = 0,           \\m = m' = 0$}
         \\[2em]
         %
         -\dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
@@ -466,20 +466,6 @@ Expanding Equation~(\ref{eq:Er2}), we obtain
         \parbox[t]{\linewidth}{\vspace{-3em}$l > 0,   \\l' = 0, \\m = m' = 0$}
         \\[2em]
         %
-        -\dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
-        \int\limits_0^1
-        \left(1 - \dfrac{(1 - b) c r}{2 (1 + c r)}\right)
-        \\
-        \qquad\qquad\quad\quad\times
-        \dfrac{(1 - b) c r \left( 2 + c r \right) r^{\alpha - 1}
-            (1 - r)^{\beta - 1}}
-        {2 \sqrt{2l' + 1} (1 + c r)^{l' + 1}}
-        \mathrm{d} r
-         &
-        \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-3em}$l = 0,   \\l' > 0, \\m = m' = 0$}
-        \\[2em]
-        %
         \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
         \int\limits_0^1
         \dfrac{(1 - b)^2 c^2 r^2 \left( 2 + c r \right)^2 r^{\alpha - 1}
@@ -494,9 +480,12 @@ Expanding Equation~(\ref{eq:Er2}), we obtain
         0
          &
         \quad\quad m, m' \ne 0
-        \quad.
+        \quad,
     \end{dcases}
 \end{align}
+%
+where, by symmetry, the expression for $l' > 0, \, l = 0, \, m = m' = 0$ is the same as
+in the second case, provided we make the substitution $l \rightarrow l'$.
 %
 These integrals again reduce to closed form expressions:
 %
@@ -520,7 +509,7 @@ These integrals again reduce to closed form expressions:
                 \left(\alpha +\beta +1\right)} G_0^2\bigg]
          &
         \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-4.75em}$l = l', \\m = m' = 0$}
+        \parbox[t]{\linewidth}{\vspace{-4.75em}$l = l' = 0, \\m = m' = 0$}
         \\[2em]
         %
         -\frac{\alpha (1-b) c}{2 \sqrt{2 l+1} (\alpha +\beta )}
@@ -539,17 +528,10 @@ These integrals again reduce to closed form expressions:
         \bigg]
          &
         \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-7.5em}$l > 0,   \\l' = 0, \\m = m' = 0$}
+        \parbox[t]{\linewidth}{\vspace{-7.5em}$l > 0,       \\l' = 0, \\m = m' = 0$}
         \\[2em]
-        %
-        \textrm{same as previous case, but with $l \rightarrow l'$}
-         &
-        \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-2em}$l = 0,     \\l' > 0, \\m = m' = 0$}
-        \\[2em]
-        %
         \frac{\alpha  (\alpha +1) (1-b)^2 c^2}{(\alpha +\beta )
-            (\alpha +\beta +1) \sqrt{(2 l+1) (2 p+1)}}
+            (\alpha +\beta +1) \sqrt{(2 l+1) (2 l'+1)}}
         \\[0.75em]
         \quad\quad\quad\quad\quad
         \times
@@ -564,7 +546,7 @@ These integrals again reduce to closed form expressions:
         \bigg]
          &
         \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-5.25em}$l > 0,  \\l' > 0, \\m = m' = 0$}
+        \parbox[t]{\linewidth}{\vspace{-5.25em}$l > 0,      \\l' > 0, \\m = m' = 0$}
         \\[2em]
         %
         0
@@ -601,7 +583,7 @@ the PDF in Equation~(\ref{eq:lognormal}):
                 \left(\alpha +\beta +1\right)} G_0^2\bigg]
          &
         \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-4.75em}$l = l', \\m = m' = 0$}
+        \parbox[t]{\linewidth}{\vspace{-4.75em}$l = l' = 0, \\m = m' = 0$}
         \\[2em]
         %
         -\frac{\alpha \gamma_1 c}{2 \sqrt{2 l+1} (\alpha +\beta )}
@@ -620,17 +602,11 @@ the PDF in Equation~(\ref{eq:lognormal}):
         \bigg]
          &
         \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-7.5em}$l > 0,   \\l' = 0, \\m = m' = 0$}
-        \\[2em]
-        %
-        \textrm{same as previous case, but with $l \rightarrow l'$}
-         &
-        \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-2em}$l = 0,     \\l' > 0, \\m = m' = 0$}
+        \parbox[t]{\linewidth}{\vspace{-7.5em}$l > 0,       \\l' = 0, \\m = m' = 0$}
         \\[2em]
         %
         \frac{\alpha  (\alpha +1) \gamma_2 c^2}{(\alpha +\beta )
-            (\alpha +\beta +1) \sqrt{(2 l+1) (2 p+1)}}
+            (\alpha +\beta +1) \sqrt{(2 l+1) (2 l'+1)}}
         \\[0.75em]
         \quad\quad\quad\quad\quad
         \times
@@ -645,7 +621,7 @@ the PDF in Equation~(\ref{eq:lognormal}):
         \bigg]
          &
         \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-5.25em}$l > 0,  \\l' > 0, \\m = m' = 0$}
+        \parbox[t]{\linewidth}{\vspace{-5.25em}$l > 0,      \\l' > 0, \\m = m' = 0$}
         \\[2em]
         %
         0
@@ -661,8 +637,11 @@ where we define
     \gamma_2 \equiv 1
     - 2\exp\bigg[ \mu + \frac{1}{2}\nu\bigg]
     + \exp\bigg[ 2\mu + 2\nu\bigg]
-    \quad.
+    \quad,
 \end{align}
+%
+and the expression for $l' > 0, \, l = 0, \, m = m' = 0$ is again the same as in
+the second case, provided we make the substitution $l \rightarrow l'$.
 
 %\bibliography
 

@@ -21,12 +21,12 @@ class YlmGP(object):
         nu_lat=0.01,
         mu_r=0.025,
         nu_r=0.005,
-        mu_d=-0.5,
-        nu_d=1.0,
+        mu_b=-0.5,
+        nu_b=1.0,
         **kwargs,
     ):
         # Set params for each integral
-        self.S.set_params(mu_r=mu_r, nu_r=nu_r, mu_d=mu_d, nu_d=nu_d)
+        self.S.set_params(mu_r=mu_r, nu_r=nu_r, mu_b=mu_b, nu_b=nu_b)
         self.P.set_params(mu_lat=mu_lat, nu_lat=nu_lat)
 
         # Compute the mean

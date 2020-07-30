@@ -8,7 +8,7 @@ from scipy.stats import lognorm
 from tqdm import tqdm
 
 
-def test_first_moment(ydeg=5, mu_r=0.1, nu_r=0.01, mu_d=-0.25, nu_d=1.0):
+def test_first_moment(ydeg=5, mu_r=0.1, nu_r=0.01, mu_b=-0.25, nu_b=1.0):
 
     np.random.seed(0)
     nsamples = 1000000
@@ -16,7 +16,7 @@ def test_first_moment(ydeg=5, mu_r=0.1, nu_r=0.01, mu_d=-0.25, nu_d=1.0):
 
     # Get analytic integral
     S = SpotIntegral(ydeg)
-    S.set_params(mu_r, nu_r, mu_d, nu_d)
+    S.set_params(mu_r, nu_r, mu_b, nu_b)
     mu = S.first_moment()
 
     # Integrate numerically
@@ -28,7 +28,7 @@ def test_first_moment(ydeg=5, mu_r=0.1, nu_r=0.01, mu_d=-0.25, nu_d=1.0):
     r = Beta.rvs(alpha_r, beta_r, size=nsamples)
 
     # Draw the spot amplitude
-    delta = 1 - lognorm.rvs(s=np.sqrt(nu_d), scale=np.exp(mu_d), size=nsamples)
+    delta = 1 - lognorm.rvs(s=np.sqrt(nu_b), scale=np.exp(mu_b), size=nsamples)
 
     # Compute the spot expansions
     s = spot(ydeg, r, delta, c=1.0)
@@ -38,7 +38,7 @@ def test_first_moment(ydeg=5, mu_r=0.1, nu_r=0.01, mu_d=-0.25, nu_d=1.0):
     assert np.allclose(mu, mu_num, atol=atol)
 
 
-def test_second_moment(ydeg=5, mu_r=0.1, nu_r=0.01, mu_d=-0.25, nu_d=1.0):
+def test_second_moment(ydeg=5, mu_r=0.1, nu_r=0.01, mu_b=-0.25, nu_b=1.0):
 
     np.random.seed(0)
     nsamples = 1000000
@@ -46,7 +46,7 @@ def test_second_moment(ydeg=5, mu_r=0.1, nu_r=0.01, mu_d=-0.25, nu_d=1.0):
 
     # Compute the analytic covariance
     S = SpotIntegral(ydeg)
-    S.set_params(mu_r, nu_r, mu_d, nu_d)
+    S.set_params(mu_r, nu_r, mu_b, nu_b)
     mu = S.first_moment().reshape(-1, 1)
     C = S.second_moment()
     K = C @ C.T - mu @ mu.T
@@ -60,7 +60,7 @@ def test_second_moment(ydeg=5, mu_r=0.1, nu_r=0.01, mu_d=-0.25, nu_d=1.0):
     r = Beta.rvs(alpha_r, beta_r, size=nsamples)
 
     # Draw the spot amplitude
-    delta = 1 - lognorm.rvs(s=np.sqrt(nu_d), scale=np.exp(mu_d), size=nsamples)
+    delta = 1 - lognorm.rvs(s=np.sqrt(nu_b), scale=np.exp(mu_b), size=nsamples)
 
     # Compute the spot expansions
     s = spot(ydeg, r, delta, c=1.0)
