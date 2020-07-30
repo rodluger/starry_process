@@ -56,25 +56,33 @@ $\theta = \varphi = 0$:
     \label{eq:ylm0}
     y_{lm}(r, \delta) =
     \begin{cases}
-        1 - \dfrac{\delta c r}{2 (1 + c r)}
+        1 - \dfrac{\delta r'}{2 (1 + r')}
          & l = m = 0    \\[2em]
-        -\dfrac{\delta c r \left( 2 + c r \right)}
-        {2 \sqrt{2l + 1} (1 + c r)^{l + 1}}
+        -\dfrac{\delta r' \left( 2 + r' \right)}
+        {2 \sqrt{2l + 1} (1 + r')^{l + 1}}
          & l > 0, m = 0 \\[2em]
         0
          & m \ne 0
     \end{cases}
 \end{align}
 %
-where $\delta \in [-\infty, 1]$ is the spot contrast (the fractional
+where
+%
+\begin{align}
+    \label{eq:rprime}
+    r' \equiv c_0 + c_1 r
+\end{align}
+%
+and $c_0, c_1 > 0$ are scaling constants (defined in more detail below).
+In the expressions above,
+$\delta \in (-\infty, 1]$ is the spot contrast (the fractional
 decrease in the brightness
-at the center of the spot) and $r \in (0, 1]$ is the normalized spot radius.
-The quantity $c \in (0, \infty)$ is a normalization constant for the radius
-(more details below).
+at the center of the spot) and $r \in [0, 1]$ is the normalized spot radius.
 The expression in Equation~(\ref{eq:ylm0}) is convenient because it satisfies
-four important properties:
+five important properties:
 %
 \begin{enumerate}[itemsep=2pt,parsep=1pt,label=\textbf{\arabic*}]
+    \item The surface intensity is azimuthally symmetric about the spot center
     \item The surface intensity monotonically increases away from the spot center
     \item The surface intensity at the spot center is $1 - \delta$
     \item The surface intensity at the antipode of the spot center is unity
@@ -98,15 +106,22 @@ surface intensity at a given point $(\theta, \varphi)$:
 where $P_l$ is the Legendre polynomial of degree $l$ and we have implicitly
 assumed a normalization such that the integral of our expansion over
 the unit sphere is $4\pi$.
-Combining this with Equation~(\ref{eq:ylm0}) and rearranging, we may write
+Note that the expression above is independent of the azimuth $\varphi$,
+a consequence of the fact that all harmonics with $m \ne 0$ are zero; this
+expansion is therefore azimuthally symmetric about the spot center, as
+stated in \textbf{1}.
+%
+Combining the above expression with Equation~(\ref{eq:ylm0}) and
+rearranging, we may write
 %
 \begin{align}
     \label{eq:Igen}
     I(\theta, \varphi) =
-    1 + \dfrac{\delta c r}{2}
+    I(\theta) =
+    1 + \dfrac{\delta r'}{2}
     -
-    \dfrac{\delta c r \left( 2 + c r \right)}{2 (1 + c r)}
-    \sum\limits_{l=0}^\infty \left(\dfrac{1}{1 + c r}\right)^l P_l(\cos\theta)
+    \dfrac{\delta r' \left( 2 + r' \right)}{2 (1 + r')}
+    \sum\limits_{l=0}^\infty \left(\dfrac{1}{1 + r'}\right)^l P_l(\cos\theta)
     \quad.
 \end{align}
 %
@@ -123,16 +138,16 @@ so we may express the intensity in the fairly simple form
 %
 \begin{align}
     \label{eq:Ifinal}
-    I(\theta, \varphi) & = A - \frac{B}{\sqrt{C - \cos\theta}}
+    I(\theta) & = A - \frac{B}{\sqrt{C - \cos\theta}}
     \quad,
     %
     \\
     \intertext{where}
     %
     \begin{split}
-        A & = 1 + \dfrac{\delta c r}{2}                      \\
-        B & = \delta c r (2 + cr) \sqrt{\dfrac{1}{8 + 8 cr}} \\
-        C & = \dfrac{1 + (1 + c r)^2}{2 + 2 c r}
+        A & = 1 + \dfrac{\delta r'}{2}                      \\
+        B & = \delta r' (2 + r') \sqrt{\dfrac{1}{8 + 8 r'}} \\
+        C & = \dfrac{1 + (1 + r')^2}{2 + 2 r'}
     \end{split}
 \end{align}
 %
@@ -142,15 +157,15 @@ Differentiating Equation~(\ref{eq:Ifinal}) with respect to $\theta$, we have
 %
 \begin{align}
     \label{eq:Ideriv}
-    \dfrac{\mathrm{d}I(\theta, \varphi)}{\mathrm{d}\theta} & =
+    \dfrac{\mathrm{d}I(\theta)}{\mathrm{d}\theta} & =
     -\frac{B\sin\theta}{2(C - \cos\theta)^\frac{3}{2}}
     \quad,
 \end{align}
 %
-which is zero only for $\theta = 0$ (for which $I(\theta, \varphi)$ is
+which is zero only for $\theta = 0$ (for which $I(\theta)$ is
 minimized) and $\theta = \pi$ (for which it is maximized). The intensity
 therefore increases monotonically from the spot center to the antipode,
-as stated in \textbf{1}. The value at the minimum is
+as stated in \textbf{2}. The value at the minimum is
 %
 \begin{align}
     \begin{split}
@@ -160,7 +175,7 @@ as stated in \textbf{1}. The value at the minimum is
     \end{split}
 \end{align}
 %
-as stated in \textbf{2}, and the value at the maximum is
+as stated in \textbf{3}, and the value at the maximum is
 %
 \begin{align}
     \begin{split}
@@ -170,8 +185,8 @@ as stated in \textbf{2}, and the value at the maximum is
     \end{split}
 \end{align}
 %
-as stated in \textbf{3}.
-Finally, to show \textbf{4}, let us compute the half width at half minimum
+as stated in \textbf{4}.
+Finally, to show \textbf{5}, let us compute the half width at half minimum
 $\Delta\theta$ of the intensity profile:
 %
 \begin{align}
@@ -183,21 +198,21 @@ Solving for $\Delta\theta$ yields
 %
 \begin{align}
     \Delta\theta =
-    \cos^{-1} \left[ \dfrac{2 + 3 c r (2 + c r)}{2 (1 + c r)^3} \right]
+    \cos^{-1} \left[ \dfrac{2 + 3 r' (2 + r')}{2 (1 + r')^3} \right]
     \quad.
 \end{align}
 %
-Differentiation with respect to $r$ yields
+Differentiation with respect to $r'$ yields
 %
 \begin{align}
-    \dfrac{\mathrm{d}\Delta\theta}{\mathrm{d}r} =
-    \frac{3 c^2 r \left(2 + c r\right)}{\left(1 + c r\right)^4
-        \sqrt{\frac{c^2 r^2 \left(2 + c r\right)^2 \left(1 + 2 c r\right)
-                \left(3 + 2 c r\right)}{\left(1 + c r\right)^6}}}
+    \dfrac{\mathrm{d}\Delta\theta}{\mathrm{d}r'} =
+    \frac{3 r' \left(2 + r'\right)}{\left(1 + r'\right)^4
+        \sqrt{\frac{r'^2 \left(2 + r'\right)^2 \left(1 + 2 r'\right)
+                \left(3 + 2 r'\right)}{\left(1 + r'\right)^6}}}
     \quad,
 \end{align}
 %
-which is positive definite for all $c, r > 0$.
+which is positive definite for all $r' > 0$.
 
 \subsection{Distributions over $r$ and $\delta$}
 %
@@ -216,9 +231,16 @@ a Beta distribution, whose PDF is given by
 where $\Gamma$ is the Gamma function and $\alpha$ and $\beta$ are
 hyperparameters characterizing the shape of the distribution.
 %
-Since we require the brghtness $b = 1 - \delta$ at the center of the spot to
-be non-negative, it is convenient to parametrize the distribution of $b$
-instead of $\delta$. We model $b$ as a random variable drawn from a log-normal
+Since we require the brightness
+%
+\begin{align}
+    b \equiv 1 - \delta
+\end{align}
+%
+at the center of the spot to
+be non-negative, it is convenient to treat $b \in [0, \infty)$ as our
+random variable instead of $\delta$. We model $b$ as a random variable
+drawn from a log-normal
 distribution:
 %
 \begin{align}
@@ -287,77 +309,102 @@ Expanding Equation~(\ref{eq:Er}), we obtain
 \begin{align}
     \mathrm{E}_r \big[ y_{lm} \big]
      & =
-    \begin{dcases}
-        \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
-        \int\limits_0^1
-        \left(
-        1 - \dfrac{(1 - b) c r}{2 (1 + c r)}
-        \right)
-        r^{\alpha - 1}
-        (1 - r)^{\beta - 1}
-        \mathrm{d} r
-         &
-        \qquad
-        l = m = 0    \\[2em]
-        -\dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
-        \int\limits_0^1
-        \dfrac{(1 - b) c r \left( 2 + c r \right)r^{\alpha - 1}
-        (1 - r)^{\beta - 1}}
-        {2 \sqrt{2l + 1} (1 + c r)^{l + 1}}
-        \mathrm{d} r
-         &
-        \qquad
-        l > 0, m = 0 \\[2em]
-        0
-         &
-        \qquad m \ne 0
-        \quad.
-    \end{dcases}
+    \resizebox{.75\hsize}{!}{$
+            \begin{dcases}
+                \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+                \int\limits_0^1
+                \left(
+                1 - \dfrac{(1 - b) (c_0 + c_1 r)}{2 (1 + c_0 + c_1 r)}
+                \right)
+                r^{\alpha - 1}
+                (1 - r)^{\beta - 1}
+                \mathrm{d} r
+                 &
+                \qquad
+                l = m = 0    \\[2em]
+                -\dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+                \int\limits_0^1
+                \dfrac{(1 - b) (c_0 + c_1 r) \left( 2 + c_0 + c_1 r \right)r^{\alpha - 1}
+                (1 - r)^{\beta - 1}}
+                {2 \sqrt{2l + 1} (1 + c_0 + c_1 r)^{l + 1}}
+                \mathrm{d} r
+                 &
+                \qquad
+                l > 0, m = 0 \\[2em]
+                0
+                 &
+                \qquad m \ne 0
+                \quad.
+            \end{dcases}
+        $}
 \end{align}
 %
 Thanks to the dependence of the spherical harmonic coefficients on only
-powers of $r$ and $(1 + cr)$, the integrals above may be expressed in closed
+powers of $r$ and $(1 + c_0 + c_1 r)$, the integrals above may be expressed in closed
 form in terms of the hypergeometric function ${_2F_1}$:
 %
 \begin{align}
     \mathrm{E}_r \big[ y_{lm} \big]
      & =
-    \begin{dcases}
-        1 -
-        \dfrac{(1 - b) \alpha c}{2(\alpha + \beta)} G_0^1
-         &
-        \qquad
-        l = m = 0    \\[2em]
-        -\dfrac{(1 - b) \alpha c}{\sqrt{2l + 1} (\alpha + \beta)}
-        \left[
-            G_l^1 + \dfrac{(\alpha + 1)c}{2(\alpha + \beta + 1)} G_l^2
-            \right]
-         &
-        \qquad
-        l > 0, m = 0 \\[2em]
-        0
-         &
-        \qquad m \ne 0
-    \end{dcases}
+    \resizebox{.75\hsize}{!}{$
+            \begin{dcases}
+                1 -
+                \dfrac{(1 - b)}{2(1 + c_0)}
+                \bigg[c_0H_0^0 + c_1 H_0^1\bigg]
+                 &
+                \qquad
+                l = m = 0    \\[2em]
+                -\dfrac{(1 - b)}{2\sqrt{2l + 1} (1 + c_0)^{l+1}}
+                \bigg[
+                    c_0(2+c_0)H_l^0
+                    +
+                    2c_1(1 + c_0)H_l^1
+                    +
+                    c_1^2 H_l^2
+                    \bigg]
+                 &
+                \qquad
+                l > 0, m = 0 \\[2em]
+                0
+                 &
+                \qquad m \ne 0
+            \end{dcases}
+        $}
 \end{align}
 %
 where we define
 %
 \begin{align}
-    G_j^k & \equiv {_2F_1}(j + 1, \alpha + k; \alpha + \beta + k; -c)
+    H_j^k & \equiv \left(\prod_{n=0}^{k-1} \lambda_n\right) G_j^k
+    \quad.
+\end{align}
+%
+with
+%
+\begin{align}
+    \lambda_n & \equiv \dfrac{\alpha + n}{\alpha + \beta + n}
+\end{align}
+%
+and
+%
+\begin{align}
+    G_j^k & \equiv {_2F_1}\left(j + 1, \alpha + k; \alpha + \beta + k; -\dfrac{c_1}{1 + c_0}\right)
     \quad.
 \end{align}
 %
 Note that for a given value of $\alpha$, $\beta$, and $c$, we need only compute
-$G_0^1$, $G_1^1$, $G_0^2$, and $G_1^2$ directly, since the remaining terms may be
+$G_0^0$, $G_1^0$, $G_0^1$, and $G_1^1$ directly, since the remaining terms may be
 obtained recursively:
 %
 \begin{align}
+    \label{eq:Grec}
     G_j^k & =
     \dfrac{\alpha + \beta + k - j}{2j}G_{j - 2}^k
     - \dfrac{2\alpha + \beta + 2k - 3j}{2j}G_{j - 1}^k
     \quad.
 \end{align}
+%
+\textbf{TODO: Recursion for k > 1.\\}
 %
 We may now evaluate the integral in Equation~(\ref{eq:Erb}), with
 PDF given by Equation~(\ref{eq:lognormal}).
@@ -368,23 +415,30 @@ be expressed in closed form:
 \begin{align}
     \mathrm{E} \big[ y_{lm} \big]
      & =
-    \begin{dcases}
-        1 -
-        \dfrac{\gamma_1 \alpha c}{2(\alpha + \beta)} G_0^1
-         &
-        \qquad
-        l = m = 0    \\[2em]
-        -\dfrac{\gamma_1 \alpha c}{\sqrt{2l + 1} (\alpha + \beta)}
-        \left[
-            G_l^1 + \dfrac{(\alpha + 1)c}{2(\alpha + \beta + 1)} G_l^2
-            \right]
-         &
-        \qquad
-        l > 0, m = 0 \\[2em]
-        0
-         &
-        \qquad m \ne 0
-    \end{dcases}
+    \resizebox{.75\hsize}{!}{$
+            \begin{dcases}
+                1 -
+                \dfrac{\gamma_1}{2(1 + c_0)}
+                \bigg[c_0 H_0^0 + c_1 H_0^1\bigg]
+                 &
+                \qquad
+                l = m = 0    \\[2em]
+                -\dfrac{\gamma_1}{2\sqrt{2l + 1} (1 + c_0)^{l+1}}
+                \bigg[
+                    c_0(2+c_0)H_l^0
+                    +
+                    2c_1(1 + c_0)H_l^1
+                    +
+                    c_1^2 H_l^2
+                    \bigg]
+                 &
+                \qquad
+                l > 0, m = 0 \\[2em]
+                0
+                 &
+                \qquad m \ne 0
+            \end{dcases}
+        $}
 \end{align}
 %
 where we define
@@ -438,50 +492,91 @@ Expanding Equation~(\ref{eq:Er2}), we obtain
 \begin{align}
     \mathrm{E}_r \big[ y_{lm} y_{l'm'} \big]
      & =
-    \begin{dcases}
-        \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
-        \int\limits_0^1
-        \left(
-        1 - \dfrac{(1 - b) c r}{2 (1 + c r)}
-        \right)^2
-        r^{\alpha - 1}
-        (1 - r)^{\beta - 1}
-        \mathrm{d} r
-         &
-        \quad\quad
-        \parbox[t]{\linewidth}{$l = l' = 0,           \\m = m' = 0$}
-        \\[2em]
-        %
-        -\dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
-        \int\limits_0^1
-        \left(1 - \dfrac{(1 - b) c r}{2 (1 + c r)}\right)
-        \\
-        \qquad\qquad\quad\quad\times
-        \dfrac{(1 - b) c r \left( 2 + c r \right) r^{\alpha - 1}
-            (1 - r)^{\beta - 1}}
-        {2 \sqrt{2l + 1} (1 + c r)^{l + 1}}
-        \mathrm{d} r
-         &
-        \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-3em}$l > 0,   \\l' = 0, \\m = m' = 0$}
-        \\[2em]
-        %
-        \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
-        \int\limits_0^1
-        \dfrac{(1 - b)^2 c^2 r^2 \left( 2 + c r \right)^2 r^{\alpha - 1}
-            (1 - r)^{\beta - 1}}
-        {4 \sqrt{(2l + 1)(2l' + 1)} (1 + c r)^{l + l' + 2}}
-        \mathrm{d} r
-         &
-        \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-1.5em}$l > 0, \\l' > 0, \\m = m' = 0$}
-        \\[2em]
-        %
-        0
-         &
-        \quad\quad m, m' \ne 0
-        \quad,
-    \end{dcases}
+    \resizebox{1.5\hsize}{!}{$
+            \begin{dcases}
+                \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+                \int\limits_0^1
+                \left(
+                1 - \dfrac{(1-b) (c_0 + c_1 r)}{2 (1 + c_0 + c_1 r)}
+                \right)^2
+                \\
+                \qquad\qquad\quad\quad\quad\quad\quad
+                \times
+                \,\,
+                r^{\alpha - 1}
+                (1 - r)^{\beta - 1}
+                \mathrm{d} r
+                 &
+                \qquad
+                \parbox[t]{\linewidth}{\vspace{-2.5em}$l = l' = 0, \\m = m' = 0$}
+                \\[2em]
+                %
+                %
+                %
+                -\dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+                \int\limits_0^1
+                \left(
+                1 - \dfrac{(1-b) (c_0 + c_1 r)}{2 (1 + c_0 + c_1 r)}
+                \right)
+                \\
+                \qquad\qquad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+                \times
+                %
+                \left(
+                \dfrac{(1-b) (c_0 + c_1 r) \left( 2 + c_0 + c_1 r \right)}
+                    {2 \sqrt{2l + 1} (1 + c_0 + c_1 r)^{l + 1}}
+                \right)
+                %
+                \\[0.75em]
+                \qquad\qquad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+                \times
+                \,\,
+                r^{\alpha - 1}
+                (1 - r)^{\beta - 1}
+                \mathrm{d} r
+                 &
+                \qquad
+                \parbox[t]{\linewidth}{\vspace{-5em}$l > 0,        \\l' = 0, \\m = m' = 0$}
+                \\[2em]
+                %
+                %
+                %
+                -\dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+                \int\limits_0^1
+                \left(
+                \dfrac{(1-b) (c_0 + c_1 r) \left( 2 + c_0 + c_1 r \right)}
+                    {2 \sqrt{2l + 1} (1 + c_0 + c_1 r)^{l + 1}}
+                \right)
+                \\
+                \qquad\qquad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+                \times
+                %
+                \left(
+                \dfrac{(1-b) (c_0 + c_1 r) \left( 2 + c_0 + c_1 r \right)}
+                    {2 \sqrt{2l' + 1} (1 + c_0 + c_1 r)^{l' + 1}}
+                \right)
+                %
+                \\[0.75em]
+                \qquad\qquad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+                \times
+                \,\,
+                r^{\alpha - 1}
+                (1 - r)^{\beta - 1}
+                \mathrm{d} r
+                 &
+                \qquad
+                \parbox[t]{\linewidth}{\vspace{-5em}$l > 0,        \\l' > 0, \\m = m' = 0$}
+                \\[2em]
+                %
+                %
+                %
+                0
+                 &
+                \qquad m, m' \ne 0
+                \quad,
+            \end{dcases}
+        $}
+    \raisetag{14.5em}
 \end{align}
 %
 where, by symmetry, the expression for $l' > 0, \, l = 0, \, m = m' = 0$ is the same as
@@ -492,143 +587,88 @@ These integrals again reduce to closed form expressions:
 \begin{align}
     \mathrm{E}_r \big[ y_{lm} y_{l'm'} \big]
      & =
-    \begin{dcases}
-        1 + \frac{\left(\alpha +1\right) \alpha
-            \left(1-b\right)^2 c^2}{4 \left(c+1\right)
-            \left(\alpha + \beta \right)}
-        \\[0.75em]
-        \quad\quad\quad\quad\quad
-        -\frac{\alpha  \left(1-b\right) c}{\alpha +\beta }
-        \\[0.75em]
-        \quad\quad\quad\quad\quad
-        \times
-        \bigg[G_0^1
-            +
-            \frac{\left(\alpha +1\right) \left(1-b\right)
-                c \left(\alpha +\beta +\alpha  c+c\right)}{4 \left(c+1\right)
-                \left(\alpha +\beta +1\right)} G_0^2\bigg]
-         &
-        \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-4.75em}$l = l' = 0, \\m = m' = 0$}
-        \\[2em]
-        %
-        -\frac{\alpha (1-b) c}{2 \sqrt{2 l+1} (\alpha +\beta )}
-        \\[0.75em]
-        \quad\quad\quad\quad\quad
-        \times
-        \bigg[
-            2G_l^1
-            + \dfrac{c(\alpha + 1)}{\alpha + \beta + 1} G_l^2
-            \\[0.75em]
-        \qquad
-        -\dfrac{c(1-b)(\alpha + 1)}{\alpha + \beta + 1} G_{l+1}^2
-        \\[0.75em]
-        \qquad
-        -\dfrac{c^2(1-b)(\alpha + 1)(\alpha + 2)}{2(\alpha + \beta + 1)(\alpha + \beta + 2)} G_{l+1}^3
-        \bigg]
-         &
-        \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-7.5em}$l > 0,       \\l' = 0, \\m = m' = 0$}
-        \\[2em]
-        \frac{\alpha  (\alpha +1) (1-b)^2 c^2}{(\alpha +\beta )
-            (\alpha +\beta +1) \sqrt{(2 l+1) (2 l'+1)}}
-        \\[0.75em]
-        \quad\quad\quad\quad\quad
-        \times
-        \bigg[
-        G_{l+l'+1}^2
-        +
-        \frac{c(\alpha + 2)}{\alpha + \beta + 2}G_{l+l'+1}^3
-        \\[0.75em]
-        \qquad
-        +
-        \frac{c^2(\alpha + 2)(\alpha + 3)}{4(\alpha + \beta + 2)(\alpha + \beta + 3)}G_{l+l'+1}^4
-        \bigg]
-         &
-        \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-5.25em}$l > 0,      \\l' > 0, \\m = m' = 0$}
-        \\[2em]
-        %
-        0
-         &
-        \quad\quad m, m' \ne 0
-        \quad.
-    \end{dcases}
+    \resizebox{1.4\hsize}{!}{$
+            \begin{dcases}
+                1 + \dfrac{1-b}{1+c_0}
+                \bigg[
+                    -c_0 H_0^0
+                    -
+                    c_1 H_0^1
+                    \\[0.75em]
+                \qquad\qquad\enspace\enspace\quad\quad
+                +
+                \dfrac{1-b}{2(1+c_0)}
+                \bigg(
+                \dfrac{c_0^2}{2}H_1^0
+                +
+                c_0 c_1 H_1^1
+                +
+                \dfrac{c_1^2}{2} H_1^2
+                \bigg)
+                \bigg]
+                 &
+                \qquad
+                \parbox[t]{\linewidth}{\vspace{-3.5em}$l = l' = 0, \\m = m' = 0$}
+                \\[2em]
+                %
+                %
+                %
+                \dfrac{1-b}{2\sqrt{2l + 1}(1+c_0)^{l+1}}
+                \\[0.75em]
+                \enspace\quad
+                \times
+                \bigg[
+                    c_0(2 + c_0) H_l^0 + 2 c_1(1 + c_0) H_l^1
+                    + c_1^2 H_l^2
+                    \\[0.75em]
+                \qquad
+                - \dfrac{1 - b}{2(1 + c_0)} \bigg(
+                c_0^2(2 + c_0) H_{l+1}^0
+                + c_0 c_1 (4 + 3 c_0) H_{l+1}^1
+                \\[0.75em]
+                \qquad
+                + (2 + 3 c_0) c_1^2 H_{l + 1}^2
+                + c_1^3 H_{l + 1}^3
+                \bigg)
+                \bigg]
+                 &
+                \qquad
+                \parbox[t]{\linewidth}{\vspace{-7em}$l > 0,        \\l' = 0, \\m = m' = 0$}
+                \\[2em]
+                %
+                %
+                %
+                \dfrac{(1 - b)^2}{4\sqrt{(2l + 1)(2l' + 1)}(1+c_0)^{l+l'+2}}
+                \\[0.75em]
+                \enspace\quad
+                \times
+                \bigg[
+                    c_0^2(2+c_0)^2 H_{l + l' + 1}^0
+                    + 4 c_0 (1 + c_0) (2 + c_0) c_1 H_{l + l' + 1}^1
+                    \\[0.75em]
+                \qquad
+                + 2 \big(2 + 3 c_0 (2 + c_0)\big)c_1^2 H_{l + l' + 1}^2
+                + 4(1 + c_0)c_1^3 H_{l + l' + 1}^3
+                \\[0.75em]
+                \qquad
+                + c_1^4 H_{l + l' + 1}^4
+                \bigg]
+                 &
+                \qquad
+                \parbox[t]{\linewidth}{\vspace{-5em}$l > 0,        \\l' > 0, \\m = m' = 0$}
+                \quad.
+            \end{dcases}
+        $}
+    \raisetag{15em}
 \end{align}
 %
-The $G_j^k$ functions may again be computed recursively, although we now also
-require the direct evaluation of $G_0^3$, $G_1^3$, $G_0^4$, and $G_1^4$ as
-our lower boundary conditions.
-
 The final step is to evaluate the integral in Equation~(\ref{eq:Er2}), given
 the PDF in Equation~(\ref{eq:lognormal}):
 %
 \begin{align}
     \mathrm{E} \big[ y_{lm} y_{l'm'} \big]
      & =
-    \begin{dcases}
-        1 + \frac{\left(\alpha +1\right) \alpha
-            \gamma_2 c^2}{4 \left(c+1\right)
-            \left(\alpha + \beta \right)}
-        \\[0.75em]
-        \quad\quad\quad\quad\quad
-        -\frac{\alpha  \gamma_1 c}{\alpha +\beta }
-        \\[0.75em]
-        \quad\quad\quad\quad\quad
-        \times
-        \bigg[G_0^1
-            +
-            \frac{\left(\alpha +1\right) \gamma_2
-                c \left(\alpha +\beta +\alpha  c+c\right)}{4 \gamma_1 \left(c+1\right)
-                \left(\alpha +\beta +1\right)} G_0^2\bigg]
-         &
-        \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-4.75em}$l = l' = 0, \\m = m' = 0$}
-        \\[2em]
-        %
-        -\frac{\alpha \gamma_1 c}{2 \sqrt{2 l+1} (\alpha +\beta )}
-        \\[0.75em]
-        \quad\quad\quad\quad\quad
-        \times
-        \bigg[
-            2G_l^1
-            + \dfrac{c(\alpha + 1)}{\alpha + \beta + 1} G_l^2
-            \\[0.75em]
-        \qquad
-        -\dfrac{c\gamma_2(\alpha + 1)}{\gamma_1(\alpha + \beta + 1)} G_{l+1}^2
-        \\[0.75em]
-        \qquad
-        -\dfrac{c^2\gamma_2(\alpha + 1)(\alpha + 2)}{2\gamma_1(\alpha + \beta + 1)(\alpha + \beta + 2)} G_{l+1}^3
-        \bigg]
-         &
-        \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-7.5em}$l > 0,       \\l' = 0, \\m = m' = 0$}
-        \\[2em]
-        %
-        \frac{\alpha  (\alpha +1) \gamma_2 c^2}{(\alpha +\beta )
-            (\alpha +\beta +1) \sqrt{(2 l+1) (2 l'+1)}}
-        \\[0.75em]
-        \quad\quad\quad\quad\quad
-        \times
-        \bigg[
-        G_{l+l'+1}^2
-        +
-        \frac{c(\alpha + 2)}{\alpha + \beta + 2}G_{l+l'+1}^3
-        \\[0.75em]
-        \qquad
-        +
-        \frac{c^2(\alpha + 2)(\alpha + 3)}{4(\alpha + \beta + 2)(\alpha + \beta + 3)}G_{l+l'+1}^4
-        \bigg]
-         &
-        \quad\quad
-        \parbox[t]{\linewidth}{\vspace{-5.25em}$l > 0,      \\l' > 0, \\m = m' = 0$}
-        \\[2em]
-        %
-        0
-         &
-        \quad\quad m, m' \ne 0
-        \quad,
-    \end{dcases}
+    ?
 \end{align}
 %
 where we define

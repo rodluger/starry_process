@@ -183,3 +183,32 @@ def spot(ydeg, r, delta, c=1.0):
     S = np.zeros((K, (ydeg + 1) * (ydeg + 1)))
     S[:, l * (l + 1)] = s
     return S
+
+
+def get_spot_function(ydeg, sign=-1):
+    """
+    Return a compiled function for spot generation.
+    
+    """
+
+    def _y(ydeg, amp, sigma, lat, lon):
+        """Return the Ylm expansion of a spotted star,
+            normalized so the mean of the *process* is unity.
+        
+        Args:
+            amp: Amplitude of the spot.
+            sigma: Spot size (std. dev. of gaussian).
+            lat: Spot latitude in degrees.
+            lon: Spot longitude in degrees.
+        """
+        map = starry.Map(ydeg)
+        map.add_spot(amp=sign * amp, sigma=sigma, lat=lat, lon=lon)
+        y = map.amp * map.y
+        y = tt.set_subtensor(y[0], 0)
+        return y / (1 - amp)
+
+    amp = tt.dscalar()
+    sigma = tt.dscalar()
+    lat = tt.dscalar()
+    lon = tt.dscalar()
+    return theano.function([amp, sigma, lat, lon], _y(ydeg, amp, sigma, lat, lon))
