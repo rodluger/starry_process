@@ -6,7 +6,7 @@ from scipy.stats import beta as Beta
 from tqdm import tqdm
 
 
-def test_first_moment(ydeg=3, mu_beta=0.5, nu_beta=0.01):
+def test_first_moment(ydeg=3, mu_lat=0.5, nu_lat=0.01):
 
     # Random vector
     np.random.seed(0)
@@ -15,13 +15,13 @@ def test_first_moment(ydeg=3, mu_beta=0.5, nu_beta=0.01):
 
     # Get analytic integral
     L = LatitudeIntegral(ydeg)
-    L.set_params(mu_beta=mu_beta, nu_beta=nu_beta)
+    L.set_params(mu_lat=mu_lat, nu_lat=nu_lat)
     mu = L.first_moment(s)
 
     # Integrate numerically
     mu_num = np.zeros(N)
-    alpha = mu_beta * (1 / nu_beta - 1)
-    beta = (1 - mu_beta) * (1 / nu_beta - 1)
+    alpha = mu_lat * (1 / nu_lat - 1)
+    beta = (1 - mu_lat) * (1 / nu_lat - 1)
     for n in tqdm(range(N)):
 
         def func(phi):
@@ -38,7 +38,7 @@ def test_first_moment(ydeg=3, mu_beta=0.5, nu_beta=0.01):
     assert np.allclose(mu, mu_num)
 
 
-def test_second_moment(ydeg=3, mu_beta=0.5, nu_beta=0.01):
+def test_second_moment(ydeg=3, mu_lat=0.5, nu_lat=0.01):
 
     # Random matrix
     np.random.seed(0)
@@ -48,14 +48,14 @@ def test_second_moment(ydeg=3, mu_beta=0.5, nu_beta=0.01):
 
     # Get analytic integral
     L = LatitudeIntegral(ydeg)
-    L.set_params(mu_beta=mu_beta, nu_beta=nu_beta)
+    L.set_params(mu_lat=mu_lat, nu_lat=nu_lat)
     A = L.second_moment(sqrtS)
     C = A @ A.T
 
     # Integrate numerically
     C_num = np.zeros((N, N))
-    alpha = mu_beta * (1 / nu_beta - 1)
-    beta = (1 - mu_beta) * (1 / nu_beta - 1)
+    alpha = mu_lat * (1 / nu_lat - 1)
+    beta = (1 - mu_lat) * (1 / nu_lat - 1)
     for n1 in tqdm(range(N)):
         for n2 in range(N):
 

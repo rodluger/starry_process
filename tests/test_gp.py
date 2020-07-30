@@ -1,8 +1,10 @@
 from starry_gp.gp import YlmGP
-from numerical import get_spot_function
+from starry_gp.transform import get_alpha_beta
+from numerical import spot
 import numpy as np
 from tqdm import tqdm
 from scipy.stats import beta as Beta
+from scipy.stats import lognorm as LogNormal
 
 
 def test_moments():
@@ -10,35 +12,43 @@ def test_moments():
     # Settings
     ydeg = 5
     atol = 5e-2
-    mu_beta = 0.5
-    nu_beta = 0.01
-    mu_lns = np.log(0.1)
-    sig_lns = 0.1
-    mu_lna = np.log(0.2)
-    sig_lna = 0.1
+    mu_lat = 0.9
+    nu_lat = 0.1
+    mu_r = 0.05
+    nu_r = 0.1
+    mu_b = np.log(0.3)
+    nu_b = 0.1
     np.random.seed(0)
     nsamples = 100000
 
     # Integrate analytically
     gp = YlmGP(ydeg)
-    gp.set_params(mu_beta, nu_beta, mu_lns, sig_lns, mu_lna, sig_lna)
+    gp.set_params(mu_lat, nu_lat, mu_r, nu_r, mu_b, nu_b)
     mu = gp.mu
     cov = gp.cov
 
     # Integrate numerically
-    spot = get_spot_function(ydeg)
     y = np.zeros((nsamples, (ydeg + 1) ** 2))
-    alpha = mu_beta * (1 / nu_beta - 1)
-    beta = (1 - mu_beta) * (1 / nu_beta - 1)
+    alpha_lat, beta_lat = get_alpha_beta(mu_lat, nu_lat)
+    alpha_r, beta_r = get_alpha_beta(mu_r, nu_r)
     for n in tqdm(range(nsamples)):
-        lnsigma = mu_lns + sig_lns * np.random.randn()
-        sigma = np.exp(lnsigma)
-        lnamp = mu_lna + sig_lna * np.random.randn()
-        amp = 1 / (1 + np.exp(-lnamp))
-        lat = np.arccos(Beta.rvs(alpha, beta)) * 180.0 / np.pi
+
+        # Draw the spot size
+        r = Beta.rvs(alpha_r, beta_r, size=nsamples)
+
+        # Draw the spot amplitude
+        delta = 1 - LogNormal.rvs(s=np.sqrt(nu_b), scale=np.exp(mu_b), size=nsamples)
+
+        # Draw the latitude
+        lat = np.arccos(Beta.rvs(alpha_lat, beta_lat)) * 180.0 / np.pi
         lat *= 2.0 * (int(np.random.random() > 0.5) - 0.5)
+
+        # Draw the longitude
         lon = 360.0 * np.random.random()
-        y[n] = spot(amp, sigma, lat, lon)
+
+        # Compute the spot expansion (TODO)
+        raise NotImplementedError("TODO!")
+
     mu_num = np.mean(y, axis=0)[1:]
     cov_num = np.cov(y.T)[1:, 1:]
 

@@ -21,7 +21,7 @@ class YlmGP(object):
         nu_lat=0.01,
         mu_r=0.025,
         nu_r=0.005,
-        mu_b=-0.5,
+        mu_b=np.log(0.3),
         nu_b=1.0,
         **kwargs,
     ):
