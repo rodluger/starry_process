@@ -46,7 +46,7 @@
 \section{The Spot Expansion}
 \label{sec:spot}
 %
-\subsection{Preliminaries}
+\subsection{Functional form}
 %
 We adopt the following expression for the spherical harmonic coefficient
 of degree $l$ and order $m$ in the expansion of a spot at
@@ -197,6 +197,7 @@ $\Delta\theta$ of the intensity profile:
 Solving for $\Delta\theta$ yields
 %
 \begin{align}
+    \label{eq:hwhm}
     \Delta\theta =
     \cos^{-1} \left[ \dfrac{2 + 3 r' (2 + r')}{2 (1 + r')^3} \right]
     \quad.
@@ -213,6 +214,61 @@ Differentiation with respect to $r'$ yields
 \end{align}
 %
 which is positive definite for all $r' > 0$.
+
+\subsection{Behavior at finite degree}
+%
+The properties of the spot expansion described in the previous section
+(in particular its monotonicity and values at the spot center and antipode)
+are inherited from the generating function of the Legendre polynomials
+(Equation~\ref{eq:gen}). These properties are therefore only rigorously
+true when the expansion is taken to spherical
+harmonic degree $l_{\mathrm{max}} = \infty$. For truncated expansions,
+a value of $r'$ in Equation~(\ref{eq:ylm0}) that is too small will lead
+to both ringing and a value at the spot center that is in general larger
+than $1 - \delta$.
+
+\begin{figure}[th!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/spot_expansion.pdf}
+        \oscaption{spot_expansion}{%
+            Polar intensity profiles for spots with different normalized
+            radii $r$ in the range $(0, 1]$, computed at spherical harmonic
+            degree $l_{\mathrm{max}} = 20$. Dotted black curves show profiles
+            corresponding to $r < 0$ (corresponding to $r' < c_0$
+            in Equation~\ref{eq:rprime}), for which the expansion does
+            not converge, leading to ringing and a smaller spot contrast.
+            \label{fig:spot_expansion}
+        }
+    \end{centering}
+\end{figure}
+
+To circumvent these issues, we impose a minimum radius
+$r'_{\mathrm{min}}$, whose value is
+a function of the degree of the expansion. Since the normalized spot radius
+$r$ is defined in the range $[0, 1]$ (Equation~\ref{eq:rprime}), this
+minimum value is equal to $c_0$. We compute $c_0 = c_0(l_{\mathrm{max}})$
+by numerically finding the
+value of $r'$ below which the fractional error in the intensity at the
+center of the spot exceeds some threshold, which we take to be 0.01.
+Since the width of the spot $\Delta\theta$ approaches $\pi$ as
+$r' \rightarrow \infty$ (Equation~\ref{eq:hwhm}), we also impose a
+maximum radius $r'_{\mathrm{max}}$, which we define to be the radius
+corresponding to
+$\Delta\theta = \nicefrac{5\pi}{12} = 75^\circ$. This choice is rather
+arbitrary, but motivated by the fact that below this value, $\Delta\theta$
+scales approximately logarithmically with $r'$ (see Figure~\ref{fig:hwhm}).
+
+\begin{figure}[th!]
+    \begin{centering}
+        \includegraphics[width=0.4615\linewidth]{figures/hwhm.pdf}
+        \includegraphics[width=0.475\linewidth]{figures/minr.pdf}
+        \oscaption{minr}{%
+            Foo bar.
+            \codelink{hwhm}
+            \label{fig:hwhm}
+        }
+    \end{centering}
+\end{figure}
 
 \subsection{Distributions over $r$ and $\delta$}
 %

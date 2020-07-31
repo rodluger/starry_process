@@ -14,6 +14,7 @@ docs/_generate
 *.vscode
 docs/.doxyxml
 docs/.build
+*.pdf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
