@@ -53,30 +53,33 @@ def max_rprime(hmwhm_max=75):
     return res.x
 
 
-# Plot
+# Setup
+fig, ax = plt.subplots(1, 2, figsize=(12, 4))
+
+# PLOT: HWHM(r)
 r = np.logspace(-2, 2, 15)
-fig, ax = plt.subplots(1, figsize=(6, 4))
-ax.plot(r, hwhm(r))
-ax.set_yticks([0, 15, 30, 45, 60, 75, 90])
-ax.set_xlabel(r"$r'$", fontsize=16)
-ax.set_ylabel(r"$\Delta\theta$ [deg]", fontsize=16)
-ax.set_xscale("log")
+ax[0].plot(r, hwhm(r))
+ax[0].set_yticks([0, 15, 30, 45, 60, 75, 90])
+ax[0].set_ylim(0, 95)
+ax[0].set_xlabel(r"$r'$", fontsize=18)
+ax[0].set_ylabel(r"$\Delta\theta$ [deg]", fontsize=16)
+ax[0].set_xscale("log")
 
 # Maximum (max_hwhm = 75 degrees)
 max_hwhm = 75.0
 max_r = max_rprime(max_hwhm)
-ax.axhline(max_hwhm, color="k", lw=1, ls="--", alpha=0.3)
-ax.axvline(max_r, color="k", lw=1, ls="--", alpha=0.3)
-ax.plot(max_r, max_hwhm, "C1o")
+ax[0].axhline(max_hwhm, color="k", lw=1, ls="--", alpha=0.3)
+ax[0].axvline(max_r, color="k", lw=1, ls="--", alpha=0.3)
+ax[0].plot(max_r, max_hwhm, "C1o")
 
 # Minimum (ydeg = 20, tol=1e-2)
 min_r = min_rprime(20, tol=1e-2)
 min_hwhm = hwhm(min_r)
-ax.axhline(min_hwhm, color="k", lw=1, ls="--", alpha=0.3)
-ax.axvline(min_r, color="k", lw=1, ls="--", alpha=0.3)
-ax.plot(min_r, min_hwhm, "C1o")
+ax[0].axhline(min_hwhm, color="k", lw=1, ls="--", alpha=0.3)
+ax[0].axvline(min_r, color="k", lw=1, ls="--", alpha=0.3)
+ax[0].plot(min_r, min_hwhm, "C1o")
 
-ax.add_patch(
+ax[0].add_patch(
     patches.Rectangle(
         (min_r, min_hwhm),
         max_r - min_r,
@@ -87,6 +90,21 @@ ax.add_patch(
         alpha=0.15,
     )
 )
+
+# PLOT: Minimum HWHM(ydeg)
+l = np.arange(0, 31, dtype=int)
+for tol, style in zip([1e-1, 1e-2, 1e-3], ["C0--", "C0-", "C0:"]):
+    r = hwhm(np.array([min_rprime(ydeg, tol=tol) for ydeg in l]))
+    ax[1].plot(l, r, style, label=tol, zorder=-1)
+legend = ax[1].legend(loc="upper right", fontsize=10, title=r"tolerance", ncol=3)
+plt.setp(legend.get_title(), fontsize=11)
+ax[1].axhline(75, color="k", ls="--")
+ax[1].axhspan(75, 100, color="r", alpha=0.25)
+ax[1].set_ylim(0, 95)
+ax[1].set_xlim(0, 30)
+ax[1].set_yticks([0, 15, 30, 45, 60, 75, 90])
+ax[1].set_xlabel("spherical harmonic degree", fontsize=16)
+ax[1].set_ylabel(r"minimum $\Delta\theta$ [deg]", fontsize=16)
 
 # We're done
 fig.savefig(__file__.replace("py", "pdf"), bbox_inches="tight")
