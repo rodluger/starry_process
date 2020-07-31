@@ -399,12 +399,35 @@ obtained recursively:
 \begin{align}
     \label{eq:Grec}
     G_j^k & =
-    \dfrac{\alpha + \beta + k - j}{2j}G_{j - 2}^k
-    - \dfrac{2\alpha + \beta + 2k - 3j}{2j}G_{j - 1}^k
+    \bigg[
+        \dfrac{(\alpha + \beta + k - j)(1 + c_0)}{j(1 + c_0 + c_1)}
+        \bigg] G_{j - 2}^k
+    \nonumber
+    \\[0.75em]
+          &
+    + \hspace{1.5pt}
+    \bigg[
+        -\dfrac{(\alpha + \beta - 2j + k)(1 + c_0) + (\alpha - j + k)c_1}
+        {j(1 + c_0 + c_1)}
+        \bigg]
+    G_{j - 1}^k
+    \\[1.5em]
+    G_j^k & =
+    \bigg[
+        \frac{(\alpha + \beta + k - 2)(1 + c_0)}
+        {\lambda_{k - 1}(\alpha + \beta - j + k - 2)c_1}
+        \bigg]
+    G_{j}^{k - 2}
+    \nonumber
+    \\[0.75em]
+          & + \hspace{1.5pt}
+    \bigg[
+        -\frac{\alpha - (\alpha + k)c_1 + \beta + k + (\alpha + \beta + k - 2)c_0 + (j + 2)c_1 - 2}
+        {\lambda_{k-1} (\alpha + \beta - j + k - 2)c_1}
+        \bigg]
+    G_{j}^{k - 1}
     \quad.
 \end{align}
-%
-\textbf{TODO: Recursion for k > 1.\\}
 %
 We may now evaluate the integral in Equation~(\ref{eq:Erb}), with
 PDF given by Equation~(\ref{eq:lognormal}).
@@ -655,7 +678,14 @@ These integrals again reduce to closed form expressions:
                 \bigg]
                  &
                 \qquad
-                \parbox[t]{\linewidth}{\vspace{-5em}$l > 0,        \\l' > 0, \\m = m' = 0$}
+                \parbox[t]{\linewidth}{\vspace{-6em}$l > 0,        \\l' > 0, \\m = m' = 0$}
+                \\[2em]
+                %
+                %
+                %
+                0
+                 &
+                \qquad m, m' \ne 0
                 \quad.
             \end{dcases}
         $}
@@ -668,7 +698,85 @@ the PDF in Equation~(\ref{eq:lognormal}):
 \begin{align}
     \mathrm{E} \big[ y_{lm} y_{l'm'} \big]
      & =
-    ?
+    \resizebox{1.4\hsize}{!}{$
+            \begin{dcases}
+                1 + \dfrac{\gamma_1}{1+c_0}
+                \bigg[
+                    -c_0 H_0^0
+                    -
+                    c_1 H_0^1
+                    \\[0.75em]
+                \qquad\qquad\enspace\enspace\quad\quad
+                +
+                \dfrac{\gamma_2}{2\gamma_1(1+c_0)}
+                \bigg(
+                \dfrac{c_0^2}{2}H_1^0
+                +
+                c_0 c_1 H_1^1
+                +
+                \dfrac{c_1^2}{2} H_1^2
+                \bigg)
+                \bigg]
+                 &
+                \qquad
+                \parbox[t]{\linewidth}{\vspace{-3.5em}$l = l' = 0, \\m = m' = 0$}
+                \\[2em]
+                %
+                %
+                %
+                \dfrac{\gamma_1}{2\sqrt{2l + 1}(1+c_0)^{l+1}}
+                \\[0.75em]
+                \enspace\quad
+                \times
+                \bigg[
+                    c_0(2 + c_0) H_l^0 + 2 c_1(1 + c_0) H_l^1
+                    + c_1^2 H_l^2
+                    \\[0.75em]
+                \qquad
+                - \dfrac{\gamma_2}{2\gamma_1(1 + c_0)} \bigg(
+                c_0^2(2 + c_0) H_{l+1}^0
+                + c_0 c_1 (4 + 3 c_0) H_{l+1}^1
+                \\[0.75em]
+                \qquad
+                + (2 + 3 c_0) c_1^2 H_{l + 1}^2
+                + c_1^3 H_{l + 1}^3
+                \bigg)
+                \bigg]
+                 &
+                \qquad
+                \parbox[t]{\linewidth}{\vspace{-7em}$l > 0,        \\l' = 0, \\m = m' = 0$}
+                \\[2em]
+                %
+                %
+                %
+                \dfrac{\gamma_2}{4\sqrt{(2l + 1)(2l' + 1)}(1+c_0)^{l+l'+2}}
+                \\[0.75em]
+                \enspace\quad
+                \times
+                \bigg[
+                    c_0^2(2+c_0)^2 H_{l + l' + 1}^0
+                    + 4 c_0 (1 + c_0) (2 + c_0) c_1 H_{l + l' + 1}^1
+                    \\[0.75em]
+                \qquad
+                + 2 \big(2 + 3 c_0 (2 + c_0)\big)c_1^2 H_{l + l' + 1}^2
+                + 4(1 + c_0)c_1^3 H_{l + l' + 1}^3
+                \\[0.75em]
+                \qquad
+                + c_1^4 H_{l + l' + 1}^4
+                \bigg]
+                 &
+                \qquad
+                \parbox[t]{\linewidth}{\vspace{-6em}$l > 0,        \\l' > 0, \\m = m' = 0$}
+                \\[2em]
+                %
+                %
+                %
+                0
+                 &
+                \qquad m, m' \ne 0
+                \quad.
+            \end{dcases}
+        $}
 \end{align}
 %
 where we define
