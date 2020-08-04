@@ -46,7 +46,10 @@
 \section{The Spot Expansion}
 \label{sec:spot}
 %
-\subsection{Functional form}
+\subsection{Preliminaries}
+%
+\subsubsection{Functional form}
+\label{sec:spot-function}
 %
 We adopt the following expression for the spherical harmonic coefficient
 of degree $l$ and order $m$ in the expansion of a spot at
@@ -79,7 +82,7 @@ $\delta \in (-\infty, 1]$ is the spot contrast (the fractional
 decrease in the brightness
 at the center of the spot) and $r \in [0, 1]$ is the normalized spot radius.
 The expression in Equation~(\ref{eq:ylm0}) is convenient because it satisfies
-five important properties:
+six important properties:
 %
 \begin{enumerate}[itemsep=2pt,parsep=1pt,label=\textbf{\arabic*}]
     \item The surface intensity is azimuthally symmetric about the spot center
@@ -89,8 +92,8 @@ five important properties:
     \item The size of the spot increases monotonically with $r$
 \end{enumerate}
 %
-These properties may be demonstrated by considering the expression for the
-surface intensity at a given point $(\theta, \varphi)$:
+These properties may be demonstrated by considering the
+expression for the surface intensity at a given point $(\theta, \varphi)$:
 %
 \begin{align}
     \begin{split}
@@ -215,7 +218,7 @@ Differentiation with respect to $r'$ yields
 %
 which is positive definite for all $r' > 0$.
 
-\subsection{Behavior at finite degree}
+\subsubsection{Behavior at finite degree}
 %
 The properties of the spot expansion described in the previous section
 (in particular its monotonicity and values at the spot center and antipode)
@@ -241,22 +244,6 @@ than $1 - \delta$.
         }
     \end{centering}
 \end{figure}
-
-To circumvent these issues, we impose a minimum radius
-$r'_{\mathrm{min}}$, whose value is
-a function of the degree of the expansion. Since the normalized spot radius
-$r$ is defined in the range $[0, 1]$ (Equation~\ref{eq:rprime}), this
-minimum value is equal to $c_0$. We compute $c_0 = c_0(l_{\mathrm{max}})$
-by numerically finding the
-value of $r'$ below which the fractional error in the intensity at the
-center of the spot exceeds some threshold, which we take to be 0.01.
-Since the width of the spot $\Delta\theta$ approaches $\pi$ as
-$r' \rightarrow \infty$ (Equation~\ref{eq:hwhm}), we also impose a
-maximum radius $r'_{\mathrm{max}}$, which we define to be the radius
-corresponding to
-$\Delta\theta = \nicefrac{5\pi}{12} = 75^\circ$. This choice is rather
-arbitrary, but motivated by the fact that below this value, $\Delta\theta$
-scales approximately logarithmically with $r'$ (see Figure~\ref{fig:hwhm}).
 
 \begin{figure}[p!]
     \begin{centering}
@@ -289,10 +276,36 @@ scales approximately logarithmically with $r'$ (see Figure~\ref{fig:hwhm}).
     \end{centering}
 \end{figure}
 
-\subsection{Distributions over $r$ and $\delta$}
+To circumvent these issues, we impose a minimum radius
+$r'_{\mathrm{min}}$, whose value is
+a function of the degree of the expansion. Since the normalized spot radius
+$r$ is defined in the range $[0, 1]$ (Equation~\ref{eq:rprime}), this
+minimum value is equal to $c_0$. We compute $c_0 = c_0(l_{\mathrm{max}})$
+by numerically finding the
+value of $r'$ below which the fractional error in the intensity at the
+center of the spot exceeds some threshold, which we take to be 0.01.
+Since the width of the spot $\Delta\theta$ approaches $\pi$ as
+$r' \rightarrow \infty$ (Equation~\ref{eq:hwhm}), we also impose a
+maximum radius $r'_{\mathrm{max}}$, which we define to be the radius
+corresponding to
+$\Delta\theta = \nicefrac{5\pi}{12} = 75^\circ$. This choice is rather
+arbitrary, but motivated by the fact that below this value, $\Delta\theta$
+scales approximately logarithmically with $r'$ (see Figure~\ref{fig:hwhm}).
+
+\subsection{Probability distribution}
 %
-We model the normalized spot radius $r$ as a random variable drawn from
-a Beta distribution, whose PDF is given by
+Our goal now is to characterize the distribution of $y_{lm}$ values as a
+function of certain statistics of the spots: specifically, the distribution of
+spot radii and intensities. As we will see, if we model these with a Beta and
+a log-normal distribution, respectively, we may analytically compute the
+first two moments of the distribution of $y_{lm}$ conditioned on the parameters
+of these two prior distributions.
+
+\subsubsection{Distributions over $r$ and $\delta$}
+%
+Since we require the normalized spot radius $r$ to be bounded
+on the interval $[0, 1]$, we place a Beta prior on this quantity, whose
+probability density function (PDF) is
 %
 \begin{align}
     p \big(r \, \big| \, \alpha, \beta \big)
@@ -306,7 +319,7 @@ a Beta distribution, whose PDF is given by
 where $\Gamma$ is the Gamma function and $\alpha$ and $\beta$ are
 hyperparameters characterizing the shape of the distribution.
 %
-Since we require the brightness
+And since we require the brightness
 %
 \begin{align}
     b \equiv 1 - \delta
@@ -314,9 +327,8 @@ Since we require the brightness
 %
 at the center of the spot to
 be non-negative, it is convenient to treat $b \in [0, \infty)$ as our
-random variable instead of $\delta$. We model $b$ as a random variable
-drawn from a log-normal
-distribution:
+random variable instead of $\delta$. We therefore place a log-normal
+prior on $b$, whose PDF is
 %
 \begin{align}
     \label{eq:lognormal}
@@ -342,8 +354,13 @@ by construction:
     \quad.
 \end{align}
 %
+In the next two sections, we derive closed form expressions for the first
+and second moments of the distribution
+%
+$p \big( y_{lm} \, \big| \, \alpha, \beta, \mu, \nu \big)$.
 
-\subsection{First moment}
+
+\subsubsection{First moment}
 %
 The first moment of the distribution of $y_{lm}$ over $r$ and $b$ is
 %
@@ -547,7 +564,7 @@ where we define
 \end{align}
 %
 
-\subsection{Second moment}
+\subsubsection{Second moment}
 %
 The second moment of the distribution of $y_{lm}$ over $r$ and $b$ is
 %
