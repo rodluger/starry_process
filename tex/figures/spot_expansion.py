@@ -137,7 +137,7 @@ for k in range(len(r)):
 # Make pretty
 ax.set_xlim(-190, 190)
 ax.set_xticks([-180, -150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150, 180])
-ax.set_xlabel(r"$\theta$ [deg]")
+ax.set_xlabel(r"$\theta \, [^\circ]$", fontsize=22)
 ax.set_ylabel(r"intensity")
 ax.legend(loc="lower right")
 

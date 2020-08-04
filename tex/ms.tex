@@ -227,7 +227,7 @@ a value of $r'$ in Equation~(\ref{eq:ylm0}) that is too small will lead
 to both ringing and a value at the spot center that is in general larger
 than $1 - \delta$.
 
-\begin{figure}[th!]
+\begin{figure}[p!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/spot_expansion.pdf}
         \oscaption{spot_expansion}{%
@@ -258,11 +258,32 @@ $\Delta\theta = \nicefrac{5\pi}{12} = 75^\circ$. This choice is rather
 arbitrary, but motivated by the fact that below this value, $\Delta\theta$
 scales approximately logarithmically with $r'$ (see Figure~\ref{fig:hwhm}).
 
-\begin{figure}[th!]
+\begin{figure}[p!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/hwhm.pdf}
         \oscaption{hwhm}{%
-            Foo bar.
+            \emph{Left.} The width $\Delta\theta$
+            (Equation~\ref{eq:hwhm}) of the
+            spot as a function of the radius parameter $r'$ (bottom axis)
+            and the normalized radius $r$ (top axis), computed for
+            $l_{\mathrm{max}} = 20$. The green dots indicate the
+            minimum value of $r'$ for which the fractional error in the
+            spot intensity due
+            to the truncated expansion is less than one percent
+            and the value of $r'$ corresponding to
+            $\Delta\theta = 75^\circ$, respectively. These points correspond to
+            the minimum and maximum spot sizes we consider at
+            $l_{\mathrm{max}} = 20$
+            (blue shading). Note that
+            in this regime, the width of the spot scales approximately
+            logarithmically with $r'$.
+            %
+            \emph{Right.} The spot width $\Delta\theta$ below which the
+            fractional error in the intensity exceeds various thresholds
+            as a function of maximum spherical harmonic degree
+            $l_{\mathrm{max}}$. The value of $\Delta\theta$ for a tolerance
+            of one percent at $l_{\mathrm{max}} = 20$ is indicated as the
+            green dot for reference.
             \label{fig:hwhm}
         }
     \end{centering}
@@ -661,6 +682,8 @@ in the second case, provided we make the substitution $l \rightarrow l'$.
 %
 These integrals again reduce to closed form expressions:
 %
+\vspace{1in}
+%
 \begin{align}
     \mathrm{E}_r \big[ y_{lm} y_{l'm'} \big]
      & =
@@ -743,10 +766,14 @@ These integrals again reduce to closed form expressions:
                 \quad.
             \end{dcases}
         $}
-    \raisetag{15em}
+    \raisetag{16.5em}
 \end{align}
 %
-The final step is to evaluate the integral in Equation~(\ref{eq:Er2}), given
+
+\clearpage
+
+%
+\noindent The final step is to evaluate the integral in Equation~(\ref{eq:Er2}), given
 the PDF in Equation~(\ref{eq:lognormal}):
 %
 \begin{align}
@@ -831,6 +858,7 @@ the PDF in Equation~(\ref{eq:lognormal}):
                 \quad.
             \end{dcases}
         $}
+    \raisetag{16.5em}
 \end{align}
 %
 where we define
