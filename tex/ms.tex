@@ -42,8 +42,278 @@
 %     \href{https://github.com/rodluger/starry_process}{\color{linkcolor}\faGithub}
 % \end{abstract}
 
+\section{Introduction}
+\label{sec:intro}
+\xxx{Talk about starry, gps, and whatnot.}
+
+\section{Spherical Harmonics}
+\label{sec:ylm}
 %
-\section{The Spot Expansion}
+\xxx{Introduce the spherical harmonics.}
+
+The real spherical harmonics are indexed by their degree $l \in [0, \infty]$
+and order $m \in [-l, l]$. It is convenient to collect the spherical harmonic coefficients of
+a given expansion into a vector $\mathbf{y}$ indexed by a single
+integer $n$, where
+%
+\begin{align}
+    \label{eq:n}
+    n = l^2 + l + m
+\end{align}
+%
+and, conversely,
+%
+\begin{align}
+    \label{eq:lm}
+    \begin{split}
+        l & = \floor{\sqrt{n}}
+        \\
+        m & = n - l^2 - l
+        \quad.
+    \end{split}
+\end{align}
+
+\section{Variational Inference}
+\label{sec:variational}
+%
+\xxx{Explain what we're doing and the connection between our GP and VI.}
+
+The mean $\pmb{\mu}$ and covariance $\pmb{\Sigma}$ of the flux GP are given by
+%
+\begin{align}
+    \label{eq:mean}
+    \pmb{\mu}(\pmb{\theta})
+     & = \mathrm{E} \Big[ \mathbf{f}(\pmb{\theta}) \, \Big| \, \pmb{\theta} \Big]
+    \\
+    \label{eq:cov}
+    \pmb{\Sigma}(\pmb{\theta})
+     & = \mathrm{E} \Big[ \mathbf{f}(\pmb{\theta}) \, \mathbf{f}^\top(\pmb{\theta}) \, \Big| \, \pmb{\theta} \Big] - \pmb{\mu}^2(\pmb{\theta})
+\end{align}
+%
+where $\mathrm{E}[\cdots]$ denotes the expectation value,
+$\mathbf{f}$ is a random vector-valued variable corresponding to
+a set of flux measurements, $\pmb{\theta}$ is a vector
+of hyperparameters on which the GP depends, and the squaring operation in
+Equation~(\ref{eq:cov}) is performed element-wise.
+The vector $\pmb{\theta}$ includes physical properties of the star such
+as its inclination $i$ and rotational period $P$ as well as parameters
+describing the shape of the probability density function (PDF) governing
+the distribution of features on the surface.
+%
+Since the flux
+$\mathbf{f}$ is linear in
+the spherical harmonic coefficient vector $\mathbf{y}$,
+%
+\begin{align}
+    \label{eq:fAy}
+    \mathbf{f}(\pmb{\theta}) = \mathbf{A}(\pmb{\theta}) \, \mathbf{y}
+    \quad,
+\end{align}
+%
+where $\mathbf{A}$ is the \starry design matrix \citep{Luger2019},
+we may write the mean and covariance as
+%
+\begin{align}
+    \pmb{\mu}(\pmb{\theta})
+     & = \mathbf{A}(\pmb{\theta}) \, \pmb{\mu}_{\mathbf{y}}(\pmb{\theta})
+    \\
+    \pmb{\Sigma}(\pmb{\theta})
+     & = \mathbf{A}(\pmb{\theta}) \, \pmb{\Sigma}_{\mathbf{y}} \, \mathbf{A}^\top(\pmb{\theta})
+    \quad,
+\end{align}
+%
+where
+%
+\begin{align}
+    \label{eq:mean_y}
+    \pmb{\mu}_{\mathbf{y}}(\pmb{\theta})
+     & = \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta} \Big]
+    \\
+    \label{eq:cov_y}
+    \pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta})
+     & = \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta} \Big] - \pmb{\mu}_{\mathbf{y}}^2(\pmb{\theta})
+\end{align}
+%
+are the mean and covariance of the spherical harmonic GP.
+The expectation values in Equations~(\ref{eq:mean_y}) and (\ref{eq:cov_y})
+above are given by the integrals
+%
+\begin{align}
+    \label{eq:exp_y}
+    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta} \Big]
+     & =
+    \int \mathbf{y}(\mathbf{x} ) \, p(\mathbf{x} \, \big| \, \pmb{\theta})\mathrm{d}\mathbf{x}
+    \\
+    \label{eq:exp_yy}
+    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta} \Big]
+     & =
+    \int \mathbf{y}(\mathbf{x} ) \mathbf{y}^\top(\mathbf{x} ) \, p(\mathbf{x} \, \big| \, \pmb{\theta})\mathrm{d}\mathbf{x}
+    \quad,
+\end{align}
+%
+where $\mathbf{x}$ is a random vector-valued variable corresponding to a particular
+distribution of features on the surface and
+$p(\mathbf{x} \, \big| \, \pmb{\theta})$ is its PDF.
+
+The goal of this paper is to show that for suitable choices of $\mathbf{y}(\mathbf{x})$
+and $p(\mathbf{x} \, \big| \, \pmb{\theta})$, the integrals in the expressions
+above have closed form solutions that may be evaluated quickly.
+%
+As we are specifically interested in modeling the effect of star spots
+on stellar light curves, we let
+%
+\begin{align}
+    \mathbf{x} = \big\{ \varphi, \lambda, \delta, r \big\}
+\end{align}
+%
+and
+%
+\begin{align}
+    \label{eq:RRs}
+    \mathbf{y}(\mathbf{x}) =
+    \mathbf{R}_{\hat{\mathbf{y}}}(\lambda)
+    \,
+    \mathbf{R}_{\hat{\mathbf{x}}}(\phi)
+    \,
+    \mathbf{s}(\delta, r)
+    \quad,
+\end{align}
+%
+where $\lambda$ is the longitude of a spot, $\phi$ is its latitude, $\delta$
+is its contrast, and $r$ is its radius. The vector function $\mathbf{s}(\delta, r)$
+returns the spherical harmonic expansion of a circular spot at $\lambda = \phi = 0$,
+$\mathbf{R}_{\hat{\mathbf{x}}}(\phi)$ is the Wigner matrix that rotates the
+expansion about $\hat{\mathbf{x}}$ such that the spot is centered at a
+latitude $\phi$, and $\mathbf{R}_{\hat{\mathbf{y}}}(\lambda)$ is the Wigner
+matrix that then rotates the
+expansion about $\hat{\mathbf{y}}$ such that the spot is centered at a
+longitude $\lambda$; these three functions are detailed in the sections below.
+%
+Equation~(\ref{eq:RRs}) thus provides a way of converting a random variable
+$\mathbf{x}$ describing the size, contrast, and position of a spot to the
+corresponding representation in terms of spherical harmonics.
+%
+Note, importantly, that we are not interested in any specific value of
+$\mathbf{y}$; rather, we would like to know its expectation value under
+the probability distribution governing the different spot properties $\mathbf{x}$,
+i.e., $p(\mathbf{x} \, \big| \, \pmb{\theta})$.
+%
+For simplicity, we assume that $p(\mathbf{x} \, \big| \, \pmb{\theta})$
+is separable in each of the four spot properties:
+%
+\begin{align}
+    p(\mathbf{x} \, \big| \, \pmb{\theta})
+    =
+    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    p(\phi \, \big| \, \pmb{\theta}_{\phi})\,
+    p(\delta \, \big| \, \pmb{\theta}_{\delta}) \,
+    p(r \, \big| \, \pmb{\theta}_{r})
+    \quad,
+\end{align}
+%
+where
+%
+\begin{align}
+    \pmb{\theta} = \big\{
+    \pmb{\theta}_{\lambda}, \,
+    \pmb{\theta}_{\phi}, \,
+    \pmb{\theta}_{\delta}, \,
+    \pmb{\theta}_{r} \big\}
+    \quad.
+\end{align}
+%
+This allows us to rewrite the expectation integrals (\ref{eq:exp_y})
+and (\ref{eq:exp_yy}) as
+%
+\begin{align}
+    \label{eq:exp_y_sep}
+    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta} \Big]
+     & =
+    \mathbf{e_3}(\pmb{\theta})
+\end{align}
+\begin{align}
+    \label{eq:exp_yy_sep}
+    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta} \Big]
+     & =
+    \mathbf{E_3}(\pmb{\theta})
+\end{align}
+%
+where we define the first moment integrals
+%
+\begin{align}
+    \mathbf{e_1}(\pmb{\theta}_r, \pmb{\theta}_\delta)
+     & =
+    \iint
+    \mathbf{s}(\delta, r) \,
+    p(r \, \big| \, \pmb{\theta}_{r}) \,
+    \mathrm{d}r \,
+    p(\delta \, \big| \, \pmb{\theta}_{\delta}) \,
+    \mathrm{d}\delta
+    %
+    \\[1em]
+    %
+    \mathbf{e_2}(\pmb{\theta}_\phi, \mathbf{S})
+     & =
+    \int
+    \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
+    \mathbf{e_1} \,
+    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\phi
+    %
+    \\[1em]
+    %
+    \mathbf{e_3}(\pmb{\theta}_\lambda, \mathbf{P})
+     & =
+    \int
+    \mathbf{R}_{\hat{\mathbf{y}}}(\lambda) \,
+    \mathbf{e_2} \,
+    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\lambda
+\end{align}
+%
+and the second moment integrals
+%
+\begin{align}
+    \mathbf{E_1}(\pmb{\theta}_r, \pmb{\theta}_\delta)
+     & =
+    \iint
+    \mathbf{s}(\delta, r) \, \mathbf{s}^\top(\delta, r) \,
+    p(r \, \big| \, \pmb{\theta}_{r}) \,
+    \mathrm{d}r \,
+    p(\delta \, \big| \, \pmb{\theta}_{\delta})
+    \mathrm{d}\delta
+    %
+    \\[1em]
+    %
+    \mathbf{E_2}(\pmb{\theta}_\phi, \mathbf{S})
+     & =
+    \int
+    \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
+    \mathbf{E_1} \,
+    \mathbf{E_1}^\top \,
+    \mathbf{R}_{\hat{\mathbf{x}}}^\top(\phi) \,
+    p(\phi \, \big| \, \pmb{\theta}_{\phi})
+    \mathrm{d}\phi
+    %
+    \\[1em]
+    %
+    \mathbf{E_3}(\pmb{\theta}_\lambda, \mathbf{P})
+     & =
+    \int
+    \mathbf{R}_{\hat{\mathbf{y}}}(\lambda) \,
+    \mathbf{E_2} \,
+    \mathbf{E_2}^\top \,
+    \mathbf{R}_{\hat{\mathbf{y}}}^\top(\lambda) \,
+    p(\lambda \, \big| \, \pmb{\theta}_{\lambda})
+    \mathrm{d}\phi
+    \quad.
+\end{align}
+%
+We devote the next three sections to the computation of these
+integrals.
+
+%
+\section{The Spot Integrals: \lowercase{$\mathbf{e_1}$} and $\mathbf{E_1}$}
 \label{sec:spot}
 %
 \subsection{Preliminaries}
@@ -51,13 +321,13 @@
 \subsubsection{Functional form}
 \label{sec:spot-function}
 %
-We adopt the following expression for the spherical harmonic coefficient
-of degree $l$ and order $m$ in the expansion of a spot at
+We adopt the following expression for the $n^{\mathrm{th}}$ term in $\mathbf{s}$
+in the expansion of a spot at
 $\theta = \varphi = 0$:
 %
 \begin{align}
-    \label{eq:ylm0}
-    y_{lm}(r, \delta) =
+    \label{eq:s}
+    s_{n}(\delta, r) =
     \begin{cases}
         1 - \dfrac{\delta r'}{2 (1 + r')}
          & l = m = 0    \\[2em]
@@ -81,7 +351,7 @@ In the expressions above,
 $\delta \in (-\infty, 1]$ is the spot contrast (the fractional
 decrease in the brightness
 at the center of the spot) and $r \in [0, 1]$ is the normalized spot radius.
-The expression in Equation~(\ref{eq:ylm0}) is convenient because it satisfies
+The expression in Equation~(\ref{eq:s}) is convenient because it satisfies
 six important properties:
 %
 \begin{enumerate}[itemsep=2pt,parsep=1pt,label=\textbf{\arabic*}]
@@ -99,14 +369,21 @@ expression for the surface intensity at a given point $(\theta, \varphi)$:
     \begin{split}
         I(\theta, \varphi)
         & =
-        \sum\limits_{l=0}^\infty \sum\limits_{m=-l}^l
-        y_{lm} Y_{lm}(\theta, \varphi) \\
-        & = \sum\limits_{l=0}^\infty
-        y_{l0} \sqrt{2l + 1} P_l(\cos\theta)
+        \sum\limits_{n=0}^\infty
+        s_{n} Y_{n}(\theta, \varphi) \\
+        & =
+        \sum\limits_{n=0}^\infty
+        \begin{cases}
+            s_{n} \sqrt{2l + 1} P_l(\cos\theta)
+              & m = 0              \\[2em]
+            0 & \mathrm{otherwise}
+        \end{cases}
     \end{split}
 \end{align}
 %
-where $P_l$ is the Legendre polynomial of degree $l$ and we have implicitly
+where $Y_n$ is the spherical harmonic of degree $l(n)$ and order $m(n)$
+(see Equation~\ref{eq:lm}),
+$P_l$ is the Legendre polynomial of degree $l$ and we have implicitly
 assumed a normalization such that the integral of our expansion over
 the unit sphere is $4\pi$.
 Note that the expression above is independent of the azimuth $\varphi$,
@@ -114,7 +391,7 @@ a consequence of the fact that all harmonics with $m \ne 0$ are zero; this
 expansion is therefore azimuthally symmetric about the spot center, as
 stated in \textbf{1}.
 %
-Combining the above expression with Equation~(\ref{eq:ylm0}) and
+Combining the above expression with Equation~(\ref{eq:s}) and
 rearranging, we may write
 %
 \begin{align}
@@ -226,7 +503,7 @@ are inherited from the generating function of the Legendre polynomials
 (Equation~\ref{eq:gen}). These properties are therefore only rigorously
 true when the expansion is taken to spherical
 harmonic degree $l_{\mathrm{max}} = \infty$. For truncated expansions,
-a value of $r'$ in Equation~(\ref{eq:ylm0}) that is too small will lead
+a value of $r'$ in Equation~(\ref{eq:s}) that is too small will lead
 to both ringing and a value at the spot center that is in general larger
 than $1 - \delta$.
 
@@ -294,11 +571,11 @@ scales approximately logarithmically with $r'$ (see Figure~\ref{fig:hwhm}).
 
 \subsection{Probability distribution}
 %
-Our goal now is to characterize the distribution of $y_{lm}$ values as a
+Our goal now is to characterize the distribution of $s_{n}$ values as a
 function of certain statistics of the spots: specifically, the distribution of
 spot radii and intensities. As we will see, if we model these with a Beta and
 a log-normal distribution, respectively, we may analytically compute the
-first two moments of the distribution of $y_{lm}$ conditioned on the parameters
+first two moments of the distribution of $s_{n}$ conditioned on the parameters
 of these two prior distributions.
 
 \subsubsection{Distributions over $r$ and $\delta$}
@@ -357,19 +634,19 @@ by construction:
 In the next two sections, we derive closed form expressions for the first
 and second moments of the distribution
 %
-$p \big( y_{lm} \, \big| \, \alpha, \beta, \mu, \nu \big)$.
+$p \big( s_{n} \, \big| \, \alpha, \beta, \mu, \nu \big)$.
 
 
 \subsubsection{First moment}
 %
-The first moment of the distribution of $y_{lm}$ over $r$ and $b$ is
+The first moment of the distribution of $s_{n}$ over $r$ and $b$ is
 %
 \begin{align}
     \label{eq:Erb}
     \begin{split}
-        \mathrm{E} \big[ y_{lm} \big] &=
+        \mathrm{E} \big[ s_{n} \big] &=
         \int\limits_0^\infty \int\limits_0^1
-        y_{lm} (r, 1 - b)
+        s_{n} (r, 1 - b)
         p \big(r, 1 - b \, \big| \, \alpha, \beta, \mu, \nu \big)
         \mathrm{d} r
         \,
@@ -377,7 +654,7 @@ The first moment of the distribution of $y_{lm}$ over $r$ and $b$ is
         \\
         &=
         \int\limits_0^\infty
-        \mathrm{E}_r \big[ y_{lm} \big]
+        \mathrm{E}_r \big[ s_{n} \big]
         p \big(b \, \big| \, \mu, \nu \big)
         \mathrm{d} b
         \quad,
@@ -387,10 +664,10 @@ The first moment of the distribution of $y_{lm}$ over $r$ and $b$ is
     \intertext{where}
     \label{eq:Er}
     %
-    \mathrm{E}_r \big[ y_{lm} \big]
+    \mathrm{E}_r \big[ s_{n} \big]
      & =
     \int\limits_0^1
-    y_{lm} (r, 1 - b)
+    s_{n} (r, 1 - b)
     p \big(r \, \big| \, \alpha, \beta \big)
     \mathrm{d} r
     \quad.
@@ -399,7 +676,7 @@ The first moment of the distribution of $y_{lm}$ over $r$ and $b$ is
 Expanding Equation~(\ref{eq:Er}), we obtain
 %
 \begin{align}
-    \mathrm{E}_r \big[ y_{lm} \big]
+    \mathrm{E}_r \big[ s_{n} \big]
      & =
     \resizebox{.75\hsize}{!}{$
             \begin{dcases}
@@ -436,7 +713,7 @@ powers of $r$ and $(1 + c_0 + c_1 r)$, the integrals above may be expressed in c
 form in terms of the hypergeometric function ${_2F_1}$:
 %
 \begin{align}
-    \mathrm{E}_r \big[ y_{lm} \big]
+    \mathrm{E}_r \big[ s_{n} \big]
      & =
     \resizebox{.75\hsize}{!}{$
             \begin{dcases}
@@ -528,7 +805,7 @@ integrals are straightforward to evaluate and may also
 be expressed in closed form:
 %
 \begin{align}
-    \mathrm{E} \big[ y_{lm} \big]
+    \mathrm{E} \big[ s_{n} \big]
      & =
     \resizebox{.75\hsize}{!}{$
             \begin{dcases}
@@ -566,15 +843,15 @@ where we define
 
 \subsubsection{Second moment}
 %
-The second moment of the distribution of $y_{lm}$ over $r$ and $b$ is
+The second moment of the distribution of $s_{n}$ over $r$ and $b$ is
 %
 \begin{align}
     \label{eq:Erb2}
     \begin{split}
-        \mathrm{E} \big[ y_{lm} y_{l'm'} \big] &=
+        \mathrm{E} \big[ s_{n} s_{n'} \big] &=
         \int\limits_0^\infty \int\limits_0^1
-        y_{lm} (r, 1 - b)
-        y_{l'm'} (r, 1 - b)
+        s_{n} (r, 1 - b)
+        s_{n'} (r, 1 - b)
         p \big(r, 1 - b \, \big| \, \alpha, \beta, \mu, \nu \big)
         \mathrm{d} r
         \,
@@ -582,7 +859,7 @@ The second moment of the distribution of $y_{lm}$ over $r$ and $b$ is
         \\
         &=
         \int\limits_0^\infty
-        \mathrm{E}_r \big[ y_{lm} y_{l'm'} \big]
+        \mathrm{E}_r \big[ s_{n} s_{n'} \big]
         p \big(b \, \big| \, \mu, \nu \big)
         \mathrm{d} b
         \quad,
@@ -592,11 +869,11 @@ The second moment of the distribution of $y_{lm}$ over $r$ and $b$ is
     \intertext{where}
     \label{eq:Er2}
     %
-    \mathrm{E}_r \big[ y_{lm} y_{l'm'} \big]
+    \mathrm{E}_r \big[ s_{n} s_{n'} \big]
      & =
     \int\limits_0^1
-    y_{lm} (r, 1 - b)
-    y_{l'm'} (r, 1 - b)
+    s_{n} (r, 1 - b)
+    s_{n'} (r, 1 - b)
     p \big(r \, \big| \, \alpha, \beta \big)
     \mathrm{d} r
     \quad.
@@ -605,7 +882,7 @@ The second moment of the distribution of $y_{lm}$ over $r$ and $b$ is
 Expanding Equation~(\ref{eq:Er2}), we obtain
 %
 \begin{align}
-    \mathrm{E}_r \big[ y_{lm} y_{l'm'} \big]
+    \mathrm{E}_r \big[ s_{n} s_{n'} \big]
      & =
     \resizebox{1.5\hsize}{!}{$
             \begin{dcases}
@@ -694,7 +971,8 @@ Expanding Equation~(\ref{eq:Er2}), we obtain
     \raisetag{14.5em}
 \end{align}
 %
-where, by symmetry, the expression for $l' > 0, \, l = 0, \, m = m' = 0$ is the same as
+where $l' = l'(n')$ and $m' = m'(n')$ are again given by Equation~(\ref{eq:lm})
+and, by symmetry, the expression for $l' > 0, \, l = 0, \, m = m' = 0$ is the same as
 in the second case, provided we make the substitution $l \rightarrow l'$.
 %
 These integrals again reduce to closed form expressions:
@@ -702,7 +980,7 @@ These integrals again reduce to closed form expressions:
 \vspace{1in}
 %
 \begin{align}
-    \mathrm{E}_r \big[ y_{lm} y_{l'm'} \big]
+    \mathrm{E}_r \big[ s_{n} s_{n'} \big]
      & =
     \resizebox{1.4\hsize}{!}{$
             \begin{dcases}
@@ -794,7 +1072,7 @@ These integrals again reduce to closed form expressions:
 the PDF in Equation~(\ref{eq:lognormal}):
 %
 \begin{align}
-    \mathrm{E} \big[ y_{lm} y_{l'm'} \big]
+    \mathrm{E} \big[ s_{n} s_{n'} \big]
      & =
     \resizebox{1.4\hsize}{!}{$
             \begin{dcases}
@@ -890,6 +1168,6 @@ where we define
 and the expression for $l' > 0, \, l = 0, \, m = m' = 0$ is again the same as in
 the second case, provided we make the substitution $l \rightarrow l'$.
 
-%\bibliography
+\bibliography{bib}
 
 \end{document}
