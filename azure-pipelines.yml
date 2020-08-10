@@ -40,4 +40,5 @@ jobs:
     displayName: 'Upload the paper'
     env:
       GITHUB_API_KEY: $(GITHUB_API_KEY)
+      GITHUB_USER: $(GITHUB_USER)
     
