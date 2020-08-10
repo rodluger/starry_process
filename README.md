@@ -9,4 +9,6 @@
   </a>
 </p>
 
+<p align="center">
 Interpretable gaussian processes for stellar light curves using [starry](https://github.com/rodluger/starry).
+</p>
