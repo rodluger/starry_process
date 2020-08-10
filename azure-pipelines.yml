@@ -1,0 +1,43 @@
+jobs:
+- job: Default
+  timeoutInMinutes: 90
+  pool:
+    vmImage: Ubuntu-16.04
+  steps:
+  - script: |
+      nproc
+      lscpu
+    displayName: 'Machine info'
+  - script: |
+      sudo chown -R $USER $CONDA
+      . $CONDA/etc/profile.d/conda.sh
+      conda create --yes --quiet --name starry_gp python=3.7.3 pip
+    displayName: 'Setup conda'
+  - script: |
+      . $CONDA/etc/profile.d/conda.sh
+      conda activate starry_gp
+      conda install -y -q numpy scipy mkl openblas theano
+      theano-cache purge
+      pip install -U pip
+      pip install -U setuptools
+      conda install -y -q -c conda-forge tectonic pybind11
+      pip install git+https://github.com/rodluger/starry
+    displayName: 'Install dependencies'
+  - script: |
+      . $CONDA/etc/profile.d/conda.sh
+      conda activate starry_gp
+      cd $(Build.SourcesDirectory)/tex
+      make
+    displayName: 'Build the paper'
+  - script: |
+      cd $(Build.SourcesDirectory)
+      git checkout --orphan $(Build.SourceBranchName)-pdf
+      git rm -rf --cached .
+      git add -f tex/ms.pdf
+      git add -f tex/figures/*.pdf
+      git -c user.name='azure' -c user.email='azure' commit -m "building the paper"
+      git push -q -f https://$GITHUB_USER:$GITHUB_API_KEY@github.com/rodluger/starry_gp $(Build.SourceBranchName)-pdf 
+    displayName: 'Upload the paper'
+    env:
+      GITHUB_API_KEY: $(GITHUB_API_KEY)
+    
