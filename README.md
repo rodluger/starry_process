@@ -10,5 +10,5 @@
 </p>
 
 <p align="center">
-Interpretable gaussian processes for stellar light curves using [starry](https://github.com/rodluger/starry).
+Interpretable gaussian processes for stellar light curves using <a href="https://github.com/rodluger/starry">starry</a>.
 </p>
