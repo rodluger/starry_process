@@ -1,3 +1,3 @@
-# starry_process
+# starry_gp
 
-starry (gaussian) processes
+Interpretable gaussian processes for stellar light curves using [starry](https://github.com/rodluger/starry).
