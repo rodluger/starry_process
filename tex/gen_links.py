@@ -4,7 +4,7 @@ import os
 
 # Generate the github links
 hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8")[:-1]
-slug = "rodluger/starry_process"
+slug = "rodluger/starry_gp"
 with open("gitlinks.tex", "w") as f:
     print(
         r"\newcommand{\codelink}[1]{\href{https://github.com/%s/blob/%s/tex/figures/#1.py}{\codeicon}\,\,}"
@@ -17,7 +17,7 @@ with open("gitlinks.tex", "w") as f:
         file=f,
     )
     print(
-        r"\newcommand{\prooflink}[1]{\href{https://github.com/%s/blob/%s/tex/proofs/#1.ipynb}{\raisebox{-0.1em}{\prooficon}}}"
+        r"\newcommand{\prooflink}[1]{\href{https://github.com/%s/blob/%s/#1}{\raisebox{-0.1em}{\prooficon}}}"
         % (slug, hash),
         file=f,
     )

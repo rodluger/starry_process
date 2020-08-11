@@ -190,6 +190,7 @@ def get_spot_function(ydeg, sign=-1):
     Return a compiled function for spot generation.
     
     """
+    raise NotImplementedError("TODO! Upgrade this in starry.")
 
     def _y(ydeg, amp, sigma, lat, lon):
         """Return the Ylm expansion of a spotted star,

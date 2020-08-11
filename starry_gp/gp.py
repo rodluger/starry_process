@@ -1,4 +1,4 @@
-from .spot import SpotIntegral
+from .size import SizeIntegral
 from .latitude import LatitudeIntegral
 from .longitude import LongitudeIntegral
 from .transform import eigen
@@ -10,7 +10,7 @@ class YlmGP(object):
     def __init__(self, ydeg, **kwargs):
         assert ydeg > 0, "Degree of map must be > 0."
         self.ydeg = ydeg
-        self.S = SpotIntegral(ydeg)
+        self.S = SizeIntegral(ydeg)
         self.P = LatitudeIntegral(ydeg)
         self.L = LongitudeIntegral(ydeg)
         self.set_params(**kwargs)

@@ -1,4 +1,4 @@
-from starry_gp.spot import SpotIntegral
+from starry_gp.size import SizeIntegral
 from starry_gp.transform import get_alpha_beta
 from numerical import spot
 import numpy as np

@@ -524,9 +524,9 @@ Differentiation with respect to $r'$ yields
 %
 \begin{align}
     \dfrac{\mathrm{d}\Delta\theta}{\mathrm{d}r'} =
-    \frac{3 r' \left(2 + r'\right)}{\left(1 + r'\right)^4
-        \sqrt{\frac{r'^2 \left(2 + r'\right)^2 \left(1 + 2 r'\right)
-                \left(3 + 2 r'\right)}{\left(1 + r'\right)^6}}}
+    \frac{3}{\left(1 + r'\right)
+        \sqrt{\left(1 + 2 r'\right)
+            \left(3 + 2 r'\right)}}
     \quad,
 \end{align}
 %
@@ -754,38 +754,39 @@ Note that for fixed $\alpha$, $\beta$, $c_0$, and $c_1$, we need only compute
 $G_0^0$, $G_1^0$, $G_0^1$, and $G_1^1$ directly, since the remaining terms may be
 obtained recursively:
 %
-\begin{align}
+\begin{proof}{tests/test_hypgeo.py}
     \label{eq:Grec}
-    G_j^k & =
-    \bigg[
-        \dfrac{(\alpha + \beta + k - j)(1 + c_0)}{j(1 + c_0 + c_1)}
-        \bigg] G_{j - 2}^k
-    \nonumber
-    \\[0.75em]
-          &
-    + \hspace{1.5pt}
-    \bigg[
-        -\dfrac{(\alpha + \beta - 2j + k)(1 + c_0) + (\alpha - j + k)c_1}
-        {j(1 + c_0 + c_1)}
-        \bigg]
-    G_{j - 1}^k
-    \\[1.5em]
-    G_j^k & =
-    \bigg[
-        \frac{(\alpha + \beta + k - 2)(1 + c_0)}
-        {\lambda_{k - 1}(\alpha + \beta - j + k - 2)c_1}
-        \bigg]
-    G_{j}^{k - 2}
-    \nonumber
-    \\[0.75em]
-          & + \hspace{1.5pt}
-    \bigg[
-        -\frac{\alpha - (\alpha + k)c_1 + \beta + k + (\alpha + \beta + k - 2)c_0 + (j + 2)c_1 - 2}
-        {\lambda_{k-1} (\alpha + \beta - j + k - 2)c_1}
-        \bigg]
-    G_{j}^{k - 1}
-    \quad.
-\end{align}
+    \begin{split}
+        G_j^k & =
+        \bigg[
+            \dfrac{(\alpha + \beta + k - j)(1 + c_0)}{j(1 + c_0 + c_1)}
+            \bigg] G_{j - 2}^k
+        \\[0.75em]
+        &
+        + \hspace{1.5pt}
+        \bigg[
+            -\dfrac{(\alpha + \beta - 2j + k)(1 + c_0) + (\alpha - j + k)c_1}
+            {j(1 + c_0 + c_1)}
+            \bigg]
+        G_{j - 1}^k
+        \\[1.5em]
+        G_j^k & =
+        \bigg[
+            \frac{(\alpha + \beta + k - 2)(1 + c_0)}
+            {\lambda_{k - 1}(\alpha + \beta - j + k - 2)c_1}
+            \bigg]
+        G_{j}^{k - 2}
+        \\[0.75em]
+        & + \hspace{1.5pt}
+        \bigg[
+            -\frac{\alpha - (\alpha + k)c_1 + \beta + k + (\alpha + \beta + k - 2)c_0 + (j + 2)c_1 - 2}
+            {\lambda_{k-1} (\alpha + \beta - j + k - 2)c_1}
+            \bigg]
+        G_{j}^{k - 1}
+        \quad.
+    \end{split}
+    \raisetag{7.5em}
+\end{proof}
 %
 
 %
@@ -1050,7 +1051,7 @@ Equation~(\ref{eq:e2}), which may easily be solved analytically:
     \nonumber
     \\
      & =
-    1 - \exp\left[ \mu + \frac{1}{2}\nu\right] \mathbf{e_1}
+    \left(1 - \exp\left[ \mu + \frac{1}{2}\nu\right]\right) \mathbf{e_1}
     \quad.
 \end{align}
 %
@@ -1066,13 +1067,16 @@ Equation~(\ref{eq:E2}), which also evaluates to a simple closed form:
     \int_{-\infty}^1
     \xi^2 \,
     \mathbf{E_1} \,
+    \mathbf{E_1}^\top \,
     p(\xi \, \big| \, \pmb{\theta}_{\xi}) \,
     \mathrm{d}\xi
     \nonumber
     \\
      & =
-    1 - 2\exp\bigg[ \mu + \frac{1}{2}\nu\bigg]
-    + \exp\bigg[ 2\mu + 2\nu\bigg]
+    \left(1 - 2\exp\bigg[ \mu + \frac{1}{2}\nu\bigg]
+    + \exp\bigg[ 2\mu + 2\nu\bigg]\right)
+    \mathbf{E_1} \,
+    \mathbf{E_1}^\top
     \quad.
 \end{align}
 
