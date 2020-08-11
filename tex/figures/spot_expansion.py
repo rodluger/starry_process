@@ -24,10 +24,10 @@ def peak_error(ydeg, rprime):
     Returns the error in the intensity at the spot center.
     
     """
-    delta = 1.0
-    I = 1 - 0.5 * delta * rprime / (1 + rprime)
+    xi = 1.0
+    I = 1 - 0.5 * xi * rprime / (1 + rprime)
     for l in range(1, ydeg + 1):
-        I -= 0.5 * delta * rprime * (2 + rprime) / (1 + rprime) ** (l + 1)
+        I -= 0.5 * xi * rprime * (2 + rprime) / (1 + rprime) ** (l + 1)
     return np.abs(I)
 
 
@@ -78,7 +78,7 @@ rprime = c0 + c1 * r
 rprime = np.append([c0 / 8, c0 / 4, c0 / 2], rprime)
 
 # Spot contrast
-delta = 1
+xi = 1
 
 # Longitude array
 lon = np.linspace(-180, 180, 1000)
@@ -93,9 +93,9 @@ for k in range(len(r)):
 
     # Legendre expansion
     x = np.zeros(map.Ny)
-    x[0] = 1 - 0.5 * delta * rprime[k] * (1 + rprime[k]) ** -1
+    x[0] = -0.5 * xi * rprime[k] * (1 + rprime[k]) ** -1
     x[l * (l + 1)] = (
-        -delta
+        -xi
         / np.sqrt(2 * l + 1)
         * (
             (1 + rprime[k]) ** -(l + 1) * rprime[k]

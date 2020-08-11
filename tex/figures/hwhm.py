@@ -25,10 +25,10 @@ def peak_error(ydeg, rprime):
     Returns the error in the intensity at the spot center.
     
     """
-    delta = 1.0
-    I = 1 - 0.5 * delta * rprime / (1 + rprime)
+    xi = 1.0
+    I = 1 - 0.5 * xi * rprime / (1 + rprime)
     for l in range(1, ydeg + 1):
-        I -= 0.5 * delta * rprime * (2 + rprime) / (1 + rprime) ** (l + 1)
+        I -= 0.5 * xi * rprime * (2 + rprime) / (1 + rprime) ** (l + 1)
     return np.abs(I)
 
 
@@ -75,7 +75,7 @@ ax[0].annotate(
     rotation=-20,
 )
 ax[0].set_xlabel(r"$r$", fontsize=22)
-ax[0].set_ylabel(r"$\Delta\theta \, [^\circ]$", fontsize=22)
+ax[0].set_ylabel(r"$\xi\theta \, [^\circ]$", fontsize=22)
 ax[0].set_xscale("log")
 ax[0].set_xlim(1e-2, 1e2)
 
@@ -133,7 +133,7 @@ ax[1].set_ylim(0, 95)
 ax[1].set_xlim(0, 30)
 ax[1].set_yticks([0, 15, 30, 45, 60, 75, 90])
 ax[1].set_xlabel(r"$l_{\mathrm{max}}$", fontsize=22)
-ax[1].set_ylabel(r"$\Delta\theta_{\mathrm{min}} \, [^\circ]$", fontsize=22)
+ax[1].set_ylabel(r"$\xi\theta_{\mathrm{min}} \, [^\circ]$", fontsize=22)
 ax[1].yaxis.tick_right()
 ax[1].yaxis.set_label_position("right")
 ax[1].plot(20, min_hwhm, "C2o")
