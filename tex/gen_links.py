@@ -3,7 +3,9 @@ import subprocess
 import os
 
 # Generate the github links
-hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8")[:-1]
+hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8")[
+    :-1
+]
 slug = "rodluger/starry_gp"
 with open("gitlinks.tex", "w") as f:
     print(
@@ -17,11 +19,12 @@ with open("gitlinks.tex", "w") as f:
         file=f,
     )
     print(
-        r"\newcommand{\prooflink}[1]{\href{https://github.com/%s/blob/%s/#1}{\raisebox{-0.1em}{\prooficon}}}"
+        r"\newcommand{\prooflink}[1]{\href{https://github.com/%s/blob/%s/tex/tests/#1.py}{\raisebox{-0.1em}{\input{tests/#1.tex}}}}"
         % (slug, hash),
         file=f,
     )
     print(
-        r"\newcommand{\cilink}[1]{\href{https://dev.azure.com/%s/_build}{#1}}" % (slug),
+        r"\newcommand{\cilink}[1]{\href{https://dev.azure.com/%s/_build}{#1}}"
+        % (slug),
         file=f,
     )

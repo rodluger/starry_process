@@ -1,3 +1,7 @@
+"""
+Test the recurrence relations for the hypergeometric function 2F1.
+
+"""
 import numpy as np
 from scipy.special import hyp2f1
 from starry_gp.transform import get_c0_c1
@@ -25,13 +29,12 @@ def get_G(ydeg=10, alpha=5.0, beta=3.3):
     # Parameters
     c0, c1 = get_c0_c1(ydeg)
     z = -c1 / (1 + c0)
-    ab = alpha + beta
     lam = np.array(
         [
-            alpha / ab,
-            (alpha + 1) / (ab + 1),
-            (alpha + 2) / (ab + 2),
-            (alpha + 3) / (ab + 3),
+            alpha / (alpha + beta),
+            (alpha + 1) / (alpha + beta + 1),
+            (alpha + 2) / (alpha + beta + 2),
+            (alpha + 3) / (alpha + beta + 3),
         ]
     )
 
@@ -39,34 +42,30 @@ def get_G(ydeg=10, alpha=5.0, beta=3.3):
     G = np.empty((2 * ydeg + 2, 5))
 
     # Compute the first four terms explicitly
-    G[0, 0] = hyp2f1(1, alpha, ab, z)
-    G[0, 1] = hyp2f1(1, alpha + 1, ab + 1, z)
-    G[1, 0] = hyp2f1(2, alpha, ab, z)
-    G[1, 1] = hyp2f1(2, alpha + 1, ab + 1, z)
+    G[0, 0] = hyp2f1(1, alpha, alpha + beta, z)
+    G[0, 1] = hyp2f1(1, alpha + 1, alpha + beta + 1, z)
+    G[1, 0] = hyp2f1(2, alpha, alpha + beta, z)
+    G[1, 1] = hyp2f1(2, alpha + 1, alpha + beta + 1, z)
 
     # Recurse upward in k
     for j in range(2):
         for k in range(2, 5):
-            A = (ab + k - 2) * (1 + c0)
-            B = (
-                alpha
-                - (alpha + k) * c1
-                + beta
-                + k
-                + (ab + k - 2) * c0
-                + (j + 2) * c1
-                - 2
+            A = ((alpha + beta + k - 2) * (1 + c0)) / (
+                (alpha + beta - j + k - 2) * lam[k - 1] * c1
             )
-            C = lam[k - 1] * (ab - j + k - 2) * c1
-            G[j, k] = (A * G[j, k - 2] - B * G[j, k - 1]) / C
+            B = 1.0 / lam[k - 1] - (
+                (alpha + beta + k - 2) * (1 + c0) + beta * c1
+            ) / ((alpha + beta - j + k - 2) * lam[k - 1] * c1)
+            G[j, k] = A * G[j, k - 2] + B * G[j, k - 1]
 
     # Now recurse upward in j
     for j in range(2, 2 * ydeg + 2):
         for k in range(5):
-            A = (ab + k - j) * (1 + c0)
-            B = (ab - 2 * j + k) * (1 + c0) + (alpha - j + k) * c1
-            C = j * (1 + c0 + c1)
-            G[j, k] = (A * G[j - 2, k] - B * G[j - 1, k]) / C
+            A = ((alpha + beta + k - j) * (1 + c0)) / (j * (1 + c0 + c1))
+            B = 1 - ((alpha + beta + k - j) * (1 + c0) + (alpha + k) * c1) / (
+                j * (1 + c0 + c1)
+            )
+            G[j, k] = A * G[j - 2, k] + B * G[j - 1, k]
 
     return G
 

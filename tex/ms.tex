@@ -754,7 +754,7 @@ Note that for fixed $\alpha$, $\beta$, $c_0$, and $c_1$, we need only compute
 $G_0^0$, $G_1^0$, $G_0^1$, and $G_1^1$ directly, since the remaining terms may be
 obtained recursively:
 %
-\begin{proof}{tests/test_hypgeo.py}
+\begin{proof}{test_hypgeo}
     \label{eq:Grec}
     \begin{split}
         G_j^k & =
@@ -765,7 +765,7 @@ obtained recursively:
         &
         + \hspace{1.5pt}
         \bigg[
-            -\dfrac{(\alpha + \beta - 2j + k)(1 + c_0) + (\alpha - j + k)c_1}
+            1 - \dfrac{(\alpha + \beta + k - j)(1 + c_0) + (\alpha + k)c_1}
             {j(1 + c_0 + c_1)}
             \bigg]
         G_{j - 1}^k
@@ -773,14 +773,15 @@ obtained recursively:
         G_j^k & =
         \bigg[
             \frac{(\alpha + \beta + k - 2)(1 + c_0)}
-            {\lambda_{k - 1}(\alpha + \beta - j + k - 2)c_1}
+            {(\alpha + \beta - j + k - 2)\lambda_{k - 1}c_1}
             \bigg]
         G_{j}^{k - 2}
         \\[0.75em]
         & + \hspace{1.5pt}
         \bigg[
-            -\frac{\alpha - (\alpha + k)c_1 + \beta + k + (\alpha + \beta + k - 2)c_0 + (j + 2)c_1 - 2}
-            {\lambda_{k-1} (\alpha + \beta - j + k - 2)c_1}
+            \frac{1}{\lambda_{k - 1}}
+            -\frac{(\alpha + \beta + k - 2)(1 + c_0) + \beta c_1}
+            {(\alpha + \beta - j + k - 2)\lambda_{k-1}c_1}
             \bigg]
         G_{j}^{k - 1}
         \quad.

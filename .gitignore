@@ -2,6 +2,7 @@
 *.gif
 *.o
 *.dSYM
+*.blg
 .DS_Store
 build/
 dist/
