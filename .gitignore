@@ -16,6 +16,7 @@ docs/_generate
 docs/.doxyxml
 docs/.build
 *.pdf
+tex/tests/*.tex
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
