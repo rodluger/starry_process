@@ -94,8 +94,8 @@ def get_alpha_beta(mu, nu):
     divided by `mu * (1 - mu)`, valid in `(0, 1)`.
 
     """
-    assert mu > 0 and mu < 1, "mean must be in (0, 1)."
-    assert nu > 0 and nu < 1, "variance must be in (0, 1)."
+    assert np.all(mu > 0) and np.all(mu < 1), "mean must be in (0, 1)."
+    assert np.all(nu > 0) and np.all(nu < 1), "variance must be in (0, 1)."
     alpha = mu * (1 / nu - 1)
     beta = (1 - mu) * (1 / nu - 1)
     return alpha, beta
@@ -122,7 +122,9 @@ class TransformIntegral(object):
             self.t[l] = self.R[l] @ self.q[l ** 2 : (l + 1) ** 2]
 
     def _compute_T(self):
-        self.T = [np.zeros((self.n, self.n, self.n)) for l in range(self.ydeg + 1)]
+        self.T = [
+            np.zeros((self.n, self.n, self.n)) for l in range(self.ydeg + 1)
+        ]
         for l in range(self.ydeg + 1):
             i = slice(l ** 2, (l + 1) ** 2)
             self.T[l] = np.swapaxes(self.R[l] @ self.U[i], 1, 2)
@@ -133,18 +135,18 @@ class TransformIntegral(object):
         self._compute_t()
         self._compute_T()
 
-    def first_moment(self, s):
+    def first_moment(self, e):
         """Compute the first moment of the distribution."""
         mu = np.zeros(self.N)
         for l in range(self.ydeg + 1):
             i = slice(l ** 2, (l + 1) ** 2)
-            mu[i] = self.t[l] @ s[i]
+            mu[i] = self.t[l] @ e[i]
         return mu
 
-    def second_moment(self, sqrtS):
+    def second_moment(self, eigE):
         """Compute the second moment of the distribution."""
-        sqrtC = np.zeros((self.N, self.n, sqrtS.shape[-1]))
+        sqrtC = np.zeros((self.N, self.n, eigE.shape[-1]))
         for l in range(self.ydeg + 1):
             i = slice(l ** 2, (l + 1) ** 2)
-            sqrtC[i] = self.T[l] @ sqrtS[i]
+            sqrtC[i] = self.T[l] @ eigE[i]
         return sqrtC.reshape(self.N, -1)

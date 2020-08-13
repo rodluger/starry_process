@@ -4,7 +4,7 @@ import theano.tensor as tt
 import starry
 
 
-__all__ = ["R", "spot", "get_spot_function"]
+__all__ = ["R"]
 
 
 def _dlmn(l, s1, c1, c2, tgbet2, s3, c3, D, R):
@@ -14,7 +14,9 @@ def _dlmn(l, s1, c1, c2, tgbet2, s3, c3, D, R):
 
     # Compute the D[lm',m) matrix.
     # First row by recurrence (Eq. 19 and 20 in Alvarez Collado et al.)
-    D[l][2 * l, 2 * l] = 0.5 * D[l - 1][isup + l - 1, isup + l - 1] * (1.0 + c2)
+    D[l][2 * l, 2 * l] = (
+        0.5 * D[l - 1][isup + l - 1, isup + l - 1] * (1.0 + c2)
+    )
     D[l][2 * l, 0] = 0.5 * D[l - 1][isup + l - 1, -isup + l - 1] * (1.0 - c2)
     for m in range(isup, iinf - 1, -1):  # for (m = isup m > iinf - 1 --m)
         D[l][2 * l, m + l] = (
@@ -109,7 +111,9 @@ def _dlmn(l, s1, c1, c2, tgbet2, s3, c3, D, R):
         cosmal = aux
 
 
-def R(ydeg, phi, cos_alpha=0, sin_alpha=1, cos_gamma=0, sin_gamma=-1, tol=1e-12):
+def R(
+    ydeg, phi, cos_alpha=0, sin_alpha=1, cos_gamma=0, sin_gamma=-1, tol=1e-12
+):
 
     c1 = cos_alpha
     s1 = sin_alpha
@@ -160,56 +164,3 @@ def R(ydeg, phi, cos_alpha=0, sin_alpha=1, cos_gamma=0, sin_gamma=-1, tol=1e-12)
         _dlmn(l, s1, c1, c2, tgbet2, s3, c3, D, R)
 
     return R
-
-
-def spot(ydeg, r, delta, c=1.0):
-    r = np.atleast_1d(r)
-    delta = np.atleast_1d(delta)
-    assert r.shape == delta.shape
-    assert len(r.shape) == 1
-    K = r.shape[0]
-    s = np.zeros((K, ydeg + 1))
-    s[:, 0] = 1 - 0.5 * delta * c * r / (1 + c * r)
-    for l in range(1, ydeg + 1):
-        s[:, l] = (
-            -0.5
-            * delta
-            * c
-            * r
-            * (2 + c * r)
-            / (np.sqrt(2 * l + 1) * (1 + c * r) ** (l + 1))
-        )
-    l = np.arange(ydeg + 1)
-    S = np.zeros((K, (ydeg + 1) * (ydeg + 1)))
-    S[:, l * (l + 1)] = s
-    return S
-
-
-def get_spot_function(ydeg, sign=-1):
-    """
-    Return a compiled function for spot generation.
-    
-    """
-    raise NotImplementedError("TODO! Upgrade this in starry.")
-
-    def _y(ydeg, amp, sigma, lat, lon):
-        """Return the Ylm expansion of a spotted star,
-            normalized so the mean of the *process* is unity.
-        
-        Args:
-            amp: Amplitude of the spot.
-            sigma: Spot size (std. dev. of gaussian).
-            lat: Spot latitude in degrees.
-            lon: Spot longitude in degrees.
-        """
-        map = starry.Map(ydeg)
-        map.add_spot(amp=sign * amp, sigma=sigma, lat=lat, lon=lon)
-        y = map.amp * map.y
-        y = tt.set_subtensor(y[0], 0)
-        return y / (1 - amp)
-
-    amp = tt.dscalar()
-    sigma = tt.dscalar()
-    lat = tt.dscalar()
-    lon = tt.dscalar()
-    return theano.function([amp, sigma, lat, lon], _y(ydeg, amp, sigma, lat, lon))

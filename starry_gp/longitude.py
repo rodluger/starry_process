@@ -5,7 +5,9 @@ from scipy.special import gamma
 
 class LongitudeIntegral(TransformIntegral):
     def __init__(self, ydeg):
-        super().__init__(ydeg, cos_alpha=1, sin_alpha=0, cos_gamma=1, sin_gamma=0)
+        super().__init__(
+            ydeg, cos_alpha=1, sin_alpha=0, cos_gamma=1, sin_gamma=0
+        )
         self.set_params()
 
     def _compute_basis_integrals(self):

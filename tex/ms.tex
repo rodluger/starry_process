@@ -267,7 +267,7 @@ where we define the first moment integrals
     %
     \\[1em]
     \label{eq:e2}
-    \mathbf{e_2}(\pmb{\theta}_b, \mathbf{e_1})
+    \mathbf{e_2}(\pmb{\theta}_\xi, \mathbf{e_1})
      & \equiv
     \int
     \xi \,
@@ -312,13 +312,13 @@ and the second moment integrals
     \\[1em]
     %
     \label{eq:E2}
-    \mathbf{E_2}(\pmb{\theta}_b, \mathbf{E_1})
+    \mathbf{E_2}(\pmb{\theta}_\xi, \mathbf{E_1})
      & \equiv
     \int
     \xi^2 \,
     \mathbf{E_1} \,
     \mathbf{E_1}^\top \,
-    p(\xi \, \big| \, \pmb{\theta}_b)
+    p(\xi \, \big| \, \pmb{\theta}_\xi)
     \mathrm{d}\xi
     %
     \\[1em]
@@ -1042,7 +1042,7 @@ The first moment of the spot contrast distribution is given by
 Equation~(\ref{eq:e2}), which may easily be solved analytically:
 %
 \begin{align}
-    \mathbf{e_2}(\pmb{\theta}_b, \mathbf{e_1})
+    \mathbf{e_2}(\pmb{\theta}_\xi, \mathbf{e_1})
      & =
     \int_{-\infty}^1
     \xi \,
@@ -1063,7 +1063,7 @@ The second moment of the spot contrast distribution is given by
 Equation~(\ref{eq:E2}), which also evaluates to a simple closed form:
 %
 \begin{align}
-    \mathbf{E_2}(\pmb{\theta}_b, \mathbf{E_1})
+    \mathbf{E_2}(\pmb{\theta}_\xi, \mathbf{E_1})
      & =
     \int_{-\infty}^1
     \xi^2 \,

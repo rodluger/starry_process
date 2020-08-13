@@ -3,6 +3,29 @@ import numpy as np
 from scipy.special import hyp2f1
 
 
+def get_s(ydeg, r, tol=1e-2, hwhm_max=75):
+    """Return the spot spherical harmonic expansion vector `s(r)`.
+
+    """
+    c0, c1 = get_c0_c1(ydeg, tol=tol, hwhm_max=hwhm_max)
+    r = np.atleast_1d(r)
+    assert len(r.shape) == 1
+    K = r.shape[0]
+    rprime = c0 + c1 * r
+    sm0 = np.zeros((K, ydeg + 1))
+    sm0[:, 0] = 0.5 * rprime
+    for l in range(ydeg + 1):
+        sm0[:, l] -= (
+            rprime
+            * (2 + rprime)
+            / (2 * np.sqrt(2 * l + 1) * (1 + rprime) ** (l + 1))
+        )
+    l = np.arange(ydeg + 1)
+    s = np.zeros((K, (ydeg + 1) * (ydeg + 1)))
+    s[:, l * (l + 1)] = sm0
+    return s
+
+
 class SizeIntegral(object):
     """Marginalizes over the spot size distribution.
 
@@ -32,13 +55,13 @@ class SizeIntegral(object):
         self.i = l * (l + 1)
         self.ij = np.ix_(self.i, self.i)
         self.e = np.zeros(self.N)
-        self.E = np.zeros((self.N, self.N))
+        self.eigE = np.zeros((self.N, self.N))
         self.set_params()
 
-    def set_params(self, mu_r=0.1, nu_r=0.01):
+    def set_params(self, mu=0.1, nu=0.01):
 
         # Get the Beta params
-        alpha, beta = get_alpha_beta(mu_r, nu_r)
+        alpha, beta = get_alpha_beta(mu, nu)
 
         # Shorthand
         c0 = self.c0
@@ -66,26 +89,22 @@ class SizeIntegral(object):
         # Recurse upward in k
         for j in range(2):
             for k in range(2, 5):
-                A = (ab + k - 2) * (1 + c0)
-                B = (
-                    alpha
-                    - (alpha + k) * c1
-                    + beta
-                    + k
-                    + (ab + k - 2) * c0
-                    + (j + 2) * c1
-                    - 2
+                A = ((alpha + beta + k - 2) * (1 + c0)) / (
+                    (alpha + beta - j + k - 2) * lam[k - 1] * c1
                 )
-                C = lam[k - 1] * (ab - j + k - 2) * c1
-                G[j, k] = (A * G[j, k - 2] - B * G[j, k - 1]) / C
+                B = 1.0 / lam[k - 1] - (
+                    (alpha + beta + k - 2) * (1 + c0) + beta * c1
+                ) / ((alpha + beta - j + k - 2) * lam[k - 1] * c1)
+                G[j, k] = A * G[j, k - 2] + B * G[j, k - 1]
 
         # Now recurse upward in j
         for j in range(2, 2 * self.ydeg + 2):
             for k in range(5):
-                A = (ab + k - j) * (1 + c0)
-                B = (ab - 2 * j + k) * (1 + c0) + (alpha - j + k) * c1
-                C = j * (1 + c0 + c1)
-                G[j, k] = (A * G[j - 2, k] - B * G[j - 1, k]) / C
+                A = ((alpha + beta + k - j) * (1 + c0)) / (j * (1 + c0 + c1))
+                B = 1 - (
+                    (alpha + beta + k - j) * (1 + c0) + (alpha + k) * c1
+                ) / (j * (1 + c0 + c1))
+                G[j, k] = A * G[j - 2, k] + B * G[j - 1, k]
 
         # Compact (m = 0) moment matrices
         e = np.zeros(self.ydeg + 1)
@@ -136,7 +155,10 @@ class SizeIntegral(object):
                     * (
                         c0 ** 2 * (2 + c0) ** 2 * H(l + lp + 1, 0)
                         + 4 * c0 * (1 + c0) * (2 + c0) * c1 * H(l + lp + 1, 1)
-                        + 2 * (2 + 3 * c0 * (2 + c0)) * c1 ** 2 * H(l + lp + 1, 2)
+                        + 2
+                        * (2 + 3 * c0 * (2 + c0))
+                        * c1 ** 2
+                        * H(l + lp + 1, 2)
                         + 4 * (1 + c0) * c1 ** 3 * H(l + lp + 1, 3)
                         + c1 ** 4 * H(l + lp + 1, 4)
                     )
@@ -144,13 +166,12 @@ class SizeIntegral(object):
                 E[lp, l] = E[l, lp]
 
         # Assemble the full (sparse) moment matrices
-        self.e[self.i] = s
-        self.E[self.ij] = eigen(S)
+        self.e[self.i] = e
+        self.eigE[self.ij] = eigen(E)
 
     def first_moment(self):
         """
-        Returns the first moment `E[y_lm]` of the spot size 
-        and amplitude distribution.
+        Returns the first moment `E[s]` of the spot size distribution.
 
         """
         return self.e
@@ -158,10 +179,10 @@ class SizeIntegral(object):
     def second_moment(self):
         """
         Returns the eigendecomposition `C` of the second moment 
-        `E[y_lm y_l'm']` of the spot size and amplitude distribution, 
+        `E[s s^T]` of the spot size distribution, 
         such that
 
-            C @ C.T = E[y_lm y_l'm']
+            C @ C.T = E[s s^T]
 
         """
-        return self.E
+        return self.eigE
