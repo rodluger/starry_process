@@ -1,21 +1,21 @@
 from starry_gp.size import get_s, SizeIntegral
-from starry_gp.transform import get_alpha_beta
+from starry_gp.transforms import get_alpha_beta
 import numpy as np
 from scipy.stats import beta as Beta
 
 
-def test_size(ydeg=5, mu=0.1, nu=0.01):
+def test_size(ydeg=5, mu=0.1, nu=0.1):
 
     # Settings
     np.random.seed(0)
     nsamples = int(1e7)
-    atol = 1.0e-6
+    atol = 5.0e-6
 
     # Get analytic integral
-    I = SizeIntegral(ydeg)
-    I.set_params(mu, nu)
-    e = I.first_moment()
-    eigE = I.second_moment()
+    I = SizeIntegral(ydeg=ydeg)
+    I._set_params(mu, nu)
+    e = I._first_moment()
+    eigE = I._second_moment()
     E = eigE @ eigE.T
 
     # Integrate numerically

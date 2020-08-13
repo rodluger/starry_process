@@ -1,4 +1,5 @@
-from .transform import eigen, get_c0_c1, get_alpha_beta
+from .integrals import MomentIntegral
+from .transforms import eigen, get_c0_c1, get_alpha_beta
 import numpy as np
 from scipy.special import hyp2f1
 
@@ -26,7 +27,7 @@ def get_s(ydeg, r, tol=1e-2, hwhm_max=75):
     return s
 
 
-class SizeIntegral(object):
+class SizeIntegral(MomentIntegral):
     """Marginalizes over the spot size distribution.
 
     Computes the first two moments of the distribution over spherical
@@ -46,19 +47,16 @@ class SizeIntegral(object):
 
     """
 
-    def __init__(self, ydeg, tol=1e-2, hwhm_max=75):
-        self.ydeg = ydeg
-        self.c0, self.c1 = get_c0_c1(ydeg, tol=tol, hwhm_max=hwhm_max)
+    def _precompute(self, tol=1e-2, hwhm_max=75, **kwargs):
+        self.c0, self.c1 = get_c0_c1(self.ydeg, tol=tol, hwhm_max=hwhm_max)
         self.z = -self.c1 / (1 + self.c0)
-        self.N = (ydeg + 1) ** 2
-        l = np.arange(ydeg + 1)
+        l = np.arange(self.ydeg + 1)
         self.i = l * (l + 1)
         self.ij = np.ix_(self.i, self.i)
-        self.e = np.zeros(self.N)
-        self.eigE = np.zeros((self.N, self.N))
-        self.set_params()
+        self._e = np.zeros(self.N)
+        self._eigE = np.zeros((self.N, self.N))
 
-    def set_params(self, mu=0.1, nu=0.01):
+    def _set_params(self, mu, nu):
 
         # Get the Beta params
         alpha, beta = get_alpha_beta(mu, nu)
@@ -166,23 +164,11 @@ class SizeIntegral(object):
                 E[lp, l] = E[l, lp]
 
         # Assemble the full (sparse) moment matrices
-        self.e[self.i] = e
-        self.eigE[self.ij] = eigen(E)
+        self._e[self.i] = e
+        self._eigE[self.ij] = eigen(E)
 
-    def first_moment(self):
-        """
-        Returns the first moment `E[s]` of the spot size distribution.
+    def _first_moment(self):
+        return self._e
 
-        """
-        return self.e
-
-    def second_moment(self):
-        """
-        Returns the eigendecomposition `C` of the second moment 
-        `E[s s^T]` of the spot size distribution, 
-        such that
-
-            C @ C.T = E[s s^T]
-
-        """
-        return self.eigE
+    def _second_moment(self):
+        return self._eigE

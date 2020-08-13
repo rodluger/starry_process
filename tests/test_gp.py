@@ -1,6 +1,7 @@
 from starry_gp.gp import YlmGP
-from starry_gp.transform import get_alpha_beta
-from numerical import spot
+from starry_gp.transforms import get_alpha_beta
+from starry_gp.wigner import R
+from starry_gp.size import get_s
 import numpy as np
 from tqdm import tqdm
 from scipy.stats import beta as Beta
@@ -11,51 +12,78 @@ def test_moments():
 
     # Settings
     ydeg = 5
-    atol = 5e-2
-    mu_lat = 0.9
-    nu_lat = 0.1
-    mu_r = 0.05
-    nu_r = 0.1
-    mu_b = np.log(0.3)
-    nu_b = 0.1
+    atol = 1e-4
+    size = (0.1, 0.1)  # mean, variance
+    contrast = (-0.1, 0.01)  # mean, variance
+    latitude = (0.5, 0.1)  # mean, variance
     np.random.seed(0)
-    nsamples = 100000
+    nsamples = int(1e5)
 
     # Integrate analytically
     gp = YlmGP(ydeg)
-    gp.set_params(mu_lat, nu_lat, mu_r, nu_r, mu_b, nu_b)
-    mu = gp.mu
+    gp.size.set_params(*size)
+    gp.contrast.set_params(*contrast)
+    gp.latitude.set_params(*latitude)
+    mu = gp.mean
     cov = gp.cov
 
     # Integrate numerically
-    y = np.zeros((nsamples, (ydeg + 1) ** 2))
-    alpha_lat, beta_lat = get_alpha_beta(mu_lat, nu_lat)
-    alpha_r, beta_r = get_alpha_beta(mu_r, nu_r)
+
+    # Draw the spot size
+    alpha_r, beta_r = get_alpha_beta(*size)
+    r = Beta.rvs(alpha_r, beta_r, size=nsamples)
+
+    # Draw the spot amplitude
+    xi = 1 - LogNormal.rvs(
+        scale=np.exp(contrast[0]), s=np.sqrt(contrast[1]), size=nsamples
+    )
+
+    # Draw the latitude
+    alpha_lat, beta_lat = get_alpha_beta(*latitude)
+    lat = np.arccos(Beta.rvs(alpha_lat, beta_lat, size=nsamples))
+    lat *= 2.0 * (
+        np.array(np.random.random(size=nsamples) > 0.5, dtype=int) - 0.5
+    )
+
+    # Draw the longitude
+    lon = 2 * np.pi * np.random.random(size=nsamples)
+
+    # Integrate numerically by sampling
+    N = (ydeg + 1) ** 2
+    y = np.empty((nsamples, N))
     for n in tqdm(range(nsamples)):
 
-        # Draw the spot size
-        r = Beta.rvs(alpha_r, beta_r, size=nsamples)
+        # Compute the spot expansion at (0, 0)
+        s = get_s(ydeg, r[n]).reshape(-1)
 
-        # Draw the spot amplitude
-        delta = 1 - LogNormal.rvs(s=np.sqrt(nu_b), scale=np.exp(mu_b), size=nsamples)
+        # Rotation in latitude
+        Rx = R(
+            ydeg,
+            phi=lat[n],
+            cos_alpha=0,
+            sin_alpha=1,
+            cos_gamma=0,
+            sin_gamma=-1,
+        )
 
-        # Draw the latitude
-        lat = np.arccos(Beta.rvs(alpha_lat, beta_lat)) * 180.0 / np.pi
-        lat *= 2.0 * (int(np.random.random() > 0.5) - 0.5)
+        # Rotation in longitude
+        Ry = R(
+            ydeg,
+            phi=lon[n],
+            cos_alpha=1,
+            sin_alpha=0,
+            cos_gamma=1,
+            sin_gamma=0,
+        )
 
-        # Draw the longitude
-        lon = 360.0 * np.random.random()
+        # Apply the transformations
+        for l in range(ydeg + 1):
+            i = slice(l ** 2, (l + 1) ** 2)
+            y[n, i] = xi[n] * (Ry[l] @ (Rx[l] @ s[i]))
 
-        # Compute the spot expansion (TODO)
-        raise NotImplementedError("TODO!")
-
-    mu_num = np.mean(y, axis=0)[1:]
-    cov_num = np.cov(y.T)[1:, 1:]
+    mu_num = np.mean(y, axis=0)
+    cov_num = np.cov(y.T)
 
     # Compare
     assert np.allclose(mu, mu_num, atol=atol)
     assert np.allclose(cov, cov_num, atol=atol)
-
-
-if __name__ == "__main__":
-    test_moments()

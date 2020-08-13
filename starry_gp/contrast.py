@@ -1,7 +1,8 @@
+from .integrals import MomentIntegral
 import numpy as np
 
 
-class ContrastIntegral(object):
+class ContrastIntegral(MomentIntegral):
     """Marginalizes over the spot contrast distribution.
 
     Computes the first two moments of the distribution over spherical
@@ -17,30 +18,18 @@ class ContrastIntegral(object):
 
     """
 
-    def __init__(self, ydeg):
-        self.ydeg = ydeg
-        self.fac1 = 0
-        self.fac2 = 0
-        self.set_params()
+    def _precompute(self, **kwargs):
+        pass
 
-    def set_params(self, mu=-0.1, nu=0.01):
+    def _set_params(self, mu, nu):
+        assert nu > 0, "variance must be positive."
         self.fac1 = 1 - np.exp(mu + 0.5 * nu)
         self.fac2 = np.sqrt(
             1 - 2 * np.exp(mu + 0.5 * nu) + np.exp(2 * mu + 2 * nu)
         )
 
-    def first_moment(self, e):
-        """
-        Returns the first moment of the spot contrast 
-        distribution.
-
-        """
+    def _first_moment(self, e):
         return self.fac1 * e
 
-    def second_moment(self, eigE):
-        """
-        Returns the eigendecomposition of the second moment 
-        of the spot contrast distribution.
-
-        """
+    def _second_moment(self, eigE):
         return self.fac2 * eigE

@@ -17,11 +17,11 @@ def test_contrast(ydeg=5, mu=-0.1, nu=0.01):
     eigS = np.random.randn(N, N) / N
     S = eigS @ eigS.T
 
-    # Get analytic integral
-    I = ContrastIntegral(ydeg)
-    I.set_params(mu, nu)
-    e = I.first_moment(s)
-    eigE = I.second_moment(eigS)
+    # Get analytic integrals
+    I = ContrastIntegral(ydeg=ydeg)
+    I._set_params(mu, nu)
+    e = I._first_moment(s)
+    eigE = I._second_moment(eigS)
     E = eigE @ eigE.T
 
     # Integrate numerically
