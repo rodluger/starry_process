@@ -79,10 +79,22 @@ class SizeIntegral(MomentIntegral):
         H = lambda j, k: np.prod(lam[:k]) * G[j, k]
 
         # Compute the first four terms explicitly
-        G[0, 0] = hyp2f1(1, alpha, ab, self.z)
-        G[0, 1] = hyp2f1(1, alpha + 1, ab + 1, self.z)
-        G[1, 0] = hyp2f1(2, alpha, ab, self.z)
-        G[1, 1] = hyp2f1(2, alpha + 1, ab + 1, self.z)
+        if False:
+            # Outside radius of convergence!
+            G[0, 0] = hyp2f1(1, alpha, ab, self.z)
+            G[0, 1] = hyp2f1(1, alpha + 1, ab + 1, self.z)
+            G[1, 0] = hyp2f1(2, alpha, ab, self.z)
+            G[1, 1] = hyp2f1(2, alpha + 1, ab + 1, self.z)
+
+        else:
+            # TODO: Check this
+            # https://functions.wolfram.com/HypergeometricFunctions/Hypergeometric2F1/16/01/01/0002/
+            zbar = self.z / (self.z - 1)
+            norm = 1.0 / (1 - self.z)
+            G[0, 0] = hyp2f1(1, beta, ab, zbar) * norm
+            G[0, 1] = hyp2f1(1, beta, ab + 1, zbar) * norm
+            G[1, 0] = hyp2f1(2, beta, ab, zbar) * norm ** 2
+            G[1, 1] = hyp2f1(2, beta, ab + 1, zbar) * norm ** 2
 
         # Recurse upward in k
         for j in range(2):
