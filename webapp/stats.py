@@ -1,7 +1,14 @@
 import numpy as np
 from scipy.special import gamma
 
-__all__ = ["params", "ContrastPDF", "SizePDF", "LatitudePDF"]
+__all__ = [
+    "params",
+    "ContrastPDF",
+    "SizePDF",
+    "LatitudePDF",
+    "IdentityTransform",
+    "AlphaBetaTransform",
+]
 
 
 params = {
@@ -14,10 +21,20 @@ params = {
         "nu": {"start": 0.01, "stop": 0.99, "step": 0.01, "value": 0.1},
     },
     "contrast": {
-        "mu": {"start": -1, "stop": 1, "step": 0.01, "value": 0.1},
+        "mu": {"start": -5, "stop": 1, "step": 0.01, "value": 0.0},
         "nu": {"start": 0.01, "stop": 1.0, "step": 0.01, "value": 0.01},
     },
 }
+
+
+def IdentityTransform(*args):
+    return args
+
+
+def AlphaBetaTransform(mu, nu):
+    alpha = mu * (1 / nu - 1)
+    beta = (1 - mu) * (1 / nu - 1)
+    return alpha, beta
 
 
 def ContrastPDF(x, mu, nu):
@@ -29,8 +46,7 @@ def ContrastPDF(x, mu, nu):
 
 
 def SizePDF(x, mu, nu):
-    alpha = mu * (1 / nu - 1)
-    beta = (1 - mu) * (1 / nu - 1)
+    alpha, beta = AlphaBetaTransform(mu, nu)
     return (
         gamma(alpha + beta)
         / (gamma(alpha) * gamma(beta))
@@ -40,8 +56,7 @@ def SizePDF(x, mu, nu):
 
 
 def LatitudePDF(x, mu, nu):
-    alpha = mu * (1 / nu - 1)
-    beta = (1 - mu) * (1 / nu - 1)
+    alpha, beta = AlphaBetaTransform(mu, nu)
     return (
         gamma(alpha + beta)
         / (gamma(alpha) * gamma(beta))

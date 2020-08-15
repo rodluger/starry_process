@@ -28,7 +28,7 @@ def get_design_matrix(ydeg, npix=50):
         lat = lat.flatten() * 180 / np.pi
         lon = lon.flatten() * 180 / np.pi
         map = starry.Map(ydeg, lazy=False)
-        A = map.intensity_design_matrix(lat=lat, lon=lon)
+        A = np.pi * map.intensity_design_matrix(lat=lat, lon=lon)
         np.savetxt(file, A)
 
     # Else load from disk
