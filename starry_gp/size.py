@@ -27,6 +27,79 @@ def get_s(ydeg, r, tol=1e-2, hwhm_max=75):
     return s
 
 
+def get_G(alpha, beta, c0, c1, jmax, tol=1e-6):
+    """
+    Return the hypergeometric G_j^k matrix,
+    computed via tridiagonal recursion.
+
+    """
+    # Shorthand
+    z = -c1 / (1.0 + c0)
+    ab = alpha + beta
+    lam = np.array(
+        [
+            alpha / ab,
+            (alpha + 1) / (ab + 1),
+            (alpha + 2) / (ab + 2),
+            (alpha + 3) / (ab + 3),
+        ]
+    )
+
+    # The exact function, computed numerically
+    G_num = (
+        lambda j, k: hyp2f1(1 + j, alpha + k, ab + k, z)
+        if np.abs(z) < 1
+        else hyp2f1(1 + j, beta, ab + k, z / (z - 1)) * pow(1 - z, -j - 1)
+    )
+
+    # The recursion coefficients
+    a = lambda j, k: -((alpha + beta + k - j) * (1 + c0)) / (j * (1 + c0 + c1))
+    b = lambda j, k: -(
+        1
+        - ((alpha + beta + k - j) * (1 + c0) + (alpha + k) * c1)
+        / (j * (1 + c0 + c1))
+    )
+
+    # Boundary conditions
+    G = np.zeros((jmax + 1, 5))
+    G[0, 0] = G_num(0, 0)
+    G[0, 1] = G_num(0, 1)
+    G[jmax, 0] = G_num(jmax, 0)
+    G[jmax, 1] = G_num(jmax, 1)
+
+    # Recurse upward in k
+    for j in [0, jmax]:
+        for k in range(2, 5):
+            # Be careful about division by zero here
+            if np.abs(alpha + beta - j + k - 2) < tol:
+                G[j, k] = G_num(j, k)
+            else:
+                ak = ((alpha + beta + k - 2) * (1 + c0)) / (
+                    (alpha + beta - j + k - 2) * lam[k - 1] * c1
+                )
+                bk = 1.0 / lam[k - 1] - (
+                    (alpha + beta + k - 2) * (1 + c0) + beta * c1
+                ) / ((alpha + beta - j + k - 2) * lam[k - 1] * c1)
+                G[j, k] = ak * G[j, k - 2] + bk * G[j, k - 1]
+
+    # Recurse along the j dimension
+    for k in range(5):
+        # The tridiagonal matrix system, M G = c
+        M = (
+            np.diag([1 for j in range(2, jmax)], k=1)
+            + np.diag([b(j, k) for j in range(2, jmax + 1)])
+            + np.diag([a(j, k) for j in range(3, jmax + 1)], k=-1)
+        )
+        c = np.zeros(jmax - 1)
+        c[0] = -a(2, k) * G[0, k]
+        c[-1] = -G[jmax, k]
+
+        # Solve it
+        G[1:-1, k] = np.linalg.solve(M, c)
+
+    return G
+
+
 class SizeIntegral(MomentIntegral):
     """Marginalizes over the spot size distribution.
 
@@ -49,7 +122,6 @@ class SizeIntegral(MomentIntegral):
 
     def _precompute(self, tol=1e-2, hwhm_max=75, **kwargs):
         self.c0, self.c1 = get_c0_c1(self.ydeg, tol=tol, hwhm_max=hwhm_max)
-        self.z = -self.c1 / (1 + self.c0)
         l = np.arange(self.ydeg + 1)
         self.i = l * (l + 1)
         self.ij = np.ix_(self.i, self.i)
@@ -75,46 +147,8 @@ class SizeIntegral(MomentIntegral):
         )
 
         # Hypergeometric sequence
-        G = np.empty((2 * self.ydeg + 2, 5))
+        G = get_G(alpha, beta, c0, c1, 2 * self.ydeg + 1)
         H = lambda j, k: np.prod(lam[:k]) * G[j, k]
-
-        # Compute the first four terms explicitly
-        if False:
-            # Outside radius of convergence!
-            G[0, 0] = hyp2f1(1, alpha, ab, self.z)
-            G[0, 1] = hyp2f1(1, alpha + 1, ab + 1, self.z)
-            G[1, 0] = hyp2f1(2, alpha, ab, self.z)
-            G[1, 1] = hyp2f1(2, alpha + 1, ab + 1, self.z)
-
-        else:
-            # TODO: Check this
-            # https://functions.wolfram.com/HypergeometricFunctions/Hypergeometric2F1/16/01/01/0002/
-            zbar = self.z / (self.z - 1)
-            norm = 1.0 / (1 - self.z)
-            G[0, 0] = hyp2f1(1, beta, ab, zbar) * norm
-            G[0, 1] = hyp2f1(1, beta, ab + 1, zbar) * norm
-            G[1, 0] = hyp2f1(2, beta, ab, zbar) * norm ** 2
-            G[1, 1] = hyp2f1(2, beta, ab + 1, zbar) * norm ** 2
-
-        # Recurse upward in k
-        for j in range(2):
-            for k in range(2, 5):
-                A = ((alpha + beta + k - 2) * (1 + c0)) / (
-                    (alpha + beta - j + k - 2) * lam[k - 1] * c1
-                )
-                B = 1.0 / lam[k - 1] - (
-                    (alpha + beta + k - 2) * (1 + c0) + beta * c1
-                ) / ((alpha + beta - j + k - 2) * lam[k - 1] * c1)
-                G[j, k] = A * G[j, k - 2] + B * G[j, k - 1]
-
-        # Now recurse upward in j
-        for j in range(2, 2 * self.ydeg + 2):
-            for k in range(5):
-                A = ((alpha + beta + k - j) * (1 + c0)) / (j * (1 + c0 + c1))
-                B = 1 - (
-                    (alpha + beta + k - j) * (1 + c0) + (alpha + k) * c1
-                ) / (j * (1 + c0 + c1))
-                G[j, k] = A * G[j - 2, k] + B * G[j - 1, k]
 
         # Compact (m = 0) moment matrices
         e = np.zeros(self.ydeg + 1)

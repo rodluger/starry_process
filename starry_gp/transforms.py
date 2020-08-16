@@ -58,7 +58,7 @@ def min_rprime(ydeg, tol=1e-2):
     """
     f = lambda rprime: (peak_error(ydeg, rprime) - tol) ** 2
     res = minimize(f, 0.25)
-    return res.x
+    return res.x[0]
 
 
 def max_rprime(hmwhm_max=75):
@@ -68,7 +68,7 @@ def max_rprime(hmwhm_max=75):
     """
     f = lambda rprime: (hwhm(rprime) - hmwhm_max) ** 2
     res = minimize(f, 10)
-    return res.x
+    return res.x[0]
 
 
 def get_c0_c1(ydeg, tol=1e-2, hwhm_max=75):

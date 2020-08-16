@@ -14,7 +14,7 @@ __all__ = [
 params = {
     "latitude": {
         "mu": {"start": 0.01, "stop": 0.99, "step": 0.01, "value": 0.95},
-        "nu": {"start": 0.01, "stop": 0.99, "step": 0.01, "value": 0.1},
+        "nu": {"start": 0.01, "stop": 0.99, "step": 0.01, "value": 0.01},
     },
     "size": {
         "mu": {"start": 0.01, "stop": 0.99, "step": 0.01, "value": 0.1},

@@ -312,6 +312,7 @@ class Application(object):
 
         # Add to the current document
         curdoc().add_root(self.layout)
+        curdoc().title = "starry gaussian process"
 
 
 Application()
