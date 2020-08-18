@@ -177,7 +177,7 @@ As we are specifically interested in modeling the effect of star spots
 on stellar light curves, we let
 %
 \begin{align}
-    \mathbf{x} = \left( \lambda \,\, \phi \,\, \xi \,\, r \right)^\top
+    \mathbf{x} = \left( \xi \,\, \lambda \,\, \phi \,\, \rho \right)^\top
 \end{align}
 %
 and
@@ -185,18 +185,20 @@ and
 \begin{align}
     \label{eq:RRs}
     \mathbf{y}(\mathbf{x}) =
+    \xi
+    \,
     \mathbf{R}_{\hat{\mathbf{y}}}(\lambda)
     \,
     \mathbf{R}_{\hat{\mathbf{x}}}(\phi)
     \,
-    \xi
-    \,
-    \mathbf{s}(r)
+    \mathbf{s}(\rho)
     \quad,
 \end{align}
 %
-where $\lambda$ is the longitude of a spot, $\phi$ is its latitude, $\xi$
-is its contrast, and $r$ is its radius. The vector function $\mathbf{s}(r)$
+where $\xi$ is the contrast of a spot,
+$\lambda$ is its longitude, $\phi$ is its latitude,
+and $\rho$ is its radius.
+The vector function $\mathbf{s}(\rho)$
 returns the spherical harmonic expansion of a negative unit brightness
 circular spot at $\lambda = \phi = 0$,
 $\mathbf{R}_{\hat{\mathbf{x}}}(\phi)$ is the Wigner matrix that rotates the
@@ -221,10 +223,10 @@ is separable in each of the four spot properties:
 \begin{align}
     p(\mathbf{x} \, \big| \, \pmb{\theta})
     =
+    p(\xi \, \big| \, \pmb{\theta}_{\xi}) \,
     p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi})\,
-    p(\xi \, \big| \, \pmb{\theta}_{\xi}) \,
-    p(r \, \big| \, \pmb{\theta}_{r})
+    p(\rho \, \big| \, \pmb{\theta}_{\rho})
     \quad,
 \end{align}
 %
@@ -232,10 +234,10 @@ where
 %
 \begin{align}
     \pmb{\theta} = \left(
+    \pmb{\theta}_{\xi} \, \,
     \pmb{\theta}_{\lambda} \, \,
     \pmb{\theta}_{\phi} \, \,
-    \pmb{\theta}_{\xi} \, \,
-    \pmb{\theta}_{r} \right)^\top
+    \pmb{\theta}_{\rho} \right)^\top
     \quad.
 \end{align}
 %
@@ -258,94 +260,94 @@ where we define the first moment integrals
 %
 \begin{align}
     \label{eq:e1}
-    \mathbf{e_1}(\pmb{\theta}_r)
+    \mathbf{e_1}(\pmb{\theta}_\rho)
      & \equiv
     \int
-    \mathbf{s}(r) \,
-    p(r \, \big| \, \pmb{\theta}_{r}) \,
-    \mathrm{d}r
+    \mathbf{s}(\rho) \,
+    p(\rho \, \big| \, \pmb{\theta}_{\rho}) \,
+    \mathrm{d}\rho
     %
     \\[1em]
+    %
     \label{eq:e2}
-    \mathbf{e_2}(\pmb{\theta}_\xi, \mathbf{e_1})
-     & \equiv
-    \int
-    \xi \,
-    \mathbf{e_1} \,
-    p(\xi \, \big| \, \pmb{\theta}_{\xi}) \,
-    \mathrm{d}\xi
-    %
-    \\[1em]
-    %
-    \label{eq:e3}
-    \mathbf{e_3}(\pmb{\theta}_\phi, \mathbf{e_2})
+    \mathbf{e_2}(\pmb{\theta}_\phi, \mathbf{e_1})
      & \equiv
     \int
     \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{e_2} \,
+    \mathbf{e_1} \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
     %
     \\[1em]
     %
-    \label{eq:e4}
-    \mathbf{e_4}(\pmb{\theta}_\lambda, \mathbf{e_3})
+    \label{eq:e3}
+    \mathbf{e_3}(\pmb{\theta}_\lambda, \mathbf{e_2})
      & \equiv
     \int
     \mathbf{R}_{\hat{\mathbf{y}}}(\lambda) \,
-    \mathbf{e_3} \,
+    \mathbf{e_2} \,
     p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
     \mathrm{d}\lambda
+    \\[1em]
+    \label{eq:e4}
+    \mathbf{e_4}(\pmb{\theta}_\xi, \mathbf{e_3})
+     & \equiv
+    \int
+    \xi \,
+    \mathbf{e_3} \,
+    p(\xi \, \big| \, \pmb{\theta}_{\xi}) \,
+    \mathrm{d}\xi
+    %
 \end{align}
 %
 and the second moment integrals
 %
 \begin{align}
     \label{eq:E1}
-    \mathbf{E_1}(\pmb{\theta}_r)
+    \mathbf{E_1}(\pmb{\theta}_\rho)
      & \equiv
     \int
-    \mathbf{s}(r) \, \mathbf{s}^\top(r) \,
-    p(r \, \big| \, \pmb{\theta}_{r}) \,
-    \mathrm{d}r
+    \mathbf{s}(\rho) \, \mathbf{s}^\top(\rho) \,
+    p(\rho \, \big| \, \pmb{\theta}_{\rho}) \,
+    \mathrm{d}\rho
     %
     \\[1em]
     %
     \label{eq:E2}
-    \mathbf{E_2}(\pmb{\theta}_\xi, \mathbf{E_1})
-     & \equiv
-    \int
-    \xi^2 \,
-    \mathbf{E_1} \,
-    \mathbf{E_1}^\top \,
-    p(\xi \, \big| \, \pmb{\theta}_\xi)
-    \mathrm{d}\xi
-    %
-    \\[1em]
-    %
-    \label{eq:E3}
-    \mathbf{E_3}(\pmb{\theta}_\phi, \mathbf{E_2})
+    \mathbf{E_2}(\pmb{\theta}_\phi, \mathbf{E_1})
      & \equiv
     \int
     \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{E_2} \,
-    \mathbf{E_2}^\top \,
+    \mathbf{E_1} \,
+    \mathbf{E_1}^\top \,
     \mathbf{R}_{\hat{\mathbf{x}}}^\top(\phi) \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi})
     \mathrm{d}\phi
     %
     \\[1em]
     %
-    \label{eq:E4}
-    \mathbf{E_4}(\pmb{\theta}_\lambda, \mathbf{E_3})
+    \label{eq:E3}
+    \mathbf{E_3}(\pmb{\theta}_\lambda, \mathbf{E_2})
      & \equiv
     \int
     \mathbf{R}_{\hat{\mathbf{y}}}(\lambda) \,
-    \mathbf{E_3} \,
-    \mathbf{E_3}^\top \,
+    \mathbf{E_2} \,
+    \mathbf{E_2}^\top \,
     \mathbf{R}_{\hat{\mathbf{y}}}^\top(\lambda) \,
     p(\lambda \, \big| \, \pmb{\theta}_{\lambda})
     \mathrm{d}\phi
+    \\[1em]
+    %
+    \label{eq:E4}
+    \mathbf{E_4}(\pmb{\theta}_\xi, \mathbf{E_3})
+     & \equiv
+    \int
+    \xi^2 \,
+    \mathbf{E_3} \,
+    \mathbf{E_3}^\top \,
+    p(\xi \, \big| \, \pmb{\theta}_\xi)
+    \mathrm{d}\xi
+    %
     \quad.
 \end{align}
 %
@@ -357,6 +359,9 @@ integrals.
 \label{sec:size}
 %
 \subsection{Functional form}
+%
+
+\subsubsection{$l_{\mathrm{max}} = \infty$}
 \label{sec:size-function}
 %
 We adopt the following expression for the $n^{\mathrm{th}}$ term in $\mathbf{s}$
@@ -364,32 +369,29 @@ in the expansion of a dark, unit contrast circular spot at
 $\lambda = \phi = 0$:
 %
 \begin{align}
-    \label{eq:s}
-    s_{n}(r) =
+    \label{eq:sinf}
+    s_{n}^\infty(\rho) =
     \begin{cases}
-        \dfrac{r' \delta_{l0}}{2}
-        -\dfrac{r' \left( 2 + r' \right)}
-        {2 \sqrt{2l + 1} (1 + r')^{l + 1}}
-         & m = 0
-        \\
+        -\dfrac{\rho}{2(1 + \rho)}
+         & l = m = 0
+        \\[1em]
+        -\dfrac{\rho \left( 2 + \rho \right)}
+        {2 \sqrt{2l + 1} (1 + \rho)^{l + 1}}
+         & l > 0, \, m = 0
+        \\[1em]
         0
          & \mathrm{otherwise}
     \end{cases}
 \end{align}
 %
 where
-$l = l(n), m = m(n)$ (Equation~\ref{eq:lm}) and
-$\delta$ is the Kronecker delta. The parameter $r'$ is defined as
-%
-\begin{align}
-    \label{eq:rprime}
-    r' \equiv c_0 + c_1 r
-    \quad,
-\end{align}
-%
-where $c_0, c_1 > 0$ are scaling constants (defined in more detail below)
-and $r \in [0, 1]$ is the normalized spot radius.
-The expression in Equation~(\ref{eq:s}) is convenient because it satisfies
+$l = l(n), m = m(n)$ (Equation~\ref{eq:lm}),
+$\delta$ is the Kronecker delta,
+$\rho \in [0, \infty)$ is the spot radius,
+and the $\infty$ superscript denotes the fact that this expression
+is valid in the limit $l_{\mathrm{max}} \rightarrow \infty$
+(more on this below).
+Equation~(\ref{eq:sinf}) is convenient because it satisfies
 five important properties:
 %
 \begin{enumerate}[itemsep=2pt,parsep=1pt,label=\textbf{\arabic*}]
@@ -397,7 +399,7 @@ five important properties:
     \item The surface intensity monotonically increases away from the spot center
     \item The surface intensity at the spot center is $-1$
     \item The surface intensity at the antipode of the spot center is zero
-    \item The size of the spot increases monotonically with $r$
+    \item The size of the spot increases monotonically with $\rho$
 \end{enumerate}
 %
 These properties may be demonstrated by considering the
@@ -409,10 +411,10 @@ azimuth $\varphi$:
         I(\theta, \varphi)
         & =
         \sum\limits_{n=0}^\infty
-        s_{n} Y_{n}(\theta, \varphi) \\
+        s_{n}^\infty Y_{n}(\theta, \varphi) \\
         & =
         \sum\limits_{n=0}^\infty
-        s_{n} \sqrt{2l + 1} \delta_{m0} P_l(\cos\theta)
+        s_{n}^\infty \sqrt{2l + 1} \delta_{m0} P_l(\cos\theta)
     \end{split}
 \end{align}
 %
@@ -427,17 +429,17 @@ a consequence of the fact that all harmonics with $m \ne 0$ are zero; this
 expansion is therefore azimuthally symmetric about the spot center, as
 stated in \textbf{1}.
 %
-Combining the above expression with Equation~(\ref{eq:s}) and
+Combining the above expression with Equation~(\ref{eq:sinf}) and
 rearranging, we may write
 %
 \begin{align}
     \label{eq:Igen}
     I(\theta, \varphi) =
     I(\theta) =
-    \dfrac{r'}{2}
+    \dfrac{\rho}{2}
     -
-    \dfrac{r' \left( 2 + r' \right)}{2 (1 + r')}
-    \sum\limits_{l=0}^\infty \left(\dfrac{1}{1 + r'}\right)^l P_l(\cos\theta)
+    \dfrac{\rho \left( 2 + \rho \right)}{2 (1 + \rho)}
+    \sum\limits_{l=0}^\infty \left(\dfrac{1}{1 + \rho}\right)^l P_l(\cos\theta)
     \quad.
 \end{align}
 %
@@ -462,9 +464,9 @@ in the fairly simple form
     \intertext{where}
     %
     \begin{split}
-        A & = \dfrac{r'}{2}                      \\
-        B & = r' (2 + r') \sqrt{\dfrac{1}{8 + 8 r'}} \\
-        C & = \dfrac{1 + (1 + r')^2}{2 + 2 r'}
+        A & = \dfrac{\rho}{2}                      \\
+        B & = \rho (2 + \rho) \sqrt{\dfrac{1}{8 + 8 \rho}} \\
+        C & = \dfrac{1 + (1 + \rho)^2}{2 + 2 \rho}
     \end{split}
 \end{align}
 %
@@ -516,112 +518,101 @@ Solving for $\Delta\theta$ yields
 \begin{align}
     \label{eq:hwhm}
     \Delta\theta =
-    \cos^{-1} \left[ \dfrac{2 + 3 r' (2 + r')}{2 (1 + r')^3} \right]
+    \cos^{-1} \left[ \dfrac{2 + 3 \rho (2 + \rho)}{2 (1 + \rho)^3} \right]
     \quad.
 \end{align}
 %
-Differentiation with respect to $r'$ yields
+Differentiation with respect to $r$ yields
 %
 \begin{align}
-    \dfrac{\mathrm{d}\Delta\theta}{\mathrm{d}r'} =
-    \frac{3}{\left(1 + r'\right)
-        \sqrt{\left(1 + 2 r'\right)
-            \left(3 + 2 r'\right)}}
+    \dfrac{\mathrm{d}\Delta\theta}{\mathrm{d}\rho} =
+    \frac{3}{\left(1 + \rho\right)
+        \sqrt{\left(1 + 2 \rho\right)
+            \left(3 + 2 \rho\right)}}
     \quad,
 \end{align}
 %
-which is positive definite for all $r' > 0$.
-
-\begin{figure}[p!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/hwhm.pdf}
-        \oscaption{hwhm}{%
-            \emph{Left.} The width $\Delta\theta$
-            (Equation~\ref{eq:hwhm}) of the
-            spot as a function of the radius parameter $r'$ (bottom axis)
-            and the normalized radius $r$ (top axis), computed for
-            $l_{\mathrm{max}} = 20$. The green dots indicate the
-            minimum value of $r'$ for which the fractional error in the
-            spot intensity due
-            to the truncated expansion is less than one percent
-            and the value of $r'$ corresponding to
-            $\Delta\theta = 75^\circ$, respectively. These points correspond to
-            the minimum and maximum spot sizes we consider at
-            $l_{\mathrm{max}} = 20$
-            (blue shading). Note that
-            in this regime, the width of the spot scales approximately
-            logarithmically with $r'$.
-            %
-            \emph{Right.} The spot width $\Delta\theta$ below which the
-            fractional error in the intensity exceeds various thresholds
-            as a function of maximum spherical harmonic degree
-            $l_{\mathrm{max}}$. The value of $\Delta\theta$ for a tolerance
-            of one percent at $l_{\mathrm{max}} = 20$ is indicated as the
-            green dot for reference.
-            \label{fig:hwhm}
-        }
-    \end{centering}
-\end{figure}
+which is positive definite for all $\rho > 0$.
 
 \begin{figure}[p!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/spot_expansion.pdf}
         \oscaption{spot_expansion}{%
+            \emph{Top.}
             Polar intensity profiles for spots with different normalized
-            radii $r$ in the range $(0, 1]$, computed at spherical harmonic
-            degree $l_{\mathrm{max}} = 20$. Dotted black curves show profiles
-            corresponding to $r < 0$ (corresponding to $r' < c_0$
-            in Equation~\ref{eq:rprime}), for which the expansion does
-            not converge, leading to ringing and a smaller spot contrast.
+            radii $\rho$ in the range $(0, 1]$, computed at spherical harmonic
+            degree $l_{\mathrm{max}} = \LMAX$.
+            \emph{Bottom.}
+            The width $\Delta\theta$
+            (Equation~\ref{eq:hwhm}) of the
+            spot as a function of the radius parameter $r$ (left panel)
+            and the normalized radius $\rho$ (right panel), computed for
+            $l_{\mathrm{max}} = \LMAX$.
             \label{fig:spot_expansion}
         }
     \end{centering}
 \end{figure}
 
+\subsubsection{Finite $l_{\mathrm{max}}$}
+%
 It is important to note that the
 properties of the spot expansion described above
 (in particular its monotonicity and values at the spot center and antipode)
 are inherited from the generating function of the Legendre polynomials
 (Equation~\ref{eq:gen}). These properties are therefore only rigorously
 true when the expansion is taken to spherical
-harmonic degree $l_{\mathrm{max}} = \infty$. For truncated expansions,
-a value of $r'$ in Equation~(\ref{eq:s}) that is too small will lead
-to both ringing and a value at the spot center that is in general larger
-than $-1$.
+harmonic degree $l_{\mathrm{max}} = \infty$. Expansions truncated to finite
+$l_{\mathrm{max}}$ will in general experience ringing and a spot amplitude
+whose (absolute) value is in general smaller than unity.
 
-To circumvent these issues, we impose a minimum radius
-$r'_{\mathrm{min}}$, whose value is
-a function of the degree of the expansion. Since the normalized spot radius
-$r$ is defined in the range $[0, 1]$ (Equation~\ref{eq:rprime}), this
-minimum value is equal to $c_0$. We compute $c_0 = c_0(l_{\mathrm{max}})$
-by numerically finding the
-value of $r'$ below which the fractional error in the intensity at the
-center of the spot exceeds some threshold, which we take to be 0.01.
-Since the half width of the spot $\Delta\theta$ approaches $\nicefrac{\pi}{2}$ as
-$r' \rightarrow \infty$ (Equation~\ref{eq:hwhm}), we also impose a
-maximum radius $r'_{\mathrm{max}}$, which we define to be the radius
-corresponding to
-$\Delta\theta = \nicefrac{5\pi}{12} = 75^\circ$. This choice is rather
-arbitrary, but motivated by the fact that below this value, $\Delta\theta$
-scales approximately logarithmically with $r'$.
+To mitigate these issues, we will do two things: we will impose a minimum
+radius $r_{\mathrm{min}}$ to prevent highly oscillatory behavior within
+the domain of our function; and we will scale the spot expansion
+by an overall amplitude factor so that
+the peak spot intensity is as close to (negative) unity as possible
+everywhere within the domain.
+We find that this can be accomplished by expressing the
+$n^{\mathrm{th}}$ term in the spot expansion $\mathbf{s}$ as
+%
+\begin{align}
+    s_n(\rho) = s_n^\infty\left(r\right) \left(1 + c_2 r^{-1} \left(1 + r\right) ^ {-c_3}\right)
+\end{align}
+%
+where
+%
+\begin{align}
+    r \equiv c_0 + c_1\rho
+\end{align}
+%
+is a rescaled radius and $c_0, c_1, c_2, c_3$ are constants at a given
+value of $l_{\mathrm{max}}$.
+%
+Plugging this into Equation~(\ref{eq:sinf}), we have
+%
+\begin{align}
+    \label{eq:s}
+    s_{n}(\rho) =
+    \begin{cases}
+        -\dfrac{r}{2(1 + r)} - \dfrac{c_2}{2(1 + r)^{c_3 + 1}}
+         & l = m = 0
+        \\[1em]
+        -\dfrac{r \left( 2 + r \right)}
+        {2 \sqrt{2l + 1} (1 + r)^{l + 1}}
+        - \dfrac{c_2\left( 2 + r \right)}
+        {2 \sqrt{2l + 1} (1 + r)^{c_3 + l + 1}}
+         & l > 0, \, m = 0
+        \\[1em]
+        0
+         & \mathrm{otherwise}
+    \end{cases}
+\end{align}
+%
+Note that in the limit $l_{\mathrm{max}} \rightarrow \infty$, we may set
+$c_0 = 0$, $c_1 = 1$, and $c_2 = 0$ to recover the original parametrization.
+At finite $l_{\mathrm{max}}$, however, we solve for the $c_n$ numerically,
+by requiring the following conditions:
 
-The left panel of Figure~\ref{fig:hwhm} shows this scaling. The minimum
-and maximum values of $r'$ for $l_{\mathrm{max}} = 20$ are indicated
-for reference; these correspond to $r = 0$ and $r = 1$, respectively
-(top axis). The right panel of the figure shows the minimum spot half width
-$\Delta\theta$ as a function of the spherical harmonic degree of the
-expansion for different error thresholds: ten percent (dashed), one
-percent (solid), and one part per thousand (dotted).
-For $l_{\mathrm{max}} = 20$, the minimum spot half width is about 17$^\circ$.
-To model spots smaller than this, one must go to larger $l_{\mathrm{max}}$;
-note, however, how slowly $\Delta\theta$ decreases above
-$l_{\mathrm{max}} = 20$.
-
-The intensity as a function of polar angle away from the spot center
-is shown in Figure~\ref{fig:spot_expansion} for a range of $r$ values.
-Three spots with $r < 0$ are also shown; note the presence of
-ringing and the fact that the intensity at the spot center is significantly
-larger than $-1$.
+\xxx{TODO...}
 
 \subsection{PDF}
 \label{sec:size-pdf}
@@ -661,7 +652,7 @@ where $\Gamma$ is the Gamma function.
 \label{sec:size-mom1}
 %
 The first moment of $\mathbf{s}$ is given by Equation~(\ref{eq:e1}).
-We may use Equations~(\ref{eq:s}) and (\ref{eq:pdf_r}) to write the
+We may use Equations~(\ref{eq:sinf}) and (\ref{eq:pdf_r}) to write the
 $n^{\mathrm{th}}$ term of $\mathbf{{e_1}}(\pmb{\theta}_r)$ as
 %
 \begin{align}
@@ -798,7 +789,7 @@ obtained recursively:
 \label{sec:size-mom2}
 %
 The second moment of $\mathbf{s}$ is given by Equation~(\ref{eq:E1}).
-We may again use Equations~(\ref{eq:s}) and (\ref{eq:pdf_r}) to write the
+We may again use Equations~(\ref{eq:sinf}) and (\ref{eq:pdf_r}) to write the
 term at index $(n, n')$ of $\mathbf{{E_1}}(\pmb{\theta}_r)$ as
 %
 \begin{align}
@@ -966,12 +957,20 @@ These integrals again reduce to closed form expressions:
 \end{align}
 %
 
-\section{The Contrast Integrals: \lowercase{$\mathbf{e_2}$} and $\mathbf{E_2}$}
+\section{The Latitude Integrals: \lowercase{$\mathbf{e_2}$} and $\mathbf{E_2}$}
+\label{sec:latitude}
+\xxx{TODO.}
+
+\section{The Longitude Integrals: \lowercase{$\mathbf{e_3}$} and $\mathbf{E_3}$}
+\label{sec:longitude}
+\xxx{TODO.}
+
+\section{The Contrast Integrals: \lowercase{$\mathbf{e_4}$} and $\mathbf{E_4}$}
 \label{sec:contrast}
 %
 \subsection{Functional form}
 \label{sec:contrast-function}
-Since the spot function $\mathbf{s}$ (Equation~\ref{eq:s}) is normalized
+Since the spot function $\mathbf{s}$ (Equation~\ref{eq:sinf}) is normalized
 to $-1$, we may simply scale it by the contrast $\xi$ to obtain a spot
 whose peak intensity is $-\xi$.
 Assuming the baseline (unspotted) stellar intensity is unity, $\xi$
@@ -1039,20 +1038,20 @@ where the hyperparameters are
 \subsection{First moment}
 \label{sec:contrast-mom1}
 The first moment of the spot contrast distribution is given by
-Equation~(\ref{eq:e2}), which may easily be solved analytically:
+Equation~(\ref{eq:e4}), which may easily be solved analytically:
 %
 \begin{align}
-    \mathbf{e_2}(\pmb{\theta}_\xi, \mathbf{e_1})
+    \mathbf{e_4}(\pmb{\theta}_\xi, \mathbf{e_3})
      & =
     \int_{-\infty}^1
     \xi \,
-    \mathbf{e_1} \,
+    \mathbf{e_3} \,
     p(\xi \, \big| \, \pmb{\theta}_{\xi}) \,
     \mathrm{d}\xi
     \nonumber
     \\
      & =
-    \left(1 - \exp\left[ \mu + \frac{1}{2}\nu\right]\right) \mathbf{e_1}
+    \left(1 - \exp\left[ \mu + \frac{1}{2}\nu\right]\right) \mathbf{e_3}
     \quad.
 \end{align}
 %
@@ -1060,15 +1059,15 @@ Equation~(\ref{eq:e2}), which may easily be solved analytically:
 \subsection{Second moment}
 \label{sec:contrast-mom2}
 The second moment of the spot contrast distribution is given by
-Equation~(\ref{eq:E2}), which also evaluates to a simple closed form:
+Equation~(\ref{eq:E4}), which also evaluates to a simple closed form:
 %
 \begin{align}
-    \mathbf{E_2}(\pmb{\theta}_\xi, \mathbf{E_1})
+    \mathbf{E_4}(\pmb{\theta}_\xi, \mathbf{E_3})
      & =
     \int_{-\infty}^1
     \xi^2 \,
-    \mathbf{E_1} \,
-    \mathbf{E_1}^\top \,
+    \mathbf{E_3} \,
+    \mathbf{E_3}^\top \,
     p(\xi \, \big| \, \pmb{\theta}_{\xi}) \,
     \mathrm{d}\xi
     \nonumber
@@ -1076,8 +1075,8 @@ Equation~(\ref{eq:E2}), which also evaluates to a simple closed form:
      & =
     \left(1 - 2\exp\bigg[ \mu + \frac{1}{2}\nu\bigg]
     + \exp\bigg[ 2\mu + 2\nu\bigg]\right)
-    \mathbf{E_1} \,
-    \mathbf{E_1}^\top
+    \mathbf{E_3} \,
+    \mathbf{E_3}^\top
     \quad.
 \end{align}
 

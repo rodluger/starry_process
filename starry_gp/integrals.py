@@ -62,11 +62,31 @@ class MomentIntegral(object):
 
 
 class WignerIntegral(MomentIntegral):
+    def __init__(self, parent=None, ydeg=None, **kwargs):
+
+        # Stability fix
+        if ydeg is None:
+            if parent is not None:
+                ydeg = parent.ydeg
+            else:
+                assert False, "please provide `ydeg`."
+        if ydeg > 15:
+            # This will slow things down quite a bit,
+            # but is necessary since otherwise things go
+            # unstable in the eigendecomposition
+            self.neig = (ydeg + 1) ** 2
+            self.driver = "ev"
+        else:
+            self.neig = 2 * ydeg + 1
+            self.driver = None
+
+        super().__init__(parent=parent, ydeg=ydeg, **kwargs)
+
     def _compute_basis_integrals(self, *args, **kwargs):
         raise NotImplementedError("Must be subclassed.")
 
     def _compute_U(self):
-        self.U = eigen(self.Q, self.n)
+        self.U = eigen(self.Q, self.neig, driver=self.driver)
 
     def _compute_t(self):
         self.t = [np.zeros((self.n, self.n)) for l in range(self.ydeg + 1)]
@@ -75,7 +95,7 @@ class WignerIntegral(MomentIntegral):
 
     def _compute_T(self):
         self.T = [
-            np.zeros((self.n, self.n, self.n)) for l in range(self.ydeg + 1)
+            np.zeros((self.n, self.neig, self.n)) for l in range(self.ydeg + 1)
         ]
         for l in range(self.ydeg + 1):
             i = slice(l ** 2, (l + 1) ** 2)
@@ -95,7 +115,7 @@ class WignerIntegral(MomentIntegral):
         return mu
 
     def _second_moment(self, eigE):
-        sqrtC = np.zeros((self.N, self.n, eigE.shape[-1]))
+        sqrtC = np.zeros((self.N, self.neig, eigE.shape[-1]))
         for l in range(self.ydeg + 1):
             i = slice(l ** 2, (l + 1) ** 2)
             sqrtC[i] = self.T[l] @ eigE[i]

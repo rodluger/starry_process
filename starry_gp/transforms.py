@@ -7,21 +7,28 @@ from packaging import version
 # Kewyord to `eigh` changed in 1.5.0
 if version.parse(scipy.__version__) < version.parse("1.5.0"):
     eigvals = "eigvals"
+    driver_allowed = False
 else:
     eigvals = "subset_by_index"
+    driver_allowed = True
 
 
 __all__ = ["eigen", "get_c0_c1", "get_alpha_beta"]
 
 
-def eigen(Q, n=None):
+def eigen(Q, n=None, driver=None):
     """
     
     """
     N = Q.shape[0]
-    if n is None:
-        n = N
-    w, U = eigh(Q, **{eigvals: (N - n, N - 1)})
+    if n is None or n == N:
+        if driver_allowed:
+            kwargs = {"driver": driver}
+        else:
+            kwargs = {}
+    else:
+        kwargs = {eigvals: (N - n, N - 1)}
+    w, U = eigh(Q, **kwargs)
     U = U @ np.diag(np.sqrt(np.maximum(0, w)))
     return U[:, ::-1]
 

@@ -7,6 +7,6 @@ figure.dpi : 100
 figure.figsize : 12, 4
 font.size : 16
 text.usetex : False
-font.family : sans-serif
+font.family : sans-serif, DejaVu Sans
 font.sans-serif : Computer Modern Sans
 mathtext.fontset: stix
