@@ -371,12 +371,13 @@ $\lambda = \phi = 0$:
 \begin{align}
     \label{eq:sinf}
     s_{n}^\infty(\rho) =
+    -\dfrac{1}{2}
     \begin{cases}
-        -\dfrac{\rho}{2(1 + \rho)}
+        \dfrac{\rho}{1 + \rho}
          & l = m = 0
         \\[1em]
-        -\dfrac{\rho \left( 2 + \rho \right)}
-        {2 \sqrt{2l + 1} (1 + \rho)^{l + 1}}
+        \dfrac{\rho \left( 2 + \rho \right)}
+        {\sqrt{2l + 1} (1 + \rho)^{l + 1}}
          & l > 0, \, m = 0
         \\[1em]
         0
@@ -575,16 +576,10 @@ We find that this can be accomplished by expressing the
 $n^{\mathrm{th}}$ term in the spot expansion $\mathbf{s}$ as
 %
 \begin{align}
-    s_n(\rho) = s_n^\infty\left(r\right) \left(1 + c_2 r^{-1} \left(1 + r\right) ^ {-c_3}\right)
+    s_n(\rho) = s_n^\infty\left( c_0 + c_1\rho \right) \left(1 + c_2 \left(1 - \rho\right) ^ {c_3}\right)
 \end{align}
 %
-where
-%
-\begin{align}
-    r \equiv c_0 + c_1\rho
-\end{align}
-%
-is a rescaled radius and $c_0, c_1, c_2, c_3$ are constants at a given
+where $c_0, c_1, c_2, c_3$ are constants at a given
 value of $l_{\mathrm{max}}$.
 %
 Plugging this into Equation~(\ref{eq:sinf}), we have
@@ -592,19 +587,26 @@ Plugging this into Equation~(\ref{eq:sinf}), we have
 \begin{align}
     \label{eq:s}
     s_{n}(\rho) =
+    -\dfrac{1 + c_2 \left(1 - \rho\right) ^ {c_3}}{2}
     \begin{cases}
-        -\dfrac{r}{2(1 + r)} - \dfrac{c_2}{2(1 + r)^{c_3 + 1}}
+        \dfrac{r\left(\rho\right)}{1 + r\left(\rho\right)}
          & l = m = 0
         \\[1em]
-        -\dfrac{r \left( 2 + r \right)}
-        {2 \sqrt{2l + 1} (1 + r)^{l + 1}}
-        - \dfrac{c_2\left( 2 + r \right)}
-        {2 \sqrt{2l + 1} (1 + r)^{c_3 + l + 1}}
+        \dfrac{ r\left(\rho\right) \big( 2 + r\left(\rho\right) \big)}
+        {\sqrt{2l + 1} \big(1 + r\left(\rho\right)\big)^{l + 1}}
          & l > 0, \, m = 0
         \\[1em]
         0
          & \mathrm{otherwise}
     \end{cases}
+    \quad,
+\end{align}
+%
+where we define
+%
+\begin{align}
+    r\left(\rho\right) \equiv c_0 + c_1\rho
+    \quad.
 \end{align}
 %
 Note that in the limit $l_{\mathrm{max}} \rightarrow \infty$, we may set

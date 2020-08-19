@@ -24,9 +24,10 @@ def r_max(hwhm_max=60):
     return res.x[0]
 
 
-def corr(r, c2, c3):
+def corr(r, c):
     """Intensity correction function."""
-    return 1 + c2 * r ** -1 * (1 + r) ** -c3
+    rho = (r - c[0]) / c[1]
+    return 1 + c[2] * (1 - rho) ** c[3]
 
 
 def get_c(ydeg, hwhm_max=60, hwhm_min=15, npts=500):
@@ -50,7 +51,7 @@ def get_c(ydeg, hwhm_max=60, hwhm_min=15, npts=500):
     # correction, c[2] and c[3].
 
     # Array over which to compute the loss
-    r = np.linspace(rmin, rmax, npts)
+    r = np.linspace(rmin + 1e-6, rmax - 1e-6, npts)
 
     # Get the actual (absolute value of the) intensity at the peak
     l = np.arange(ydeg + 1).reshape(1, -1)
@@ -61,8 +62,8 @@ def get_c(ydeg, hwhm_max=60, hwhm_min=15, npts=500):
     norm = 1.0 / I
 
     # Find the coefficients of the fit (least squares)
-    diff = lambda p: np.sum((norm - corr(r, *p)) ** 2)
-    res = minimize(diff, [1.0, 10.0])
+    diff = lambda p: np.sum((norm - corr(r, [c[0], c[1], p[0], p[1]])) ** 2)
+    res = minimize(diff, [0.1, 50.0])
     c[2:] = res.x
 
     return c
@@ -160,7 +161,7 @@ for k in tqdm(range(ncurves)):
     )
 
     # Intensity correction
-    x *= corr(r, c[2], c[3])
+    x *= corr(r, c)
 
     # Compute the (unit normalized) intensity
     map[:, :] = x
