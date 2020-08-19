@@ -360,6 +360,7 @@ integrals.
 %
 \subsection{Functional form}
 %
+\xxx{TODO: Explain why we need the corrected, scaled radius.}
 
 \subsubsection{$l_{\mathrm{max}} = \infty$}
 \label{sec:size-function}
@@ -370,14 +371,14 @@ $\lambda = \phi = 0$:
 %
 \begin{align}
     \label{eq:sinf}
-    s_{n}^\infty(\rho) =
-    -\dfrac{1}{2}
+    s_{n}'(\rho') =
+    -\dfrac{1}{2\sqrt{2l + 1}}
     \begin{cases}
-        \dfrac{\rho}{1 + \rho}
+        \dfrac{\rho'}{1 + \rho'}
          & l = m = 0
         \\[1em]
-        \dfrac{\rho \left( 2 + \rho \right)}
-        {\sqrt{2l + 1} (1 + \rho)^{l + 1}}
+        \dfrac{\rho' \left( 2 + \rho' \right)}
+        {(1 + \rho')^{l + 1}}
          & l > 0, \, m = 0
         \\[1em]
         0
@@ -388,9 +389,10 @@ $\lambda = \phi = 0$:
 where
 $l = l(n), m = m(n)$ (Equation~\ref{eq:lm}),
 $\delta$ is the Kronecker delta,
-$\rho \in [0, \infty)$ is the spot radius,
-and the $\infty$ superscript denotes the fact that this expression
-is valid in the limit $l_{\mathrm{max}} \rightarrow \infty$
+$\rho' \in [0, \infty)$ is the spot radius,
+and the prime superscript on both $s_{n}'$ and $\rho'$ denotes
+the fact that this expression
+is valid only in the limit $l_{\mathrm{max}} \rightarrow \infty$
 (more on this below).
 Equation~(\ref{eq:sinf}) is convenient because it satisfies
 five important properties:
@@ -400,7 +402,7 @@ five important properties:
     \item The surface intensity monotonically increases away from the spot center
     \item The surface intensity at the spot center is $-1$
     \item The surface intensity at the antipode of the spot center is zero
-    \item The size of the spot increases monotonically with $\rho$
+    \item The size of the spot increases monotonically with $\rho'$
 \end{enumerate}
 %
 These properties may be demonstrated by considering the
@@ -412,10 +414,10 @@ azimuth $\varphi$:
         I(\theta, \varphi)
         & =
         \sum\limits_{n=0}^\infty
-        s_{n}^\infty Y_{n}(\theta, \varphi) \\
+        s_{n}' Y_{n}(\theta, \varphi) \\
         & =
         \sum\limits_{n=0}^\infty
-        s_{n}^\infty \sqrt{2l + 1} \delta_{m0} P_l(\cos\theta)
+        s_{n}' \sqrt{2l + 1} \delta_{m0} P_l(\cos\theta)
     \end{split}
 \end{align}
 %
@@ -437,10 +439,10 @@ rearranging, we may write
     \label{eq:Igen}
     I(\theta, \varphi) =
     I(\theta) =
-    \dfrac{\rho}{2}
+    \dfrac{\rho'}{2}
     -
-    \dfrac{\rho \left( 2 + \rho \right)}{2 (1 + \rho)}
-    \sum\limits_{l=0}^\infty \left(\dfrac{1}{1 + \rho}\right)^l P_l(\cos\theta)
+    \dfrac{\rho' \left( 2 + \rho' \right)}{2 (1 + \rho')}
+    \sum\limits_{l=0}^\infty \left(\dfrac{1}{1 + \rho'}\right)^l P_l(\cos\theta)
     \quad.
 \end{align}
 %
@@ -465,9 +467,9 @@ in the fairly simple form
     \intertext{where}
     %
     \begin{split}
-        A & = \dfrac{\rho}{2}                      \\
-        B & = \rho (2 + \rho) \sqrt{\dfrac{1}{8 + 8 \rho}} \\
-        C & = \dfrac{1 + (1 + \rho)^2}{2 + 2 \rho}
+        A & = \dfrac{\rho'}{2}                      \\
+        B & = \rho' (2 + \rho') \sqrt{\dfrac{1}{8 + 8 \rho'}} \\
+        C & = \dfrac{1 + (1 + \rho')^2}{2 + 2 \rho'}
     \end{split}
 \end{align}
 %
@@ -518,22 +520,37 @@ Solving for $\Delta\theta$ yields
 %
 \begin{align}
     \label{eq:hwhm}
-    \Delta\theta =
-    \cos^{-1} \left[ \dfrac{2 + 3 \rho (2 + \rho)}{2 (1 + \rho)^3} \right]
+    \Delta\theta(\rho') =
+    \cos^{-1} \left[ \dfrac{2 + 3 \rho' (2 + \rho')}{2 (1 + \rho')^3} \right]
     \quad.
 \end{align}
 %
 Differentiation with respect to $r$ yields
 %
 \begin{align}
-    \dfrac{\mathrm{d}\Delta\theta}{\mathrm{d}\rho} =
-    \frac{3}{\left(1 + \rho\right)
-        \sqrt{\left(1 + 2 \rho\right)
-            \left(3 + 2 \rho\right)}}
+    \dfrac{\mathrm{d}\Delta\theta}{\mathrm{d}\rho'} =
+    \frac{3}{\left(1 + \rho'\right)
+        \sqrt{\left(1 + 2 \rho'\right)
+            \left(3 + 2 \rho'\right)}}
     \quad,
 \end{align}
 %
-which is positive definite for all $\rho > 0$.
+which is positive definite for all $\rho' > 0$.
+
+For future reference, Equation~(\ref{eq:hwhm}) may be inverted to obtain the
+radius $\rho'$ corresponding to a particular value of the half width
+at half minimum:
+%
+\begin{align}
+    \label{eq:hwhm}
+    \rho'(\Delta\theta) =
+    \left(\dfrac{1 +
+        \cos\left(\dfrac{2\Delta\theta}{3}\right) +
+        \sqrt{3}\sin\left(\dfrac{2\Delta\theta}{3}\right)}
+    {2 \cos\Delta\theta}\right) - 1
+    \quad.
+\end{align}
+%
 
 \begin{figure}[p!]
     \begin{centering}
@@ -556,7 +573,7 @@ which is positive definite for all $\rho > 0$.
 
 \subsubsection{Finite $l_{\mathrm{max}}$}
 %
-It is important to note that the
+The
 properties of the spot expansion described above
 (in particular its monotonicity and values at the spot center and antipode)
 are inherited from the generating function of the Legendre polynomials
@@ -576,10 +593,19 @@ We find that this can be accomplished by expressing the
 $n^{\mathrm{th}}$ term in the spot expansion $\mathbf{s}$ as
 %
 \begin{align}
-    s_n(\rho) = s_n^\infty\left( c_0 + c_1\rho \right) \left(1 + c_2 \left(1 - \rho\right) ^ {c_3}\right)
+    s_n(\rho) = s_n'\left( \rho' \right) \left(1 + c_2 \left(1 - \rho\right) ^ {c_3}\right)
 \end{align}
 %
-where $c_0, c_1, c_2, c_3$ are constants at a given
+where
+%
+\begin{align}
+    \begin{split}
+        \rho' &= \rho'\left(\rho\right) \\ &\equiv c_0 + c_1\rho
+        \quad.
+    \end{split}
+\end{align}
+%
+and $c_0, c_1, c_2, c_3$ are constants at a given
 value of $l_{\mathrm{max}}$.
 %
 Plugging this into Equation~(\ref{eq:sinf}), we have
@@ -587,25 +613,18 @@ Plugging this into Equation~(\ref{eq:sinf}), we have
 \begin{align}
     \label{eq:s}
     s_{n}(\rho) =
-    -\dfrac{1 + c_2 \left(1 - \rho\right) ^ {c_3}}{2}
+    -\dfrac{1 + c_2 \left(1 - \rho\right) ^ {c_3}}{2\sqrt{2l + 1}}
     \begin{cases}
-        \dfrac{r\left(\rho\right)}{1 + r\left(\rho\right)}
+        \dfrac{\rho'}{1 + \rho'}
          & l = m = 0
         \\[1em]
-        \dfrac{ r\left(\rho\right) \big( 2 + r\left(\rho\right) \big)}
-        {\sqrt{2l + 1} \big(1 + r\left(\rho\right)\big)^{l + 1}}
+        \dfrac{ \rho' \left( 2 + \rho' \right)}
+        {\left(1 + \rho'\right)^{l + 1}}
          & l > 0, \, m = 0
         \\[1em]
         0
          & \mathrm{otherwise}
     \end{cases}
-    \quad,
-\end{align}
-%
-where we define
-%
-\begin{align}
-    r\left(\rho\right) \equiv c_0 + c_1\rho
     \quad.
 \end{align}
 %

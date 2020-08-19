@@ -1,33 +1,72 @@
 import matplotlib.pyplot as plt
 from matplotlib import colors, patches
 import numpy as np
-import starry
 from scipy.optimize import minimize
-from tqdm import tqdm
+from scipy.special import legendre
+import logging
+
+logger = logging.getLogger("spot_expansion")
+logger.addHandler(logging.StreamHandler())
+logger.setLevel(logging.INFO)
 
 
-def hwhm(r):
+def hwhm(rhop):
     """
-    Return the theoretical half-width at half minimum as a function of r.
+    Return the theoretical half-witdth at half minimum as a function of rho'.
     
     """
-    return np.arccos((2 + 3 * r * (2 + r)) / (2 * (1 + r) ** 3)) * 180 / np.pi
+    return (
+        np.arccos((2 + 3 * rhop * (2 + rhop)) / (2 * (1 + rhop) ** 3))
+        * 180
+        / np.pi
+    )
 
 
-def r_max(hwhm_max=60):
+def hwhm_inv(hwhm):
     """
-    Returns the value of r corresponding to `hwhm_max`.
+    Return rho' as a function of the theoretical half-width at half minimum.
     
     """
-    f = lambda r: (hwhm(r) - hwhm_max) ** 2
+    theta = hwhm * np.pi / 180
+    return (1 + np.cos(2 * theta / 3) + np.sqrt(3) * np.sin(2 * theta / 3)) / (
+        2 * np.cos(theta)
+    ) - 1
+
+
+def rhop_max(hwhm_max=60):
+    """
+    Returns the value of rho' corresponding to `hwhm_max`.
+    
+    """
+    f = lambda rhop: (hwhm(rhop) - hwhm_max) ** 2
     res = minimize(f, 2.0)
     return res.x[0]
 
 
-def corr(r, c):
+def corr(rhop, c):
     """Intensity correction function."""
-    rho = (r - c[0]) / c[1]
+    rho = (rhop - c[0]) / c[1]
     return 1 + c[2] * (1 - rho) ** c[3]
+
+
+def I(ydeg, rhop, theta, c=None):
+    """
+    Return the intensity at polar angle `theta` (in deg) away from
+    the center of a spot of radius rho' expanded to degree `ydeg`.
+    
+    """
+    # Compute the Legendre expansion
+    cost = np.cos(theta * np.pi / 180)
+    term = np.sum(
+        [(1 + rhop) ** -l * legendre(l)(cost) for l in range(ydeg + 1)], axis=0
+    )
+    I = 0.5 * rhop * (1 - (2 + rhop) / (1 + rhop) * term)
+
+    # Apply the intensity correction
+    if c is not None:
+        I *= corr(rhop, c)
+
+    return I
 
 
 def get_c(ydeg, hwhm_max=60, hwhm_min=15, npts=500):
@@ -39,68 +78,70 @@ def get_c(ydeg, hwhm_max=60, hwhm_min=15, npts=500):
 
     # Minimum r: we need to optimize numerically
     loss = lambda p: (hwhm_empirical(ydeg, p[0]) - hwhm_min) ** 2
-    res = minimize(loss, 0.1526)
-    rmin = res.x[0]
-    c[0] = rmin
+    res = minimize(loss, hwhm_inv(hwhm_min))
+    rhopmin = res.x[0]
+    c[0] = rhopmin
 
     # Maximum r (easy)
-    rmax = r_max(hwhm_max=hwhm_max)
-    c[1] = rmax - rmin
+    rhopmax = rhop_max(hwhm_max=hwhm_max)
+    c[1] = rhopmax - rhopmin
 
     # Now compute the coefficients of the intensity
     # correction, c[2] and c[3].
 
     # Array over which to compute the loss
-    r = np.linspace(rmin + 1e-6, rmax - 1e-6, npts)
+    rhop = np.linspace(rhopmin + 1e-6, rhopmax - 1e-6, npts)
 
     # Get the actual (absolute value of the) intensity at the peak
     l = np.arange(ydeg + 1).reshape(1, -1)
-    term = np.sum((1 + r.reshape(-1, 1)) ** -l, axis=-1)
-    I = -0.5 * r * (1 - (2 + r) / (1 + r) * term)
+    term = np.sum((1 + rhop.reshape(-1, 1)) ** -l, axis=-1)
+    I = -0.5 * rhop * (1 - (2 + rhop) / (1 + rhop) * term)
 
     # This is the factor by which we need to normalize the function
     norm = 1.0 / I
 
     # Find the coefficients of the fit (least squares)
-    diff = lambda p: np.sum((norm - corr(r, [c[0], c[1], p[0], p[1]])) ** 2)
+    diff = lambda p: np.sum((norm - corr(rhop, [c[0], c[1], p[0], p[1]])) ** 2)
     res = minimize(diff, [0.1, 50.0])
     c[2:] = res.x
+
+    # Log the error info
+    logger.info(
+        "Delta theta range: {:.2f} - {:.2f} degrees".format(hwhm_min, hwhm_max)
+    )
+    logger.info("c coeffs: {:.3f} {:.3f} {:.3f} {:.3f}".format(*c))
+    logger.info(
+        "Maximum intensity |error|: {:.2e}".format(
+            np.max(np.abs(norm - corr(rhop, c)))
+        )
+    )
+    logger.info(
+        "Average intensity |error|: {:.2e}".format(
+            np.mean(np.abs(norm - corr(rhop, c)))
+        )
+    )
 
     return c
 
 
-def hwhm_empirical(ydeg, r):
+def hwhm_empirical(ydeg, rhop):
     """
-    Return the empirical half-width at half minimum as a function of r.
+    Return the empirical half-width at half minimum as a function of rho'.
     
     """
     # Setup
-    r = np.atleast_1d(r)
-    hwhm_empirical = np.zeros_like(r)
+    rhop = np.atleast_1d(rhop)
+    hwhm_empirical = np.zeros_like(rhop)
 
-    # Legendre expansion
-    map = starry.Map(ydeg, lazy=False)
-    x = np.zeros(map.Ny)
-    l = np.arange(1, map.ydeg + 1)
-    for k in range(len(r)):
-        x[0] = -0.5 * r[k] * (1 + r[k]) ** -1
-        x[l * (l + 1)] = (
-            -1.0
-            / np.sqrt(2 * l + 1)
-            * (
-                (1 + r[k]) ** -(l + 1) * r[k]
-                + 0.5 * (1 + r[k]) ** -(l + 1) * r[k] ** 2
-            )
-        )
-        map[:, :] = x
+    # Find the HWHM numerically for each radius
+    for k in range(len(rhop)):
 
-        # Find the HWHM
-        halfmax = 0.5 * map.intensity(lon=0)
+        halfmax = 0.5 * I(ydeg, rhop[k], 0)
 
         def loss(theta):
-            return (map.intensity(lon=theta) - halfmax) ** 2
+            return (I(ydeg, rhop[k], theta) - halfmax) ** 2
 
-        res = minimize(loss, hwhm(max(0.1, r[k])))
+        res = minimize(loss, hwhm(max(0.1, rhop[k])))
         hwhm_empirical[k] = res.x[0]
 
     return hwhm_empirical
@@ -112,7 +153,6 @@ hwhm_min = 15
 hwhm_max = 75
 ncurves = 10
 cmap = lambda x: plt.get_cmap("plasma")(0.85 * (1 - x))
-starry.config.quiet = True
 
 # Get the radius transform coeffs
 c = get_c(ydeg, hwhm_max=hwhm_max, hwhm_min=hwhm_min)
@@ -131,10 +171,6 @@ fig.subplots_adjust(wspace=0.085)
 # ---- TOP PANEL ----
 
 
-# Instantiate the starry map
-map = starry.Map(ydeg, lazy=False)
-l = np.arange(1, map.ydeg + 1)
-
 # Longitude array
 lon = np.linspace(-180, 180, 1000)
 
@@ -142,30 +178,14 @@ lon = np.linspace(-180, 180, 1000)
 # to `ncurves` equally spaced values of HWHM
 # We'll do nearest-neighbor, since it's fastest
 hwhms = np.linspace(hwhm_min, hwhm_max, ncurves)
-r_ = np.logspace(-2, 1, 100)
-h_ = hwhm_empirical(ydeg, r_)
+rhop_ = np.logspace(-2, 1, 100)
+h_ = hwhm_empirical(ydeg, rhop_)
 
 # Plot the intensity profile for each radius
-for k in tqdm(range(ncurves)):
+for k in range(ncurves):
 
     # The current value of r
-    r = r_[np.argmin(np.abs(hwhms[k] - h_))]
-
-    # Legendre expansion
-    x = np.zeros(map.Ny)
-    x[0] = -0.5 * r * (1 + r) ** -1
-    x[l * (l + 1)] = (
-        -1.0
-        / np.sqrt(2 * l + 1)
-        * ((1 + r) ** -(l + 1) * r + 0.5 * (1 + r) ** -(l + 1) * r ** 2)
-    )
-
-    # Intensity correction
-    x *= corr(r, c)
-
-    # Compute the (unit normalized) intensity
-    map[:, :] = x
-    I = np.pi * map.intensity(lon=lon)
+    rhop = rhop_[np.argmin(np.abs(hwhms[k] - h_))]
 
     # Plot it
     if k == 0:
@@ -174,8 +194,9 @@ for k in tqdm(range(ncurves)):
         label = r"$\rho = 1$"
     else:
         label = None
+
     ax[0].plot(
-        lon, I, color=cmap(k / (ncurves - 1)), label=label,
+        lon, I(ydeg, rhop, lon, c), color=cmap(k / (ncurves - 1)), label=label,
     )
 
 # Make pretty
@@ -192,42 +213,47 @@ ax[0].legend(loc="lower right", fontsize=16)
 # ---- BOTTOM PANEL 1 ----
 
 
-# HWHM vs r
-r = np.logspace(-2, 2, 300)
-hwhm_fin = hwhm_empirical(ydeg, r)
-hwhm_inf = hwhm(r)
+# HWHM vs rho'
+rhop = np.logspace(-2, 2, 300)
+hwhm_fin = hwhm_empirical(ydeg, rhop)
+hwhm_inf = hwhm(rhop)
 ax[1].plot(
-    r, hwhm_fin, "C0", label=r"$l_{\mathrm{max}} = %d$" % ydeg, zorder=2,
+    rhop, hwhm_fin, "C0", label=r"$l_{\mathrm{max}} = %d$" % ydeg, zorder=2,
 )
 ax[1].plot(
-    r, hwhm_inf, "k--", lw=1, label=r"$l_{\mathrm{max}} = \infty$", zorder=1,
+    rhop,
+    hwhm_inf,
+    "k--",
+    lw=1,
+    label=r"$l_{\mathrm{max}} = \infty$",
+    zorder=1,
 )
 yticks = [0, 15, 30, 45, 60, 75, 90]
 yticklabels = [r"  {:d}$^\circ$".format(tick) for tick in yticks]
 ax[1].set_yticks(yticks)
 ax[1].set_yticklabels(yticklabels)
 ax[1].set_ylim(0, 95)
-ax[1].set_xlabel(r"$r$", fontsize=22)
+ax[1].set_xlabel(r"$\rho\prime$", fontsize=22)
 ax[1].set_ylabel(r"$\Delta\theta$", fontsize=22)
 ax[1].set_xscale("log")
 ax[1].set_xlim(1e-2, 1e2)
 ax[1].legend(loc="lower right", fontsize=16, framealpha=1)
 
 # Maximum r
-r_max = c[0] + c[1]
+rhopmax = c[0] + c[1]
 ax[1].axhline(hwhm_max, color="k", lw=1, ls="--", alpha=0.3, zorder=0)
-ax[1].axvline(r_max, color="k", lw=1, ls="--", alpha=0.3, zorder=0)
+ax[1].axvline(rhopmax, color="k", lw=1, ls="--", alpha=0.3, zorder=0)
 
 # Minimum r
-r_min = c[0]
+rhopmin = c[0]
 ax[1].axhline(hwhm_min, color="k", lw=1, ls="--", alpha=0.3, zorder=0)
-ax[1].axvline(r_min, color="k", lw=1, ls="--", alpha=0.3, zorder=0)
+ax[1].axvline(rhopmin, color="k", lw=1, ls="--", alpha=0.3, zorder=0)
 
 # Range we're modeling
 ax[1].add_patch(
     patches.Rectangle(
-        (r_min, hwhm_min),
-        r_max - r_min,
+        (rhopmin, hwhm_min),
+        rhopmax - rhopmin,
         hwhm_max - hwhm_min,
         linewidth=1,
         edgecolor="none",
@@ -242,7 +268,7 @@ hwhms = np.linspace(hwhm_min, hwhm_max, ncurves)
 for k in range(ncurves):
     j = np.argmin(np.abs(hwhms[k] - hwhm_fin))
     ax[1].plot(
-        r[j], hwhms[k], "o", ms=7, color=cmap(k / (ncurves - 1)), mec="C0"
+        rhop[j], hwhms[k], "o", ms=7, color=cmap(k / (ncurves - 1)), mec="C0"
     )
 
 
@@ -250,7 +276,7 @@ for k in range(ncurves):
 
 
 # HWHM vs rho
-rho = (r - c[0]) / c[1]
+rho = (rhop - c[0]) / c[1]
 ax[2].plot(
     rho, hwhm_fin, "C0", label=r"$l_{\mathrm{max}} = %d$" % ydeg, zorder=2,
 )
@@ -290,10 +316,6 @@ ax[2].add_patch(
         zorder=0,
     )
 )
-
-# Print some stats for the record
-print("Delta theta range: {:.2f} - {:.2f} degrees".format(hwhm_min, hwhm_max))
-print("c coeffs: {:.3f} {:.3f} {:.3f} {:.3f}".format(*c))
 
 # Final tweaks
 for axis in ax:
