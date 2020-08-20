@@ -69,7 +69,7 @@ def I(ydeg, rhop, theta, c=None):
     return I
 
 
-def get_c(ydeg, hwhm_max=60, hwhm_min=15, npts=500):
+def get_c(ydeg, hwhm_max=75, hwhm_min=15, npts=500):
     """
     Return the coefficients for the radius transformation.
 

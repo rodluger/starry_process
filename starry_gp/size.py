@@ -1,7 +1,18 @@
 from .integrals import MomentIntegral
-from .transforms import eigen, get_c0_c1, get_alpha_beta
+from .transforms import eigen, get_c, get_alpha_beta
 import numpy as np
 from scipy.special import hyp2f1
+from scipy.special import beta as EulerBeta
+
+
+# Dimensions & misc. constants
+imax = 3
+kmax = 2
+mmax = 4
+V = np.array(
+    [[1, 1, 0, 0, 0], [1, 2, 1, 0, 0], [1, 3, 3, 1, 0], [1, 4, 6, 4, 1]],
+    dtype=int,
+)
 
 
 def get_s(ydeg, r, tol=1e-2, hwhm_max=75):
@@ -27,77 +38,116 @@ def get_s(ydeg, r, tol=1e-2, hwhm_max=75):
     return s
 
 
-def get_G(alpha, beta, c0, c1, jmax, tol=1e-6):
+def _get_G_factor(alpha, beta, c):
+    kmax = 2
+    mmax = 4
+    lam = np.zeros((kmax + 1, mmax + 1))
+    k = np.arange(kmax + 1)
+    q = c[1] / c[0]
+    lam[:, 0] = 1.0
+    for m in range(1, mmax + 1):
+        for k in range(kmax + 1):
+            lam[k, m] = (
+                lam[k, m - 1]
+                * q
+                * (alpha + m - 1)
+                / (alpha + beta + k * c[3] + m - 1)
+            )
+    norm = 1 / EulerBeta(alpha, beta)
+    for k in range(1, kmax + 1):
+        lam[k] *= c[2] ** k * (norm * EulerBeta(alpha, beta + k * c[3]))
+    return lam
+
+
+def get_G(ydeg, alpha, beta, c, tol=1e-6):
     """
-    Return the hypergeometric G_j^k matrix,
-    computed via tridiagonal recursion.
+    Return the hypergeometric G_{jkm} tensor, computed via tridiagonal recursion.
 
     """
+    # Dimensions
+    jmax = 2 * ydeg + 1
+    G = np.zeros((jmax + 1, kmax + 1, mmax + 1))
+
     # Shorthand
-    z = -c1 / (1.0 + c0)
-    ab = alpha + beta
-    lam = np.array(
-        [
-            alpha / ab,
-            (alpha + 1) / (ab + 1),
-            (alpha + 2) / (ab + 2),
-            (alpha + 3) / (ab + 3),
-        ]
-    )
+    q = c[1] / c[0]
+    p = 1 + c[0] + c[1]
+    z = -c[1] / (1.0 + c[0])
+    zbar = c[1] / p
+    betap = lambda k: beta + k * c[3]
 
     # The exact function, computed numerically
     G_num = (
-        lambda j, k: hyp2f1(1 + j, alpha + k, ab + k, z)
-        if np.abs(z) < 1
-        else hyp2f1(1 + j, beta, ab + k, z / (z - 1)) * pow(1 - z, -j - 1)
+        lambda j, k, m: hyp2f1(1 + j, betap(k), alpha + betap(k) + m, zbar)
+        / (1 + c[0]) ** (j + 1)
+        * pow(1 - z, -(j + 1))
     )
 
     # The recursion coefficients
-    a = lambda j, k: -((alpha + beta + k - j) * (1 + c0)) / (j * (1 + c0 + c1))
-    b = lambda j, k: -(
-        1
-        - ((alpha + beta + k - j) * (1 + c0) + (alpha + k) * c1)
-        / (j * (1 + c0 + c1))
+    a = lambda j, k, m: -((alpha + betap(k) + m - j) * (1 + c[0])) / (
+        j * p * (1 + c[0]) ** 2
     )
+    b = lambda j, k, m: -(
+        1
+        - ((alpha + betap(k) + m - j) * (1 + c[0]) + (alpha + m) * c[1])
+        / (j * p)
+    ) / (1 + c[0])
 
-    # Boundary conditions
-    G = np.zeros((jmax + 1, 5))
-    G[0, 0] = G_num(0, 0)
-    G[0, 1] = G_num(0, 1)
-    G[jmax, 0] = G_num(jmax, 0)
-    G[jmax, 1] = G_num(jmax, 1)
+    # Solve the problem for each value of `k`
+    for k in range(kmax + 1):
 
-    # Recurse upward in k
-    for j in [0, jmax]:
-        for k in range(2, 5):
-            # Be careful about division by zero here
-            if np.abs(alpha + beta - j + k - 2) < tol:
-                G[j, k] = G_num(j, k)
-            else:
-                ak = ((alpha + beta + k - 2) * (1 + c0)) / (
-                    (alpha + beta - j + k - 2) * lam[k - 1] * c1
-                )
-                bk = 1.0 / lam[k - 1] - (
-                    (alpha + beta + k - 2) * (1 + c0) + beta * c1
-                ) / ((alpha + beta - j + k - 2) * lam[k - 1] * c1)
-                G[j, k] = ak * G[j, k - 2] + bk * G[j, k - 1]
+        # Boundary conditions
+        G[0, k, 0] = G_num(0, k, 0)
+        G[0, k, 1] = G_num(0, k, 1)
+        G[jmax, k, 0] = G_num(jmax, k, 0)
+        G[jmax, k, 1] = G_num(jmax, k, 1)
 
-    # Recurse along the j dimension
-    for k in range(5):
-        # The tridiagonal matrix system, M G = c
-        M = (
-            np.diag([1 for j in range(2, jmax)], k=1)
-            + np.diag([b(j, k) for j in range(2, jmax + 1)])
-            + np.diag([a(j, k) for j in range(3, jmax + 1)], k=-1)
-        )
-        c = np.zeros(jmax - 1)
-        c[0] = -a(2, k) * G[0, k]
-        c[-1] = -G[jmax, k]
+        # Recurse upward in m
+        for j in [0, jmax]:
+            for m in range(2, mmax + 1):
+                # Be careful about division by zero here
+                if np.abs(alpha + betap(k) - j + m - 2) < tol:
+                    G[j, k, m] = G_num(j, k, m)
+                else:
+                    term = (alpha + m - 1) / (alpha + betap(k) + m - 1)
+                    am = ((alpha + betap(k) + m - 2) * (1 + c[0])) / (
+                        (alpha + betap(k) - j + m - 2) * term * c[1]
+                    )
+                    bm = 1.0 / term - (
+                        (alpha + betap(k) + m - 2) * (1 + c[0])
+                        + betap(k) * c[1]
+                    ) / ((alpha + betap(k) - j + m - 2) * term * c[1])
+                    G[j, k, m] = am * G[j, k, m - 2] + bm * G[j, k, m - 1]
 
-        # Solve it
-        G[1:-1, k] = np.linalg.solve(M, c)
+        # Recurse along the j dimension
+        for m in range(mmax + 1):
+            # The tridiagonal matrix system, M G = x
+            M = (
+                np.diag([1 for j in range(2, jmax)], k=1)
+                + np.diag([b(j, k, m) for j in range(2, jmax + 1)])
+                + np.diag([a(j, k, m) for j in range(3, jmax + 1)], k=-1)
+            )
+            x = np.zeros(jmax - 1)
+            x[0] = -a(2, k, m) * G[0, k, m]
+            x[-1] = -G[jmax, k, m]
+
+            # Solve it
+            G[1:-1, k, m] = np.linalg.solve(M, x)
+
+    # Finally, apply the amplitude factor
+    G *= _get_G_factor(alpha, beta, c).reshape(1, kmax + 1, mmax + 1)
 
     return G
+
+
+def get_H(ydeg, alpha, beta, c):
+    jmax = 2 * ydeg + 1
+    G = get_G(ydeg, alpha, beta, c)
+    H = np.zeros((imax + 1, jmax + 1, kmax + 1))
+    fac = c[0] ** np.arange(1, imax + 2).reshape(-1, 1)
+    W = fac * V
+    for i in range(imax + 1):
+        H[i] = G @ W[i]
+    return H
 
 
 class SizeIntegral(MomentIntegral):
@@ -120,8 +170,8 @@ class SizeIntegral(MomentIntegral):
 
     """
 
-    def _precompute(self, tol=1e-2, hwhm_max=75, **kwargs):
-        self.c0, self.c1 = get_c0_c1(self.ydeg, tol=tol, hwhm_max=hwhm_max)
+    def _precompute(self, **kwargs):
+        self.c = get_c(self.ydeg, **kwargs)
         l = np.arange(self.ydeg + 1)
         self.i = l * (l + 1)
         self.ij = np.ix_(self.i, self.i)
@@ -133,79 +183,42 @@ class SizeIntegral(MomentIntegral):
         # Get the Beta params
         alpha, beta = get_alpha_beta(mu, nu)
 
-        # Shorthand
-        c0 = self.c0
-        c1 = self.c1
-        ab = alpha + beta
-        lam = np.array(
-            [
-                alpha / ab,
-                (alpha + 1) / (ab + 1),
-                (alpha + 2) / (ab + 2),
-                (alpha + 3) / (ab + 3),
-            ]
-        )
-
-        # Hypergeometric sequence
-        G = get_G(alpha, beta, c0, c1, 2 * self.ydeg + 1)
-        H = lambda j, k: np.prod(lam[:k]) * G[j, k]
+        # Hypergeometric sequences
+        H = get_H(self.ydeg, alpha, beta, self.c)
+        J = lambda i, j: H[i, j, 0] + H[i, j, 1]
+        K = lambda i, j: H[i, j, 0] + 2 * H[i, j, 1] + H[i, j, 2]
 
         # Compact (m = 0) moment matrices
         e = np.zeros(self.ydeg + 1)
         E = np.zeros((self.ydeg + 1, self.ydeg + 1))
 
         # Case 1: l = 0
-        e[0] = -1.0 / (2.0 * (1 + c0)) * (c0 * H(0, 0) + c1 * H(0, 1))
+        e[0] = -0.5 * J(0, 0)
 
         # Case 1: l = l' = 0
-        E[0, 0] = (
-            1.0
-            / (4.0 * (1 + c0) ** 2)
-            * (c0 ** 2 * H(1, 0) + 2 * c0 * c1 * H(1, 1) + c1 ** 2 * H(1, 2))
-        )
+        E[0, 0] = 0.25 * K(1, 1)
 
         # Outer loop
         for l in range(1, self.ydeg + 1):
-            term = 1.0 / (2 * np.sqrt(2 * l + 1) * (1 + c0) ** (l + 1))
+
+            sql = 1.0 / np.sqrt(2 * l + 1)
 
             # Case 2: l > 0
-            e[l] = -term * (
-                c0 * (2 + c0) * H(l, 0)
-                + 2 * c1 * (1 + c0) * H(l, 1)
-                + c1 ** 2 * H(l, 2)
-            )
+            e[l] = -0.5 * sql * (2 * J(0, l) + J(1, l))
 
             # Case 2: l > 0, l' = 0
-            E[l, 0] = (
-                term
-                / (2.0 * (1 + c0))
-                * (
-                    c0 ** 2 * (2 + c0) * H(l + 1, 0)
-                    + c0 * c1 * (4 + 3 * c0) * H(l + 1, 1)
-                    + (2 + 3 * c0) * c1 ** 2 * H(l + 1, 2)
-                    + c1 ** 3 * H(l + 1, 3)
-                )
-            )
+            E[l, 0] = 0.25 * sql * (2 * K(1, l + 1) + K(2, l + 1))
             E[0, l] = E[l, 0]
 
             # Inner loop
             for lp in range(1, l + 1):
-                sqp = 1 / np.sqrt(2 * lp + 1)
+
+                sqlp = 1.0 / np.sqrt(2 * lp + 1)
 
                 # Case 3: l > 0, l' > 0
+                n = l + lp + 1
                 E[l, lp] = (
-                    term
-                    / (2.0 * np.sqrt(2 * lp + 1) * (1 + c0) ** (lp + 1))
-                    * (
-                        c0 ** 2 * (2 + c0) ** 2 * H(l + lp + 1, 0)
-                        + 4 * c0 * (1 + c0) * (2 + c0) * c1 * H(l + lp + 1, 1)
-                        + 2
-                        * (2 + 3 * c0 * (2 + c0))
-                        * c1 ** 2
-                        * H(l + lp + 1, 2)
-                        + 4 * (1 + c0) * c1 ** 3 * H(l + lp + 1, 3)
-                        + c1 ** 4 * H(l + lp + 1, 4)
-                    )
+                    0.25 * sql * sqlp * (4 * K(1, n) + 4 * K(2, n) + K(3, n))
                 )
                 E[lp, l] = E[l, lp]
 

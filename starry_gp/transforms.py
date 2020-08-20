@@ -2,6 +2,7 @@ import numpy as np
 import scipy
 from scipy.linalg import eigh
 from scipy.optimize import minimize
+from scipy.special import legendre
 from packaging import version
 
 # Kewyord to `eigh` changed in 1.5.0
@@ -13,12 +14,16 @@ else:
     driver_allowed = True
 
 
-__all__ = ["eigen", "get_c0_c1", "get_alpha_beta"]
+__all__ = ["eigen", "get_alpha_beta", "get_c"]
 
 
 def eigen(Q, n=None, driver=None):
     """
-    
+    Returns the matrix square root of `Q`,
+    computed via (hermitian) eigendecomposition:
+
+        eigen(Q) . eigen(Q)^T = Q
+
     """
     N = Q.shape[0]
     if n is None or n == N:
@@ -31,63 +36,6 @@ def eigen(Q, n=None, driver=None):
     w, U = eigh(Q, **kwargs)
     U = U @ np.diag(np.sqrt(np.maximum(0, w)))
     return U[:, ::-1]
-
-
-def hwhm(rprime):
-    """
-    Return the half-width at half minimum as a function of r'.
-    
-    """
-    return (
-        np.arccos((2 + 3 * rprime * (2 + rprime)) / (2 * (1 + rprime) ** 3))
-        * 180
-        / np.pi
-    )
-
-
-def peak_error(ydeg, rprime):
-    """
-    Returns the error in the intensity at the spot center.
-    
-    """
-    xi = 1.0
-    I = 1 - 0.5 * xi * rprime / (1 + rprime)
-    for l in range(1, ydeg + 1):
-        I -= 0.5 * xi * rprime * (2 + rprime) / (1 + rprime) ** (l + 1)
-    return np.abs(I)
-
-
-def min_rprime(ydeg, tol=1e-2):
-    """
-    Returns the smallest value of r' such that the error on the peak
-    intensity is less than `tol`.
-
-    """
-    f = lambda rprime: (peak_error(ydeg, rprime) - tol) ** 2
-    res = minimize(f, 0.25)
-    return res.x[0]
-
-
-def max_rprime(hmwhm_max=75):
-    """
-    Returns the value of r' corresponding to `hwhm_max`.
-    
-    """
-    f = lambda rprime: (hwhm(rprime) - hmwhm_max) ** 2
-    res = minimize(f, 10)
-    return res.x[0]
-
-
-def get_c0_c1(ydeg, tol=1e-2, hwhm_max=75):
-    """
-    Returns the c_0, c_1 coefficients for the radius transformation.
-
-    """
-    rmin = min_rprime(ydeg, tol=tol)
-    rmax = max_rprime(hmwhm_max=hwhm_max)
-    c0 = rmin
-    c1 = rmax - rmin
-    return c0, c1
 
 
 def get_alpha_beta(mu, nu):
@@ -105,3 +53,140 @@ def get_alpha_beta(mu, nu):
     alpha = mu * (1 / nu - 1)
     beta = (1 - mu) * (1 / nu - 1)
     return alpha, beta
+
+
+def hwhm(rhop):
+    """
+    Return the theoretical half-witdth at half minimum as a function of rho'.
+    
+    """
+    return (
+        np.arccos((2 + 3 * rhop * (2 + rhop)) / (2 * (1 + rhop) ** 3))
+        * 180
+        / np.pi
+    )
+
+
+def hwhm_inv(hwhm):
+    """
+    Return rho' as a function of the theoretical half-width at half minimum.
+    
+    """
+    theta = hwhm * np.pi / 180
+    return (1 + np.cos(2 * theta / 3) + np.sqrt(3) * np.sin(2 * theta / 3)) / (
+        2 * np.cos(theta)
+    ) - 1
+
+
+def rhop_max(hwhm_max=60):
+    """
+    Returns the value of rho' corresponding to `hwhm_max`.
+    
+    """
+    f = lambda rhop: (hwhm(rhop) - hwhm_max) ** 2
+    res = minimize(f, 2.0)
+    return res.x[0]
+
+
+def corr(rhop, c):
+    """Intensity correction function."""
+    rho = (rhop - c[0]) / c[1]
+    return 1 + c[2] * (1 - rho) ** c[3]
+
+
+def I(ydeg, rhop, theta, c=None):
+    """
+    Return the intensity at polar angle `theta` (in deg) away from
+    the center of a spot of radius rho' expanded to degree `ydeg`.
+    
+    """
+    # Compute the Legendre expansion
+    cost = np.cos(theta * np.pi / 180)
+    term = np.sum(
+        [(1 + rhop) ** -l * legendre(l)(cost) for l in range(ydeg + 1)], axis=0
+    )
+    I = 0.5 * rhop * (1 - (2 + rhop) / (1 + rhop) * term)
+
+    # Apply the intensity correction
+    if c is not None:
+        I *= corr(rhop, c)
+
+    return I
+
+
+def get_c(ydeg, hwhm_max=75, hwhm_min=15, npts=500):
+    """
+    Return the coefficients for the radius transformation.
+
+    """
+    c = np.zeros(4)
+
+    # Minimum r: we need to optimize numerically
+    loss = lambda p: (hwhm_empirical(ydeg, p[0]) - hwhm_min) ** 2
+    res = minimize(loss, hwhm_inv(hwhm_min))
+    rhopmin = res.x[0]
+    c[0] = rhopmin
+
+    # Maximum r (easy)
+    rhopmax = rhop_max(hwhm_max=hwhm_max)
+    c[1] = rhopmax - rhopmin
+
+    # Now compute the coefficients of the intensity
+    # correction, c[2] and c[3].
+
+    # Array over which to compute the loss
+    rhop = np.linspace(rhopmin + 1e-6, rhopmax - 1e-6, npts)
+
+    # Get the actual (absolute value of the) intensity at the peak
+    l = np.arange(ydeg + 1).reshape(1, -1)
+    term = np.sum((1 + rhop.reshape(-1, 1)) ** -l, axis=-1)
+    I = -0.5 * rhop * (1 - (2 + rhop) / (1 + rhop) * term)
+
+    # This is the factor by which we need to normalize the function
+    norm = 1.0 / I
+
+    # Find the coefficients of the fit (least squares)
+    diff = lambda p: np.sum((norm - corr(rhop, [c[0], c[1], p[0], p[1]])) ** 2)
+    res = minimize(diff, [0.1, 50.0])
+    c[2:] = res.x
+
+    # TODO: Use logging
+    print(
+        "Delta theta range: {:.2f} - {:.2f} degrees".format(hwhm_min, hwhm_max)
+    )
+    print("c coeffs: {:s}".format(" ".join(["{:.8f}".format(ck) for ck in c])))
+    print(
+        "Maximum intensity |error|: {:.2e}".format(
+            np.max(np.abs(norm - corr(rhop, c)))
+        )
+    )
+    print(
+        "Average intensity |error|: {:.2e}".format(
+            np.mean(np.abs(norm - corr(rhop, c)))
+        )
+    )
+
+    return c
+
+
+def hwhm_empirical(ydeg, rhop):
+    """
+    Return the empirical half-width at half minimum as a function of rho'.
+    
+    """
+    # Setup
+    rhop = np.atleast_1d(rhop)
+    hwhm_empirical = np.zeros_like(rhop)
+
+    # Find the HWHM numerically for each radius
+    for k in range(len(rhop)):
+
+        halfmax = 0.5 * I(ydeg, rhop[k], 0)
+
+        def loss(theta):
+            return (I(ydeg, rhop[k], theta) - halfmax) ** 2
+
+        res = minimize(loss, hwhm(max(0.1, rhop[k])))
+        hwhm_empirical[k] = res.x[0]
+
+    return hwhm_empirical
