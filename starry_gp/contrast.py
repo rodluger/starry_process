@@ -1,4 +1,5 @@
 from .integrals import MomentIntegral
+from .transforms import ContrastTransform
 import numpy as np
 
 
@@ -10,22 +11,23 @@ class ContrastIntegral(MomentIntegral):
 
     The spot contrast `xi` is distributed according to:
 
-        b ~ LogNormal(mu, nu)
+        b ~ LogNormal(mu, sigma^2)
         xi = 1 - b
     
-    where `mu` and `nu` are the mean and variance of the
+    where `mu` and `sigma` are the mean and std. dev. of the
     brightness distribution.
 
     """
 
     def _precompute(self, **kwargs):
-        pass
+        self.transform = ContrastTransform(self.ydeg)
 
-    def _set_params(self, mu, nu):
-        assert nu > 0, "variance must be positive."
-        self.fac1 = 1 - np.exp(mu + 0.5 * nu)
+    def _set_params(self, mean, std):
+        assert std > 0, "std is out of bounds"
+        var = std ** 2
+        self.fac1 = 1 - np.exp(mean + 0.5 * var)
         self.fac2 = np.sqrt(
-            1 - 2 * np.exp(mu + 0.5 * nu) + np.exp(2 * mu + 2 * nu)
+            1 - 2 * np.exp(mean + 0.5 * var) + np.exp(2 * mean + 2 * var)
         )
 
     def _first_moment(self, e):

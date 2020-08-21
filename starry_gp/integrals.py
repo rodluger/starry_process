@@ -1,4 +1,4 @@
-from .transforms import eigen
+from .utils import eigen
 import numpy as np
 
 

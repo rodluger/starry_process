@@ -1,19 +1,16 @@
-from starry_gp.size import get_s, SizeIntegral
-from starry_gp.transforms import get_alpha_beta
+from starry_gp.size import SizeIntegral
 import numpy as np
 from scipy.stats import beta as Beta
 
 
-def test_size(ydeg=5, mu=0.1, nu=0.1):
+def test_size(ydeg=15, mu=20, sigma=5, nsamples=int(1e7), atol=2e-5):
 
     # Settings
     np.random.seed(0)
-    nsamples = int(1e7)
-    atol = 5.0e-6
 
     # Get analytic integral
     I = SizeIntegral(ydeg=ydeg)
-    I._set_params(mu, nu)
+    I._set_params(mu, sigma)
     e = I._first_moment()
     eigE = I._second_moment()
     E = eigE @ eigE.T
@@ -23,11 +20,12 @@ def test_size(ydeg=5, mu=0.1, nu=0.1):
     y = np.zeros((N, nsamples))
 
     # Draw the spot size
-    alpha, beta = get_alpha_beta(mu, nu)
-    r = Beta.rvs(alpha, beta, size=nsamples)
+    alpha, beta = I.transform.get_standard_params(mu, sigma)
+
+    rho = Beta.rvs(alpha, beta, size=nsamples)
 
     # Compute the spot expansions
-    s = get_s(ydeg, r)
+    s = I.transform.get_s(rho)
 
     # Empirical moments
     e_num = np.mean(s, axis=0)

@@ -1,15 +1,8 @@
-from css import svg_mu, svg_nu, style
+from css import svg_mu, svg_sigma, style
 from design import get_design_matrix
-from stats import (
-    params,
-    ContrastPDF,
-    LatitudePDF,
-    SizePDF,
-    IdentityTransform,
-    AlphaBetaTransform,
-)
 from moll import get_latitude_lines, get_longitude_lines
 import numpy as np
+from numpy.linalg import LinAlgError
 from starry_gp import YlmGP
 from bokeh.layouts import column, row
 from bokeh.models import ColumnDataSource, Slider, ColorBar, Label
@@ -17,6 +10,23 @@ from bokeh.plotting import figure, curdoc
 from bokeh.models.tickers import FixedTicker
 from bokeh.models.formatters import FuncTickFormatter
 from bokeh.models.mappers import LinearColorMapper
+
+
+# Parameter ranges & default values
+params = {
+    "latitude": {
+        "mu": {"start": 0.01, "stop": 0.99, "step": 0.01, "value": 0.8},
+        "sigma": {"start": 0.01, "stop": 1.0, "step": 0.01, "value": 0.05},
+    },
+    "size": {
+        "mu": {"start": 0.0, "stop": 90.0, "step": 0.1, "value": 33.0},
+        "sigma": {"start": 1.0, "stop": 30.0, "step": 0.1, "value": 5.0},
+    },
+    "contrast": {
+        "mu": {"start": -5, "stop": 1, "step": 0.01, "value": -5},
+        "sigma": {"start": 0.01, "stop": 5.0, "step": 0.01, "value": 0.01},
+    },
+}
 
 
 class Samples(object):
@@ -34,15 +44,15 @@ class Samples(object):
 
         # Draw three samples from the default distr
         self.gp.size.set_params(
-            params["size"]["mu"]["value"], params["size"]["nu"]["value"]
+            params["size"]["mu"]["value"], params["size"]["sigma"]["value"]
         )
         self.gp.latitude.set_params(
             params["latitude"]["mu"]["value"],
-            params["latitude"]["nu"]["value"],
+            params["latitude"]["sigma"]["value"],
         )
         self.gp.contrast.set_params(
             params["contrast"]["mu"]["value"],
-            params["contrast"]["nu"]["value"],
+            params["contrast"]["sigma"]["value"],
         )
         self.ylm = self.gp.draw(self.nmaps)
 
@@ -125,37 +135,50 @@ class Samples(object):
         self.layout = row(*self.plot, self.cax, margin=(10, 30, 10, 30))
 
     def callback(self, attr, old, new):
-        # Draw the samples
-        self.gp.size.set_params(
-            self.Size.slider_mu.value, self.Size.slider_nu.value
-        )
-        self.gp.latitude.set_params(
-            self.Latitude.slider_mu.value, self.Latitude.slider_nu.value
-        )
-        self.gp.contrast.set_params(
-            self.Contrast.slider_mu.value, self.Contrast.slider_nu.value
-        )
-        self.ylm = self.gp.draw(self.nmaps)
+        try:
 
-        # Compute the images
-        for i in range(len(self.source)):
-            self.source[i].data["image"] = [
-                1.0 + (self.A @ self.ylm[i]).reshape(self.npix, 2 * self.npix)
-            ]
+            # Draw the samples
+            self.gp.size.set_params(
+                self.Size.slider_mu.value, self.Size.slider_sigma.value
+            )
+            self.gp.latitude.set_params(
+                self.Latitude.slider_mu.value, self.Latitude.slider_sigma.value
+            )
+            self.gp.contrast.set_params(
+                self.Contrast.slider_mu.value, self.Contrast.slider_sigma.value
+            )
+            self.ylm = self.gp.draw(self.nmaps)
+
+            # Compute the images
+            for i in range(len(self.source)):
+                self.source[i].data["image"] = [
+                    1.0
+                    + (self.A @ self.ylm[i]).reshape(self.npix, 2 * self.npix)
+                ]
+
+            for dist in [self.Size, self.Latitude, self.Contrast]:
+                for slider in [dist.slider_mu, dist.slider_sigma]:
+                    slider.bar_color = "white"
+
+        except LinAlgError:
+
+            # Something went wrong inverting the covariance!
+            for dist in [self.Size, self.Latitude, self.Contrast]:
+                for slider in [dist.slider_mu, dist.slider_sigma]:
+                    slider.bar_color = "firebrick"
 
 
 class Distribution(object):
     def __init__(
-        self, name, xmin, xmax, mu, nu, pdf, gp_callback, transform, throttle,
+        self, name, xmin, xmax, mu, sigma, pdf, gp_callback, throttle,
     ):
         # Store
         self.pdf = pdf
         self.gp_callback = gp_callback
-        self.transform = transform
 
         # Arrays
         x = np.linspace(xmin, xmax, 300)
-        y = self.pdf(x, mu["value"], nu["value"])
+        y = self.pdf(x, mu["value"], sigma["value"])
         self.source = ColumnDataSource(data=dict(x=x, y=y))
 
         # Plot them
@@ -184,28 +207,6 @@ class Distribution(object):
         self.plot.outline_line_alpha = 1
         self.plot.outline_line_color = "black"
 
-        # Annotation
-        if self.transform == AlphaBetaTransform:
-            alpha, beta = self.transform(mu["value"], nu["value"])
-            self.labels = [
-                Label(
-                    x=280,
-                    y=280,
-                    x_units="screen",
-                    y_units="screen",
-                    text="α: {:4.2f}".format(alpha),
-                ),
-                Label(
-                    x=280,
-                    y=260,
-                    x_units="screen",
-                    y_units="screen",
-                    text="β: {:4.2f}".format(beta),
-                ),
-            ]
-            self.plot.add_layout(self.labels[0])
-            self.plot.add_layout(self.labels[1])
-
         # Sliders
         self.slider_mu = Slider(
             start=mu["start"],
@@ -219,42 +220,52 @@ class Distribution(object):
             callback_throttle=throttle,
         )
         self.slider_mu.on_change("value_throttled", self.callback)
-        self.slider_nu = Slider(
-            start=nu["start"],
-            end=nu["stop"],
-            step=nu["step"],
-            value=nu["value"],
+        self.slider_sigma = Slider(
+            start=sigma["start"],
+            end=sigma["stop"],
+            step=sigma["step"],
+            value=sigma["value"],
             orientation="vertical",
             format="0.3f",
             css_classes=["custom-slider"],
-            name="nu",
+            name="sigma",
             callback_policy="throttle",
             callback_throttle=throttle,
         )
-        self.slider_nu.on_change("value_throttled", self.callback)
+        self.slider_sigma.on_change("value_throttled", self.callback)
 
         # Full layout
         self.layout = row(
             self.plot,
             column(svg_mu(), self.slider_mu, margin=(10, 10, 10, 10)),
-            column(svg_nu(), self.slider_nu, margin=(10, 10, 10, 10)),
+            column(svg_sigma(), self.slider_sigma, margin=(10, 10, 10, 10)),
         )
 
     def callback(self, attr, old, new):
-        # Update the transform
-        if self.transform == AlphaBetaTransform:
-            alpha, beta = self.transform(
-                self.slider_mu.value, self.slider_nu.value
-            )
-            self.labels[0].text = "α: {:4.2f}".format(alpha)
-            self.labels[1].text = "β: {:4.2f}".format(beta)
+        try:
 
-        # Update the distribution
-        self.source.data["y"] = self.pdf(
-            self.source.data["x"], self.slider_mu.value, self.slider_nu.value
-        )
-        # Update the GP samples
-        self.gp_callback(attr, old, new)
+            # Update the distribution
+            self.source.data["y"] = self.pdf(
+                self.source.data["x"],
+                self.slider_mu.value,
+                self.slider_sigma.value,
+            )
+            self.slider_mu.bar_color = "white"
+            self.slider_sigma.bar_color = "white"
+
+            # Update the GP samples
+            self.gp_callback(attr, old, new)
+
+        except AssertionError as e:
+
+            # A param is out of bounds!
+            if "std" in str(e):
+                self.slider_sigma.bar_color = "firebrick"
+            elif "mean" in str(e):
+                self.slider_mu.bar_color = "firebrick"
+            else:
+                self.slider_sigma.bar_color = "firebrick"
+                self.slider_mu.bar_color = "firebrick"
 
 
 class Application(object):
@@ -269,21 +280,19 @@ class Application(object):
             -90,
             90,
             params["latitude"]["mu"],
-            params["latitude"]["nu"],
-            LatitudePDF,
+            params["latitude"]["sigma"],
+            self.Samples.gp.latitude.transform.pdf,
             self.Samples.callback,
-            AlphaBetaTransform,
             throttle,
         )
         self.Size = Distribution(
             "size",
             0,
-            1,
+            90,
             params["size"]["mu"],
-            params["size"]["nu"],
-            SizePDF,
+            params["size"]["sigma"],
+            self.Samples.gp.size.transform.pdf,
             self.Samples.callback,
-            AlphaBetaTransform,
             throttle,
         )
         self.Contrast = Distribution(
@@ -291,10 +300,9 @@ class Application(object):
             -1,
             1,
             params["contrast"]["mu"],
-            params["contrast"]["nu"],
-            ContrastPDF,
+            params["contrast"]["sigma"],
+            self.Samples.gp.contrast.transform.pdf,
             self.Samples.callback,
-            IdentityTransform,
             throttle,
         )
 

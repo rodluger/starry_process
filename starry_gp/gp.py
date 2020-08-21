@@ -2,21 +2,21 @@ from .size import SizeIntegral
 from .contrast import ContrastIntegral
 from .latitude import LatitudeIntegral
 from .longitude import LongitudeIntegral
-from .transforms import eigen
+from .utils import eigen
 import numpy as np
 from scipy.linalg import cho_factor, cho_solve
 
 
 class YlmGP(object):
-    def __init__(self, ydeg):
+    def __init__(self, ydeg, **kwargs):
         assert ydeg > 0, "Degree of map must be > 0."
         self.ydeg = ydeg
         self.N = (ydeg + 1) ** 2
 
-        self.contrast = ContrastIntegral(self)
-        self.longitude = LongitudeIntegral(self.contrast)
-        self.latitude = LatitudeIntegral(self.longitude)
-        self.size = SizeIntegral(self.latitude)
+        self.contrast = ContrastIntegral(self, **kwargs)
+        self.longitude = LongitudeIntegral(self.contrast, **kwargs)
+        self.latitude = LatitudeIntegral(self.longitude, **kwargs)
+        self.size = SizeIntegral(self.latitude, **kwargs)
 
         self._mean = None
         self._cov = None

@@ -1,5 +1,6 @@
+from .transforms import SizeTransform
 from .integrals import MomentIntegral
-from .transforms import eigen, get_c, get_alpha_beta
+from .utils import eigen
 import numpy as np
 from scipy.special import hyp2f1
 from scipy.special import beta as EulerBeta
@@ -13,29 +14,6 @@ V = np.array(
     [[1, 1, 0, 0, 0], [1, 2, 1, 0, 0], [1, 3, 3, 1, 0], [1, 4, 6, 4, 1]],
     dtype=int,
 )
-
-
-def get_s(ydeg, r, tol=1e-2, hwhm_max=75):
-    """Return the spot spherical harmonic expansion vector `s(r)`.
-
-    """
-    c0, c1 = get_c0_c1(ydeg, tol=tol, hwhm_max=hwhm_max)
-    r = np.atleast_1d(r)
-    assert len(r.shape) == 1
-    K = r.shape[0]
-    rprime = c0 + c1 * r
-    sm0 = np.zeros((K, ydeg + 1))
-    sm0[:, 0] = 0.5 * rprime
-    for l in range(ydeg + 1):
-        sm0[:, l] -= (
-            rprime
-            * (2 + rprime)
-            / (2 * np.sqrt(2 * l + 1) * (1 + rprime) ** (l + 1))
-        )
-    l = np.arange(ydeg + 1)
-    s = np.zeros((K, (ydeg + 1) * (ydeg + 1)))
-    s[:, l * (l + 1)] = sm0
-    return s
 
 
 def _get_G_factor(alpha, beta, c):
@@ -156,35 +134,23 @@ class SizeIntegral(MomentIntegral):
     Computes the first two moments of the distribution over spherical
     harmonic coefficients given a distribution of spot sizes.
 
-    The spot size `r` is Beta-distributed:
-
-        r ~ Beta(alpha, beta)
-    
-    where `alpha` and `beta` are parametrized in terms of `mu` and `nu`:
-
-        alpha = mu * (1 / nu - 1)
-        beta = (1 - mu) * (1 / nu - 1)
-
-    where `mu` and `nu` are the mean and (normalized) variance of the
-    distribution.
-
     """
 
     def _precompute(self, **kwargs):
-        self.c = get_c(self.ydeg, **kwargs)
+        self.transform = SizeTransform(self.ydeg, **kwargs)
         l = np.arange(self.ydeg + 1)
         self.i = l * (l + 1)
         self.ij = np.ix_(self.i, self.i)
         self._e = np.zeros(self.N)
         self._eigE = np.zeros((self.N, self.N))
 
-    def _set_params(self, mu, nu):
+    def _set_params(self, mean, std):
 
         # Get the Beta params
-        alpha, beta = get_alpha_beta(mu, nu)
+        alpha, beta = self.transform.get_standard_params(mean, std)
 
         # Hypergeometric sequences
-        H = get_H(self.ydeg, alpha, beta, self.c)
+        H = get_H(self.ydeg, alpha, beta, self.transform.c)
         J = lambda i, j: H[i, j, 0] + H[i, j, 1]
         K = lambda i, j: H[i, j, 0] + 2 * H[i, j, 1] + H[i, j, 2]
 
