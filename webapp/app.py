@@ -1,5 +1,5 @@
 from css import svg_mu, svg_sigma, style
-from design import get_design_matrix
+from design import get_intensity_design_matrix, get_flux_design_matrix
 from moll import get_latitude_lines, get_longitude_lines
 import numpy as np
 from numpy.linalg import LinAlgError
@@ -14,11 +14,15 @@ from bokeh.models import (
     CustomJS,
     Button,
     Span,
+    MultiLine,
+    Legend,
+    LegendItem,
 )
 from bokeh.plotting import figure, curdoc
 from bokeh.models.tickers import FixedTicker
 from bokeh.models.formatters import FuncTickFormatter
 from bokeh.models.mappers import LinearColorMapper
+from bokeh.palettes import OrRd6
 
 # Parameter ranges & default values
 params = {
@@ -37,15 +41,21 @@ params = {
 }
 
 
+def mednorm(x, **kwargs):
+    return x - np.median(x, **kwargs)
+
+
 class Samples(object):
-    def __init__(self, ydeg, npix, throttle):
+    def __init__(self, ydeg, npix, npts, throttle):
         # Settings
         self.npix = npix
+        self.npts = npts
         self.nmaps = 5
-        self.seed = 0
+        self.seed = 238
 
-        # Intensity design matrix
-        self.A = get_design_matrix(ydeg, npix)
+        # Design matrices
+        self.A_I = get_intensity_design_matrix(ydeg, npix)
+        self.A_F = get_flux_design_matrix(ydeg, npts)
 
         # The GP
         self.gp = YlmGP(ydeg)
@@ -69,13 +79,13 @@ class Samples(object):
         self.color_mapper = LinearColorMapper(
             palette="Plasma256", nan_color="white", low=0.5, high=1.2
         )
-        self.plot = [None for i in range(self.nmaps)]
-        self.source = [
+        self.moll_plot = [None for i in range(self.nmaps)]
+        self.moll_source = [
             ColumnDataSource(
                 data=dict(
                     image=[
                         1.0
-                        + (self.A @ self.ylm[i]).reshape(
+                        + (self.A_I @ self.ylm[i]).reshape(
                             self.npix, 2 * self.npix
                         )
                     ]
@@ -85,24 +95,24 @@ class Samples(object):
         ]
         eps = 0.1
         for i in range(self.nmaps):
-            self.plot[i] = figure(
+            self.moll_plot[i] = figure(
                 plot_width=280,
-                plot_height=140,
+                plot_height=130,
                 toolbar_location=None,
                 x_range=(-2 - eps, 2 + eps),
                 y_range=(-1 - eps / 2, 1 + eps / 2),
             )
-            self.plot[i].axis.visible = False
-            self.plot[i].grid.visible = False
-            self.plot[i].outline_line_color = None
-            self.plot[i].image(
+            self.moll_plot[i].axis.visible = False
+            self.moll_plot[i].grid.visible = False
+            self.moll_plot[i].outline_line_color = None
+            self.moll_plot[i].image(
                 image="image",
                 x=-2,
                 y=-1,
                 dw=4,
                 dh=2,
                 color_mapper=self.color_mapper,
-                source=self.source[i],
+                source=self.moll_source[i],
             )
 
         # Plot lat/lon grid
@@ -110,18 +120,18 @@ class Samples(object):
         lon_lines = get_longitude_lines()
         for i in range(self.nmaps):
             for x, y in lat_lines:
-                self.plot[i].line(
+                self.moll_plot[i].line(
                     x, y, line_width=1, color="black", alpha=0.25
                 )
             for x, y in lon_lines:
-                self.plot[i].line(
+                self.moll_plot[i].line(
                     x, y, line_width=1, color="black", alpha=0.25
                 )
 
             x = np.linspace(-2, 2, 300)
             y = 0.5 * np.sqrt(4 - x ** 2)
-            self.plot[i].line(x, y, line_width=3, color="black", alpha=1)
-            self.plot[i].line(x, -y, line_width=3, color="black", alpha=1)
+            self.moll_plot[i].line(x, y, line_width=3, color="black", alpha=1)
+            self.moll_plot[i].line(x, -y, line_width=3, color="black", alpha=1)
 
         # Colorbar slider
         self.slider = RangeSlider(
@@ -141,17 +151,89 @@ class Samples(object):
 
         # Seed button
         self.button = Button(
-            label="re-seed",
+            label="new randomizer seed",
             button_type="default",
             width=10,
             css_classes=["seed-button"],
         )
         self.button.on_click(self.seed_callback)
 
-        # Full layout
-        self.layout = row(
-            *self.plot, self.slider, self.button, margin=(10, 30, 10, 30)
+        # Light curve samples
+        self.flux_plot = [None for i in range(self.nmaps)]
+        self.flux_source = [
+            ColumnDataSource(
+                data=dict(
+                    xs=[np.linspace(0, 1, npts) for j in range(6)],
+                    ys=[mednorm(self.A_F[j] @ self.ylm[i]) for j in range(6)],
+                    color=[OrRd6[j] for j in range(6)][::-1],
+                )
+            )
+            for i in range(self.nmaps)
+        ]
+        y_range = None
+        for i in range(self.nmaps):
+            self.flux_plot[i] = figure(
+                plot_width=280,
+                plot_height=200,
+                toolbar_location=None,
+                x_range=(0, 1),
+                y_range=y_range,
+                min_border_left=30,
+            )
+            y_range = self.flux_plot[0].y_range
+            if i > 0:
+                self.flux_plot[i].yaxis.visible = False
+            else:
+                self.flux_plot[i].yaxis.axis_label = "flux [ppt]"
+                self.flux_plot[i].yaxis.axis_label_text_font_style = "normal"
+            self.flux_plot[i].xaxis.axis_label = "rotational phase"
+            self.flux_plot[i].xaxis.axis_label_text_font_style = "normal"
+            self.flux_plot[i].outline_line_color = None
+            self.flux_plot[i].multi_line(
+                xs="xs",
+                ys="ys",
+                line_color="color",
+                source=self.flux_source[i],
+            )
+
+        # Legend
+        self.legend_source = ColumnDataSource(
+            data=dict(
+                xs=[[np.nan, np.nan] for j in range(6)],
+                ys=[[np.nan, np.nan] for j in range(6)],
+                color=[OrRd6[j] for j in range(6)][::-1],
+            )
         )
+        self.legend = figure(
+            plot_width=100, plot_height=200, toolbar_location=None
+        )
+        self.legend.background_fill_alpha = 1
+        self.legend.axis.visible = False
+        self.legend.grid.visible = False
+        self.legend.outline_line_color = None
+        glyph = self.legend.multi_line(
+            xs="xs", ys="ys", line_color="color", source=self.legend_source,
+        )
+        leg = Legend(
+            items=[
+                LegendItem(label=label, renderers=[glyph], index=j)
+                for j, label in enumerate(["15", "30", "45", "60", "75", "90"])
+            ],
+            label_text_font_size="8pt",
+            title="inclination",
+            title_text_font_style="bold",
+            title_text_font_size="8pt",
+            label_height=5,
+            border_line_alpha=0,
+            glyph_width=30,
+            glyph_height=15,
+        )
+        self.legend.add_layout(leg, "center")
+
+        # Full layout
+        c = [column(m, f) for m, f in zip(self.moll_plot, self.flux_plot)]
+        c += [column(row(self.slider, self.button), self.legend)]
+        self.layout = row(*c, margin=(10, 30, 10, 30))
 
     def slider_callback(self, attr, old, new):
         self.color_mapper.low, self.color_mapper.high = self.slider.value
@@ -176,11 +258,18 @@ class Samples(object):
             np.random.seed(self.seed)
             self.ylm = self.gp.draw(self.nmaps)
 
-            # Compute the images
-            for i in range(len(self.source)):
-                self.source[i].data["image"] = [
+            # Compute the images & plot the light curves
+            for i in range(len(self.moll_source)):
+                self.moll_source[i].data["image"] = [
                     1.0
-                    + (self.A @ self.ylm[i]).reshape(self.npix, 2 * self.npix)
+                    + (self.A_I @ self.ylm[i]).reshape(
+                        self.npix, 2 * self.npix
+                    )
+                ]
+
+                self.flux_source[i].data["ys"] = [
+                    mednorm(self.A_F[j] @ self.ylm[i])
+                    for j in range(len(self.A_F))
                 ]
 
             for dist in [self.Size, self.Latitude, self.Contrast]:
@@ -343,10 +432,10 @@ class Distribution(object):
 
 
 class Application(object):
-    def __init__(self, ydeg=15, npix=150, throttle=200):
+    def __init__(self, ydeg=15, npix=150, npts=300, throttle=200):
 
         # The GP samples
-        self.Samples = Samples(ydeg, npix, throttle)
+        self.Samples = Samples(ydeg, npix, npts, throttle)
 
         # The distributions
         self.Latitude = Distribution(

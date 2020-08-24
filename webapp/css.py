@@ -43,6 +43,11 @@ style = lambda: Div(
     }
     .seed-button .bk-btn {
         padding: 6px 6px !important;
+        transform: rotate(-90deg);
+        background-color: #ffe0c6 !important;
+        margin-top: 45px;
+        height: 30px;
+        margin-left: -30px;
     }
     .colorbar-slider .bk-noUi-draggable {
         %s
