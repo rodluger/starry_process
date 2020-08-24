@@ -23,11 +23,12 @@ class ContrastIntegral(MomentIntegral):
         self.transform = ContrastTransform(self.ydeg)
 
     def _set_params(self, mean, std):
-        assert std > 0, "std is out of bounds"
-        var = std ** 2
-        self.fac1 = 1 - np.exp(mean + 0.5 * var)
+        # Get the parameters of the *brightness* distribution
+        mu, sigma = self.transform.get_standard_params(mean, std)
+        var = sigma ** 2
+        self.fac1 = 1 - np.exp(mu + 0.5 * var)
         self.fac2 = np.sqrt(
-            1 - 2 * np.exp(mean + 0.5 * var) + np.exp(2 * mean + 2 * var)
+            1 - 2 * np.exp(mu + 0.5 * var) + np.exp(2 * mu + 2 * var)
         )
 
     def _first_moment(self, e):

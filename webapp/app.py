@@ -5,12 +5,20 @@ import numpy as np
 from numpy.linalg import LinAlgError
 from starry_gp import YlmGP
 from bokeh.layouts import column, row
-from bokeh.models import ColumnDataSource, Slider, ColorBar, Label
+from bokeh.models import (
+    ColumnDataSource,
+    Slider,
+    ColorBar,
+    Label,
+    RangeSlider,
+    CustomJS,
+    Button,
+    Span,
+)
 from bokeh.plotting import figure, curdoc
 from bokeh.models.tickers import FixedTicker
 from bokeh.models.formatters import FuncTickFormatter
 from bokeh.models.mappers import LinearColorMapper
-
 
 # Parameter ranges & default values
 params = {
@@ -19,22 +27,22 @@ params = {
         "sigma": {"start": 0.01, "stop": 1.0, "step": 0.01, "value": 0.05},
     },
     "size": {
-        "mu": {"start": 0.0, "stop": 90.0, "step": 0.1, "value": 33.0},
+        "mu": {"start": 0.0, "stop": 90.0, "step": 0.1, "value": 15.0},
         "sigma": {"start": 1.0, "stop": 30.0, "step": 0.1, "value": 5.0},
     },
     "contrast": {
-        "mu": {"start": -5, "stop": 1, "step": 0.01, "value": -5},
-        "sigma": {"start": 0.01, "stop": 5.0, "step": 0.01, "value": 0.01},
+        "mu": {"start": -0.99, "stop": 0.99, "step": 0.01, "value": 0.80},
+        "sigma": {"start": 0.01, "stop": 1.0, "step": 0.01, "value": 0.05},
     },
 }
 
 
 class Samples(object):
-    def __init__(self, ydeg, npix):
+    def __init__(self, ydeg, npix, throttle):
         # Settings
-        np.random.seed(0)
         self.npix = npix
         self.nmaps = 5
+        self.seed = 0
 
         # Intensity design matrix
         self.A = get_design_matrix(ydeg, npix)
@@ -54,11 +62,12 @@ class Samples(object):
             params["contrast"]["mu"]["value"],
             params["contrast"]["sigma"]["value"],
         )
+        np.random.seed(self.seed)
         self.ylm = self.gp.draw(self.nmaps)
 
         # Plot the GP ylm samples
         self.color_mapper = LinearColorMapper(
-            palette="Plasma256", nan_color="white", low=0.0, high=1.1
+            palette="Plasma256", nan_color="white", low=0.5, high=1.2
         )
         self.plot = [None for i in range(self.nmaps)]
         self.source = [
@@ -114,25 +123,42 @@ class Samples(object):
             self.plot[i].line(x, y, line_width=3, color="black", alpha=1)
             self.plot[i].line(x, -y, line_width=3, color="black", alpha=1)
 
-        # Colorbar
-        self.cbar = ColorBar(
-            color_mapper=self.color_mapper,
-            bar_line_color="black",
-            location=(0, 0),
-            major_tick_line_color="black",
+        # Colorbar slider
+        self.slider = RangeSlider(
+            start=0,
+            end=1.5,
+            step=0.01,
+            value=(0.5, 1.2),
+            orientation="vertical",
+            show_value=False,
+            css_classes=["colorbar-slider"],
+            direction="rtl",
+            callback_policy="throttle",
+            callback_throttle=throttle,
             height=118,
-            width=15,
         )
-        self.cax = figure(
-            plot_width=80, plot_height=140, toolbar_location=None
+        self.slider.on_change("value_throttled", self.slider_callback)
+
+        # Seed button
+        self.button = Button(
+            label="re-seed",
+            button_type="default",
+            width=10,
+            css_classes=["seed-button"],
         )
-        self.cax.axis.visible = False
-        self.cax.grid.visible = False
-        self.cax.outline_line_color = None
-        self.cax.add_layout(self.cbar, "center")
+        self.button.on_click(self.seed_callback)
 
         # Full layout
-        self.layout = row(*self.plot, self.cax, margin=(10, 30, 10, 30))
+        self.layout = row(
+            *self.plot, self.slider, self.button, margin=(10, 30, 10, 30)
+        )
+
+    def slider_callback(self, attr, old, new):
+        self.color_mapper.low, self.color_mapper.high = self.slider.value
+
+    def seed_callback(self, event):
+        self.seed = np.random.randint(0, 999)
+        self.callback(None, None, None)
 
     def callback(self, attr, old, new):
         try:
@@ -147,6 +173,7 @@ class Samples(object):
             self.gp.contrast.set_params(
                 self.Contrast.slider_mu.value, self.Contrast.slider_sigma.value
             )
+            np.random.seed(self.seed)
             self.ylm = self.gp.draw(self.nmaps)
 
             # Compute the images
@@ -234,6 +261,32 @@ class Distribution(object):
         )
         self.slider_sigma.on_change("value_throttled", self.callback)
 
+        # Show mean and std. dev.
+        self.mean_vline = Span(
+            location=self.slider_mu.value,
+            dimension="height",
+            line_color="black",
+            line_width=1,
+            line_dash="dashed",
+        )
+        self.std_vline1 = Span(
+            location=self.slider_mu.value - self.slider_sigma.value,
+            dimension="height",
+            line_color="black",
+            line_width=1,
+            line_dash="dotted",
+        )
+        self.std_vline2 = Span(
+            location=self.slider_mu.value + self.slider_sigma.value,
+            dimension="height",
+            line_color="black",
+            line_width=1,
+            line_dash="dotted",
+        )
+        self.plot.renderers.extend(
+            [self.mean_vline, self.std_vline1, self.std_vline2]
+        )
+
         # Full layout
         self.layout = row(
             self.plot,
@@ -253,8 +306,14 @@ class Distribution(object):
             self.slider_mu.bar_color = "white"
             self.slider_sigma.bar_color = "white"
 
-            # Update the GP samples
-            self.gp_callback(attr, old, new)
+            # Update the mean and std. dev. lines
+            self.mean_vline.location = self.slider_mu.value
+            self.std_vline1.location = (
+                self.slider_mu.value - self.slider_sigma.value
+            )
+            self.std_vline2.location = (
+                self.slider_mu.value + self.slider_sigma.value
+            )
 
         except AssertionError as e:
 
@@ -267,16 +326,27 @@ class Distribution(object):
                 self.slider_sigma.bar_color = "firebrick"
                 self.slider_mu.bar_color = "firebrick"
 
+        finally:
+
+            try:
+
+                # Update the GP samples
+                self.gp_callback(attr, old, new)
+
+            except AssertionError as e:
+
+                pass
+
 
 class Application(object):
-    def __init__(self, ydeg=15, npix=150, throttle=100):
+    def __init__(self, ydeg=15, npix=150, throttle=200):
 
         # The GP samples
-        self.Samples = Samples(ydeg, npix=npix)
+        self.Samples = Samples(ydeg, npix, throttle)
 
         # The distributions
         self.Latitude = Distribution(
-            "latitude",
+            "latitude [deg]",
             -90,
             90,
             params["latitude"]["mu"],
@@ -286,7 +356,7 @@ class Application(object):
             throttle,
         )
         self.Size = Distribution(
-            "size",
+            "size [deg]",
             0,
             90,
             params["size"]["mu"],

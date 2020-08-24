@@ -1,4 +1,6 @@
 from bokeh.models import Div
+from plasma import plasma
+
 
 __all__ = ["svg_mu", "svg_nu", "style"]
 
@@ -39,6 +41,13 @@ style = lambda: Div(
         width: 20px !important;
         height: 20px;
     }
+    .seed-button .bk-btn {
+        padding: 6px 6px !important;
+    }
+    .colorbar-slider .bk-noUi-draggable {
+        %s
+    }
 </style>
 """
+    % plasma
 )

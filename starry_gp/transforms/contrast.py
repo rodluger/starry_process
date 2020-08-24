@@ -17,7 +17,8 @@ class ContrastTransform(Transform):
 
     def get_standard_params(self, mean, std):
         """
-        Identity transform: our PDF is a function of mean and std already.
+        Return the mean and standard deviation of the log-normal distribution
+        in *brightness*.
         
         """
         # Bounds checks
@@ -25,8 +26,11 @@ class ContrastTransform(Transform):
         std = np.array(std)
         assert np.all((std > 0)), "std is out of bounds"
 
-        # Transform: identity!
-        return mean, std
+        v = std ** 2
+        b = (1 - mean) ** 2
+        mu = np.log(b / np.sqrt(b + v))
+        sigma = np.log(1 + v / b)
+        return mu, sigma
 
     def pdf(self, xi, mean, std):
         """
@@ -34,11 +38,11 @@ class ContrastTransform(Transform):
         
         """
         # Transform to the standard params
-        mean, std = self.get_standard_params(mean, std)
-        var = std ** 2
-
+        mu, sigma = self.get_standard_params(mean, std)
+        var = sigma ** 2
+        b = 1 - xi
         return (
             1.0
-            / ((1 - xi) * np.sqrt(2 * np.pi * var))
-            * np.exp(-((np.log(1 - xi) - mean) ** 2) / (2 * var))
+            / (b * np.sqrt(2 * np.pi * var))
+            * np.exp(-((np.log(b) - mu) ** 2) / (2 * var))
         )

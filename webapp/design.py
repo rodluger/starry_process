@@ -6,7 +6,7 @@ __all__ = ["get_design_matrix"]
 
 def get_design_matrix(ydeg, npix=50):
     # Cached file name
-    file = "A{:02d}-{:03d}.dat".format(ydeg, npix)
+    file = "A{:02d}-{:03d}.npz".format(ydeg, npix)
 
     # If it doesn't exist, create it
     if not os.path.exists(file):
@@ -29,10 +29,11 @@ def get_design_matrix(ydeg, npix=50):
         lon = lon.flatten() * 180 / np.pi
         map = starry.Map(ydeg, lazy=False)
         A = np.pi * map.intensity_design_matrix(lat=lat, lon=lon)
-        np.savetxt(file, A)
+        np.savez(file, A=A)
 
     # Else load from disk
     else:
-        A = np.loadtxt(file)
+
+        A = np.load(file)["A"]
 
     return A
