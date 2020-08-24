@@ -612,6 +612,7 @@ class SizeTransform(Transform):
                 except AssertionError:
 
                     # We are out of bounds; not a problem
+                    mean_error[i, j] = np.nan
                     std_error[i, j] = np.nan
 
         if plot:

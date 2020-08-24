@@ -23,8 +23,8 @@ from bokeh.models.mappers import LinearColorMapper
 # Parameter ranges & default values
 params = {
     "latitude": {
-        "mu": {"start": 0.01, "stop": 0.99, "step": 0.01, "value": 0.8},
-        "sigma": {"start": 0.01, "stop": 1.0, "step": 0.01, "value": 0.05},
+        "mu": {"start": 0.0, "stop": 90.0, "step": 0.01, "value": 30.0},
+        "sigma": {"start": 1.0, "stop": 30.0, "step": 0.01, "value": 5.0},
     },
     "size": {
         "mu": {"start": 0.0, "stop": 90.0, "step": 0.1, "value": 15.0},
@@ -305,6 +305,8 @@ class Distribution(object):
             )
             self.slider_mu.bar_color = "white"
             self.slider_sigma.bar_color = "white"
+            self.plot.background_fill_color = "white"
+            self.plot.background_fill_alpha = 1
 
             # Update the mean and std. dev. lines
             self.mean_vline.location = self.slider_mu.value
@@ -325,6 +327,8 @@ class Distribution(object):
             else:
                 self.slider_sigma.bar_color = "firebrick"
                 self.slider_mu.bar_color = "firebrick"
+            self.plot.background_fill_color = "firebrick"
+            self.plot.background_fill_alpha = 0.2
 
         finally:
 
@@ -346,7 +350,7 @@ class Application(object):
 
         # The distributions
         self.Latitude = Distribution(
-            "latitude [deg]",
+            "latitude",
             -90,
             90,
             params["latitude"]["mu"],
@@ -356,7 +360,7 @@ class Application(object):
             throttle,
         )
         self.Size = Distribution(
-            "size [deg]",
+            "size",
             0,
             90,
             params["size"]["mu"],

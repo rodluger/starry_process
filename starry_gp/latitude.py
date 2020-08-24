@@ -7,7 +7,7 @@ import numpy as np
 
 class LatitudeIntegral(WignerIntegral):
     def _precompute(self, **kwargs):
-        self.transform = LatitudeTransform(self.ydeg)
+        self.transform = LatitudeTransform()
         self.R = R(
             self.ydeg, cos_alpha=0, sin_alpha=1, cos_gamma=0, sin_gamma=-1
         )
