@@ -1,6 +1,6 @@
-from starry_gp.latitude import LatitudeIntegral
-from starry_gp.wigner import R
-from starry_gp.transforms import get_alpha_beta
+from starry_process.latitude import LatitudeIntegral
+from starry_process.wigner import R
+from starry_process.transforms import get_alpha_beta
 import numpy as np
 from scipy.integrate import quad
 from scipy.stats import beta as Beta

@@ -11,11 +11,11 @@ jobs:
   - script: |
       sudo chown -R $USER $CONDA
       . $CONDA/etc/profile.d/conda.sh
-      conda create --yes --quiet --name starry_gp python=3.7.3 pip
+      conda create --yes --quiet --name starry_process python=3.7.3 pip
     displayName: 'Setup conda'
   - script: |
       . $CONDA/etc/profile.d/conda.sh
-      conda activate starry_gp
+      conda activate starry_process
       conda install -y -q numpy scipy mkl openblas theano
       theano-cache purge
       pip install -U pip
@@ -25,7 +25,7 @@ jobs:
     displayName: 'Install dependencies'
   - script: |
       . $CONDA/etc/profile.d/conda.sh
-      conda activate starry_gp
+      conda activate starry_process
       cd $(Build.SourcesDirectory)/tex
       make
     displayName: 'Build the paper'
@@ -36,7 +36,7 @@ jobs:
       git add -f tex/ms.pdf
       git add -f tex/figures/*.pdf
       git -c user.name='azure' -c user.email='azure' commit -m "building the paper"
-      git push -q -f https://$GITHUB_USER:$GITHUB_API_KEY@github.com/rodluger/starry_gp $(Build.SourceBranchName)-pdf 
+      git push -q -f https://$GITHUB_USER:$GITHUB_API_KEY@github.com/rodluger/starry_process $(Build.SourceBranchName)-pdf 
     displayName: 'Upload the paper'
     env:
       GITHUB_API_KEY: $(GITHUB_API_KEY)

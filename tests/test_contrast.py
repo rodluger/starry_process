@@ -1,4 +1,4 @@
-from starry_gp.contrast import ContrastIntegral
+from starry_process.contrast import ContrastIntegral
 import numpy as np
 from scipy.stats import lognorm as LogNormal
 

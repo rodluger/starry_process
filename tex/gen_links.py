@@ -6,7 +6,7 @@ import os
 hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8")[
     :-1
 ]
-slug = "rodluger/starry_gp"
+slug = "rodluger/starry_process"
 with open("gitlinks.tex", "w") as f:
     print(
         r"\newcommand{\codelink}[1]{\href{https://github.com/%s/blob/%s/tex/figures/#1.py}{\codeicon}\,\,}"

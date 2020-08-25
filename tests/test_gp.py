@@ -1,7 +1,7 @@
-from starry_gp.gp import YlmGP
-from starry_gp.transforms import get_alpha_beta
-from starry_gp.wigner import R
-from starry_gp.size import get_s
+from starry_process.gp import YlmGP
+from starry_process.transforms import get_alpha_beta
+from starry_process.wigner import R
+from starry_process.size import get_s
 import numpy as np
 from tqdm import tqdm
 from scipy.stats import beta as Beta

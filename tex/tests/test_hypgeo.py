@@ -4,7 +4,7 @@ Test the recurrence relations for the hypergeometric function 2F1.
 """
 import numpy as np
 from scipy.special import hyp2f1
-from starry_gp.transform import get_c0_c1
+from starry_process.transform import get_c0_c1
 
 
 def get_G_numerical(ydeg=10, alpha=5.0, beta=3.3):

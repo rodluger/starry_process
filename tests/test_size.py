@@ -1,4 +1,4 @@
-from starry_gp.size import SizeIntegral
+from starry_process.size import SizeIntegral
 import numpy as np
 from scipy.stats import beta as Beta
 

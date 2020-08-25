@@ -1,4 +1,4 @@
-from starry_gp.gp import YlmGP
+from starry_process.gp import YlmGP
 from line_profiler import LineProfiler
 import numpy as np
 import time

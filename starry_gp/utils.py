@@ -7,7 +7,7 @@ from packaging import version
 import logging
 
 # Set up the logger
-logger = logging.getLogger("starry_gp")
+logger = logging.getLogger("starry_process")
 logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.INFO)
 

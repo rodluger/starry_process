@@ -1,6 +1,6 @@
 import numpy as np
 import starry
-from starry_gp import YlmGP
+from starry_process import YlmGP
 from scipy.special import gamma
 from bokeh.layouts import column, row
 from bokeh.models import ColumnDataSource, CustomJS, Slider, Div
@@ -63,7 +63,8 @@ DisableTickLabels = FuncTickFormatter(code="return '  ';")
 # Get the intensity design matrix `A`
 Nx = 2 * Ny
 x, y = np.meshgrid(
-    2 * np.sqrt(2) * np.linspace(-1, 1, Nx), np.sqrt(2) * np.linspace(-1, 1, Ny)
+    2 * np.sqrt(2) * np.linspace(-1, 1, Nx),
+    np.sqrt(2) * np.linspace(-1, 1, Ny),
 )
 a = np.sqrt(2)
 b = 2 * np.sqrt(2)
@@ -106,7 +107,9 @@ for i in range(nmaps):
         y=-1,
         dw=4,
         dh=2,
-        color_mapper=LinearColorMapper(palette="Viridis256", nan_color="white"),
+        color_mapper=LinearColorMapper(
+            palette="Viridis256", nan_color="white"
+        ),
     )
     ylm_source[i] = ylm_plot[i].renderers[0].data_source
 
@@ -137,7 +140,9 @@ for i in range(ncomb):
             pass
 
 # Collect all plots
-ylm_layout = row(*ylm_plot, sizing_mode="stretch_width", margin=(10, 30, 10, 30))
+ylm_layout = row(
+    *ylm_plot, sizing_mode="stretch_width", margin=(10, 30, 10, 30)
+)
 
 # Contrast distribution
 xi = np.linspace(-1, 1, 200)
@@ -216,7 +221,9 @@ phi_plot = figure(
 )
 phi_plot.title.align = "center"
 phi_plot.title.text_font_size = "14pt"
-phi_plot.line("phi", "phi_prob", source=phi_source, line_width=3, line_alpha=0.6)
+phi_plot.line(
+    "phi", "phi_prob", source=phi_source, line_width=3, line_alpha=0.6
+)
 phi_plot.xaxis.axis_label = "spot latitude (degrees)"
 phi_plot.xaxis.axis_label_text_font_style = "normal"
 phi_plot.xaxis.axis_label_text_font_size = "12pt"
