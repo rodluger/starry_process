@@ -14,11 +14,6 @@ class LatitudeIntegralOp(LatitudeIntegralBaseOp):
     func_file = "./latitude.cc"
     func_name = "APPLY_SPECIFIC(latitude)"
 
-    def __init__(self, ydeg):
-        self.ydeg = ydeg
-        self.N = (self.ydeg + 1) ** 2
-        super().__init__()
-
     def make_node(self, alpha, beta):
         in_args = []
         dtype = theano.config.floatX
@@ -53,20 +48,16 @@ class LatitudeIntegralOp(LatitudeIntegralBaseOp):
     def grad(self, inputs, gradients):
         alpha, beta = inputs
         q, dqda, dqdb, Q, dQda, dQdb = self(*inputs)
-        bf = gradients[0]
-        for i, g in enumerate(gradients[1:]):
+        bq = gradients[0]
+        bQ = gradients[3]
+        for i, g in enumerate(list(gradients[1:3]) + list(gradients[4:6])):
             if not isinstance(g.type, theano.gradient.DisconnectedType):
                 raise ValueError(
                     "can't propagate gradients wrt parameter {0}".format(i + 1)
                 )
-        bc = tt.sum(
-            tt.reshape(bf, (1, bf.size))
-            * tt.reshape(dfdcl, (c.size, bf.size)),
-            axis=-1,
-        )
-        bb = bf * dfdb
-        br = bf * dfdr
-        return bc, bb, br, tt.zeros_like(los)
+        ba = tt.sum(bq * dqda) + tt.sum(bQ * dQda)  # TODO
+        bb = tt.sum(bq * dqdb) + tt.sum(bQ * dQdb)  # TODO
+        return ba, bb
 
     def R_op(self, inputs, eval_points):
         if eval_points[0] is None:

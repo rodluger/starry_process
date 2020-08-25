@@ -1,7 +1,6 @@
 /**
-\file utils.h
-\brief Miscellaneous utilities and definitions used throughout the code.
-
+ * \file utils.h
+ * \brief Miscellaneous utilities and definitions used throughout the code.
 */
 
 #ifndef _SP_UTILS_H_
@@ -18,16 +17,24 @@
 namespace sp {
 namespace utils {
 
+// Eigen shorthand
 using Eigen::Map;
-
 template <typename Scalar, int M, int N>
 using RowMatrix = Eigen::Matrix<Scalar, M, N, Eigen::RowMajor>;
-
 template <typename Scalar, int N> using Vector = Eigen::Matrix<Scalar, N, 1>;
 
-/**
-  Generic starry exception class.
+//! Check if a number is even (or doubly, triply, quadruply... even)
+inline bool is_even(int n, int ntimes = 1) {
+  for (int i = 0; i < ntimes; i++) {
+    if ((n % 2) != 0)
+      return false;
+    n /= 2;
+  }
+  return true;
+}
 
+/**
+ * Generic starry exception class.
 */
 class StarryProcessException : public std::exception {
 

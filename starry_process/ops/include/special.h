@@ -7,8 +7,8 @@
 #ifndef _SP_SPECIAL_H
 #define _SP_SPECIAL_H
 
-#include <constants.h>
-#include <utils.h>
+#include "constants.h"
+#include "utils.h"
 
 namespace sp {
 namespace special {
@@ -16,8 +16,7 @@ namespace special {
 using namespace utils;
 
 /**
-  The Gauss hypergeometric function 2F1.
-
+ * The Gauss hypergeometric function 2F1.
 */
 template <typename T>
 inline T hyp2f1(const T &a_, const T &b_, const T &c_, const T &z) {

@@ -1,19 +1,5 @@
 #section support_code_struct
 
-// starry::limbdark::GreensLimbDark<DTYPE_OUTPUT_0> *APPLY_SPECIFIC(L);
-
-#section init_code_struct
-
-//{ APPLY_SPECIFIC(L) = NULL; }
-
-#section cleanup_code_struct
-
-// if (APPLY_SPECIFIC(L) != NULL) {
-//  delete APPLY_SPECIFIC(L);
-//}
-
-#section support_code_struct
-
 // Shorthand
 #define DI0 DTYPE_INPUT_0
 #define DI1 DTYPE_INPUT_1
@@ -44,24 +30,25 @@ int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
   using namespace sp::latitude;
   using namespace sp::utils;
 
-  // DEBUG, TODO?
-  const npy_intp ydeg = 15;
-  const npy_intp N = (ydeg + 1) * (ydeg + 1);
+  // Size of the matrices
+  const npy_intp N = (SP_LMAX + 1) * (SP_LMAX + 1);
 
   // Get the inputs
   int success = 0;
   int ndim = -1;
   npy_intp *shape;
-  auto alpha = get_input<DI0>(&ndim, &shape, input0, &success);
+  auto alpha_in = get_input<DI0>(&ndim, &shape, input0, &success);
   if (ndim != 0) {
     PyErr_Format(PyExc_ValueError, "alpha must be a scalar");
     return 1;
   }
-  auto beta = get_input<DI1>(&ndim, &shape, input1, &success);
+  auto beta_in = get_input<DI1>(&ndim, &shape, input1, &success);
   if (ndim != 0) {
     PyErr_Format(PyExc_ValueError, "beta must be a scalar");
     return 1;
   }
+  DI0 alpha = *alpha_in;
+  DI1 beta = *beta_in;
 
   // Allocate the outputs
   int ndim_q = 1;
@@ -82,45 +69,16 @@ int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
   if (success) {
     return 1;
   }
-  Map<Vector<DO0, N>> q(q_out, N);
-  Map<Vector<DO1, N>> dqda(dqda_out, N);
-  Map<Vector<DO2, N>> dqdb(dqdb_out, N);
-  Map<RowMatrix<DO3, N, N>> Q(Q_out, N, N);
-  Map<RowMatrix<DO4, N, N>> dQda(dQda_out, N, N);
-  Map<RowMatrix<DO5, N, N>> dQdb(dQdb_out, N, N);
+  Map<Vector<DO0, N>> q(q_out);
+  Map<Vector<DO1, N>> dqda(dqda_out);
+  Map<Vector<DO2, N>> dqdb(dqdb_out);
+  Map<RowMatrix<DO3, N, N>> Q(Q_out);
+  Map<RowMatrix<DO4, N, N>> dQda(dQda_out);
+  Map<RowMatrix<DO5, N, N>> dQdb(dQdb_out);
 
-  ComputeLatitudeIntegrals(alpha, beta, q, dqda, dqdb, Q, dQda, dQdb);
+  // Compute the integrals
+  ComputeLatitudeIntegrals<SP_LMAX>(alpha, beta, q, dqda, dqdb, Q, dQda, dQdb);
 
-  /*
-  if (APPLY_SPECIFIC(L) == NULL || APPLY_SPECIFIC(L)->lmax != Nc - 1) {
-    if (APPLY_SPECIFIC(L) != NULL)
-      delete APPLY_SPECIFIC(L);
-    APPLY_SPECIFIC(L) = new starry::limbdark::GreensLimbDark<double>(Nc - 1);
-  }
-
-  for (npy_intp i = 0; i < Nb; ++i) {
-    f[i] = 0;
-    dfdb[i] = 0;
-    dfdr[i] = 0;
-
-    if (los[i] > 0) {
-      auto b_ = std::abs(b[i]);
-      auto r_ = std::abs(r[i]);
-      if (b_ < 1 + r_) {
-        APPLY_SPECIFIC(L)->template compute<true>(b_, r_);
-        auto sT = APPLY_SPECIFIC(L)->sT;
-
-        // The value of the light curve
-        f[i] = sT.dot(cvec);
-
-        // The gradients
-        dfdcl_mat.col(i) = sT;
-        dfdb[i] = sgn(b[i]) * APPLY_SPECIFIC(L)->dsTdb.dot(cvec);
-        dfdr[i] = sgn(r[i]) * APPLY_SPECIFIC(L)->dsTdr.dot(cvec);
-      }
-    }
-  }
-  */
-
+  // We're done!
   return 0;
 }

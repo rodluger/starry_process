@@ -13,7 +13,9 @@ class LatitudeIntegralBaseOp(gof.COp):
     func_file = None
     func_name = None
 
-    def __init__(self):
+    def __init__(self, ydeg):
+        self.ydeg = ydeg
+        self.N = (self.ydeg + 1) ** 2
         super().__init__(self.func_file, self.func_name)
 
     def c_code_cache_version(self):
@@ -42,7 +44,8 @@ class LatitudeIntegralBaseOp(gof.COp):
         return dirs
 
     def c_compile_args(self, compiler):
-        opts = ["-std=c++11", "-O2", "-DNDEBUG"]
+        args = ["-std=c++11", "-O2", "-DNDEBUG"]
         if sys.platform == "darwin":
-            opts += ["-stdlib=libc++", "-mmacosx-version-min=10.7"]
-        return opts
+            args += ["-stdlib=libc++", "-mmacosx-version-min=10.7"]
+        args += ["-DSP_LMAX={0}".format(self.ydeg)]
+        return args
