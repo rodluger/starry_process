@@ -124,5 +124,7 @@ class WignerIntegral(MomentIntegral):
         # Sometimes it's useful to reduce the size of `sqrtC` by
         # finding the equivalent lower dimension representation
         # via eigendecomposition. This is not an approximation!
-        sqrtC = ifelse(sqrtC.shape[1] > self.N, eigen(sqrtC @ sqrtC.T))
+        sqrtC = ifelse(
+            sqrtC.shape[1] > self.N, eigen(tt.dot(sqrtC, sqrtC.T)), sqrtC
+        )
         return sqrtC
