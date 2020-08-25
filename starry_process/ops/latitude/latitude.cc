@@ -14,21 +14,7 @@
 
 #section support_code_struct
 
-int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
-                             PyArrayObject *input1,   // beta
-                             PyArrayObject **output0, // q
-                             PyArrayObject **output1, // dq / dalpha
-                             PyArrayObject **output2, // dq / dbeta
-                             PyArrayObject **output3, // Q
-                             PyArrayObject **output4, // dQ / dalpha
-                             PyArrayObject **output5  // dQ / dbeta
-                             ) {
-  // using namespace starry_process;
-
-  using Eigen::Map;
-  using Eigen::Matrix;
-  using Eigen::RowMajor;
-
+// Shorthand
 #define DI0 DTYPE_INPUT_0
 #define DI1 DTYPE_INPUT_1
 #define DO0 DTYPE_OUTPUT_0
@@ -43,6 +29,20 @@ int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
 #define TO3 TYPENUM_OUTPUT_3
 #define TO4 TYPENUM_OUTPUT_4
 #define TO5 TYPENUM_OUTPUT_5
+
+int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
+                             PyArrayObject *input1,   // beta
+                             PyArrayObject **output0, // q
+                             PyArrayObject **output1, // dq / dalpha
+                             PyArrayObject **output2, // dq / dbeta
+                             PyArrayObject **output3, // Q
+                             PyArrayObject **output4, // dQ / dalpha
+                             PyArrayObject **output5  // dQ / dbeta
+                             ) {
+
+  using namespace sp::theano;
+  using namespace sp::latitude;
+  using namespace sp::utils;
 
   // DEBUG, TODO?
   const npy_intp ydeg = 15;
@@ -64,32 +64,32 @@ int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
   }
 
   // Allocate the outputs
-  std::vector<npy_intp> shape_q(1);
-  shape_q[0] = N;
-  std::vector<npy_intp> shape_Q(2);
-  shape_Q[0] = N;
-  shape_Q[1] = N;
-  auto q_out = allocate_output<DO0>(1, shape_q, TO0, output0, &success);
-  auto dqda_out = allocate_output<DO1>(1, shape_q, TO1, output1, &success);
-  auto dqdb_out = allocate_output<DO2>(1, shape_q, TO2, output2, &success);
-  auto Q_out = allocate_output<DO3>(2, shape_Q, TO3, output3, &success);
-  auto dQda_out = allocate_output<DO4>(2, shape_Q, TO4, output4, &success);
-  auto dQdb_out = allocate_output<DO5>(2, shape_Q, TO5, output5, &success);
-  if (success)
+  int ndim_q = 1;
+  int ndim_Q = 2;
+  std::vector<npy_intp> shape_q_vec(ndim_q);
+  shape_q_vec[0] = N;
+  npy_intp *shape_q = &(shape_q_vec[0]);
+  std::vector<npy_intp> shape_Q_vec(ndim_Q);
+  shape_Q_vec[0] = N;
+  shape_Q_vec[1] = N;
+  npy_intp *shape_Q = &(shape_Q_vec[0]);
+  auto q_out = allocate_output<DO0>(ndim_q, shape_q, TO0, output0, &success);
+  auto dqda_out = allocate_output<DO1>(ndim_q, shape_q, TO1, output1, &success);
+  auto dqdb_out = allocate_output<DO2>(ndim_q, shape_q, TO2, output2, &success);
+  auto Q_out = allocate_output<DO3>(ndim_Q, shape_Q, TO3, output3, &success);
+  auto dQda_out = allocate_output<DO4>(ndim_Q, shape_Q, TO4, output4, &success);
+  auto dQdb_out = allocate_output<DO5>(ndim_Q, shape_Q, TO5, output5, &success);
+  if (success) {
     return 1;
-  Map<Matrix<DO0, N, 1>> q(q_out, N);
-  Map<Matrix<DO1, N, 1>> dqda(dqda_out, N);
-  Map<Matrix<DO2, N, 1>> dqdb(dqdb_out, N);
-  Map<Matrix<DO3, N, N, RowMajor>> Q(Q_out, N, N);
-  Map<Matrix<DO4, N, N, RowMajor>> dQda(dQda_out, N, N);
-  Map<Matrix<DO5, N, N, RowMajor>> dQdb(dQdb_out, N, N);
+  }
+  Map<Vector<DO0, N>> q(q_out, N);
+  Map<Vector<DO1, N>> dqda(dqda_out, N);
+  Map<Vector<DO2, N>> dqdb(dqdb_out, N);
+  Map<RowMatrix<DO3, N, N>> Q(Q_out, N, N);
+  Map<RowMatrix<DO4, N, N>> dQda(dQda_out, N, N);
+  Map<RowMatrix<DO5, N, N>> dQdb(dQdb_out, N, N);
 
-  q.setZero();
-  dqda.setZero();
-  dqdb.setZero();
-  Q.setZero();
-  dQda.setZero();
-  dQdb.setZero();
+  ComputeLatitudeIntegrals(alpha, beta, q, dqda, dqdb, Q, dQda, dQdb);
 
   /*
   if (APPLY_SPECIFIC(L) == NULL || APPLY_SPECIFIC(L)->lmax != Nc - 1) {

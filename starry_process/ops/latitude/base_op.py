@@ -22,7 +22,13 @@ class LatitudeIntegralBaseOp(gof.COp):
         return tuple(map(int, __version__.split(".")))
 
     def c_headers(self, compiler):
-        return []
+        return [
+            "utils.h",
+            "special.h",
+            "latitude.h",
+            "theano_helpers.h",
+            "vector",
+        ]
 
     def c_header_dirs(self, compiler):
         dirs = [
