@@ -4,13 +4,13 @@
 
 #section init_code_struct
 
-{ APPLY_SPECIFIC(L) = NULL; }
+//{ APPLY_SPECIFIC(L) = NULL; }
 
 #section cleanup_code_struct
 
-if (APPLY_SPECIFIC(L) != NULL) {
-  delete APPLY_SPECIFIC(L);
-}
+// if (APPLY_SPECIFIC(L) != NULL) {
+//  delete APPLY_SPECIFIC(L);
+//}
 
 #section support_code_struct
 
@@ -21,7 +21,7 @@ int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
                              PyArrayObject **output2, // dq / dbeta
                              PyArrayObject **output3, // Q
                              PyArrayObject **output4, // dQ / dalpha
-                             PyArrayObject **output5, // dQ / dbeta
+                             PyArrayObject **output5  // dQ / dbeta
                              ) {
   // using namespace starry_process;
 
@@ -29,22 +29,20 @@ int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
   using Eigen::Matrix;
   using Eigen::RowMajor;
 
-  using DI0 = DTYPE_INPUT_0;
-  using DI1 = DTYPE_INPUT_1;
-
-  using DO0 = DTYPE_OUTPUT_0;
-  using DO1 = DTYPE_OUTPUT_1;
-  using DO2 = DTYPE_OUTPUT_2;
-  using DO3 = DTYPE_OUTPUT_3;
-  using DO4 = DTYPE_OUTPUT_4;
-  using DO5 = DTYPE_OUTPUT_5;
-
-  using TO0 = TYPENUM_OUTPUT_0;
-  using TO1 = TYPENUM_OUTPUT_1;
-  using TO2 = TYPENUM_OUTPUT_2;
-  using TO3 = TYPENUM_OUTPUT_3;
-  using TO4 = TYPENUM_OUTPUT_4;
-  using TO5 = TYPENUM_OUTPUT_5;
+#define DI0 DTYPE_INPUT_0
+#define DI1 DTYPE_INPUT_1
+#define DO0 DTYPE_OUTPUT_0
+#define DO1 DTYPE_OUTPUT_1
+#define DO2 DTYPE_OUTPUT_2
+#define DO3 DTYPE_OUTPUT_3
+#define DO4 DTYPE_OUTPUT_4
+#define DO5 DTYPE_OUTPUT_5
+#define TO0 TYPENUM_OUTPUT_0
+#define TO1 TYPENUM_OUTPUT_1
+#define TO2 TYPENUM_OUTPUT_2
+#define TO3 TYPENUM_OUTPUT_3
+#define TO4 TYPENUM_OUTPUT_4
+#define TO5 TYPENUM_OUTPUT_5
 
   // DEBUG, TODO?
   const npy_intp ydeg = 15;
@@ -54,12 +52,12 @@ int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
   int success = 0;
   int ndim = -1;
   npy_intp *shape;
-  DI0 alpha = get_input<DI0>(&ndim, &shape, input0, &success);
+  auto alpha = get_input<DI0>(&ndim, &shape, input0, &success);
   if (ndim != 0) {
     PyErr_Format(PyExc_ValueError, "alpha must be a scalar");
     return 1;
   }
-  DI1 beta = get_input<DI1>(&ndim, &shape, input1, &success);
+  auto beta = get_input<DI1>(&ndim, &shape, input1, &success);
   if (ndim != 0) {
     PyErr_Format(PyExc_ValueError, "beta must be a scalar");
     return 1;

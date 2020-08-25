@@ -17,6 +17,7 @@ class LatitudeIntegralOp(LatitudeIntegralBaseOp):
     def __init__(self, ydeg):
         self.ydeg = ydeg
         self.N = (self.ydeg + 1) ** 2
+        super().__init__()
 
     def make_node(self, alpha, beta):
         in_args = []

@@ -14,7 +14,7 @@ class LatitudeIntegralBaseOp(gof.COp):
     func_name = None
 
     def __init__(self):
-        super.__init__(self.func_file, self.func_name)
+        super().__init__(self.func_file, self.func_name)
 
     def c_code_cache_version(self):
         if "dev" in __version__:
