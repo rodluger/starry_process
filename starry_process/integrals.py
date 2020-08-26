@@ -11,7 +11,7 @@ def eigen(Q, neig=None):
         eigen(Q) . eigen(Q)^T = Q
 
     """
-    # TODO: compute only `neig` eigenvalues?
+    # TODO: Is there a way to compute only `neig` eigenvalues?
     w, U = eigh(Q)
     U = tt.dot(U, tt.diag(tt.sqrt(tt.maximum(0, w))))
     if neig is not None:
@@ -32,11 +32,14 @@ class MomentIntegral(object):
         self.child = None
         self.N = (self.ydeg + 1) ** 2
         self.n = 2 * self.ydeg + 1
-        self.neig = self.N
         self._set = False
         self.e = None
         self.eigE = None
         self._precompute(**kwargs)
+
+    @property
+    def neig(self):
+        return self.N
 
     def set_params(self, *args, **kwargs):
         self._set_params(*args, **kwargs)
@@ -81,9 +84,9 @@ class MomentIntegral(object):
 
 
 class WignerIntegral(MomentIntegral):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.neig = self.n
+    @property
+    def neig(self):
+        return self.n
 
     def _compute_basis_integrals(self, *args, **kwargs):
         raise NotImplementedError("Must be subclassed.")

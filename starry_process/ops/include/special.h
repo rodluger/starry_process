@@ -49,6 +49,13 @@ inline T hyp2f1(const T &a_, const T &b_, const T &c_, const T &z) {
   return value;
 }
 
+/**
+ * The Euler Beta function.
+*/
+template <typename T> inline T EulerBeta(const T &alpha, const T &beta) {
+  return lgamma(alpha) + lgamma(beta) - lgamma(alpha + beta);
+}
+
 } // namespace special
 } // namespace sp
 
