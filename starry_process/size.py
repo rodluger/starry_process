@@ -8,9 +8,10 @@ class SizeIntegral(MomentIntegral):
 
     def _set_params(self, alpha, beta):
         self.q, _, _, self.Q, _, _ = self._integral_op(alpha, beta)
+        self.eigQ = eigen(self.Q)
 
     def _first_moment(self):
         return self.q
 
     def _second_moment(self):
-        return self.Q
+        return self.eigQ

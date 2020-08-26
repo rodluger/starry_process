@@ -225,7 +225,7 @@ inline void computeSizeIntegrals(const S &alpha, const S &beta, V &q, V &dqda,
 
     // Case 2: l > 0, l' = 0
     Q(n, 0) = 0.25 * sql * (2 * K(1, l + 1) + K(2, l + 1));
-    Q(0, n) = Q(l, 0);
+    Q(0, n) = Q(n, 0);
 
     // Inner loop
     for (int lp = 1; lp < l + 1; ++lp) {
@@ -235,7 +235,7 @@ inline void computeSizeIntegrals(const S &alpha, const S &beta, V &q, V &dqda,
 
       // Case 3: l > 0, l' > 0
       int q = l + lp + 1;
-      Q(np, np) = (0.25 * sql * sqlp * (4 * K(1, q) + 4 * K(2, q) + K(3, q)));
+      Q(n, np) = (0.25 * sql * sqlp * (4 * K(1, q) + 4 * K(2, q) + K(3, q)));
       Q(np, n) = Q(n, np);
     }
   }
