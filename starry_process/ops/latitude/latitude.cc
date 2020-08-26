@@ -77,7 +77,7 @@ int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
   Map<RowMatrix<DO5, N, N>> dQdb(dQdb_out);
 
   // Compute the integrals
-  ComputeLatitudeIntegrals<SP_LMAX>(alpha, beta, q, dqda, dqdb, Q, dQda, dQdb);
+  computeLatitudeIntegrals(alpha, beta, q, dqda, dqdb, Q, dQda, dQdb);
 
   // We're done!
   return 0;

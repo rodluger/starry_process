@@ -7,6 +7,7 @@
 #define _SP_UTILS_H_
 
 #include <Eigen/Core>
+#include <Eigen/Dense>
 #include <cmath>
 #include <exception>
 #include <iomanip>
@@ -17,7 +18,12 @@
 namespace sp {
 namespace utils {
 
-// Eigen shorthand
+//! Commonly used stuff
+using std::abs;
+using std::isinf;
+using std::max;
+
+//! Eigen shorthand
 using Eigen::Map;
 template <typename Scalar, int M, int N>
 using RowMatrix = Eigen::Matrix<Scalar, M, N, Eigen::RowMajor>;

@@ -18,13 +18,13 @@ using special::hyp2f1;
 /**
  * Compute the mean `q` and variance `Q` latitude integrals.
 */
-template <int LMAX, typename S, typename V, typename M>
-inline void ComputeLatitudeIntegrals(const S &alpha, const S &beta, V &q,
+template <typename S, typename V, typename M>
+inline void computeLatitudeIntegrals(const S &alpha, const S &beta, V &q,
                                      V &dqda, V &dqdb, M &Q, M &dQda, M &dQdb) {
 
   // Dimensions
-  const int N = (LMAX + 1) * (LMAX + 1);
-  const int n = 4 * LMAX + 1;
+  const int N = (SP_LMAX + 1) * (SP_LMAX + 1);
+  const int n = 4 * SP_LMAX + 1;
   int n1, n2, j1, i1, j2, i2;
 
   // Helper matrices
@@ -89,14 +89,14 @@ inline void ComputeLatitudeIntegrals(const S &alpha, const S &beta, V &q,
   n1 = 0;
   S inv_two_l1 = 1.0;
   S inv_two_l1l2;
-  for (int l1 = 0; l1 < LMAX + 1; ++l1) {
+  for (int l1 = 0; l1 < SP_LMAX + 1; ++l1) {
     for (int m1 = -l1; m1 < l1 + 1; ++m1) {
       j1 = m1 + l1;
       i1 = l1 - m1;
       q(n1) = term(j1, i1) * inv_two_l1;
       n2 = 0;
       inv_two_l1l2 = inv_two_l1;
-      for (int l2 = 0; l2 < LMAX + 1; ++l2) {
+      for (int l2 = 0; l2 < SP_LMAX + 1; ++l2) {
         for (int m2 = -l2; m2 < l2 + 1; ++m2) {
           j2 = m2 + l2;
           i2 = l2 - m2;
