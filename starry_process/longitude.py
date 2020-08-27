@@ -1,11 +1,13 @@
 from .wigner import R
 from .integrals import WignerIntegral
+from .transforms import LongitudeTransform
 import numpy as np
 from scipy.special import gamma
 
 
 class LongitudeIntegral(WignerIntegral):
     def _precompute(self, **kwargs):
+        self.transform = LongitudeTransform()
         self.R = R(
             self.ydeg, cos_alpha=1, sin_alpha=0, cos_gamma=1, sin_gamma=0
         )

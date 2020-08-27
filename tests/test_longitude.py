@@ -82,6 +82,3 @@ def test_longitude(ydeg=3, rtol=1e-12, ftol=1e-10):
     assert (
         np.max(np.abs(1 - E[nonzero_ij] / E_num[nonzero_ij])) < ftol
     ), "error in second moment"
-
-
-test_longitude()

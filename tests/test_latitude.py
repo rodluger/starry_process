@@ -6,7 +6,9 @@ from scipy.stats import beta as Beta
 from tqdm import tqdm
 
 
-def test_latitude(ydeg=3, alpha=10.0, beta=30.0, rtol=1e-12, ftol=1e-10):
+def test_latitude(
+    ydeg=3, alpha=10.0, beta=30.0, rtol=1e-12, ftol=1e-10, **kwargs
+):
 
     # Random input moment matrices
     np.random.seed(0)
@@ -17,7 +19,7 @@ def test_latitude(ydeg=3, alpha=10.0, beta=30.0, rtol=1e-12, ftol=1e-10):
 
     # Get analytic integrals
     print("Computing moments analytically...")
-    I = LatitudeIntegral(ydeg=ydeg)
+    I = LatitudeIntegral(ydeg=ydeg, **kwargs)
     I._set_params(alpha, beta)
     e = I._first_moment(s).eval()
     eigE = I._second_moment(eigS).eval()

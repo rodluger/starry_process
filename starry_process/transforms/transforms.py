@@ -20,6 +20,9 @@ class Transform(object):
     def pdf(self, *args, **kwargs):
         raise NotImplementedError("Must be subclassed.")
 
+    def draw(self, *args, **kwargs):
+        raise NotImplementedError("Must be subclassed.")
+
     def transform_params(self, *args, **kwargs):
         raise NotImplementedError("Must be subclassed.")
 
@@ -363,6 +366,27 @@ class BetaTransform(Transform):
 
         # Easy!
         return self._jac(x) * Beta.pdf(self._f(x), alpha, beta)
+
+    def draw(self, mu=None, sigma=None, alpha=None, beta=None, ndraws=1):
+        """
+        Draw samples from the distribution.
+        
+        """
+        assert ((mu is not None) and (sigma is not None)) or (
+            (alpha is not None) and (beta is not None)
+        ), "must provide either `mu` and `sigma` or `alpha` and `beta`"
+
+        assert not (
+            (mu is not None) and (alpha is not None)
+        ), "cannot provide both `mu, sigma` and `alpha, beta`."
+
+        # Transform to the standard params
+        if alpha is None:
+            alpha, beta = self.transform_params(mu, sigma)
+
+        # Sample
+        x = Beta.rvs(alpha, beta, size=ndraws)
+        return self._finv(x)
 
     def get_transform_error(self, res=100, plot=True):
         """

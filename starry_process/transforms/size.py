@@ -170,6 +170,7 @@ class SizeTransform(BetaTransform):
     _extra_params = {"c": 4}
 
     def _f(self, x):
+        # hwhwm --> rho
         theta = x * np.pi / 180
         rhop = (
             1 + np.cos(2 * theta / 3) + np.sqrt(3) * np.sin(2 * theta / 3)
@@ -191,6 +192,7 @@ class SizeTransform(BetaTransform):
         )
 
     def _finv(self, f_of_x):
+        # rho --> hwhm
         rhop = self._c[0] + self._c[1] * f_of_x
         return (
             np.arccos((2 + 3 * rhop * (2 + rhop)) / (2 * (1 + rhop) ** 3))
