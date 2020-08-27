@@ -31,7 +31,7 @@ int APPLY_SPECIFIC(size)(PyArrayObject *input0,   // alpha
   using namespace sp::utils;
 
   // Size of the matrices
-  const npy_intp N = (SP_LMAX + 1) * (SP_LMAX + 1);
+  const npy_intp N = (SP__LMAX + 1) * (SP__LMAX + 1);
 
   // Get the inputs
   int success = 0;

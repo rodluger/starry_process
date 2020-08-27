@@ -2,13 +2,13 @@
 
 __all__ = ["SizeIntegralOp"]
 
+from ..base_op import IntegralBaseOp
 import theano
 import theano.tensor as tt
 from theano import gof
-from .base_op import SizeIntegralBaseOp
 
 
-class SizeIntegralOp(SizeIntegralBaseOp):
+class SizeIntegralOp(IntegralBaseOp):
 
     __props__ = ()
     func_file = "./size.cc"

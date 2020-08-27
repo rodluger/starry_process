@@ -17,30 +17,30 @@ using special::hyp2f1;
 using special::EulerBeta;
 
 // Dimensions & constants
-const double W_data[] = {SP_C0,
-                         SP_C0,
+const double W_data[] = {SP__C0,
+                         SP__C0,
                          0,
                          0,
                          0,
-                         (SP_C0 * SP_C0),
-                         (2 * SP_C0 * SP_C0),
-                         (SP_C0 * SP_C0),
+                         (SP__C0 * SP__C0),
+                         (2 * SP__C0 * SP__C0),
+                         (SP__C0 * SP__C0),
                          0,
                          0,
-                         (SP_C0 * SP_C0 * SP_C0),
-                         (3 * SP_C0 * SP_C0 * SP_C0),
-                         (3 * SP_C0 * SP_C0 * SP_C0),
-                         (SP_C0 * SP_C0 * SP_C0),
+                         (SP__C0 * SP__C0 * SP__C0),
+                         (3 * SP__C0 * SP__C0 * SP__C0),
+                         (3 * SP__C0 * SP__C0 * SP__C0),
+                         (SP__C0 * SP__C0 * SP__C0),
                          0,
-                         (SP_C0 * SP_C0 * SP_C0 * SP_C0),
-                         (4 * SP_C0 * SP_C0 * SP_C0 * SP_C0),
-                         (6 * SP_C0 * SP_C0 * SP_C0 * SP_C0),
-                         (4 * SP_C0 * SP_C0 * SP_C0 * SP_C0),
-                         (SP_C0 * SP_C0 * SP_C0 * SP_C0)};
+                         (SP__C0 * SP__C0 * SP__C0 * SP__C0),
+                         (4 * SP__C0 * SP__C0 * SP__C0 * SP__C0),
+                         (6 * SP__C0 * SP__C0 * SP__C0 * SP__C0),
+                         (4 * SP__C0 * SP__C0 * SP__C0 * SP__C0),
+                         (SP__C0 * SP__C0 * SP__C0 * SP__C0)};
 const int IMAX = 3;
 const int KMAX = 2;
 const int MMAX = 4;
-const int JMAX = 2 * SP_LMAX + 1;
+const int JMAX = 2 * SP__LMAX + 1;
 
 template <typename Scalar>
 inline RowMatrix<Scalar, KMAX + 1, MMAX + 1> getGfac(const Scalar &alpha,
@@ -49,14 +49,14 @@ inline RowMatrix<Scalar, KMAX + 1, MMAX + 1> getGfac(const Scalar &alpha,
   lam.col(0).setOnes();
   for (int m = 1; m < MMAX + 1; ++m) {
     for (int k = 0; k < KMAX + 1; ++k) {
-      lam(k, m) = (lam(k, m - 1) * SP_Q * (alpha + m - 1) /
-                   (alpha + beta + k * SP_C3 + m - 1));
+      lam(k, m) = (lam(k, m - 1) * SP__Q * (alpha + m - 1) /
+                   (alpha + beta + k * SP__C3 + m - 1));
     }
   }
-  Scalar norm = SP_C2 / EulerBeta(alpha, beta);
+  Scalar norm = SP__C2 / EulerBeta(alpha, beta);
   for (int k = 1; k < KMAX + 1; ++k) {
-    lam.row(k) *= norm * EulerBeta(alpha, beta + k * SP_C3);
-    norm *= SP_C2;
+    lam.row(k) *= norm * EulerBeta(alpha, beta + k * SP__C3);
+    norm *= SP__C2;
   }
   return lam;
 }
@@ -64,27 +64,27 @@ inline RowMatrix<Scalar, KMAX + 1, MMAX + 1> getGfac(const Scalar &alpha,
 template <typename Scalar>
 inline Scalar G_num(const Scalar &alpha, const Scalar &beta, const int j,
                     const int k, const int m) {
-  Scalar G =
-      hyp2f1(1.0 + j, beta + k * SP_C3, alpha + beta + k * SP_C3 + m, SP_ZBAR);
-  G /= pow((1.0 + SP_C0) * (1.0 - SP_Z), 1 + j);
+  Scalar G = hyp2f1(1.0 + j, beta + k * SP__C3, alpha + beta + k * SP__C3 + m,
+                    SP__ZBAR);
+  G /= pow((1.0 + SP__C0) * (1.0 - SP__Z), 1 + j);
   return G;
 }
 
 template <typename Scalar>
 inline Scalar arec(const Scalar &alpha, const Scalar &beta, const int j,
                    const int k, const int m) {
-  return -((alpha + beta + k * SP_C3 + m - j) * (1.0 + SP_C0)) /
-         (j * SP_P * (1.0 + SP_C0) * (1.0 + SP_C0));
+  return -((alpha + beta + k * SP__C3 + m - j) * (1.0 + SP__C0)) /
+         (j * SP__P * (1.0 + SP__C0) * (1.0 + SP__C0));
 }
 
 template <typename Scalar>
 inline Scalar brec(const Scalar &alpha, const Scalar &beta, const int j,
                    const int k, const int m) {
   return -(1.0 -
-           ((alpha + beta + k * SP_C3 + m - j) * (1.0 + SP_C0) +
-            (alpha + m) * SP_C1) /
-               (j * SP_P)) /
-         (1.0 + SP_C0);
+           ((alpha + beta + k * SP__C3 + m - j) * (1.0 + SP__C0) +
+            (alpha + m) * SP__C1) /
+               (j * SP__P)) /
+         (1.0 + SP__C0);
 }
 
 template <typename Scalar>
@@ -102,66 +102,94 @@ computeG(const Scalar &alpha, const Scalar &beta,
   Vector<Scalar, JMAX - 1> x;
   x.setZero();
 
-  // Solve the problem for each value of `k`
-  for (int k = 0; k < KMAX + 1; ++k) {
+  if (SP_COMPUTE_G_NUMERICALLY) {
 
-    // Boundary conditions
-    G[k](0, 0) = G_num(alpha, beta, 0, k, 0);
-    G[k](0, 1) = G_num(alpha, beta, 0, k, 1);
-    G[k](JMAX, 0) = G_num(alpha, beta, JMAX, k, 0);
-    G[k](JMAX, 1) = G_num(alpha, beta, JMAX, k, 1);
-
-    // Recurse upward in m
-    std::vector<int> zero_and_JMAX = {0, JMAX};
-    for (int &j : zero_and_JMAX) {
-
-      for (int m = 2; m < MMAX + 1; ++m) {
-
-        // Be careful about division by zero here
-        if (abs(alpha + beta + k * SP_C3 - j + m - 2) < SP_G_DIV_BY_ZERO_TOL) {
-
+    // Compute G numerically for all j, k, m
+    for (int k = 0; k < KMAX + 1; ++k) {
+      for (int m = 0; m < MMAX + 1; ++m) {
+        for (int j = 0; j < JMAX + 1; ++j) {
           G[k](j, m) = G_num(alpha, beta, j, k, m);
-
-        } else {
-
-          Scalar term = (alpha + m - 1) / (alpha + beta + k * SP_C3 + m - 1);
-          Scalar am = ((alpha + beta + k * SP_C3 + m - 2) * (1 + SP_C0)) /
-                      ((alpha + beta + k * SP_C3 - j + m - 2) * term * SP_C1);
-          Scalar bm =
-              1.0 / term -
-              ((alpha + beta + k * SP_C3 + m - 2) * (1 + SP_C0) +
-               (beta + k * SP_C3) * SP_C1) /
-                  ((alpha + beta + k * SP_C3 - j + m - 2) * term * SP_C1);
-          G[k](j, m) = am * G[k](j, m - 2) + bm * G[k](j, m - 1);
         }
+        G[k].col(m) *= Gfac(k, m);
       }
     }
 
-    // Recurse along the j dimension @ each m
-    // We're solving the tridiagonal matrix system `M G = x`
-    for (int m = 0; m < MMAX + 1; ++m) {
+  } else {
 
-      // Populate the tridiagonal matrix
-      for (int j = 2; j < JMAX + 1; ++j) {
-        B(j - 2) = brec(alpha, beta, j, k, m);
+    // Solve by recursion
+
+    // Solve the problem for each value of `k`
+    for (int k = 0; k < KMAX + 1; ++k) {
+
+      // Boundary conditions
+      G[k](0, 0) = G_num(alpha, beta, 0, k, 0);
+      G[k](0, 1) = G_num(alpha, beta, 0, k, 1);
+      G[k](JMAX, 0) = G_num(alpha, beta, JMAX, k, 0);
+      G[k](JMAX, 1) = G_num(alpha, beta, JMAX, k, 1);
+
+      std::vector<int> zero_and_JMAX = {0, JMAX};
+      for (int &j : zero_and_JMAX) {
+
+        for (int m = 2; m < MMAX + 1; ++m) {
+
+          if (SP_G_RECURSE_UPWARD_IN_M) {
+
+            // Recurse upward in m
+            Scalar div1 = alpha + m - 1;
+            Scalar div2 = (alpha + beta + k * SP__C3 - j + m - 2) * SP__C1;
+
+            // Be careful about division by zero here
+            if ((abs(div1) < SP_G_DIV_BY_ZERO_TOL) ||
+                (abs(div2) < SP_G_DIV_BY_ZERO_TOL)) {
+
+              G[k](j, m) = G_num(alpha, beta, j, k, m);
+
+            } else {
+
+              Scalar term = (alpha + beta + k * SP__C3 + m - 1) / div1;
+              Scalar am = ((alpha + beta + k * SP__C3 + m - 2) * (1 + SP__C0)) *
+                          (term / div2);
+              Scalar bm = term -
+                          ((alpha + beta + k * SP__C3 + m - 2) * (1 + SP__C0) +
+                           (beta + k * SP__C3) * SP__C1) *
+                              (term / div2);
+              G[k](j, m) = am * G[k](j, m - 2) + bm * G[k](j, m - 1);
+            }
+
+          } else {
+
+            // Compute numerically
+            G[k](j, m) = G_num(alpha, beta, j, k, m);
+          }
+        }
       }
-      for (int j = 3; j < JMAX + 1; ++j) {
-        A(j - 3) = arec(alpha, beta, j, k, m);
+
+      // Recurse along the j dimension @ each m
+      // We're solving the tridiagonal matrix system `M G = x`
+      for (int m = 0; m < MMAX + 1; ++m) {
+
+        // Populate the tridiagonal matrix
+        for (int j = 2; j < JMAX + 1; ++j) {
+          B(j - 2) = brec(alpha, beta, j, k, m);
+        }
+        for (int j = 3; j < JMAX + 1; ++j) {
+          A(j - 3) = arec(alpha, beta, j, k, m);
+        }
+        M.diagonal(0) = B;
+        M.diagonal(-1) = A;
+
+        // Populate the `data` vector
+        x(0) = -arec(alpha, beta, 2, k, m) * G[k](0, m);
+        x(JMAX - 2) = -G[k](JMAX, m);
+
+        // Solve
+        // TODO: We should probably use a sparse solve here!
+        // TODO: Fix-sized block not working here!?
+        G[k].block(1, m, JMAX - 1, 1) = M.lu().solve(x);
+
+        // Finally, apply the amplitude factor
+        G[k].col(m) *= Gfac(k, m);
       }
-      M.diagonal(0) = B;
-      M.diagonal(-1) = A;
-
-      // Populate the `data` vector
-      x(0) = -arec(alpha, beta, 2, k, m) * G[k](0, m);
-      x(JMAX - 2) = -G[k](JMAX, m);
-
-      // Solve
-      // TODO: We should probably use a sparse solve here!
-      // TODO: Fix-sized block not working here!?
-      G[k].block(1, m, JMAX - 1, 1) = M.lu().solve(x);
-
-      // Finally, apply the amplitude factor
-      G[k].col(m) *= Gfac(k, m);
     }
   }
 }
@@ -188,7 +216,7 @@ inline void computeSizeIntegrals(const S &alpha, const S &beta, V &q, V &dqda,
                                  V &dqdb, M &Q, M &dQda, M &dQdb) {
 
   // Dimensions & constants
-  const int N = (SP_LMAX + 1) * (SP_LMAX + 1);
+  const int N = (SP__LMAX + 1) * (SP__LMAX + 1);
 
   // Initialize the output
   q.setZero();
@@ -215,7 +243,7 @@ inline void computeSizeIntegrals(const S &alpha, const S &beta, V &q, V &dqda,
   Q(0, 0) = 0.25 * K(1, 1);
 
   // Outer loop
-  for (int l = 1; l < SP_LMAX + 1; ++l) {
+  for (int l = 1; l < SP__LMAX + 1; ++l) {
 
     int n = l * (l + 1);
     S sql = 1.0 / sqrt(2 * l + 1.0);

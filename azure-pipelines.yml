@@ -19,6 +19,7 @@ jobs:
       conda install -y -q numpy scipy mkl openblas theano
       theano-cache purge
       pip install -U pip
+      pip install -U pytest
       pip install -U setuptools
       conda install -y -q -c conda-forge tectonic pybind11
       pip install git+https://github.com/rodluger/starry

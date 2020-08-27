@@ -8,7 +8,15 @@ import theano.tensor as tt
 class SizeIntegral(MomentIntegral):
     def _precompute(self, **kwargs):
         self.transform = SizeTransform(ydeg=self.ydeg, **kwargs)
-        self._integral_op = SizeIntegralOp(self.ydeg, c=self.transform._c)
+        kwargs.update(
+            {
+                "SP__C0": "{:.15f}".format(self.transform._c[0]),
+                "SP__C1": "{:.15f}".format(self.transform._c[1]),
+                "SP__C2": "{:.15f}".format(self.transform._c[2]),
+                "SP__C3": "{:.15f}".format(self.transform._c[3]),
+            }
+        )
+        self._integral_op = SizeIntegralOp(self.ydeg, **kwargs)
 
     def _set_params(self, alpha, beta):
         alpha = tt.as_tensor_variable(alpha).astype(tt.config.floatX)

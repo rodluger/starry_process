@@ -11,7 +11,7 @@ class LatitudeIntegral(WignerIntegral):
         self.R = R(
             self.ydeg, cos_alpha=0, sin_alpha=1, cos_gamma=0, sin_gamma=-1
         )
-        self._integral_op = LatitudeIntegralOp(self.ydeg)
+        self._integral_op = LatitudeIntegralOp(self.ydeg, **kwargs)
 
     def _compute_basis_integrals(self, alpha, beta):
         alpha = tt.as_tensor_variable(alpha).astype(tt.config.floatX)

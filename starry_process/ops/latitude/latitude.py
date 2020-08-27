@@ -2,13 +2,13 @@
 
 __all__ = ["LatitudeIntegralOp"]
 
+from ..base_op import IntegralBaseOp
 import theano
 import theano.tensor as tt
 from theano import gof
-from .base_op import LatitudeIntegralBaseOp
 
 
-class LatitudeIntegralOp(LatitudeIntegralBaseOp):
+class LatitudeIntegralOp(IntegralBaseOp):
 
     __props__ = ()
     func_file = "./latitude.cc"

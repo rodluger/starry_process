@@ -54,7 +54,6 @@ inline T hyp2f1(const T &a_, const T &b_, const T &c_, const T &z) {
  * The Euler Beta function.
 */
 template <typename T> inline T EulerBeta(const T &alpha, const T &beta) {
-  // TODO: Check the numerical precision of this!
   return exp(lgamma(alpha) + lgamma(beta) - lgamma(alpha + beta));
 }
 

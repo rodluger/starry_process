@@ -2,22 +2,23 @@ from starry_process.size import SizeIntegral
 from starry_process.ops.size import SizeIntegralOp
 import numpy as np
 from scipy.stats import beta as Beta
-import theano
-import theano.tensor as tt
+from scipy.integrate import quad
+from tqdm import tqdm
 
 
-def test_size(
-    ydeg=15, alpha=10.0, beta=30.0, nsamples=int(1e7), rtol=1e-5, ftol=1e-2
-):
+# TODO: alpha = 10, beta = 20 is unstable for some reason!
+# Use kwarg `SP_COMPUTE_G_NUMERICALLY=1` to circumvent this
+
+
+def test_size(ydeg=15, alpha=1.0, beta=50.0, rtol=1e-10, ftol=1e-7, **kwargs):
 
     # Get analytic integral
-    I = SizeIntegral(ydeg=ydeg)
+    print("Computing moments analytically...")
+    I = SizeIntegral(ydeg=ydeg, **kwargs)
     I._set_params(alpha, beta)
-    e = I._first_moment()
-    eigE = I._second_moment()
-    E = tt.dot(eigE, tt.transpose(eigE))
-    e = e.eval()
-    E = E.eval()
+    e = I._first_moment().eval()
+    eigE = I._second_moment().eval()
+    E = eigE @ eigE.T
 
     # The m != 0 terms of this integral should all be zero
     l = np.arange(ydeg + 1)
@@ -33,14 +34,35 @@ def test_size(
     e = e[i]
     E = E[ij]
 
-    # Integrate by sampling
-    np.random.seed(0)
-    rho = Beta.rvs(alpha, beta, size=nsamples)
-    s = I.transform.get_s(rho=rho)[:, i]
+    # Get the first moment by numerical integration
+    e_num = np.zeros(ydeg + 1)
+    print("Computing first moment numerically...")
+    for l in tqdm(range(ydeg + 1)):
 
-    # Empirical moments
-    e_num = np.mean(s, axis=0)
-    E_num = np.cov(s.T) + np.outer(e_num, e_num)
+        n = l * (l + 1)
+
+        def func(rho):
+            s = I.transform.get_s(rho=rho)[0]
+            return s[n] * Beta.pdf(rho, alpha, beta)
+
+        e_num[l] = quad(func, 0, 1, epsabs=1e-12, epsrel=1e-12)[0]
+
+    # Get the second moment by numerical integration
+    E_num = np.zeros((ydeg + 1, ydeg + 1))
+    print("Computing second moment numerically...")
+    for l1 in tqdm(range(ydeg + 1)):
+
+        n1 = l1 * (l1 + 1)
+
+        for l2 in range(ydeg + 1):
+
+            n2 = l2 * (l2 + 1)
+
+            def func(rho):
+                s = I.transform.get_s(rho=rho)[0]
+                return s[n1] * s[n2] * Beta.pdf(rho, alpha, beta)
+
+            E_num[l1, l2] = quad(func, 0, 1, epsabs=1e-12, epsrel=1e-12)[0]
 
     # Compare
     assert np.max(np.abs(e - e_num)) < rtol, "error in first moment"

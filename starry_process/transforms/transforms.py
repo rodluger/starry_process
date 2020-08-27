@@ -51,12 +51,6 @@ class BetaTransform(Transform):
         for key, value in self._defaults.items():
             setattr(self, "_{0}".format(key), kwargs.pop(key, value))
             self._params.append(getattr(self, "_{0}".format(key)))
-        for key, value in kwargs.items():
-            logger.warn(
-                "Invalid keyword argument `{0}` passed to `BetaTransform`.".format(
-                    key
-                )
-            )
         self._compute_hash()
 
         # Either load or compute the transform coeffs
