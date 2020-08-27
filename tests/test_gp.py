@@ -19,7 +19,7 @@ def test_moments(rtol=1e-4, ftol=2e-2):
     latitude_alpha = 10.0
     latitude_beta = 30.0
     np.random.seed(0)
-    nsamples = int(1e6)
+    nsamples = int(1e5)
 
     # Integrate analytically
     print("Computing moments analytically...")
@@ -87,12 +87,6 @@ def test_moments(rtol=1e-4, ftol=2e-2):
     nonzero_i = np.abs(mu[:N]) > 1e-15
     nonzero_ij = np.abs(cov[:N, :N]) > 1e-15
 
-    # DEBUG
-    print(np.max(np.abs(mu[:N] - mu_num)))
-    print(np.max(np.abs(1 - mu[:N][nonzero_i] / mu_num[nonzero_i])))
-    print(np.max(np.abs(cov[:N, :N] - cov_num)))
-    print(np.max(np.abs(1 - cov[:N, :N][nonzero_ij] / cov_num[nonzero_ij])))
-
     # Compare
     assert np.max(np.abs(mu[:N] - mu_num)) < rtol, "error in mean"
     assert (
@@ -103,6 +97,3 @@ def test_moments(rtol=1e-4, ftol=2e-2):
         np.max(np.abs(1 - cov[:N, :N][nonzero_ij] / cov_num[nonzero_ij]))
         < ftol
     ), "error in cov"
-
-
-test_moments()
