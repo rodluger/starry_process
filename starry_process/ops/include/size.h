@@ -129,8 +129,8 @@ computeG(const Scalar &alpha, const Scalar &beta,
                       ((alpha + beta + k * SP_C3 - j + m - 2) * term * SP_C1);
           Scalar bm =
               1.0 / term -
-              ((alpha + beta + k * SP_C3 + m - 2) * (1 + SP_C0) + beta +
-               k * SP_C3 * SP_C1) /
+              ((alpha + beta + k * SP_C3 + m - 2) * (1 + SP_C0) +
+               (beta + k * SP_C3) * SP_C1) /
                   ((alpha + beta + k * SP_C3 - j + m - 2) * term * SP_C1);
           G[k](j, m) = am * G[k](j, m - 2) + bm * G[k](j, m - 1);
         }

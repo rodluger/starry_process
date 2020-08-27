@@ -13,8 +13,9 @@ class SizeIntegralBaseOp(gof.COp):
     func_file = None
     func_name = None
 
-    def __init__(self, ydeg):
+    def __init__(self, ydeg, c=[0.5, 1.0, 0.0, 0.0]):
         self.ydeg = ydeg
+        self.c = c
         self.N = (self.ydeg + 1) ** 2
         super().__init__(self.func_file, self.func_name)
 
@@ -48,4 +49,6 @@ class SizeIntegralBaseOp(gof.COp):
         if sys.platform == "darwin":
             args += ["-stdlib=libc++", "-mmacosx-version-min=10.7"]
         args += ["-DSP_LMAX={0}".format(self.ydeg)]
+        for n in range(4):
+            args += ["-DSP_C{:d}={:.15f}".format(n, self.c[n])]
         return args

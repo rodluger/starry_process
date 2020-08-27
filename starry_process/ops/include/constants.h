@@ -13,39 +13,39 @@
 
 //! Spot profile correction constant
 #ifndef SP_C0
-#define SP_C0 0.5
+#define SP_C0 0.152490623061794
 #endif
 
 //! Spot profile correction constant
 #ifndef SP_C1
-#define SP_C1 1.0
+#define SP_C1 4.584365957466125
 #endif
 
 //! Spot profile correction constant
 #ifndef SP_C2
-#define SP_C2 0.0
+#define SP_C2 0.124027269107698
 #endif
 
 //! Spot profile correction constant
 #ifndef SP_C3
-#define SP_C3 0.0
+#define SP_C3 61.471223120013967
 #endif
 
 //! Spot profile correction constant
 #define SP_Q (SP_C1 / SP_C0)
 
 //! Spot profile correction constant
-#define SP_P (1 + SP_C0 + SP_C1)
+#define SP_P (1.0 + SP_C0 + SP_C1)
 
 //! Spot profile correction constant
-#define SP_Z (-SP_C1 / (1 + SP_C0))
+#define SP_Z (-SP_C1 / (1.0 + SP_C0))
 
 //! Spot profile correction constant
-#define SP_ZBAR (SP_C1 / (1 + SP_C0 + SP_C1))
+#define SP_ZBAR (SP_C1 / SP_P)
 
 //! Maximum number of iterations when computing 2F1
 #ifndef SP_2F1_MAXITER
-#define SP_2F1_MAXITER 200
+#define SP_2F1_MAXITER 500
 #endif
 
 //! Tolerance (max) when computing 2F1

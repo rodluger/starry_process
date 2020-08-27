@@ -1,12 +1,15 @@
 from .integrals import MomentIntegral
+from .transforms import ContrastTransform
 import theano.tensor as tt
 
 
 class ContrastIntegral(MomentIntegral):
     def _precompute(self, **kwargs):
-        pass
+        self.transform = ContrastTransform(**kwargs)
 
     def _set_params(self, mu, sigma):
+        mu = tt.as_tensor_variable(mu).astype(tt.config.floatX)
+        sigma = tt.as_tensor_variable(sigma).astype(tt.config.floatX)
         # TODO: Simplify me!
         v = sigma ** 2
         b = (1 - mu) ** 2

@@ -1,23 +1,6 @@
+from .math import eigen
 import theano.tensor as tt
-from theano.tensor.nlinalg import eigh
 from theano.ifelse import ifelse
-
-
-def eigen(Q, neig=None):
-    """
-    Returns the square root of a hermitian matrix `Q`,
-    computed via eigendecomposition, such that:
-
-        eigen(Q) . eigen(Q)^T = Q
-
-    """
-    # TODO: Is there a way to compute only `neig` eigenvalues?
-    w, U = eigh(Q)
-    U = tt.dot(U, tt.diag(tt.sqrt(tt.maximum(0, w))))
-    if neig is not None:
-        return U[:, -neig:]
-    else:
-        return U
 
 
 class MomentIntegral(object):

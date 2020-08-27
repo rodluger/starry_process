@@ -28,7 +28,7 @@ inline T hyp2f1(const T &a_, const T &b_, const T &c_, const T &z) {
   T term = a * b * z / c;
   T value = 1.0 + term;
   int n = 1;
-  while ((abs(term) > SP_2F1_MAXTOL) && (n < SP_2F1_MAXITER)) {
+  while ((abs(term / value) > SP_2F1_MAXTOL) && (n < SP_2F1_MAXITER)) {
     a += 1;
     b += 1;
     c += 1;
@@ -36,15 +36,16 @@ inline T hyp2f1(const T &a_, const T &b_, const T &c_, const T &z) {
     term *= a * b * z / c / n;
     value += term;
   }
-  if ((n == SP_2F1_MAXITER) && (abs(term) > SP_2F1_MINTOL)) {
-    std::cout << abs(term) << std::endl;
+  if ((n == SP_2F1_MAXITER) && (abs(term / value) > SP_2F1_MINTOL)) {
+    std::stringstream msg;
+    msg << "Series for 2F1 did not converge (value = " << std::setprecision(9)
+        << value << ", frac. error = " << abs(term / value) << ").";
     std::stringstream args;
     args << "a_ = " << a_ << ", "
          << "b_ = " << b_ << ", "
          << "c_ = " << c_ << ", "
          << "z = " << z;
-    throw StarryProcessException("Series for 2F1 did not converge.", "utils.h",
-                                 "hyp2f1", args.str());
+    throw StarryProcessException(msg.str(), "special.h", "hyp2f1", args.str());
   }
   return value;
 }
@@ -53,7 +54,8 @@ inline T hyp2f1(const T &a_, const T &b_, const T &c_, const T &z) {
  * The Euler Beta function.
 */
 template <typename T> inline T EulerBeta(const T &alpha, const T &beta) {
-  return lgamma(alpha) + lgamma(beta) - lgamma(alpha + beta);
+  // TODO: Check the numerical precision of this!
+  return exp(lgamma(alpha) + lgamma(beta) - lgamma(alpha + beta));
 }
 
 } // namespace special

@@ -22,7 +22,7 @@ setup(
         "setuptools_scm",
         "numpy>=1.13.0",
         "scipy>=1.2.1",
-        "theano>=1.0.4",
+        "theano>=1.0.5",
     ],
     setup_requires=["setuptools_scm"],
     include_package_data=True,
