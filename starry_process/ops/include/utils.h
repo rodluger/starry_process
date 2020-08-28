@@ -13,6 +13,7 @@
 #include <iomanip>
 #include <iostream>
 #include <stdlib.h>
+#include <unsupported/Eigen/AutoDiff>
 #include <vector>
 
 namespace sp {
@@ -28,6 +29,8 @@ using Eigen::Map;
 template <typename Scalar, int M, int N>
 using RowMatrix = Eigen::Matrix<Scalar, M, N, Eigen::RowMajor>;
 template <typename Scalar, int N> using Vector = Eigen::Matrix<Scalar, N, 1>;
+template <typename Scalar, int N>
+using ADScalar = Eigen::AutoDiffScalar<Eigen::Matrix<Scalar, N, 1>>;
 
 //! Check if a number is even (or doubly, triply, quadruply... even)
 inline bool is_even(int n, int ntimes = 1) {
@@ -37,6 +40,29 @@ inline bool is_even(int n, int ntimes = 1) {
     n /= 2;
   }
   return true;
+}
+
+template <size_t Lower, size_t Upper> struct for_bounds {
+  static constexpr const size_t lower = Lower;
+  static constexpr const size_t upper = Upper;
+};
+
+namespace for_constexpr_detail {
+template <size_t lower, size_t... Is, class F>
+void for_constexpr_impl(F &&f, std::index_sequence<Is...> /*meta*/) {
+  (void)std::initializer_list<char>{
+      ((void)f(std::integral_constant<size_t, Is + lower>{}), '0')...};
+}
+} // namespace for_constexpr_detail
+
+/**
+ * Compile-time for loop. From https://nilsdeppe.com/posts/for-constexpr
+ * Requires C++14
+*/
+template <class Bounds0, class F> void for_constexpr(F &&f) {
+  for_constexpr_detail::for_constexpr_impl<Bounds0::lower>(
+      std::forward<F>(f),
+      std::make_index_sequence<Bounds0::upper - Bounds0::lower>{});
 }
 
 /**

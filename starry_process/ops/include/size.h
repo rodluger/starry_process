@@ -211,12 +211,10 @@ computeH(const Scalar &alpha, const Scalar &beta,
 /**
  * Compute the mean `q` and variance `Q` size integrals.
 */
-template <typename S, typename V, typename M>
-inline void computeSizeIntegrals(const S &alpha, const S &beta, V &q, V &dqda,
-                                 V &dqdb, M &Q, M &dQda, M &dQdb) {
-
-  // Dimensions & constants
-  const int N = (SP__LMAX + 1) * (SP__LMAX + 1);
+template <typename SCALAR, typename VECTOR, typename MATRIX>
+inline void computeSizeIntegrals(const SCALAR &alpha, const SCALAR &beta,
+                                 VECTOR &q, VECTOR &dqda, VECTOR &dqdb,
+                                 MATRIX &Q, MATRIX &dQda, MATRIX &dQdb) {
 
   // Initialize the output
   q.setZero();
@@ -227,12 +225,12 @@ inline void computeSizeIntegrals(const S &alpha, const S &beta, V &q, V &dqda,
   dQdb.setZero();
 
   // Hypergeometric sequences
-  Vector<RowMatrix<S, IMAX + 1, JMAX + 1>, KMAX + 1> H;
+  Vector<RowMatrix<SCALAR, IMAX + 1, JMAX + 1>, KMAX + 1> H;
   computeH(alpha, beta, H);
-  std::function<S(const int, const int)> J = [&](const int i, const int j) {
-    return H[0](i, j) + H[1](i, j);
-  };
-  std::function<S(const int, const int)> K = [&](const int i, const int j) {
+  std::function<SCALAR(const int, const int)> J =
+      [&](const int i, const int j) { return H[0](i, j) + H[1](i, j); };
+  std::function<SCALAR(const int, const int)> K = [&](const int i,
+                                                      const int j) {
     return H[0](i, j) + 2 * H[1](i, j) + H[2](i, j);
   };
 
@@ -246,7 +244,7 @@ inline void computeSizeIntegrals(const S &alpha, const S &beta, V &q, V &dqda,
   for (int l = 1; l < SP__LMAX + 1; ++l) {
 
     int n = l * (l + 1);
-    S sql = 1.0 / sqrt(2 * l + 1.0);
+    SCALAR sql = 1.0 / sqrt(2 * l + 1.0);
 
     // Case 2: l > 0
     q(n) = -0.5 * sql * (2 * J(0, l) + J(1, l));
@@ -259,7 +257,7 @@ inline void computeSizeIntegrals(const S &alpha, const S &beta, V &q, V &dqda,
     for (int lp = 1; lp < l + 1; ++lp) {
 
       int np = lp * (lp + 1);
-      S sqlp = 1.0 / sqrt(2 * lp + 1.0);
+      SCALAR sqlp = 1.0 / sqrt(2 * lp + 1.0);
 
       // Case 3: l > 0, l' > 0
       int q = l + lp + 1;

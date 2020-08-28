@@ -30,9 +30,6 @@ int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
   using namespace sp::latitude;
   using namespace sp::utils;
 
-  // Size of the matrices
-  const npy_intp N = (SP__LMAX + 1) * (SP__LMAX + 1);
-
   // Get the inputs
   int success = 0;
   int ndim = -1;
@@ -54,11 +51,11 @@ int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
   int ndim_q = 1;
   int ndim_Q = 2;
   std::vector<npy_intp> shape_q_vec(ndim_q);
-  shape_q_vec[0] = N;
+  shape_q_vec[0] = SP__N;
   npy_intp *shape_q = &(shape_q_vec[0]);
   std::vector<npy_intp> shape_Q_vec(ndim_Q);
-  shape_Q_vec[0] = N;
-  shape_Q_vec[1] = N;
+  shape_Q_vec[0] = SP__N;
+  shape_Q_vec[1] = SP__N;
   npy_intp *shape_Q = &(shape_Q_vec[0]);
   auto q_out = allocate_output<DO0>(ndim_q, shape_q, TO0, output0, &success);
   auto dqda_out = allocate_output<DO1>(ndim_q, shape_q, TO1, output1, &success);
@@ -69,12 +66,12 @@ int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
   if (success) {
     return 1;
   }
-  Map<Vector<DO0, N>> q(q_out);
-  Map<Vector<DO1, N>> dqda(dqda_out);
-  Map<Vector<DO2, N>> dqdb(dqdb_out);
-  Map<RowMatrix<DO3, N, N>> Q(Q_out);
-  Map<RowMatrix<DO4, N, N>> dQda(dQda_out);
-  Map<RowMatrix<DO5, N, N>> dQdb(dQdb_out);
+  Map<Vector<DO0, SP__N>> q(q_out);
+  Map<Vector<DO1, SP__N>> dqda(dqda_out);
+  Map<Vector<DO2, SP__N>> dqdb(dqdb_out);
+  Map<RowMatrix<DO3, SP__N, SP__N>> Q(Q_out);
+  Map<RowMatrix<DO4, SP__N, SP__N>> dQda(dQda_out);
+  Map<RowMatrix<DO5, SP__N, SP__N>> dQdb(dQdb_out);
 
   // Compute the integrals
   computeLatitudeIntegrals(alpha, beta, q, dqda, dqdb, Q, dQda, dQdb);

@@ -18,19 +18,19 @@ using special::hyp2f1;
 /**
  * Compute the mean `q` and variance `Q` latitude integrals.
 */
-template <typename S, typename V, typename M>
-inline void computeLatitudeIntegrals(const S &alpha, const S &beta, V &q,
-                                     V &dqda, V &dqdb, M &Q, M &dQda, M &dQdb) {
+template <typename SCALAR, typename VECTOR, typename MATRIX>
+inline void computeLatitudeIntegrals(const SCALAR &alpha, const SCALAR &beta,
+                                     VECTOR &q, VECTOR &dqda, VECTOR &dqdb,
+                                     MATRIX &Q, MATRIX &dQda, MATRIX &dQdb) {
 
   // Dimensions
-  const int N = (SP__LMAX + 1) * (SP__LMAX + 1);
   const int n = 4 * SP__LMAX + 1;
   int n1, n2, j1, i1, j2, i2;
 
   // Helper matrices
-  Vector<S, n> B;
-  Vector<S, n> F;
-  RowMatrix<S, n, n> term;
+  Vector<SCALAR, n> B;
+  Vector<SCALAR, n> F;
+  RowMatrix<SCALAR, n, n> term;
 
   // Initialize the output
   q.setZero();
@@ -47,7 +47,7 @@ inline void computeLatitudeIntegrals(const S &alpha, const S &beta, V &q,
   }
 
   // F functions
-  S ab = alpha + beta;
+  SCALAR ab = alpha + beta;
   F(0) = sqrt(2.0) * hyp2f1(-0.5, beta, ab, 0.5);
   F(1) = sqrt(2.0) * hyp2f1(-0.5, beta, ab + 1.0, 0.5);
   for (int k = 2; k < n; ++k) {
@@ -57,15 +57,15 @@ inline void computeLatitudeIntegrals(const S &alpha, const S &beta, V &q,
   F.array() = F.array().cwiseProduct(B.array()).eval();
 
   // Terms
-  Map<Vector<S, n>> func(NULL);
-  S fac1, fac2;
+  Map<Vector<SCALAR, n>> func(NULL);
+  SCALAR fac1, fac2;
   term.setZero();
   for (int i = 0; i < n; ++i) {
     if (is_even(i)) {
-      new (&func) Map<Vector<S, n>>(B.data());
+      new (&func) Map<Vector<SCALAR, n>>(B.data());
       i2 = i / 2;
     } else {
-      new (&func) Map<Vector<S, n>>(F.data());
+      new (&func) Map<Vector<SCALAR, n>>(F.data());
       i2 = (i - 1) / 2;
     }
     for (int j = 0; j < n; j += 2) {
@@ -87,8 +87,8 @@ inline void computeLatitudeIntegrals(const S &alpha, const S &beta, V &q,
 
   // Moment integrals
   n1 = 0;
-  S inv_two_l1 = 1.0;
-  S inv_two_l1l2;
+  SCALAR inv_two_l1 = 1.0;
+  SCALAR inv_two_l1l2;
   for (int l1 = 0; l1 < SP__LMAX + 1; ++l1) {
     for (int m1 = -l1; m1 < l1 + 1; ++m1) {
       j1 = m1 + l1;

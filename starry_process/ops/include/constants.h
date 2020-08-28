@@ -15,6 +15,13 @@
 #define SP__LMAX 15
 #endif
 
+//! Number of Ylm terms
+#define SP__N ((SP__LMAX + 1) * (SP__LMAX + 1))
+
+//! Number of terms in the Wigner rotation matrix
+#define SP__NWIG                                                               \
+  (((SP__LMAX + 1) * (2 * SP__LMAX + 1) * (2 * SP__LMAX + 3)) / 3)
+
 //! Spot profile correction constant
 #ifndef SP__C0
 #define SP__C0 0.152490623061794
@@ -79,6 +86,11 @@
 //! Recurse upward in m? Disabled by default, since it can be unstable
 #ifndef SP_G_RECURSE_UPWARD_IN_M
 #define SP_G_RECURSE_UPWARD_IN_M 0
+#endif
+
+//! Wigner rotation matrix tolerance
+#ifndef SP_WIGNER_TOL
+#define SP_WIGNER_TOL 1.0e-14
 #endif
 
 #endif
