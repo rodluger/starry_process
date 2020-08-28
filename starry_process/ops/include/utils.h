@@ -26,6 +26,7 @@ using std::max;
 
 //! Eigen shorthand
 using Eigen::Map;
+using Eigen::Dynamic;
 template <typename Scalar, int M, int N>
 using RowMatrix = Eigen::Matrix<Scalar, M, N, Eigen::RowMajor>;
 template <typename Scalar, int N> using Vector = Eigen::Matrix<Scalar, N, 1>;

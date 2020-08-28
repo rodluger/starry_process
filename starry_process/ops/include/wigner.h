@@ -315,11 +315,24 @@ inline void rotar(const Scalar &theta, T &R, T &Rp) {
 }
 
 /**
- * Compute the Wigner rotation matrix Rx.
+ * Compute the Wigner rotation matrix Rx(theta).
 */
 template <typename SCALAR, typename VECTOR>
 inline void computeRx(const SCALAR &theta, VECTOR &Rx, VECTOR &dRxdtheta) {
   rotar(theta, Rx, dRxdtheta);
+}
+
+/**
+ * Compute the tensor dot product M . Rz(theta)
+*/
+template <typename VECTOR_K, typename MATRIX_KxN, typename MATRIX_NxN>
+inline void computeTensordotRz(const MATRIX_KxN &M, VECTOR_K const &theta,
+                               MATRIX_KxN &f, MATRIX_NxN &dfdM,
+                               MATRIX_KxN &dfdtheta) {
+  // TODO
+  f.setZero();
+  dfdM.setZero();
+  dfdtheta.setZero();
 }
 
 } // namespace wigner
