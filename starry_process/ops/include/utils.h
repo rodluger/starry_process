@@ -13,7 +13,6 @@
 #include <iomanip>
 #include <iostream>
 #include <stdlib.h>
-#include <unsupported/Eigen/AutoDiff>
 #include <vector>
 
 namespace sp {
@@ -29,9 +28,9 @@ using Eigen::Map;
 using Eigen::Dynamic;
 template <typename Scalar, int M, int N>
 using RowMatrix = Eigen::Matrix<Scalar, M, N, Eigen::RowMajor>;
+template <typename Scalar, int M, int N>
+using ColMatrix = Eigen::Matrix<Scalar, M, N, Eigen::ColMajor>;
 template <typename Scalar, int N> using Vector = Eigen::Matrix<Scalar, N, 1>;
-template <typename Scalar, int N>
-using ADScalar = Eigen::AutoDiffScalar<Eigen::Matrix<Scalar, N, 1>>;
 
 //! Check if a number is even (or doubly, triply, quadruply... even)
 inline bool is_even(int n, int ntimes = 1) {

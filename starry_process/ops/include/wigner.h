@@ -325,14 +325,121 @@ inline void computeRx(const SCALAR &theta, VECTOR &Rx, VECTOR &dRxdtheta) {
 /**
  * Compute the tensor dot product M . Rz(theta)
 */
-template <typename VECTOR_K, typename MATRIX_KxN, typename MATRIX_NxN>
-inline void computeTensordotRz(const MATRIX_KxN &M, VECTOR_K const &theta,
-                               MATRIX_KxN &f, MATRIX_NxN &dfdM,
-                               MATRIX_KxN &dfdtheta) {
-  // TODO
-  f.setZero();
-  dfdM.setZero();
-  dfdtheta.setZero();
+template <typename VECTOR, typename MATRIX>
+inline void computeTensordotRz(const MATRIX &M, VECTOR const &theta,
+                               MATRIX &f) {
+
+  using Scalar = typename VECTOR::Scalar;
+  int K = theta.size();
+
+  // Compute sin & cos
+  auto costheta = theta.array().cos();
+  auto sintheta = theta.array().sin();
+
+  // Initialize our z rotation vectors
+  RowMatrix<Scalar, Dynamic, SP__LMAX + 1> cosnt(K, SP__LMAX + 1);
+  RowMatrix<Scalar, Dynamic, SP__LMAX + 1> sinnt(K, SP__LMAX + 1);
+  RowMatrix<Scalar, Dynamic, SP__N> cosmt(K, SP__N);
+  RowMatrix<Scalar, Dynamic, SP__N> sinmt(K, SP__N);
+  cosnt.col(0).setOnes();
+  sinnt.col(0).setZero();
+
+  // Compute the cos and sin vectors for the zhat rotation
+  cosnt.col(1) = costheta;
+  sinnt.col(1) = sintheta;
+  for (int n = 2; n < SP__LMAX + 1; ++n) {
+    cosnt.col(n) =
+        2.0 * cosnt.col(n - 1).cwiseProduct(cosnt.col(1)) - cosnt.col(n - 2);
+    sinnt.col(n) =
+        2.0 * sinnt.col(n - 1).cwiseProduct(cosnt.col(1)) - sinnt.col(n - 2);
+  }
+  int n = 0;
+  for (int l = 0; l < SP__LMAX + 1; ++l) {
+    for (int m = -l; m < 0; ++m) {
+      cosmt.col(n) = cosnt.col(-m);
+      sinmt.col(n) = -sinnt.col(-m);
+      ++n;
+    }
+    for (int m = 0; m < l + 1; ++m) {
+      cosmt.col(n) = cosnt.col(m);
+      sinmt.col(n) = sinnt.col(m);
+      ++n;
+    }
+  }
+
+  // Dot them in
+  for (int l = 0; l < SP__LMAX + 1; ++l) {
+    for (int j = 0; j < 2 * l + 1; ++j) {
+      f.col(l * l + j) =
+          M.col(l * l + j).cwiseProduct(cosmt.col(l * l + j)) +
+          M.col(l * l + 2 * l - j).cwiseProduct(sinmt.col(l * l + j));
+    }
+  }
+}
+
+/**
+ * Computes the gradient of the tensor dot product M . Rz(theta).
+*/
+template <typename VECTOR, typename MATRIX>
+inline void computeTensordotRzGradient(const MATRIX &M, VECTOR const &theta,
+                                       const MATRIX &bf, MATRIX &bM,
+                                       VECTOR &btheta) {
+
+  using Scalar = typename VECTOR::Scalar;
+  int K = theta.size();
+
+  // Init grads
+  btheta.setZero();
+  bM.setZero();
+
+  // Compute sin & cos
+  auto costheta = theta.array().cos();
+  auto sintheta = theta.array().sin();
+
+  // Initialize our z rotation vectors
+  RowMatrix<Scalar, Dynamic, SP__LMAX + 1> cosnt(K, SP__LMAX + 1);
+  RowMatrix<Scalar, Dynamic, SP__LMAX + 1> sinnt(K, SP__LMAX + 1);
+  RowMatrix<Scalar, Dynamic, SP__N> cosmt(K, SP__N);
+  RowMatrix<Scalar, Dynamic, SP__N> sinmt(K, SP__N);
+  cosnt.col(0).setOnes();
+  sinnt.col(0).setZero();
+
+  // Compute the cos and sin vectors for the zhat rotation
+  cosnt.col(1) = costheta;
+  sinnt.col(1) = sintheta;
+  for (int n = 2; n < SP__LMAX + 1; ++n) {
+    cosnt.col(n) =
+        2.0 * cosnt.col(n - 1).cwiseProduct(cosnt.col(1)) - cosnt.col(n - 2);
+    sinnt.col(n) =
+        2.0 * sinnt.col(n - 1).cwiseProduct(cosnt.col(1)) - sinnt.col(n - 2);
+  }
+  int n = 0;
+  for (int l = 0; l < SP__LMAX + 1; ++l) {
+    for (int m = -l; m < 0; ++m) {
+      cosmt.col(n) = cosnt.col(-m);
+      sinmt.col(n) = -sinnt.col(-m);
+      ++n;
+    }
+    for (int m = 0; m < l + 1; ++m) {
+      cosmt.col(n) = cosnt.col(m);
+      sinmt.col(n) = sinnt.col(m);
+      ++n;
+    }
+  }
+
+  // Dot them in
+  for (int l = 0; l < SP__LMAX + 1; ++l) {
+    for (int j = 0; j < 2 * l + 1; ++j) {
+      Vector<Scalar, Dynamic> tmp_c =
+          bf.col(l * l + j).cwiseProduct(cosmt.col(l * l + j));
+      Vector<Scalar, Dynamic> tmp_s =
+          bf.col(l * l + j).cwiseProduct(sinmt.col(l * l + j));
+      btheta += (j - l) * (M.col(l * l + 2 * l - j).cwiseProduct(tmp_c) -
+                           M.col(l * l + j).cwiseProduct(tmp_s));
+      bM.col(l * l + 2 * l - j) += tmp_s;
+      bM.col(l * l + j) += tmp_c;
+    }
+  }
 }
 
 } // namespace wigner

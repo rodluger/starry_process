@@ -4,23 +4,22 @@ from starry_process.ops import tensordotRzOp
 import numpy as np
 
 
-def test_tensordotRz():
-
-    ydeg = 2
-    K = 3
-
-    op = tensordotRzOp(ydeg)
-
-    theta = np.linspace(-np.pi, np.pi, K)
-    M = np.ones((K, (ydeg + 1) ** 2))
-    f = op(M, theta)[0].eval()
-    dfdM = op(M, theta)[1].eval()
-    dfdtheta = op(M, theta)[2].eval()
-
-    print(f)
-    print(dfdM)
-    print(dfdtheta)
+def test_tensordotRz_grad(ydeg=2, abs_tol=1e-5, rel_tol=1e-5, eps=1e-7):
+    with change_flags(compute_test_value="off"):
+        op = tensordotRzOp(ydeg)
+        theta = (
+            np.array([0.0, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0]) * np.pi / 180.0
+        )
+        M = np.ones((len(theta), (ydeg + 1) ** 2))
+        verify_grad(
+            op,
+            (M, theta,),
+            n_tests=1,
+            abs_tol=abs_tol,
+            rel_tol=rel_tol,
+            eps=eps,
+        )
 
 
 if __name__ == "__main__":
-    test_tensordotRz()
+    test_tensordotRz_grad()
