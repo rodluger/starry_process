@@ -9,16 +9,33 @@ __all__ = ["FluxDesignMatrix"]
 class FluxDesignMatrix(object):
     def __init__(self, ydeg, **kwargs):
         self.ydeg = ydeg
-        self.Rx = RxOp(ydeg, **kwargs)
-        self.tensordotRz = tensordotRzOp(ydeg, **kwargs)
-        self.rTA1 = rTA1Op(ydeg, **kwargs)()
+        self._Rx = RxOp(ydeg, **kwargs)
+        self._tensordotRz = tensordotRzOp(ydeg, **kwargs)
+        self._rTA1 = rTA1Op(ydeg, **kwargs)()
+        self._set = False
+
+    def set_params(self, t, period, inc):
+        theta = 2 * np.pi / period * t
+        inc *= np.pi / 180
+        self._compute(theta, inc)
+        self._set = True
+
+    @property
+    def A(self):
+        assert self._set, "must call `set_params` first."
+        return self._A
+
+    @property
+    def AT(self):
+        assert self._set, "must call `set_params` first."
+        return self._AT
 
     def _nwig(self, l):
         return ((l + 1) * (2 * l + 1) * (2 * l + 3)) // 3
 
-    def dotRx(self, M, theta):
+    def _dotRx(self, M, theta):
         f = tt.zeros_like(M)
-        rx = self.Rx(theta)[0]
+        rx = self._Rx(theta)[0]
         for l in range(self.ydeg + 1):
             start = self._nwig(l - 1)
             stop = self._nwig(l)
@@ -29,7 +46,7 @@ class FluxDesignMatrix(object):
             )
         return f
 
-    def right_project(self, M, theta, inc):
+    def _right_project(self, M, theta, inc):
         """Apply the projection operator on the right.
 
         Specifically, this method returns the dot product `M . R`,
@@ -38,17 +55,17 @@ class FluxDesignMatrix(object):
         input frame to a vector in the observer's frame.
         """
         # Rotate to the sky frame
-        M = self.dotRx(M, -inc)
+        M = self._dotRx(M, -inc)
 
         # Rotate to the correct phase
-        M = self.tensordotRz(M, theta)
+        M = self._tensordotRz(M, theta)
 
         # Rotate to the polar frame
-        M = self.dotRx(M, 0.5 * np.pi)
+        M = self._dotRx(M, 0.5 * np.pi)
 
         return M
 
-    def __call__(self, theta, inc):
-        rTA1 = tt.tile(self.rTA1, (theta.shape[0], 1))
-        X = self.right_project(rTA1, theta, inc)
-        return X
+    def _compute(self, theta, inc):
+        rTA1 = tt.tile(self._rTA1, (theta.shape[0], 1))
+        self._A = self._right_project(rTA1, theta, inc)
+        self._AT = tt.transpose(self._A)

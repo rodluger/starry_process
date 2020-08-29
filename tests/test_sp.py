@@ -1,4 +1,4 @@
-from starry_process.gp import YlmGP
+from starry_process.sp import StarryProcess
 from starry_process.wigner import R
 import numpy as np
 from tqdm import tqdm
@@ -23,12 +23,12 @@ def test_moments(rtol=1e-4, ftol=2e-2):
 
     # Integrate analytically
     print("Computing moments analytically...")
-    gp = YlmGP(ydeg)
+    gp = StarryProcess(ydeg)
     gp.size.set_params(size_alpha, size_beta)
     gp.contrast.set_params(contrast_mu, contrast_sigma)
     gp.latitude.set_params(latitude_alpha, latitude_beta)
-    mu = gp.mean.eval()
-    cov = gp.cov.eval()
+    mu = gp.mean_ylm.eval()
+    cov = gp.cov_ylm.eval()
 
     # Integrate numerically
     print("Computing moments numerically...")
@@ -97,3 +97,26 @@ def test_moments(rtol=1e-4, ftol=2e-2):
         np.max(np.abs(1 - cov[:N, :N][nonzero_ij] / cov_num[nonzero_ij]))
         < ftol
     ), "error in cov"
+
+
+def test_draw():
+
+    # Settings
+    ydeg = 15
+    size_alpha = 1.0
+    size_beta = 50.0
+    contrast_mu = 0.5
+    contrast_sigma = 0.1
+    latitude_alpha = 10.0
+    latitude_beta = 30.0
+    t = np.linspace(0, 1, 500)
+    period = 0.5
+    inc = 60.0
+
+    # Compute
+    gp = StarryProcess(ydeg)
+    gp.size.set_params(size_alpha, size_beta)
+    gp.contrast.set_params(contrast_mu, contrast_sigma)
+    gp.latitude.set_params(latitude_alpha, latitude_beta)
+    gp.flux.set_params(t, period, inc)
+    fluxes = gp.draw(ndraws=10).eval()

@@ -14,9 +14,9 @@ del tt
 
 # Main imports
 from .starry_process_version import __version__
-from .gp import YlmGP
+from .sp import StarryProcess
 from . import (
-    gp,
+    sp,
     math,
     ops,
     integrals,
