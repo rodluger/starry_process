@@ -4,31 +4,54 @@ jobs:
   pool:
     vmImage: Ubuntu-16.04
   steps:
+  
   - script: |
       nproc
       lscpu
     displayName: 'Machine info'
+  
   - script: |
       sudo chown -R $USER $CONDA
       . $CONDA/etc/profile.d/conda.sh
       conda create --yes --quiet --name starry_process python=3.7.3 pip
     displayName: 'Setup conda'
+  
   - script: |
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
       conda install -y -q numpy scipy mkl openblas theano
       theano-cache purge
       pip install -U pip
-      pip install -U pytest pytest-dependency
+      pip install -U parameterized nose pytest pytest-dependency
       pip install -U setuptools
       conda install -y -q -c conda-forge tectonic
     displayName: 'Install dependencies'
+  
+  - script: |
+      . $CONDA/etc/profile.d/conda.sh
+      conda activate starry_process
+      python setup.py develop
+    displayName: 'Install the package'
+  
+  - script: |
+      . $CONDA/etc/profile.d/conda.sh
+      conda activate starry_process
+      py.test -v -s tests --junitxml=junit/test-results.xml
+    displayName: 'Run the tests'
+  
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results'
+  
   - script: |
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
       cd $(Build.SourcesDirectory)/tex
       make
     displayName: 'Build the paper'
+  
   - script: |
       cd $(Build.SourcesDirectory)
       git checkout --orphan $(Build.SourceBranchName)-pdf
