@@ -8,6 +8,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <Eigen/SparseCore>
 #include <cmath>
 #include <exception>
 #include <iomanip>
@@ -31,6 +32,7 @@ using RowMatrix = Eigen::Matrix<Scalar, M, N, Eigen::RowMajor>;
 template <typename Scalar, int M, int N>
 using ColMatrix = Eigen::Matrix<Scalar, M, N, Eigen::ColMajor>;
 template <typename Scalar, int N> using Vector = Eigen::Matrix<Scalar, N, 1>;
+template <typename Scalar, int N> using RowVector = Eigen::Matrix<Scalar, 1, N>;
 
 //! Check if a number is even (or doubly, triply, quadruply... even)
 inline bool is_even(int n, int ntimes = 1) {

@@ -17,18 +17,14 @@ class tensordotRzOp(BaseOp):
         super().__init__(*args, **kwargs)
 
     def make_node(self, M, theta):
-        in_args = []
-        dtype = theano.config.floatX
-        for a in [M, theta]:
-            try:
-                a = tt.as_tensor_variable(a)
-            except tt.AsTensorError:
-                pass
-            else:
-                dtype = theano.scalar.upcast(dtype, a.dtype)
-            in_args.append(a)
+        in_args = [
+            tt.as_tensor_variable(arg).astype(tt.config.floatX)
+            for arg in [M, theta]
+        ]
         out_args = [
-            tt.TensorType(dtype=dtype, broadcastable=[False, False])(),
+            tt.TensorType(
+                dtype=tt.config.floatX, broadcastable=[False, False]
+            )(),
         ]
         return gof.Apply(self, in_args, out_args)
 

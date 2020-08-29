@@ -33,6 +33,7 @@ class BaseOp(gof.COp):
             "latitude.h",
             "size.h",
             "wigner.h",
+            "flux.h",
             "theano_helpers.h",
             "vector",
         ]
@@ -61,23 +62,23 @@ class BaseOp(gof.COp):
 
 class IntegralOp(BaseOp):
     def make_node(self, alpha, beta):
-        in_args = []
-        dtype = theano.config.floatX
-        for a in [alpha, beta]:
-            try:
-                a = tt.as_tensor_variable(a)
-            except tt.AsTensorError:
-                pass
-            else:
-                dtype = theano.scalar.upcast(dtype, a.dtype)
-            in_args.append(a)
+        in_args = [
+            tt.as_tensor_variable(arg).astype(tt.config.floatX)
+            for arg in [alpha, beta]
+        ]
         out_args = [
-            tt.TensorType(dtype=dtype, broadcastable=[False])(),
-            tt.TensorType(dtype=dtype, broadcastable=[False])(),
-            tt.TensorType(dtype=dtype, broadcastable=[False])(),
-            tt.TensorType(dtype=dtype, broadcastable=[False, False])(),
-            tt.TensorType(dtype=dtype, broadcastable=[False, False])(),
-            tt.TensorType(dtype=dtype, broadcastable=[False, False])(),
+            tt.TensorType(dtype=tt.config.floatX, broadcastable=[False])(),
+            tt.TensorType(dtype=tt.config.floatX, broadcastable=[False])(),
+            tt.TensorType(dtype=tt.config.floatX, broadcastable=[False])(),
+            tt.TensorType(
+                dtype=tt.config.floatX, broadcastable=[False, False]
+            )(),
+            tt.TensorType(
+                dtype=tt.config.floatX, broadcastable=[False, False]
+            )(),
+            tt.TensorType(
+                dtype=tt.config.floatX, broadcastable=[False, False]
+            )(),
         ]
         return gof.Apply(self, in_args, out_args)
 
@@ -92,6 +93,7 @@ class IntegralOp(BaseOp):
         )
 
     def grad(self, inputs, gradients):
+        raise NotImplementedError("Implement the gradients!")
         alpha, beta = inputs
         q, dqda, dqdb, Q, dQda, dQdb = self(*inputs)
         bq = gradients[0]
@@ -101,8 +103,8 @@ class IntegralOp(BaseOp):
                 raise ValueError(
                     "can't propagate gradients wrt parameter {0}".format(i + 1)
                 )
-        ba = tt.sum(bq * dqda) + tt.sum(bQ * dQda)  # TODO
-        bb = tt.sum(bq * dqdb) + tt.sum(bQ * dQdb)  # TODO
+        ba = tt.sum(bq * dqda) + tt.sum(bQ * dQda)  # TODO: CHECK
+        bb = tt.sum(bq * dqdb) + tt.sum(bQ * dQdb)  # TODO: CHECK
         return ba, bb
 
     def R_op(self, inputs, eval_points):

@@ -186,8 +186,12 @@ inline void rotar(const Scalar &theta, T &R, T &Rp) {
   Rp(0) = 0.0;
   R(1) = D(9) - D(7);
   Rp(1) = Dp(9) - Dp(7);
+  R(2) = -root_two * D(6);
+  Rp(2) = -root_two * Dp(6);
   R(3) = 0;
   Rp(3) = 0;
+  R(4) = -root_two * D(8);
+  Rp(4) = -root_two * Dp(8);
   R(5) = D(5);
   Rp(5) = Dp(5);
   R(6) = 0;
@@ -198,22 +202,6 @@ inline void rotar(const Scalar &theta, T &R, T &Rp) {
   Rp(8) = 0;
   R(9) = D(9) + D(7);
   Rp(9) = Dp(9) + Dp(7);
-  if (s2 < 0) {
-    R(2) = root_two * D(6);
-    Rp(2) = root_two * Dp(6);
-    R(4) = root_two * D(8);
-    Rp(4) = root_two * Dp(8);
-  } else if (s2 > 0) {
-    R(2) = -root_two * D(6);
-    Rp(2) = -root_two * Dp(6);
-    R(4) = -root_two * D(8);
-    Rp(4) = -root_two * Dp(8);
-  } else {
-    R(2) = 0.0;
-    Rp(2) = 0.0; // Undefined!
-    R(4) = 0.0;
-    Rp(4) = 0.0; // Undefined!
-  }
 
   // The remaining matrices are calculated using
   // symmetry and and recurrence relations
@@ -247,22 +235,10 @@ inline void rotar(const Scalar &theta, T &R, T &Rp) {
     for (int mp = 1; mp < l + 1; ++mp) {
       cosmga = 0;
       sinmga = 1;
-      if (s2 < 0) {
-        Rl(0 + l, mp + l) = root_two * Dl(0 + l, mp + l) * cosmal;
-        Rlp(0 + l, mp + l) = root_two * Dlp(0 + l, mp + l) * cosmal;
-        Rl(0 + l, -mp + l) = root_two * Dl(0 + l, mp + l) * sinmal;
-        Rlp(0 + l, -mp + l) = root_two * Dlp(0 + l, mp + l) * sinmal;
-      } else if (s2 > 0) {
-        Rl(mp + l, 0 + l) = root_two * Dl(0 + l, mp + l) * cosmal;
-        Rlp(mp + l, 0 + l) = root_two * Dlp(0 + l, mp + l) * cosmal;
-        Rl(-mp + l, 0 + l) = root_two * Dl(0 + l, mp + l) * sinmal;
-        Rlp(-mp + l, 0 + l) = root_two * Dlp(0 + l, mp + l) * sinmal;
-      } else {
-        Rl(mp + l, 0 + l) = 0.0;
-        Rlp(mp + l, 0 + l) = 0.0;
-        Rl(-mp + l, 0 + l) = 0.0;
-        Rlp(-mp + l, 0 + l) = 0.0;
-      }
+      Rl(mp + l, 0 + l) = root_two * Dl(0 + l, mp + l) * cosmal;
+      Rlp(mp + l, 0 + l) = root_two * Dlp(0 + l, mp + l) * cosmal;
+      Rl(-mp + l, 0 + l) = root_two * Dl(0 + l, mp + l) * sinmal;
+      Rlp(-mp + l, 0 + l) = root_two * Dlp(0 + l, mp + l) * sinmal;
       for (int m = 1; m < l + 1; ++m) {
         d1 = Dl(-mp + l, -m + l);
         d1p = Dlp(-mp + l, -m + l);
@@ -272,33 +248,18 @@ inline void rotar(const Scalar &theta, T &R, T &Rp) {
         cosagm = cosmal * cosmga + sinmal * sinmga;
         sinag = sinmal * cosmga + cosmal * sinmga;
         sinagm = sinmal * cosmga - cosmal * sinmga;
-        if (s2 < 0) {
-          Rl(m + l, l) = root_two * Dl(m + l, 0 + l) * cosmga;
-          Rlp(m + l, l) = root_two * Dlp(m + l, 0 + l) * cosmga;
-          Rl(-m + l, l) = -root_two * Dl(m + l, 0 + l) * sinmga;
-          Rlp(-m + l, l) = -root_two * Dlp(m + l, 0 + l) * sinmga;
-          Rl(m + l, mp + l) = d1 * cosag + d2 * cosagm;
-          Rlp(m + l, mp + l) = d1p * cosag + d2p * cosagm;
-          Rl(-m + l, mp + l) = -d1 * sinag + d2 * sinagm;
-          Rlp(-m + l, mp + l) = -d1p * sinag + d2p * sinagm;
-          Rl(m + l, -mp + l) = d1 * sinag + d2 * sinagm;
-          Rlp(m + l, -mp + l) = d1p * sinag + d2p * sinagm;
-          Rl(-m + l, -mp + l) = d1 * cosag - d2 * cosagm;
-          Rlp(-m + l, -mp + l) = d1p * cosag - d2p * cosagm;
-        } else {
-          Rl(l, m + l) = root_two * Dl(m + l, 0 + l) * cosmga;
-          Rlp(l, m + l) = root_two * Dlp(m + l, 0 + l) * cosmga;
-          Rl(l, -m + l) = -root_two * Dl(m + l, 0 + l) * sinmga;
-          Rlp(l, -m + l) = -root_two * Dlp(m + l, 0 + l) * sinmga;
-          Rl(mp + l, m + l) = d1 * cosag + d2 * cosagm;
-          Rlp(mp + l, m + l) = d1p * cosag + d2p * cosagm;
-          Rl(mp + l, -m + l) = -d1 * sinag + d2 * sinagm;
-          Rlp(mp + l, -m + l) = -d1p * sinag + d2p * sinagm;
-          Rl(-mp + l, m + l) = d1 * sinag + d2 * sinagm;
-          Rlp(-mp + l, m + l) = d1p * sinag + d2p * sinagm;
-          Rl(-mp + l, -m + l) = d1 * cosag - d2 * cosagm;
-          Rlp(-mp + l, -m + l) = d1p * cosag - d2p * cosagm;
-        }
+        Rl(l, m + l) = root_two * Dl(m + l, 0 + l) * cosmga;
+        Rlp(l, m + l) = root_two * Dlp(m + l, 0 + l) * cosmga;
+        Rl(l, -m + l) = -root_two * Dl(m + l, 0 + l) * sinmga;
+        Rlp(l, -m + l) = -root_two * Dlp(m + l, 0 + l) * sinmga;
+        Rl(mp + l, m + l) = d1 * cosag + d2 * cosagm;
+        Rlp(mp + l, m + l) = d1p * cosag + d2p * cosagm;
+        Rl(mp + l, -m + l) = -d1 * sinag + d2 * sinagm;
+        Rlp(mp + l, -m + l) = -d1p * sinag + d2p * sinagm;
+        Rl(-mp + l, m + l) = d1 * sinag + d2 * sinagm;
+        Rlp(-mp + l, m + l) = d1p * sinag + d2p * sinagm;
+        Rl(-mp + l, -m + l) = d1 * cosag - d2 * cosagm;
+        Rlp(-mp + l, -m + l) = d1p * cosag - d2p * cosagm;
         aux = -sinmga;
         sinmga = cosmga;
         cosmga = aux;
