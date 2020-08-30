@@ -18,16 +18,16 @@ def test_save():
     contrast_sigma = tt.dscalar()
     latitude_alpha = tt.dscalar()
     latitude_beta = tt.dscalar()
-    t = tt.dvector()
     period = tt.dscalar()
     inc = tt.dscalar()
+    t = tt.dvector()
 
     # Set up the process
     gp = StarryProcess(ydeg)
     gp.size.set_params(size_alpha, size_beta)
     gp.contrast.set_params(contrast_mu, contrast_sigma)
     gp.latitude.set_params(latitude_alpha, latitude_beta)
-    gp.flux.set_params(t, period, inc)
+    gp.design.set_params(period, inc)
 
     # Compile a function that computes the mean and covariance
     function = theano.function(
@@ -38,11 +38,11 @@ def test_save():
             contrast_sigma,
             latitude_alpha,
             latitude_beta,
-            t,
             period,
             inc,
+            t,
         ],
-        [gp.mean, gp.cov],
+        [gp.mean(t), gp.cov(t)],
     )
 
     # Pickle it!
@@ -59,7 +59,7 @@ def test_load():
         function = cPickle.load(f)
 
     # Run the function and just check the shapes it returns
-    mean, cov = function(1, 50, 0.5, 0.1, 10, 30, [0, 1, 2, 3], 3, 65)
+    mean, cov = function(1, 50, 0.5, 0.1, 10, 30, 3, 65, [0, 1, 2, 3])
     assert mean.shape == (4,)
     assert cov.shape == (4, 4)
 

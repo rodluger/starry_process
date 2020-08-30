@@ -18,14 +18,11 @@ class StarryProcess(object):
         self.longitude = LongitudeIntegral(self.contrast, **kwargs)
         self.latitude = LatitudeIntegral(self.longitude, **kwargs)
         self.size = SizeIntegral(self.latitude, **kwargs)
-
-        self.flux = FluxDesignMatrix(self.ydeg)
+        self.design = FluxDesignMatrix(self.ydeg)
 
         self._mean_ylm = None
         self._cov_ylm = None
         self._cho_cov_ylm = None
-        self._mean = None
-        self._cov = None
 
         self._srng = RandomStreams(seed=0)
 
@@ -35,11 +32,8 @@ class StarryProcess(object):
             self._mean_ylm = self.contrast.first_moment()
         return self._mean_ylm
 
-    @property
-    def mean(self):
-        if self._mean is None:
-            self._mean = tt.dot(self.flux.A, self.mean_ylm)
-        return self._mean
+    def mean(self, t):
+        return tt.dot(self.design(t), self.mean_ylm)
 
     @property
     def cov_ylm(self):
@@ -50,11 +44,9 @@ class StarryProcess(object):
             self._cho_cov_ylm = None
         return self._cov_ylm
 
-    @property
-    def cov(self):
-        if self._cov is None:
-            self._cov = tt.dot(tt.dot(self.flux.A, self.cov_ylm), self.flux.AT)
-        return self._cov
+    def cov(self, t):
+        A = self.design(t)
+        return tt.dot(tt.dot(A, self.cov_ylm), tt.transpose(A))
 
     def draw_ylm(self, ndraws=1, seed=None, eps=1e-12):
         if self._cho_cov_ylm is None:
@@ -66,6 +58,6 @@ class StarryProcess(object):
             self.mean_ylm[:, None] + tt.dot(self._cho_cov_ylm, u)
         )
 
-    def draw(self, ndraws=1, seed=None, eps=1e-12):
+    def draw(self, t, ndraws=1, seed=None, eps=1e-12):
         ylm = self.draw_ylm(ndraws=ndraws, seed=seed, eps=eps)
-        return tt.dot(ylm, self.flux.AT)
+        return tt.dot(ylm, tt.transpose(self.design(t)))

@@ -14,21 +14,10 @@ class FluxDesignMatrix(object):
         self._rTA1 = rTA1Op(ydeg, **kwargs)()
         self._set = False
 
-    def set_params(self, t, period, inc):
-        theta = 2 * np.pi / period * t
-        inc *= np.pi / 180
-        self._compute(theta, inc)
+    def set_params(self, period, inc):
+        self._omega = 2 * np.pi / period
+        self._inc = inc * np.pi / 180
         self._set = True
-
-    @property
-    def A(self):
-        assert self._set, "must call `set_params` first."
-        return self._A
-
-    @property
-    def AT(self):
-        assert self._set, "must call `set_params` first."
-        return self._AT
 
     def _nwig(self, l):
         return ((l + 1) * (2 * l + 1) * (2 * l + 3)) // 3
@@ -65,7 +54,8 @@ class FluxDesignMatrix(object):
 
         return M
 
-    def _compute(self, theta, inc):
+    def __call__(self, t):
+        assert self._set, "must call `set_params` first."
+        theta = self._omega * t
         rTA1 = tt.tile(self._rTA1, (theta.shape[0], 1))
-        self._A = self._right_project(rTA1, theta, inc)
-        self._AT = tt.transpose(self._A)
+        return self._right_project(rTA1, theta, self._inc)

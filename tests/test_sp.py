@@ -118,5 +118,5 @@ def test_draw():
     gp.size.set_params(size_alpha, size_beta)
     gp.contrast.set_params(contrast_mu, contrast_sigma)
     gp.latitude.set_params(latitude_alpha, latitude_beta)
-    gp.flux.set_params(t, period, inc)
-    fluxes = gp.draw(ndraws=10).eval()
+    gp.design.set_params(period, inc)
+    fluxes = gp.draw(t=t, ndraws=10).eval()

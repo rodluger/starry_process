@@ -22,6 +22,7 @@ jobs:
       conda install -y -q numpy scipy mkl openblas theano
       theano-cache purge
       pip install -U pip
+      pip install -U matplotlib
       pip install -U parameterized nose pytest pytest-dependency
       pip install -U setuptools
       conda install -y -q -c conda-forge tectonic
