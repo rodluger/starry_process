@@ -80,3 +80,32 @@ def test_latitude(
     assert np.max(np.abs(1 - e / e_num)) < ftol, "error in first moment"
     assert np.max(np.abs(E - E_num)) < rtol, "error in second moment"
     assert np.max(np.abs(1 - E / E_num)) < ftol, "error in second moment"
+
+
+def test_python(ydeg=3, alpha=10.0, beta=30.0, **kwargs):
+    # Random input moment matrices
+    np.random.seed(0)
+    N = (ydeg + 1) ** 2
+    s = np.random.randn(N)
+    eigS = np.random.randn(N, N) / N
+    S = eigS @ eigS.T
+
+    # Get analytic integrals (theano)
+    print("Computing moments using theano...")
+    I = LatitudeIntegral(ydeg=ydeg, **kwargs)
+    I._set_params(alpha, beta)
+    e = I._first_moment(s).eval()
+    eigE = I._second_moment(eigS).eval()
+    E = eigE @ eigE.T
+
+    # Get analytic integrals
+    print("Computing moments using python...")
+    I = LatitudeIntegral(ydeg=ydeg, use_theano=False, **kwargs)
+    I._set_params(alpha, beta)
+    e_python = I._first_moment(s)
+    eigE = I._second_moment(eigS)
+    E_python = eigE @ eigE.T
+
+    # Compare
+    assert np.allclose(e, e_python), "error in first moment"
+    assert np.allclose(E, E_python), "error in second moment"

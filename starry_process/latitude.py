@@ -1,8 +1,6 @@
 from .wigner import R
 from .integrals import WignerIntegral
-from .ops import LatitudeIntegralOp
 from .transforms import LatitudeTransform
-import theano.tensor as tt
 
 
 class LatitudeIntegral(WignerIntegral):
@@ -11,9 +9,11 @@ class LatitudeIntegral(WignerIntegral):
         self.R = R(
             self.ydeg, cos_alpha=0, sin_alpha=1, cos_gamma=0, sin_gamma=-1
         )
-        self._integral_op = LatitudeIntegralOp(self.ydeg, **kwargs)
+        self._integral_op = self._math.ops.LatitudeIntegralOp(
+            self.ydeg, **kwargs
+        )
 
     def _compute_basis_integrals(self, alpha, beta):
-        alpha = tt.as_tensor_variable(alpha).astype(tt.config.floatX)
-        beta = tt.as_tensor_variable(beta).astype(tt.config.floatX)
+        alpha = self._math.cast(alpha)
+        beta = self._math.cast(beta)
         self.q, _, _, self.Q, _, _ = self._integral_op(alpha, beta)

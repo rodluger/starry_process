@@ -21,7 +21,7 @@ setup(
     install_requires=[
         "setuptools_scm",
         "numpy>=1.13.0",
-        "scipy>=1.2.1",
+        "scipy>=1.5.0",
         "theano>=1.0.5",
         "tqdm",
     ],

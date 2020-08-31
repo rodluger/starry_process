@@ -260,8 +260,8 @@ inline void computeSizeIntegrals(const SCALAR &alpha, const SCALAR &beta,
       SCALAR sqlp = 1.0 / sqrt(2 * lp + 1.0);
 
       // Case 3: l > 0, l' > 0
-      int q = l + lp + 1;
-      Q(n, np) = (0.25 * sql * sqlp * (4 * K(1, q) + 4 * K(2, q) + K(3, q)));
+      int v = l + lp + 1;
+      Q(n, np) = (0.25 * sql * sqlp * (4 * K(1, v) + 4 * K(2, v) + K(3, v)));
       Q(np, n) = Q(n, np);
     }
   }

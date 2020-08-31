@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ..starry_process_version import __version__
+from ...starry_process_version import __version__
 from theano import gof
 import theano
 import theano.tensor as tt
@@ -40,11 +40,13 @@ class BaseOp(gof.COp):
 
     def c_header_dirs(self, compiler):
         dirs = [
-            pkg_resources.resource_filename("starry_process", "ops/include")
+            pkg_resources.resource_filename(
+                "starry_process", "ops/theano_ops/include"
+            )
         ]
         dirs += [
             pkg_resources.resource_filename(
-                "starry_process", "ops/vendor/eigen_3.3.5"
+                "starry_process", "ops/theano_ops/vendor/eigen_3.3.5"
             )
         ]
         return dirs

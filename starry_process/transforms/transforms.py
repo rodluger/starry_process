@@ -27,7 +27,7 @@ class Transform(object):
         raise NotImplementedError("Must be subclassed.")
 
 
-class IdentityTransform(object):
+class IdentityTransform(Transform):
     def transform_params(self, *args):
         return args
 

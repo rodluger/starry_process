@@ -1,1 +1,1 @@
-web: bokeh serve --port=$PORT --allow-websocket-origin=starry-process.herokuapp.com --address=0.0.0.0 --use-xheaders app.py
+web: SP_USE_THEANO=0 bokeh serve --port=$PORT --allow-websocket-origin=starry-process.herokuapp.com --address=0.0.0.0 --use-xheaders app.py

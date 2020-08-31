@@ -1,4 +1,4 @@
-from css import svg_mu, svg_sigma, loader, style
+from css import loader, style
 from design import get_intensity_design_matrix, get_flux_design_matrix
 from moll import get_latitude_lines, get_longitude_lines
 import numpy as np
@@ -7,7 +7,7 @@ from starry_process import StarryProcess
 import theano
 import theano.tensor as tt
 import sys
-from six.moves import cPickle
+import os
 from bokeh.layouts import column, row, grid
 from bokeh.models import (
     ColumnDataSource,
@@ -50,7 +50,7 @@ def mednorm(x, **kwargs):
 
 
 class Samples(object):
-    def __init__(self, ydeg, npix, npts, throttle):
+    def __init__(self, ydeg, npix, npts, throttle, use_theano):
         # Settings
         self.npix = npix
         self.npts = npts
@@ -60,34 +60,59 @@ class Samples(object):
         self.A_I = get_intensity_design_matrix(ydeg, npix)
         self.A_F = get_flux_design_matrix(ydeg, npts)
 
-        # The GP
-        self.gp = StarryProcess(ydeg)
-        self.gp.random.seed(238)
+        # Instantiate the GP
+        if use_theano:
 
-        # Compile the function
-        size_alpha = tt.dscalar()
-        size_beta = tt.dscalar()
-        latitude_alpha = tt.dscalar()
-        latitude_beta = tt.dscalar()
-        contrast_mu = tt.dscalar()
-        contrast_sigma = tt.dscalar()
-        self.gp.size.set_params(size_alpha, size_beta)
-        self.gp.latitude.set_params(latitude_alpha, latitude_beta)
-        self.gp.contrast.set_params(contrast_mu, contrast_sigma)
-        print("Compiling...")
-        self.draw_ylm = theano.function(
-            [
+            # The GP
+            self.gp = StarryProcess(ydeg)
+            self.gp.random.seed(238)
+
+            # Compile the function
+            size_alpha = tt.dscalar()
+            size_beta = tt.dscalar()
+            latitude_alpha = tt.dscalar()
+            latitude_beta = tt.dscalar()
+            contrast_mu = tt.dscalar()
+            contrast_sigma = tt.dscalar()
+            self.gp.size.set_params(size_alpha, size_beta)
+            self.gp.latitude.set_params(latitude_alpha, latitude_beta)
+            self.gp.contrast.set_params(contrast_mu, contrast_sigma)
+            print("Compiling...")
+            self.draw_ylm = theano.function(
+                [
+                    size_alpha,
+                    size_beta,
+                    latitude_alpha,
+                    latitude_beta,
+                    contrast_mu,
+                    contrast_sigma,
+                ],
+                [self.gp.draw_ylm(self.nmaps)],
+                no_default_updates=True,
+            )
+            print("Done!")
+
+        else:
+
+            # The GP
+            self.gp = StarryProcess(ydeg, use_theano=False)
+            self.gp.random.seed(238)
+
+            # Wrapper for the sampler
+            def func(
                 size_alpha,
                 size_beta,
                 latitude_alpha,
                 latitude_beta,
                 contrast_mu,
                 contrast_sigma,
-            ],
-            [self.gp.draw_ylm(self.nmaps)],
-            no_default_updates=True,
-        )
-        print("Done!")
+            ):
+                self.gp.size.set_params(size_alpha, size_beta)
+                self.gp.latitude.set_params(latitude_alpha, latitude_beta)
+                self.gp.contrast.set_params(contrast_mu, contrast_sigma)
+                return [self.gp.draw_ylm(self.nmaps)]
+
+            self.draw_ylm = func
 
         # Draw three samples from the default distr
         self.ylm = self.draw_ylm(
@@ -95,8 +120,7 @@ class Samples(object):
                 params["size"]["mu"]["value"], params["size"]["sigma"]["value"]
             ),
             *self.gp.latitude.transform.transform_params(
-                params["latitude"]["mu"]["value"],
-                params["latitude"]["sigma"]["value"],
+                params["latitude"]["mu"]["value"], params["latitude"]["sigma"]["value"],
             ),
             params["contrast"]["mu"]["value"],
             params["contrast"]["sigma"]["value"],
@@ -111,10 +135,7 @@ class Samples(object):
             ColumnDataSource(
                 data=dict(
                     image=[
-                        1.0
-                        + (self.A_I @ self.ylm[i]).reshape(
-                            self.npix, 2 * self.npix
-                        )
+                        1.0 + (self.A_I @ self.ylm[i]).reshape(self.npix, 2 * self.npix)
                     ]
                 )
             )
@@ -150,13 +171,9 @@ class Samples(object):
         lon_lines = get_longitude_lines()
         for i in range(self.nmaps):
             for x, y in lat_lines:
-                self.moll_plot[i].line(
-                    x, y, line_width=1, color="black", alpha=0.25
-                )
+                self.moll_plot[i].line(x, y, line_width=1, color="black", alpha=0.25)
             for x, y in lon_lines:
-                self.moll_plot[i].line(
-                    x, y, line_width=1, color="black", alpha=0.25
-                )
+                self.moll_plot[i].line(x, y, line_width=1, color="black", alpha=0.25)
 
             x = np.linspace(-2, 2, 300)
             y = 0.5 * np.sqrt(4 - x ** 2)
@@ -219,10 +236,7 @@ class Samples(object):
             self.flux_plot[i].xaxis.axis_label_text_font_style = "normal"
             self.flux_plot[i].outline_line_color = None
             self.flux_plot[i].multi_line(
-                xs="xs",
-                ys="ys",
-                line_color="color",
-                source=self.flux_source[i],
+                xs="xs", ys="ys", line_color="color", source=self.flux_source[i],
             )
             self.flux_plot[i].toolbar.active_drag = None
             self.flux_plot[i].toolbar.active_scroll = None
@@ -235,9 +249,7 @@ class Samples(object):
 
         # Legend
         for j, label in enumerate(["15", "30", "45", "60", "75", "90"]):
-            self.flux_plot[-1].line(
-                [0, 0], [0, 0], legend=label, line_color=OrRd6[j]
-            )
+            self.flux_plot[-1].line([0, 0], [0, 0], legend=label, line_color=OrRd6[j])
         self.flux_plot[-1].legend.location = "bottom_right"
         self.flux_plot[-1].legend.title = "inclination"
         self.flux_plot[-1].legend.title_text_font_style = "bold"
@@ -275,8 +287,7 @@ class Samples(object):
                     self.Size.slider_mu.value, self.Size.slider_sigma.value
                 ),
                 *self.gp.latitude.transform.transform_params(
-                    self.Latitude.slider_mu.value,
-                    self.Latitude.slider_sigma.value,
+                    self.Latitude.slider_mu.value, self.Latitude.slider_sigma.value,
                 ),
                 self.Contrast.slider_mu.value,
                 self.Contrast.slider_sigma.value,
@@ -285,15 +296,11 @@ class Samples(object):
             # Compute the images & plot the light curves
             for i in range(len(self.moll_source)):
                 self.moll_source[i].data["image"] = [
-                    1.0
-                    + (self.A_I @ self.ylm[i]).reshape(
-                        self.npix, 2 * self.npix
-                    )
+                    1.0 + (self.A_I @ self.ylm[i]).reshape(self.npix, 2 * self.npix)
                 ]
 
                 self.flux_source[i].data["ys"] = [
-                    mednorm(self.A_F[j] @ self.ylm[i])
-                    for j in range(len(self.A_F))
+                    mednorm(self.A_F[j] @ self.ylm[i]) for j in range(len(self.A_F))
                 ]
 
             for dist in [self.Size, self.Latitude, self.Contrast]:
@@ -333,9 +340,7 @@ class Distribution(object):
         )
         self.plot.title.align = "center"
         self.plot.title.text_font_size = "14pt"
-        self.plot.line(
-            "x", "y", source=self.source, line_width=3, line_alpha=0.6
-        )
+        self.plot.line("x", "y", source=self.source, line_width=3, line_alpha=0.6)
         # self.plot.xaxis.axis_label = name
         self.plot.xaxis.axis_label_text_font_style = "normal"
         self.plot.xaxis.axis_label_text_font_size = "12pt"
@@ -407,9 +412,7 @@ class Distribution(object):
             line_width=1,
             line_dash="dotted",
         )
-        self.plot.renderers.extend(
-            [self.mean_vline, self.std_vline1, self.std_vline2]
-        )
+        self.plot.renderers.extend([self.mean_vline, self.std_vline1, self.std_vline2])
 
         # Full layout
         self.layout = grid(
@@ -417,9 +420,7 @@ class Distribution(object):
                 [self.plot],
                 [
                     column(
-                        self.slider_mu,
-                        self.slider_sigma,
-                        sizing_mode="stretch_width",
+                        self.slider_mu, self.slider_sigma, sizing_mode="stretch_width",
                     )
                 ],
             ]
@@ -430,9 +431,7 @@ class Distribution(object):
 
             # Update the distribution
             self.source.data["y"] = self.pdf(
-                self.source.data["x"],
-                self.slider_mu.value,
-                self.slider_sigma.value,
+                self.source.data["x"], self.slider_mu.value, self.slider_sigma.value,
             )
             self.slider_mu.bar_color = "white"
             self.slider_sigma.bar_color = "white"
@@ -441,12 +440,8 @@ class Distribution(object):
 
             # Update the mean and std. dev. lines
             self.mean_vline.location = self.slider_mu.value
-            self.std_vline1.location = (
-                self.slider_mu.value - self.slider_sigma.value
-            )
-            self.std_vline2.location = (
-                self.slider_mu.value + self.slider_sigma.value
-            )
+            self.std_vline1.location = self.slider_mu.value - self.slider_sigma.value
+            self.std_vline2.location = self.slider_mu.value + self.slider_sigma.value
 
         except AssertionError as e:
 
@@ -474,12 +469,13 @@ class Distribution(object):
 
 
 class Application(object):
-    def __init__(self, ydeg=15, npix=100, npts=300, throttle=200):
+    def __init__(self, ydeg=15, npix=100, npts=300, throttle=200, use_theano=True):
 
         self.ydeg = ydeg
         self.npix = npix
         self.npts = npts
         self.throttle = throttle
+        self.use_theano = use_theano
 
         # Display the loader
         self.layout = column(loader(), style(), sizing_mode="scale_both")
@@ -492,7 +488,9 @@ class Application(object):
     def run(self):
 
         # The GP samples
-        self.Samples = Samples(self.ydeg, self.npix, self.npts, self.throttle)
+        self.Samples = Samples(
+            self.ydeg, self.npix, self.npts, self.throttle, self.use_theano
+        )
 
         # The distributions
         self.Latitude = Distribution(
@@ -551,4 +549,7 @@ class Application(object):
         )
 
 
-app = Application()
+if int(os.environ.get("SP_USE_THEANO", 1)):
+    app = Application()
+else:
+    app = Application(use_theano=False, throttle=800)

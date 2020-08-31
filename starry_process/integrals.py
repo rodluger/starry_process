@@ -1,10 +1,11 @@
-from .math import eigen
-import theano.tensor as tt
-from theano.ifelse import ifelse
+from .math import theano_math, numpy_math
 
 
 class MomentIntegral(object):
     def __init__(self, parent=None, ydeg=None, **kwargs):
+        self._math = (
+            theano_math if kwargs.get("use_theano", True) else numpy_math
+        )
         self.parent = parent
         if self.parent is not None:
             self.parent.child = self
@@ -75,18 +76,22 @@ class WignerIntegral(MomentIntegral):
         raise NotImplementedError("Must be subclassed.")
 
     def _compute_U(self):
-        self.U = eigen(self.Q, self.neig)
+        self.U = self._math.eigen(self.Q, self.neig)
 
     def _compute_t(self):
         self.t = [None for l in range(self.ydeg + 1)]
         for l in range(self.ydeg + 1):
-            self.t[l] = tt.dot(self.R[l], self.q[l ** 2 : (l + 1) ** 2])
+            self.t[l] = self._math.dot(
+                self.R[l], self.q[l ** 2 : (l + 1) ** 2]
+            )
 
     def _compute_T(self):
         self.T = [None for l in range(self.ydeg + 1)]
         for l in range(self.ydeg + 1):
             i = slice(l ** 2, (l + 1) ** 2)
-            self.T[l] = tt.swapaxes(tt.dot(self.R[l], self.U[i]), 1, 2)
+            self.T[l] = self._math.swapaxes(
+                self._math.dot(self.R[l], self.U[i]), 1, 2
+            )
 
     def _set_params(self, *args, **kwargs):
         self._compute_basis_integrals(*args, **kwargs)
@@ -95,22 +100,34 @@ class WignerIntegral(MomentIntegral):
         self._compute_T()
 
     def _first_moment(self, e):
-        mu = tt.zeros(self.N)
+        mu = self._math.zeros(self.N)
         for l in range(self.ydeg + 1):
             i = slice(l ** 2, (l + 1) ** 2)
-            mu = tt.set_subtensor(mu[i], tt.dot(self.t[l], e[i]))
+            try:
+                mu = self._math.set_subtensor(
+                    mu[i], self._math.dot(self.t[l], e[i])
+                )
+            except AttributeError:
+                mu[i] = self._math.dot(self.t[l], e[i])
         return mu
 
     def _second_moment(self, eigE):
-        sqrtC = tt.zeros((self.N, self.neig, eigE.shape[-1]))
+        sqrtC = self._math.zeros((self.N, self.neig, eigE.shape[-1]))
         for l in range(self.ydeg + 1):
             i = slice(l ** 2, (l + 1) ** 2)
-            sqrtC = tt.set_subtensor(sqrtC[i], tt.dot(self.T[l], eigE[i]))
-        sqrtC = tt.reshape(sqrtC, (self.N, -1))
+            try:
+                sqrtC = self._math.set_subtensor(
+                    sqrtC[i], self._math.dot(self.T[l], eigE[i])
+                )
+            except AttributeError:
+                sqrtC[i] = self._math.dot(self.T[l], eigE[i])
+        sqrtC = self._math.reshape(sqrtC, (self.N, -1))
         # Sometimes it's useful to reduce the size of `sqrtC` by
         # finding the equivalent lower dimension representation
         # via eigendecomposition. This is not an approximation!
-        sqrtC = ifelse(
-            sqrtC.shape[1] > self.N, eigen(tt.dot(sqrtC, sqrtC.T)), sqrtC
+        sqrtC = self._math.ifelse(
+            sqrtC.shape[1] > self.N,
+            self._math.eigen(self._math.dot(sqrtC, sqrtC.T)),
+            sqrtC,
         )
         return sqrtC

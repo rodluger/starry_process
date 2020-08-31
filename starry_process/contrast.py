@@ -1,6 +1,5 @@
 from .integrals import MomentIntegral
 from .transforms import ContrastTransform
-import theano.tensor as tt
 
 
 class ContrastIntegral(MomentIntegral):
@@ -8,10 +7,10 @@ class ContrastIntegral(MomentIntegral):
         self.transform = ContrastTransform(**kwargs)
 
     def _set_params(self, mu, sigma):
-        mu = tt.as_tensor_variable(mu).astype(tt.config.floatX)
-        sigma = tt.as_tensor_variable(sigma).astype(tt.config.floatX)
+        mu = self._math.cast(mu)
+        sigma = self._math.cast(sigma)
         self.fac1 = mu
-        self.fac2 = tt.sqrt(sigma ** 2 + mu ** 2)
+        self.fac2 = self._math.sqrt(sigma ** 2 + mu ** 2)
 
     def _first_moment(self, e):
         return self.fac1 * e
