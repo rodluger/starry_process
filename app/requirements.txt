@@ -14,7 +14,7 @@ PyYAML==5.3.1
 scipy==1.5.2
 setuptools-scm==4.1.2
 six==1.15.0
--e git://github.com/rodluger/starry_process.git@bfcf61db14201244f29c750f3f01d11e0c7b95ed#egg=starry_process
+-e git://github.com/rodluger/starry_process.git@heroku#egg=starry_process
 Theano==1.0.5
 tornado==6.0.4
 tqdm==4.48.2
