@@ -15,7 +15,7 @@ for v, hex_color in enumerate(Plasma100):
     plasma.append("rgba({:d}, {:d}, {:d}, 1) {:d}%".format(r, g, b, v))
 plasma = plasma[::3]
 plasma = ",\n    ".join(plasma)
-PLASMA = "background: linear-gradient(\n{:s}\n);".format(plasma)
+PLASMA = "background: linear-gradient(to right, \n{:s}\n);".format(plasma)
 
 
 # SVG: Greek mu
@@ -61,32 +61,54 @@ loader = lambda: Div(
 style = lambda: Div(
     text="""
 <style>
-    .custom-slider {
-        left: 5px !important;
+    html, body {
+        margin: 0 !important; 
+        height: 100%% !important; 
+        overflow: hidden !important;
+    }
+    .samples{
+        margin-top: 50px !important;
+    }
+    .custom-slider .bk-input-group {
+        padding-left: 30px !important;
+        padding-right: 30px !important;
+        margin-left: 30px !important;
+        margin-right: 30px !important;
     }
     .custom-slider .bk-slider-title {
-        margin-left: -3px;
+        position: absolute;
+        left: 35px;
+        font-weight: 600;
     }
-    .custom-slider .bk-slider-value {
-        font-weight: unset;
+    .colorbar-slider {
+        margin-top: 25px !important;
+        padding-right: 180px !important;
     }
-    .custom-slider-title {
-        position: relative !important;
-        text-align: right;
-        width: 20px !important;
-        height: 20px;
-    }
-    .seed-button .bk-btn {
-        padding: 6px 6px !important;
-        transform: rotate(-90deg);
-        background-color: #ffe0c6 !important;
-        margin-top: 45px;
-        height: 30px;
-        margin-left: -30px;
+    .colorbar-slider .bk-input-group {
+        padding-left: 130px !important;
+        padding-right: 30px !important;
+        margin-left: 30px !important;
+        margin-right: 30px !important;
     }
     .colorbar-slider .bk-noUi-draggable {
         %s
     }
+    .colorbar-slider .bk-slider-title {
+        position: absolute;
+        left: 35px;
+        font-weight: 600;
+    }
+
+    .seed-button {
+        left: auto !important;
+        right: 0 !important;
+        position: absolute !important;
+        margin-right: 50px !important;
+        top: 25px !important;
+    }
+
+    /* Loading screen */
+
     .preloader {
         position: fixed;
         top: 0;

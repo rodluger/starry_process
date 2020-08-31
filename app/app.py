@@ -8,7 +8,7 @@ import theano
 import theano.tensor as tt
 import sys
 from six.moves import cPickle
-from bokeh.layouts import column, row
+from bokeh.layouts import column, row, grid
 from bokeh.models import (
     ColumnDataSource,
     Slider,
@@ -74,6 +74,7 @@ class Samples(object):
         self.gp.size.set_params(size_alpha, size_beta)
         self.gp.latitude.set_params(latitude_alpha, latitude_beta)
         self.gp.contrast.set_params(contrast_mu, contrast_sigma)
+        print("Compiling...")
         self.draw_ylm = theano.function(
             [
                 size_alpha,
@@ -86,6 +87,7 @@ class Samples(object):
             [self.gp.draw_ylm(self.nmaps)],
             no_default_updates=True,
         )
+        print("Done!")
 
         # Draw three samples from the default distr
         self.ylm = self.draw_ylm(
@@ -139,6 +141,9 @@ class Samples(object):
                 color_mapper=self.color_mapper,
                 source=self.moll_source[i],
             )
+            self.moll_plot[i].toolbar.active_drag = None
+            self.moll_plot[i].toolbar.active_scroll = None
+            self.moll_plot[i].toolbar.active_tap = None
 
         # Plot lat/lon grid
         lat_lines = get_latitude_lines()
@@ -164,24 +169,25 @@ class Samples(object):
             end=1.5,
             step=0.01,
             value=(0.5, 1.2),
-            orientation="vertical",
+            orientation="horizontal",
             show_value=False,
             css_classes=["colorbar-slider"],
-            direction="rtl",
+            direction="ltr",
             callback_policy="throttle",
             callback_throttle=throttle,
-            height=118,
+            title="intensity range",
         )
         self.slider.on_change("value_throttled", self.slider_callback)
 
         # Seed button
-        self.button = Button(
+        self.seed_button = Button(
             label="new randomizer seed",
             button_type="default",
-            width=10,
             css_classes=["seed-button"],
+            sizing_mode="fixed",
+            width=100,
         )
-        self.button.on_click(self.seed_callback)
+        self.seed_button.on_click(self.seed_callback)
 
         # Light curve samples
         self.flux_plot = [None for i in range(self.nmaps)]
@@ -198,12 +204,10 @@ class Samples(object):
         y_range = None
         for i in range(self.nmaps):
             self.flux_plot[i] = figure(
-                plot_width=280,
-                plot_height=200,
                 toolbar_location=None,
                 x_range=(0, 1),
                 y_range=y_range,
-                min_border_left=30,
+                min_border_left=50,
             )
             y_range = self.flux_plot[0].y_range
             if i > 0:
@@ -220,45 +224,40 @@ class Samples(object):
                 line_color="color",
                 source=self.flux_source[i],
             )
+            self.flux_plot[i].toolbar.active_drag = None
+            self.flux_plot[i].toolbar.active_scroll = None
+            self.flux_plot[i].toolbar.active_tap = None
+            self.flux_plot[i].yaxis.major_label_orientation = np.pi / 4
+            self.flux_plot[i].xaxis.axis_label_text_font_size = "8pt"
+            self.flux_plot[i].xaxis.major_label_text_font_size = "8pt"
+            self.flux_plot[i].yaxis.axis_label_text_font_size = "8pt"
+            self.flux_plot[i].yaxis.major_label_text_font_size = "8pt"
 
         # Legend
-        self.legend_source = ColumnDataSource(
-            data=dict(
-                xs=[[np.nan, np.nan] for j in range(6)],
-                ys=[[np.nan, np.nan] for j in range(6)],
-                color=[OrRd6[j] for j in range(6)][::-1],
+        for j, label in enumerate(["15", "30", "45", "60", "75", "90"]):
+            self.flux_plot[-1].line(
+                [0, 0], [0, 0], legend=label, line_color=OrRd6[j]
             )
-        )
-        self.legend = figure(
-            plot_width=100, plot_height=200, toolbar_location=None
-        )
-        self.legend.background_fill_alpha = 1
-        self.legend.axis.visible = False
-        self.legend.grid.visible = False
-        self.legend.outline_line_color = None
-        glyph = self.legend.multi_line(
-            xs="xs", ys="ys", line_color="color", source=self.legend_source,
-        )
-        leg = Legend(
-            items=[
-                LegendItem(label=label, renderers=[glyph], index=j)
-                for j, label in enumerate(["15", "30", "45", "60", "75", "90"])
-            ],
-            label_text_font_size="8pt",
-            title="inclination",
-            title_text_font_style="bold",
-            title_text_font_size="8pt",
-            label_height=5,
-            border_line_alpha=0,
-            glyph_width=30,
-            glyph_height=15,
-        )
-        self.legend.add_layout(leg, "center")
+        self.flux_plot[-1].legend.location = "bottom_right"
+        self.flux_plot[-1].legend.title = "inclination"
+        self.flux_plot[-1].legend.title_text_font_style = "bold"
+        self.flux_plot[-1].legend.title_text_font_size = "8pt"
+        self.flux_plot[-1].legend.label_text_font_size = "8pt"
+        self.flux_plot[-1].legend.spacing = 0
+        self.flux_plot[-1].legend.label_height = 5
+        self.flux_plot[-1].legend.glyph_height = 5
 
         # Full layout
-        c = [column(m, f) for m, f in zip(self.moll_plot, self.flux_plot)]
-        c += [column(row(self.slider, self.button), self.legend)]
-        self.layout = row(*c, margin=(10, 30, 10, 30))
+        self.plots = row(
+            *[
+                column(m, f, sizing_mode="scale_both")
+                for m, f in zip(self.moll_plot, self.flux_plot)
+            ],
+            margin=(10, 30, 10, 30),
+            sizing_mode="scale_both",
+            css_classes=["samples"],
+        )
+        self.layout = grid([[self.slider], [self.plots], [self.seed_button]])
 
     def slider_callback(self, attr, old, new):
         self.color_mapper.low, self.color_mapper.high = self.slider.value
@@ -326,18 +325,18 @@ class Distribution(object):
         dx = (xmax - xmin) * 0.01
         self.plot = figure(
             plot_width=400,
-            plot_height=400,
-            sizing_mode="stretch_height",
+            plot_height=600,
             toolbar_location=None,
             x_range=(xmin - dx, xmax + dx),
             title="{} distribution".format(name),
+            sizing_mode="stretch_both",
         )
         self.plot.title.align = "center"
         self.plot.title.text_font_size = "14pt"
         self.plot.line(
             "x", "y", source=self.source, line_width=3, line_alpha=0.6
         )
-        self.plot.xaxis.axis_label = name
+        # self.plot.xaxis.axis_label = name
         self.plot.xaxis.axis_label_text_font_style = "normal"
         self.plot.xaxis.axis_label_text_font_size = "12pt"
         self.plot.yaxis[0].formatter = FuncTickFormatter(code="return '  ';")
@@ -347,6 +346,9 @@ class Distribution(object):
         self.plot.outline_line_width = 1
         self.plot.outline_line_alpha = 1
         self.plot.outline_line_color = "black"
+        self.plot.toolbar.active_drag = None
+        self.plot.toolbar.active_scroll = None
+        self.plot.toolbar.active_tap = None
 
         # Sliders
         self.slider_mu = Slider(
@@ -354,11 +356,15 @@ class Distribution(object):
             end=mu["stop"],
             step=mu["step"],
             value=mu["value"],
-            orientation="vertical",
+            orientation="horizontal",
             format="0.3f",
             css_classes=["custom-slider"],
             callback_policy="throttle",
             callback_throttle=throttle,
+            sizing_mode="stretch_width",
+            height=10,
+            show_value=False,
+            title="μ",
         )
         self.slider_mu.on_change("value_throttled", self.callback)
         self.slider_sigma = Slider(
@@ -366,12 +372,16 @@ class Distribution(object):
             end=sigma["stop"],
             step=sigma["step"],
             value=sigma["value"],
-            orientation="vertical",
+            orientation="horizontal",
             format="0.3f",
             css_classes=["custom-slider"],
             name="sigma",
             callback_policy="throttle",
             callback_throttle=throttle,
+            sizing_mode="stretch_width",
+            height=10,
+            show_value=False,
+            title="σ",
         )
         self.slider_sigma.on_change("value_throttled", self.callback)
 
@@ -402,10 +412,17 @@ class Distribution(object):
         )
 
         # Full layout
-        self.layout = row(
-            self.plot,
-            column(svg_mu(), self.slider_mu, margin=(10, 10, 10, 10)),
-            column(svg_sigma(), self.slider_sigma, margin=(10, 10, 10, 10)),
+        self.layout = grid(
+            [
+                [self.plot],
+                [
+                    column(
+                        self.slider_mu,
+                        self.slider_sigma,
+                        sizing_mode="stretch_width",
+                    )
+                ],
+            ]
         )
 
     def callback(self, attr, old, new):
@@ -465,7 +482,7 @@ class Application(object):
         self.throttle = throttle
 
         # Display the loader
-        self.layout = column(loader(), style(), sizing_mode="stretch_width")
+        self.layout = column(loader(), style(), sizing_mode="scale_both")
         curdoc().add_root(self.layout)
         curdoc().title = "starry process"
 
@@ -526,8 +543,10 @@ class Application(object):
                     self.Latitude.layout,
                     self.Size.layout,
                     self.Contrast.layout,
+                    sizing_mode="scale_both",
                 ),
                 self.Samples.layout,
+                sizing_mode="scale_both",
             )
         )
 
