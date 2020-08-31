@@ -105,10 +105,10 @@ def test_draw():
     ydeg = 15
     size_alpha = 1.0
     size_beta = 50.0
-    contrast_mu = 0.5
-    contrast_sigma = 0.1
     latitude_alpha = 10.0
     latitude_beta = 30.0
+    contrast_mu = 0.5
+    contrast_sigma = 0.1
     t = np.linspace(0, 1, 500)
     period = 0.5
     inc = 60.0
@@ -116,7 +116,7 @@ def test_draw():
     # Compute
     gp = StarryProcess(ydeg)
     gp.size.set_params(size_alpha, size_beta)
-    gp.contrast.set_params(contrast_mu, contrast_sigma)
     gp.latitude.set_params(latitude_alpha, latitude_beta)
+    gp.contrast.set_params(contrast_mu, contrast_sigma)
     gp.design.set_params(period, inc)
     fluxes = gp.draw(t=t, ndraws=10).eval()

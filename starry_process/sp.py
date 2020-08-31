@@ -24,7 +24,8 @@ class StarryProcess(object):
         self._cov_ylm = None
         self._cho_cov_ylm = None
 
-        self._srng = RandomStreams(seed=0)
+        # NB: Change this by setting `self.random.seed(XXX)`
+        self.random = RandomStreams(seed=0)
 
     @property
     def mean_ylm(self):
@@ -48,16 +49,14 @@ class StarryProcess(object):
         A = self.design(t)
         return tt.dot(tt.dot(A, self.cov_ylm), tt.transpose(A))
 
-    def draw_ylm(self, ndraws=1, seed=None, eps=1e-12):
+    def draw_ylm(self, ndraws=1, eps=1e-12):
         if self._cho_cov_ylm is None:
             self._cho_cov_ylm = cho_factor(self.cov_ylm + tt.eye(self.N) * eps)
-        if seed is not None:
-            self._srng.seed(seed)
-        u = self._srng.normal((self.N, ndraws))
+        u = self.random.normal((self.N, ndraws))
         return tt.transpose(
             self.mean_ylm[:, None] + tt.dot(self._cho_cov_ylm, u)
         )
 
-    def draw(self, t, ndraws=1, seed=None, eps=1e-12):
-        ylm = self.draw_ylm(ndraws=ndraws, seed=seed, eps=eps)
+    def draw(self, t, ndraws=1, eps=1e-12):
+        ylm = self.draw_ylm(ndraws=ndraws, eps=eps)
         return tt.dot(ylm, tt.transpose(self.design(t)))

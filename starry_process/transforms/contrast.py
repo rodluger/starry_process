@@ -11,7 +11,7 @@ class ContrastTransform(IdentityTransform):
         q = (1 - mu) ** 2
         mu_b = np.log(q / np.sqrt(q + p))
         var_b = np.log(1 + p / q)
-        b = 1 - xi
+        b = 1 - x
         return (
             1.0
             / (b * np.sqrt(2 * np.pi * var_b))
