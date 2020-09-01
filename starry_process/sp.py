@@ -3,7 +3,8 @@ from .contrast import ContrastIntegral
 from .latitude import LatitudeIntegral
 from .longitude import LongitudeIntegral
 from .flux import FluxDesignMatrix
-from .math import theano_math, numpy_math
+from .math import cho_factor
+import theano.tensor as tt
 
 
 class StarryProcess(object):
@@ -11,9 +12,6 @@ class StarryProcess(object):
         assert ydeg > 0, "Degree of map must be > 0."
         self.ydeg = ydeg
         self.N = (ydeg + 1) ** 2
-        self._math = (
-            theano_math if kwargs.get("use_theano", True) else numpy_math
-        )
 
         self.contrast = ContrastIntegral(self, **kwargs)
         self.longitude = LongitudeIntegral(self.contrast, **kwargs)
@@ -26,7 +24,7 @@ class StarryProcess(object):
         self._cho_cov_ylm = None
 
         # NB: Change this by setting `self.random.seed(XXX)`
-        self.random = self._math.RandomStreams(seed=0)
+        self.random = tt.shared_randomstreams.RandomStreams(0)
 
     @property
     def mean_ylm(self):
@@ -35,24 +33,22 @@ class StarryProcess(object):
         return self._mean_ylm
 
     def mean(self, t):
-        return self._math.dot(self.design(t), self.mean_ylm)
+        return tt.dot(self.design(t), self.mean_ylm)
 
     @property
     def cov_ylm(self):
         if (self._cov_ylm is None) or (self.contrast.eigE is None):
             e4 = self.contrast.first_moment()
             eigE4 = self.contrast.second_moment()
-            self._cov_ylm = self._math.dot(
-                eigE4, self._math.transpose(eigE4)
-            ) - self._math.outer(e4, e4)
+            self._cov_ylm = tt.dot(eigE4, tt.transpose(eigE4)) - tt.outer(
+                e4, e4
+            )
             self._cho_cov_ylm = None
         return self._cov_ylm
 
     def cov(self, t):
         A = self.design(t)
-        return self._math.dot(
-            self._math.dot(A, self.cov_ylm), self._math.transpose(A)
-        )
+        return tt.dot(tt.dot(A, self.cov_ylm), tt.transpose(A))
 
     def draw_ylm(self, ndraws=1, eps=1e-12):
         if (
@@ -60,14 +56,12 @@ class StarryProcess(object):
             or (self._cov_ylm is None)
             or (self._cho_cov_ylm is None)
         ):
-            self._cho_cov_ylm = self._math.cho_factor(
-                self.cov_ylm + self._math.eye(self.N) * eps
-            )
+            self._cho_cov_ylm = cho_factor(self.cov_ylm + tt.eye(self.N) * eps)
         u = self.random.normal((self.N, ndraws))
-        return self._math.transpose(
-            self.mean_ylm[:, None] + self._math.dot(self._cho_cov_ylm, u)
+        return tt.transpose(
+            self.mean_ylm[:, None] + tt.dot(self._cho_cov_ylm, u)
         )
 
     def draw(self, t, ndraws=1, eps=1e-12):
         ylm = self.draw_ylm(ndraws=ndraws, eps=eps)
-        return self._math.dot(ylm, self._math.transpose(self.design(t)))
+        return tt.dot(ylm, tt.transpose(self.design(t)))

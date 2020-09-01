@@ -19,7 +19,3 @@ def test_tensordotRz_grad(ydeg=2, abs_tol=1e-5, rel_tol=1e-5, eps=1e-7):
             rel_tol=rel_tol,
             eps=eps,
         )
-
-
-if __name__ == "__main__":
-    test_tensordotRz_grad()

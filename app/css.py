@@ -26,7 +26,10 @@ loader = lambda: Div(
         <div class="dot1"></div>
         <div class="dot2"></div>
         <div class="loader-message">
-            &nbsp;&nbsp;&nbsp;Loading...
+            &nbsp;Compiling...
+            <div style="font-size: 8pt; font-weight: 100; width: 160px; margin-top: 10px;">
+                This may take up to 15 seconds.
+            </div>
         </div>
     </div>
 </div>

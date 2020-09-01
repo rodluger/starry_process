@@ -6,7 +6,11 @@ __all__ = ["get_intensity_design_matrix", "get_flux_design_matrix"]
 
 def get_intensity_design_matrix(ydeg, npix=100, clobber=False):
     # Cached file name
-    file = "data/A_I{:02d}-{:03d}.npz".format(ydeg, npix)
+    file = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "data",
+        "A_I{:02d}-{:03d}.npz".format(ydeg, npix),
+    )
 
     # If it doesn't exist, create it
     if clobber or not os.path.exists(file):
@@ -48,7 +52,11 @@ def get_intensity_design_matrix(ydeg, npix=100, clobber=False):
 
 def get_flux_design_matrix(ydeg, npts=300):
     # Cached file name
-    file = "data/A_F{:02d}-{:03d}.npz".format(ydeg, npts)
+    file = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "data",
+        "A_F{:02d}-{:03d}.npz".format(ydeg, npts),
+    )
 
     # If it doesn't exist, create it
     if not os.path.exists(file):
@@ -59,7 +67,7 @@ def get_flux_design_matrix(ydeg, npts=300):
         A_F = np.empty((len(incs), npts, (ydeg + 1) ** 2))
         for i, inc in enumerate(incs):
             map.inc = inc
-            theta = np.linspace(0, 360, npts)
+            theta = np.linspace(0, 360, npts) * 2
             A_F[i] = 1e3 * map.design_matrix(theta=theta)  # ppt
         np.savez(file, A_F=A_F)
 

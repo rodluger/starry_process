@@ -69,25 +69,3 @@ def test_size(ydeg=15, alpha=1.0, beta=50.0, rtol=1e-10, ftol=1e-7, **kwargs):
     assert np.max(np.abs(1 - e / e_num)) < ftol, "error in first moment"
     assert np.max(np.abs(E - E_num)) < rtol, "error in second moment"
     assert np.max(np.abs(1 - E / E_num)) < ftol, "error in second moment"
-
-
-def test_python(ydeg=15, alpha=1.0, beta=50.0, **kwargs):
-    # Get analytic integrals (theano)
-    print("Computing moments using theano...")
-    I = SizeIntegral(ydeg=ydeg, **kwargs)
-    I._set_params(alpha, beta)
-    e = I._first_moment().eval()
-    eigE = I._second_moment().eval()
-    E = eigE @ eigE.T
-
-    # Get analytic integrals (python)
-    print("Computing moments using python...")
-    I = SizeIntegral(ydeg=ydeg, use_theano=False, **kwargs)
-    I._set_params(alpha, beta)
-    e_python = I._first_moment()
-    eigE = I._second_moment()
-    E_python = eigE @ eigE.T
-
-    # Compare
-    assert np.allclose(e, e_python), "error in first moment"
-    assert np.allclose(E, E_python), "error in second moment"
