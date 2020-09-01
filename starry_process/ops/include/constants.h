@@ -85,7 +85,7 @@
 
 //! Compute all Gjkm numerically? Slower but more stable.
 #ifndef SP_COMPUTE_G_NUMERICALLY
-#define SP_COMPUTE_G_NUMERICALLY 0
+#define SP_COMPUTE_G_NUMERICALLY 1
 #endif
 
 //! Tolerance to avoid div by zero when computing G

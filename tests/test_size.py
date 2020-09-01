@@ -4,6 +4,8 @@ import numpy as np
 from scipy.stats import beta as Beta
 from scipy.integrate import quad
 from tqdm import tqdm
+from theano.tests.unittest_tools import verify_grad
+from theano.configparser import change_flags
 
 
 # TODO: alpha = 10, beta = 20 is unstable for some reason!
@@ -69,3 +71,34 @@ def test_size(ydeg=15, alpha=1.0, beta=50.0, rtol=1e-10, ftol=1e-7, **kwargs):
     assert np.max(np.abs(1 - e / e_num)) < ftol, "error in first moment"
     assert np.max(np.abs(E - E_num)) < rtol, "error in second moment"
     assert np.max(np.abs(1 - E / E_num)) < ftol, "error in second moment"
+
+
+def test_size_grad(
+    ydeg=15, alpha=1.0, beta=50.0, abs_tol=1e-5, rel_tol=1e-5, eps=1e-7
+):
+    with change_flags(compute_test_value="off"):
+        op = SizeIntegralOp(ydeg)
+
+        # d/dq
+        verify_grad(
+            lambda alpha, beta: op(alpha, beta)[0],
+            (alpha, beta,),
+            n_tests=1,
+            abs_tol=abs_tol,
+            rel_tol=rel_tol,
+            eps=eps,
+        )
+
+        # d/dQ
+        verify_grad(
+            lambda alpha, beta: op(alpha, beta)[3],
+            (alpha, beta,),
+            n_tests=1,
+            abs_tol=abs_tol,
+            rel_tol=rel_tol,
+            eps=eps,
+        )
+
+
+if __name__ == "__main__":
+    test_size_grad()
