@@ -38,6 +38,11 @@ inline T hyp2f1(const T &a_, const T &b_, const T &c_, const T &z, T &dfdb,
           (abs(dtermdc / dfdc) > SP_2F1_MAXDTOL)) &&
          (n < SP_2F1_MAXITER)) {
 
+    a += 1;
+    b += 1;
+    c += 1;
+    n += 1;
+
     fac1 = a * z / c / n;
     fac2 = fac1 * b;
     fac3 = -fac2 / c;
