@@ -68,9 +68,19 @@
 #define SP_2F1_MAXTOL 1e-15
 #endif
 
+//! Tolerance (max) when computing 2F1 derivs
+#ifndef SP_2F1_MAXDTOL
+#define SP_2F1_MAXDTOL 1e-13
+#endif
+
 //! Tolerance (min) when computing 2F1
 #ifndef SP_2F1_MINTOL
 #define SP_2F1_MINTOL 1e-12
+#endif
+
+//! Tolerance (min) when computing 2F1 derivs
+#ifndef SP_2F1_MINDTOL
+#define SP_2F1_MINDTOL 1e-10
 #endif
 
 //! Compute all Gjkm numerically? Slower but more stable.

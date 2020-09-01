@@ -64,8 +64,9 @@ inline RowMatrix<Scalar, KMAX + 1, MMAX + 1> getGfac(const Scalar &alpha,
 template <typename Scalar>
 inline Scalar G_num(const Scalar &alpha, const Scalar &beta, const int j,
                     const int k, const int m) {
+  Scalar dfdb, dfdc;
   Scalar G = hyp2f1(1.0 + j, beta + k * SP__C3, alpha + beta + k * SP__C3 + m,
-                    SP__ZBAR);
+                    SP__ZBAR, dfdb, dfdc);
   G /= pow((1.0 + SP__C0) * (1.0 - SP__Z), 1 + j);
   return G;
 }

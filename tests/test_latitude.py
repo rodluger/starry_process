@@ -1,9 +1,12 @@
 from starry_process.latitude import LatitudeIntegral
+from starry_process.ops import LatitudeIntegralOp
 from starry_process.wigner import R
 import numpy as np
 from scipy.integrate import quad
 from scipy.stats import beta as Beta
 from tqdm import tqdm
+from theano.tests.unittest_tools import verify_grad
+from theano.configparser import change_flags
 
 
 def test_latitude(
@@ -80,3 +83,30 @@ def test_latitude(
     assert np.max(np.abs(1 - e / e_num)) < ftol, "error in first moment"
     assert np.max(np.abs(E - E_num)) < rtol, "error in second moment"
     assert np.max(np.abs(1 - E / E_num)) < ftol, "error in second moment"
+
+
+def test_latitude_grad(
+    ydeg=3, alpha=10.0, beta=30.0, abs_tol=1e-5, rel_tol=1e-5, eps=1e-7
+):
+    with change_flags(compute_test_value="off"):
+        op = LatitudeIntegralOp(ydeg)
+
+        # d/dq
+        verify_grad(
+            lambda alpha, beta: op(alpha, beta)[0],
+            (alpha, beta,),
+            n_tests=1,
+            abs_tol=abs_tol,
+            rel_tol=rel_tol,
+            eps=eps,
+        )
+
+        # d/dQ
+        verify_grad(
+            lambda alpha, beta: op(alpha, beta)[3],
+            (alpha, beta,),
+            n_tests=1,
+            abs_tol=abs_tol,
+            rel_tol=rel_tol,
+            eps=eps,
+        )

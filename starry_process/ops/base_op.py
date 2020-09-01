@@ -93,18 +93,25 @@ class IntegralOp(BaseOp):
         )
 
     def grad(self, inputs, gradients):
-        raise NotImplementedError("Implement the gradients!")
         alpha, beta = inputs
         q, dqda, dqdb, Q, dQda, dQdb = self(*inputs)
         bq = gradients[0]
         bQ = gradients[3]
+        # Derivs of derivs not implemented
         for i, g in enumerate(list(gradients[1:3]) + list(gradients[4:6])):
             if not isinstance(g.type, theano.gradient.DisconnectedType):
                 raise ValueError(
                     "can't propagate gradients wrt parameter {0}".format(i + 1)
                 )
-        ba = tt.sum(bq * dqda) + tt.sum(bQ * dQda)  # TODO: CHECK
-        bb = tt.sum(bq * dqdb) + tt.sum(bQ * dQdb)  # TODO: CHECK
+
+        # Chain rule
+        ba = 0.0
+        bb = 0.0
+        for g, fa, fb in zip([bq, bQ], [dqda, dQda], [dqdb, dQdb]):
+            if not isinstance(g.type, theano.gradient.DisconnectedType):
+                ba += tt.sum(g * fa)
+                bb += tt.sum(g * fb)
+
         return ba, bb
 
     def R_op(self, inputs, eval_points):
