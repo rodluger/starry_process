@@ -24,7 +24,7 @@ setup(
         "scipy>=1.5.0",
         "theano>=1.0.5",
         "tqdm",
-        "bokeh==1.3.4",
+        "bokeh>=2.2.1",
     ],
     setup_requires=["setuptools_scm"],
     include_package_data=True,

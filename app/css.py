@@ -51,9 +51,9 @@ style = lambda: Div(
     }
     .custom-slider .bk-input-group {
         padding-left: 30px !important;
-        padding-right: 30px !important;
+        padding-right: 0px !important;
         margin-left: 30px !important;
-        margin-right: 30px !important;
+        margin-right: 0px !important;
     }
     .custom-slider .bk-slider-title {
         position: absolute;
@@ -66,9 +66,9 @@ style = lambda: Div(
     }
     .colorbar-slider .bk-input-group {
         padding-left: 130px !important;
-        padding-right: 30px !important;
+        padding-right: 0px !important;
         margin-left: 30px !important;
-        margin-right: 30px !important;
+        margin-right: 0px !important;
     }
     .colorbar-slider .bk-noUi-draggable {
         %s
