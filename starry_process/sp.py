@@ -3,13 +3,14 @@ from .contrast import ContrastIntegral
 from .latitude import LatitudeIntegral
 from .longitude import LongitudeIntegral
 from .flux import FluxDesignMatrix
-from .math import cho_factor
+from .math import cho_factor, cho_solve, cast
 import theano.tensor as tt
+import numpy as np
 
 
 class StarryProcess(object):
-    def __init__(self, ydeg, **kwargs):
-        assert ydeg > 0, "Degree of map must be > 0."
+    def __init__(self, ydeg=15, **kwargs):
+        assert ydeg > 10, "Degree of map must be > 10."
         self.ydeg = ydeg
         self.N = (ydeg + 1) ** 2
 
@@ -65,3 +66,39 @@ class StarryProcess(object):
     def draw(self, t, ndraws=1, eps=1e-12):
         ylm = self.draw_ylm(ndraws=ndraws, eps=eps)
         return tt.dot(ylm, tt.transpose(self.design(t)))
+
+    def lnlike(self, t, flux, data_cov):
+        """
+        Compute the log marginal likelihood of a light curve.
+
+        Args:
+            t (array): The time array.
+            flux (array): The array of observed flux values.
+            data_cov (scalar/vector/matrix): The data covariance matrix.
+
+        Returns:
+            The log marginal likelihood of the `flux` vector conditioned on
+            the the current properties of the model. This is the likelihood 
+            marginalized over all possible spherical harmonic vectors.
+
+        """
+        # Get the full data covariance
+        data_cov = cast(data_cov)
+        if data_cov.ndim == 0:
+            C = data_cov * tt.eye(t.shape[0])
+        elif data_cov.ndim == 1:
+            C = tt.diag(data_cov)
+        else:
+            C = data_cov
+
+        # Cholesky factorization
+        gp_cov = C + self.cov(t)
+        cho_gp_cov = cho_factor(gp_cov)
+
+        # Compute the marginal likelihood
+        K = t.shape[0]
+        r = tt.reshape(flux - self.mean(t), (-1, 1))
+        lnlike = -0.5 * tt.dot(tt.transpose(r), cho_solve(cho_gp_cov, r))
+        lnlike -= tt.sum(tt.log(tt.diag(cho_gp_cov)))
+        lnlike -= 0.5 * K * tt.log(2 * np.pi)
+        return lnlike[0, 0]
