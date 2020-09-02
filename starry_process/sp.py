@@ -68,7 +68,9 @@ class StarryProcess(object):
         ylm = self.sample_ylm(nsamples=nsamples, eps=eps)
         return tt.dot(ylm, tt.transpose(self.design(t)))
 
-    def lnlike(self, t, flux, data_cov, baseline_mean=0.0, baseline_var=0.0):
+    def log_likelihood(
+        self, t, flux, data_cov, baseline_mean=0.0, baseline_var=0.0
+    ):
         """
         Compute the log marginal likelihood of a light curve.
 

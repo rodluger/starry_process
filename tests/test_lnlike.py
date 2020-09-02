@@ -23,7 +23,7 @@ def get_functions():
         sp.latitude.set_params(latitude_alpha, latitude_beta)
         sp.contrast.set_params(contrast_mu, contrast_sigma)
         sp.design.set_params(period, inc)
-        return sp.lnlike(t, flux, data_cov)
+        return sp.log_likelihood(t, flux, data_cov)
 
     def _sample(
         size_alpha,
