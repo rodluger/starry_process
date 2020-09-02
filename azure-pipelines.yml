@@ -31,7 +31,7 @@ jobs:
   - script: |
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
-      python setup.py develop
+      pip install -e ".[app,tests]"
     displayName: 'Install the package'
   
   - script: |

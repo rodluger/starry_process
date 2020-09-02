@@ -24,9 +24,18 @@ setup(
         "scipy>=1.5.0",
         "theano>=1.0.5",
         "tqdm",
+        "matplotlib",
     ],
-    extras_require={"app": ["bokeh>=2.2.1"]},
-    tests_require=["pymc3>=3.8", "exoplanet>=0.3.2"],
+    extras_require={
+        "app": ["bokeh>=2.2.1"],
+        "tests": [
+            "pytest",
+            "pytest-dependency",
+            "pytest-env",
+            "pymc3>=3.8",
+            "exoplanet>=0.3.2",
+        ],
+    },
     entry_points={
         "console_scripts": ["starry-process=starry_process.app:main [app]"]
     },

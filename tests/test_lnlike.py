@@ -2,6 +2,8 @@ from starry_process import StarryProcess
 import numpy as np
 import theano.tensor as tt
 import theano
+import pymc3 as pm
+import exoplanet
 
 
 def get_functions():
@@ -56,7 +58,7 @@ def get_functions():
     return lnlike, sample
 
 
-def test_lnlike():
+def test_lnlike_array():
 
     # Get the functions
     lnlike, sample = get_functions()
@@ -76,5 +78,5 @@ def test_lnlike():
         params[3] = beta[i]
         ll[i] = lnlike(*params, t, flux, data_cov)
 
-    # TODO: Test this more robustly
+    # A very simple test
     assert np.abs(beta[np.argmax(ll)] - 30.0) < 5.0

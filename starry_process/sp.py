@@ -15,18 +15,23 @@ class StarryProcess(object):
         self.ydeg = ydeg
         self.N = (ydeg + 1) ** 2
 
+        # Initialize the integral ops
         self.contrast = ContrastIntegral(self, **kwargs)
         self.longitude = LongitudeIntegral(self.contrast, **kwargs)
         self.latitude = LatitudeIntegral(self.longitude, **kwargs)
         self.size = SizeIntegral(self.latitude, **kwargs)
         self.design = FluxDesignMatrix(self.ydeg)
 
+        # Cached
         self._mean_ylm = None
         self._cov_ylm = None
         self._cho_cov_ylm = None
 
         # NB: Change this by setting `self.random.seed(XXX)`
         self.random = tt.shared_randomstreams.RandomStreams(0)
+
+    def set_params(self, **kwargs):
+        pass
 
     def mean_ylm(self):
         if (self._mean_ylm is None) or (self.contrast.e is None):

@@ -41,7 +41,7 @@ class FluxDesignMatrix(object):
         """Apply the projection operator on the right.
 
         Specifically, this method returns the dot product `M . R`,
-        where `M` is an input matrix and R` is the Wigner rotation matrix
+        where `M` is an input matrix and `R` is the Wigner rotation matrix
         that transforms a spherical harmonic coefficient vector in the
         input frame to a vector in the observer's frame.
         """
