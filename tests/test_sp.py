@@ -27,23 +27,23 @@ def test_moments(rtol=1e-4, ftol=2e-2):
     gp.size.set_params(size_alpha, size_beta)
     gp.contrast.set_params(contrast_mu, contrast_sigma)
     gp.latitude.set_params(latitude_alpha, latitude_beta)
-    mu = gp.mean_ylm.eval()
-    cov = gp.cov_ylm.eval()
+    mu = gp.mean_ylm().eval()
+    cov = gp.cov_ylm().eval()
 
     # Integrate numerically
     print("Computing moments numerically...")
 
     # Draw the size, contrast, latitude, and amplitude
-    hwhm = gp.size.transform.draw(
-        alpha=size_alpha, beta=size_beta, ndraws=nsamples
+    hwhm = gp.size.transform.sample(
+        alpha=size_alpha, beta=size_beta, nsamples=nsamples
     )
-    xi = gp.contrast.transform.draw(
-        contrast_mu, contrast_sigma, ndraws=nsamples
+    xi = gp.contrast.transform.sample(
+        contrast_mu, contrast_sigma, nsamples=nsamples
     )
-    phi = gp.latitude.transform.draw(
-        alpha=latitude_alpha, beta=latitude_beta, ndraws=nsamples
+    phi = gp.latitude.transform.sample(
+        alpha=latitude_alpha, beta=latitude_beta, nsamples=nsamples
     )
-    lam = gp.longitude.transform.draw(ndraws=nsamples)
+    lam = gp.longitude.transform.sample(nsamples=nsamples)
 
     # Integrate numerically by sampling. We'll only
     # compute things up to `ydeg_num` since this is *very*
@@ -99,7 +99,7 @@ def test_moments(rtol=1e-4, ftol=2e-2):
     ), "error in cov"
 
 
-def test_draw():
+def test_sample():
 
     # Settings
     ydeg = 15
@@ -119,4 +119,4 @@ def test_draw():
     gp.latitude.set_params(latitude_alpha, latitude_beta)
     gp.contrast.set_params(contrast_mu, contrast_sigma)
     gp.design.set_params(period, inc)
-    fluxes = gp.draw(t=t, ndraws=10).eval()
+    fluxes = gp.sample(t=t, nsamples=10).eval()

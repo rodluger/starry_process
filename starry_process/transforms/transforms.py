@@ -20,7 +20,7 @@ class Transform(object):
     def pdf(self, *args, **kwargs):
         raise NotImplementedError("Must be subclassed.")
 
-    def draw(self, *args, **kwargs):
+    def sample(self, *args, **kwargs):
         raise NotImplementedError("Must be subclassed.")
 
     def transform_params(self, *args, **kwargs):
@@ -367,7 +367,7 @@ class BetaTransform(Transform):
         # Easy!
         return self._jac(x) * Beta.pdf(self._f(x), alpha, beta)
 
-    def draw(self, mu=None, sigma=None, alpha=None, beta=None, ndraws=1):
+    def sample(self, mu=None, sigma=None, alpha=None, beta=None, nsamples=1):
         """
         Draw samples from the distribution.
         
@@ -385,7 +385,7 @@ class BetaTransform(Transform):
             alpha, beta = self.transform_params(mu, sigma)
 
         # Sample
-        x = Beta.rvs(alpha, beta, size=ndraws)
+        x = Beta.rvs(alpha, beta, size=nsamples)
         return self._finv(x)
 
     def get_transform_error(self, res=100, plot=True):

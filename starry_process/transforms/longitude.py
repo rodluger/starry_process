@@ -10,8 +10,8 @@ class LongitudeTransform(IdentityTransform):
         pdf[(x < 0) | (x > 360)] = 0.0
         return pdf
 
-    def draw(self, ndraws=1):
-        return 360.0 * np.random.random(size=ndraws)
+    def sample(self, nsamples=1):
+        return 360.0 * np.random.random(size=nsamples)
 
     def transform_params(self):
         return

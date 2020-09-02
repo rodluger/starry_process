@@ -77,11 +77,11 @@ class Samples(object):
         self.gp.contrast.set_params(contrast_mu, contrast_sigma)
         print("Compiling...")
         if debug:
-            self.draw_ylm = lambda *args: [
+            self.sample_ylm = lambda *args: [
                 np.random.randn(self.nmaps, (ydeg + 1) ** 2)
             ]
         else:
-            self.draw_ylm = theano.function(
+            self.sample_ylm = theano.function(
                 [
                     size_alpha,
                     size_beta,
@@ -90,13 +90,13 @@ class Samples(object):
                     contrast_mu,
                     contrast_sigma,
                 ],
-                [self.gp.draw_ylm(self.nmaps)],
+                [self.gp.sample_ylm(self.nmaps)],
                 no_default_updates=True,
             )
         print("Done!")
 
         # Draw three samples from the default distr
-        self.ylm = self.draw_ylm(
+        self.ylm = self.sample_ylm(
             *self.gp.size.transform.transform_params(
                 params["size"]["mu"]["value"], params["size"]["sigma"]["value"]
             ),
@@ -278,7 +278,7 @@ class Samples(object):
         try:
 
             # Draw the samples
-            self.ylm = self.draw_ylm(
+            self.ylm = self.sample_ylm(
                 *self.gp.size.transform.transform_params(
                     self.Size.slider_mu.value, self.Size.slider_sigma.value
                 ),

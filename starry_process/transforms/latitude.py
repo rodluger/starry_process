@@ -29,8 +29,8 @@ class LatitudeTransform(BetaTransform):
         # cos(lat) --> lat
         return np.arccos(f_of_x) * 180.0 / np.pi
 
-    def draw(self, *args, **kwargs):
-        samples = super().draw(*args, **kwargs)
+    def sample(self, *args, **kwargs):
+        samples = super().sample(*args, **kwargs)
         samples *= 2.0 * (
             np.array(np.random.random(size=len(samples)) > 0.5, dtype=int)
             - 0.5

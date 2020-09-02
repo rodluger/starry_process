@@ -57,4 +57,4 @@ def test_timing(ydeg=15, npts=1000):
     )
 
     print("time elapsed: {:.4f} s".format(time))
-    assert time < 0.1, "too slow!"
+    assert time < 0.1, "too slow! ({:.4f} s)".format(time)
