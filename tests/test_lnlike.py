@@ -8,42 +8,44 @@ import exoplanet
 
 def get_functions():
     def _lnlike(
-        size_alpha,
-        size_beta,
-        latitude_alpha,
-        latitude_beta,
-        contrast_mu,
-        contrast_sigma,
+        alpha_s,
+        beta_s,
+        alpha_l,
+        beta_l,
+        mu_c,
+        sigma_c,
         period,
         inc,
         t,
         flux,
         data_cov,
     ):
-        sp = StarryProcess()
-        sp.size.set_params(size_alpha, size_beta)
-        sp.latitude.set_params(latitude_alpha, latitude_beta)
-        sp.contrast.set_params(contrast_mu, contrast_sigma)
-        sp.design.set_params(period, inc)
-        return sp.log_likelihood(t, flux, data_cov)
+        gp = StarryProcess(
+            alpha_s=alpha_s,
+            beta_s=beta_s,
+            mu_c=mu_c,
+            sigma_c=sigma_c,
+            alpha_l=alpha_l,
+            beta_l=beta_l,
+            period=period,
+            inc=inc,
+        )
+        return gp.log_likelihood(t, flux, data_cov)
 
     def _sample(
-        size_alpha,
-        size_beta,
-        latitude_alpha,
-        latitude_beta,
-        contrast_mu,
-        contrast_sigma,
-        period,
-        inc,
-        t,
+        alpha_s, beta_s, alpha_l, beta_l, mu_c, sigma_c, period, inc, t,
     ):
-        sp = StarryProcess()
-        sp.size.set_params(size_alpha, size_beta)
-        sp.latitude.set_params(latitude_alpha, latitude_beta)
-        sp.contrast.set_params(contrast_mu, contrast_sigma)
-        sp.design.set_params(period, inc)
-        return tt.reshape(sp.sample(t), (-1,))
+        gp = StarryProcess(
+            alpha_s=alpha_s,
+            beta_s=beta_s,
+            mu_c=mu_c,
+            sigma_c=sigma_c,
+            alpha_l=alpha_l,
+            beta_l=beta_l,
+            period=period,
+            inc=inc,
+        )
+        return tt.reshape(gp.sample(t), (-1,))
 
     # Likelihood func
     inputs = [tt.dscalar() for n in range(8)]
@@ -71,7 +73,7 @@ def test_lnlike_array():
     data_cov = flux_err ** 2
     flux += np.random.randn(len(t)) * flux_err
 
-    # Compute the pdf of latitude_beta
+    # Compute the pdf of beta_l
     ll = np.zeros(100)
     beta = np.linspace(0.01, 100, len(ll))
     for i in range(len(ll)):

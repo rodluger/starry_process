@@ -10,38 +10,33 @@ import pytest
 def test_timing(ydeg=15, npts=1000):
 
     # Free parameters
-    size_alpha = tt.dscalar()
-    size_beta = tt.dscalar()
-    latitude_alpha = tt.dscalar()
-    latitude_beta = tt.dscalar()
-    contrast_mu = tt.dscalar()
-    contrast_sigma = tt.dscalar()
+    alpha_s = tt.dscalar()
+    beta_s = tt.dscalar()
+    alpha_l = tt.dscalar()
+    beta_l = tt.dscalar()
+    mu_c = tt.dscalar()
+    sigma_c = tt.dscalar()
     period = tt.dscalar()
     inc = tt.dscalar()
     t = tt.dvector()
 
     # Compute the mean and covariance
-    gp = StarryProcess(ydeg)
-    gp.size.set_params(size_alpha, size_beta)
-    gp.latitude.set_params(latitude_alpha, latitude_beta)
-    gp.contrast.set_params(contrast_mu, contrast_sigma)
-    gp.design.set_params(period, inc)
+    gp = StarryProcess(
+        alpha_s=alpha_s,
+        beta_s=beta_s,
+        mu_c=mu_c,
+        sigma_c=sigma_c,
+        alpha_l=alpha_l,
+        beta_l=beta_l,
+        period=period,
+        inc=inc,
+    )
     mu = gp.mean(t)
     cov = gp.cov(t)
 
     # Compile the function
     get_mu_and_cov = theano.function(
-        [
-            size_alpha,
-            size_beta,
-            latitude_alpha,
-            latitude_beta,
-            contrast_mu,
-            contrast_sigma,
-            period,
-            inc,
-            t,
-        ],
+        [alpha_s, beta_s, alpha_l, beta_l, mu_c, sigma_c, period, inc, t,],
         [mu, cov],
     )
 
@@ -63,12 +58,12 @@ def test_timing(ydeg=15, npts=1000):
 def test_profile(ydeg=15, npts=1000):
 
     # Free parameters
-    size_alpha = tt.dscalar()
-    size_beta = tt.dscalar()
-    latitude_alpha = tt.dscalar()
-    latitude_beta = tt.dscalar()
-    contrast_mu = tt.dscalar()
-    contrast_sigma = tt.dscalar()
+    alpha_s = tt.dscalar()
+    beta_s = tt.dscalar()
+    alpha_l = tt.dscalar()
+    beta_l = tt.dscalar()
+    mu_c = tt.dscalar()
+    sigma_c = tt.dscalar()
     period = tt.dscalar()
     inc = tt.dscalar()
     t = tt.dvector()
@@ -76,21 +71,26 @@ def test_profile(ydeg=15, npts=1000):
     data_cov = tt.dscalar()
 
     # Compute the mean and covariance
-    gp = StarryProcess(ydeg)
-    gp.size.set_params(size_alpha, size_beta)
-    gp.latitude.set_params(latitude_alpha, latitude_beta)
-    gp.contrast.set_params(contrast_mu, contrast_sigma)
-    gp.design.set_params(period, inc)
+    gp = StarryProcess(
+        alpha_s=alpha_s,
+        beta_s=beta_s,
+        mu_c=mu_c,
+        sigma_c=sigma_c,
+        alpha_l=alpha_l,
+        beta_l=beta_l,
+        period=period,
+        inc=inc,
+    )
 
     # Compile the function
     log_likelihood = theano.function(
         [
-            size_alpha,
-            size_beta,
-            latitude_alpha,
-            latitude_beta,
-            contrast_mu,
-            contrast_sigma,
+            alpha_s,
+            beta_s,
+            alpha_l,
+            beta_l,
+            mu_c,
+            sigma_c,
             period,
             inc,
             t,
