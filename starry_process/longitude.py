@@ -13,7 +13,7 @@ class LongitudeIntegral(WignerIntegral):
         )
         self.set_params()
 
-    def _compute_basis_integrals(self):
+    def _compute_basis_integrals(self, **kwargs):
 
         # Integrate the basis terms
         term = np.zeros((4 * self.ydeg + 1, 4 * self.ydeg + 1))

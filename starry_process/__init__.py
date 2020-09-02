@@ -21,5 +21,6 @@ from . import (
     contrast,
     wigner,
     transforms,
+    defaults,
 )
 from .sp import StarryProcess

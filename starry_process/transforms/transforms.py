@@ -8,9 +8,23 @@ from scipy.interpolate import interp1d
 from tqdm import tqdm
 import warnings
 import os
+import theano
+import theano.tensor as tt
+from theano.ifelse import ifelse
+from inspect import getmro
+
 
 # Get current path
 CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache")
+
+
+def is_theano(*objs):
+    """Return ``True`` if any of ``objs`` is a ``Theano`` object."""
+    for obj in objs:
+        for c in getmro(type(obj)):
+            if c is theano.gof.graph.Node:
+                return True
+    return False
 
 
 class Transform(object):
@@ -317,6 +331,10 @@ class BetaTransform(Transform):
         corresponding to a given `mu` and `sigma`.
         
         """
+        # Theano-friendly implementation of this function
+        if is_theano(mu, sigma):
+            return self._transform_params_theano(mu, sigma)
+
         # Bounds checks
         mu = np.array(mu)
         sigma = np.array(sigma)
@@ -345,6 +363,58 @@ class BetaTransform(Transform):
         # Convert to standard params
         alpha = (beta_mu / beta_var) * ((1 - beta_mu) * beta_mu - beta_var)
         beta = beta_mu + (beta_mu / beta_var) * (1 - beta_mu) ** 2 - 1
+        return alpha, beta
+
+    def _transform_params_theano(self, mu, sigma):
+
+        # Bounds checks
+        nan_if_bounds_error = ifelse(
+            tt.lt(mu, self._mu_max),
+            ifelse(tt.gt(mu, self._mu_min), 0.0, np.nan),
+            np.nan,
+        ) + ifelse(
+            tt.lt(sigma, self._sigma_max),
+            ifelse(tt.gt(sigma, self._sigma_min), 0.0, np.nan),
+            np.nan,
+        )
+
+        # Nearest-neighbor check for `sigma_min(mu)` and `sigma_max(mu)``
+        x1 = tt.as_tensor_variable(self._sigma_min_func.x)
+        y1 = tt.as_tensor_variable(self._sigma_min_func.y)
+        x2 = tt.as_tensor_variable(self._sigma_max_func.x)
+        y2 = tt.as_tensor_variable(self._sigma_max_func.y)
+        nan_if_bounds_error += ifelse(
+            tt.lt(sigma, y2[tt.argmin(tt.abs_(x2 - mu))]),
+            ifelse(
+                tt.gt(sigma, y1[tt.argmin(tt.abs_(x1 - mu))]),
+                0.0,
+                np.nan
+            ),
+            np.nan
+        )
+
+        # Linear fit
+        x1 = (mu - self._mu_min) / (self._mu_max - self._mu_min)
+        x2 = (sigma - self._sigma_min) / (self._sigma_max - self._sigma_min)
+        A = tt.ones(1 + self._poly_order * (self._poly_order + 3) // 2)
+        i = 1
+        for n in range(1, self._poly_order + 1):
+            for k in range(n + 1):
+                A = tt.set_subtensor(A[i], x1 ** (n - k) * x2 ** k)
+                i += 1
+
+        # Beta mu and variance
+        beta_mu = tt.dot(A, self._mu_coeffs)
+        beta_var = tt.dot(A, self._sigma_coeffs) ** 2
+
+        # Convert to standard params
+        alpha = (beta_mu / beta_var) * ((1 - beta_mu) * beta_mu - beta_var)
+        beta = beta_mu + (beta_mu / beta_var) * (1 - beta_mu) ** 2 - 1
+
+        # Make NAN if bounds error
+        alpha += nan_if_bounds_error
+        beta += nan_if_bounds_error
+
         return alpha, beta
 
     def pdf(self, x, mu=None, sigma=None, alpha=None, beta=None):

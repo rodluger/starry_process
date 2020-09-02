@@ -10,7 +10,7 @@ from theano.configparser import change_flags
 
 
 def test_latitude(
-    ydeg=3, alpha=10.0, beta=30.0, rtol=1e-12, ftol=1e-10, **kwargs
+    ydeg=3, alpha_l=10.0, beta_l=30.0, rtol=1e-12, ftol=1e-10, **kwargs
 ):
 
     # Random input moment matrices
@@ -22,8 +22,7 @@ def test_latitude(
 
     # Get analytic integrals
     print("Computing moments analytically...")
-    I = LatitudeIntegral(ydeg=ydeg, **kwargs)
-    I._set_params(alpha, beta)
+    I = LatitudeIntegral(ydeg=ydeg, alpha_l=alpha_l, beta_l=beta_l, **kwargs)
     e = I._first_moment(s).eval()
     eigE = I._second_moment(eigS).eval()
     E = eigE @ eigE.T
@@ -47,7 +46,7 @@ def test_latitude(
                 i = slice(l ** 2, (l + 1) ** 2)
                 Rs[i] = Rl[l] @ s[i]
             jac = 0.5 * np.abs(np.sin(phi))
-            return Rs[n] * jac * Beta.pdf(np.cos(phi), alpha, beta)
+            return Rs[n] * jac * Beta.pdf(np.cos(phi), alpha_l, beta_l)
 
         e_num[n] = quad(func, -np.pi, np.pi)[0]
 
@@ -74,7 +73,9 @@ def test_latitude(
                         RSRT[i, j] = Rl[l1] @ S[i, j] @ Rl[l2].T
 
                 jac = 0.5 * np.abs(np.sin(phi))
-                return RSRT[n1, n2] * jac * Beta.pdf(np.cos(phi), alpha, beta)
+                return (
+                    RSRT[n1, n2] * jac * Beta.pdf(np.cos(phi), alpha_l, beta_l)
+                )
 
             E_num[n1, n2] = quad(func, -np.pi, np.pi)[0]
 
@@ -86,15 +87,15 @@ def test_latitude(
 
 
 def test_latitude_grad(
-    ydeg=3, alpha=10.0, beta=30.0, abs_tol=1e-5, rel_tol=1e-5, eps=1e-7
+    ydeg=3, alpha_l=10.0, beta_l=30.0, abs_tol=1e-5, rel_tol=1e-5, eps=1e-7
 ):
     with change_flags(compute_test_value="off"):
         op = LatitudeIntegralOp(ydeg)
 
         # d/dq
         verify_grad(
-            lambda alpha, beta: op(alpha, beta)[0],
-            (alpha, beta,),
+            lambda alpha, beta: op(alpha_l, beta_l)[0],
+            (alpha_l, beta_l,),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,
@@ -103,8 +104,8 @@ def test_latitude_grad(
 
         # d/dQ
         verify_grad(
-            lambda alpha, beta: op(alpha, beta)[3],
-            (alpha, beta,),
+            lambda alpha, beta: op(alpha_l, beta_l)[3],
+            (alpha_l, beta_l,),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,

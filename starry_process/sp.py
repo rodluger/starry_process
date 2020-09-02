@@ -9,6 +9,9 @@ from theano.ifelse import ifelse
 import numpy as np
 
 
+__all__ = ["StarryProcess"]
+
+
 class StarryProcess(object):
     def __init__(self, ydeg=15, **kwargs):
         assert ydeg > 10, "Degree of map must be > 10."
@@ -16,51 +19,31 @@ class StarryProcess(object):
         self.N = (ydeg + 1) ** 2
 
         # Initialize the integral ops
-        self.contrast = ContrastIntegral(self, **kwargs)
-        self.longitude = LongitudeIntegral(self.contrast, **kwargs)
-        self.latitude = LatitudeIntegral(self.longitude, **kwargs)
-        self.size = SizeIntegral(self.latitude, **kwargs)
-        self.design = FluxDesignMatrix(self.ydeg)
-
-        # Cached
-        self._mean_ylm = None
-        self._cov_ylm = None
-        self._cho_cov_ylm = None
+        self.size = SizeIntegral(self.ydeg, **kwargs)
+        self.latitude = LatitudeIntegral(self.ydeg, child=self.size, **kwargs)
+        self.longitude = LongitudeIntegral(
+            self.ydeg, child=self.latitude, **kwargs
+        )
+        self.contrast = ContrastIntegral(
+            self.ydeg, child=self.longitude, **kwargs
+        )
+        self.design = FluxDesignMatrix(self.ydeg, **kwargs)
 
         # NB: Change this by setting `self.random.seed(XXX)`
         self.random = tt.shared_randomstreams.RandomStreams(0)
 
-    def set_params(self, **kwargs):
-        pass
-
     def mean_ylm(self):
-        if (self._mean_ylm is None) or (self.contrast.e is None):
-            self._mean_ylm = self.contrast.first_moment()
-        return self._mean_ylm
+        return self.contrast.first_moment()
 
     def cov_ylm(self):
-        if (self._cov_ylm is None) or (self.contrast.eigE is None):
-            e4 = self.contrast.first_moment()
-            eigE4 = self.contrast.second_moment()
-            self._cov_ylm = tt.dot(eigE4, tt.transpose(eigE4)) - tt.outer(
-                e4, e4
-            )
-            self._cho_cov_ylm = None
-        return self._cov_ylm
+        e4 = self.contrast.first_moment()
+        eigE4 = self.contrast.second_moment()
+        return tt.dot(eigE4, tt.transpose(eigE4)) - tt.outer(e4, e4)
 
     def sample_ylm(self, nsamples=1, eps=1e-12):
-        if (
-            (self.contrast.eigE is None)
-            or (self._cov_ylm is None)
-            or (self._cho_cov_ylm is None)
-        ):
-            self._cho_cov_ylm = cho_factor(
-                self.cov_ylm() + tt.eye(self.N) * eps
-            )
+        cho_cov_ylm = cho_factor(self.cov_ylm() + tt.eye(self.N) * eps)
         u = self.random.normal((self.N, nsamples))
-        return tt.transpose(
-            self.mean_ylm()[:, None] + tt.dot(self._cho_cov_ylm, u)
-        )
+        return tt.transpose(self.mean_ylm()[:, None] + tt.dot(cho_cov_ylm, u))
 
     def mean(self, t):
         return tt.dot(self.design(t), self.mean_ylm())

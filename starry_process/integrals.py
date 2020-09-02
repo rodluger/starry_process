@@ -4,65 +4,47 @@ from theano.ifelse import ifelse
 
 
 class MomentIntegral(object):
-    def __init__(self, parent=None, ydeg=None, **kwargs):
-        self.parent = parent
-        if self.parent is not None:
-            self.parent.child = self
-            self.ydeg = self.parent.ydeg
+    def __init__(self, ydeg, child=None, **kwargs):
+        self.ydeg = ydeg
+        if child is None:
+
+            class NoChild(object):
+                def first_moment(self):
+                    return None
+
+                def second_moment(self):
+                    return None
+
+            self.child = NoChild()
         else:
-            self.ydeg = ydeg
-            assert self.ydeg is not None, "please provide `ydeg`."
-        self.child = None
+            self.child = child
         self.N = (self.ydeg + 1) ** 2
         self.n = 2 * self.ydeg + 1
-        self._set = False
-        self.e = None
-        self.eigE = None
         self._precompute(**kwargs)
+        self.set_params(**kwargs)
 
     @property
     def neig(self):
         return self.N
 
-    def set_params(self, *args, **kwargs):
-        self._set_params(*args, **kwargs)
-        self.e = None
-        self.eigE = None
-        if self.parent is not None:
-            self.parent.e = None
-            self.parent.eigE = None
-        self._set = True
-
     def first_moment(self):
-        assert self._set, "must call `set_params()` first."
-        if self.e is None:
-            if self.child is None:
-                self.e = self._first_moment()
-            else:
-                self.e = self._first_moment(self.child.first_moment())
-        return self.e
+        return self._first_moment(self.child.first_moment())
 
     def second_moment(self):
-        assert self._set, "must call `set_params()` first."
-        if self.eigE is None:
-            if self.child is None:
-                self.eigE = self._second_moment()
-            else:
-                self.eigE = self._second_moment(self.child.second_moment())
-        return self.eigE
+        return self._second_moment(self.child.second_moment())
 
     # All of the following methods must be defined in the subclasses:
 
-    def _precompute(self, *args, **kwargs):
+    def _precompute(self, **kwargs):
         raise NotImplementedError("Must be subclassed.")
 
-    def _set_params(self, *args, **kwargs):
+    def set_params(self, **kwargs):
         raise NotImplementedError("Must be subclassed.")
 
-    def _first_moment(self, *args, **kwargs):
+    def _first_moment(self, e):
         raise NotImplementedError("Must be subclassed.")
 
-    def _second_moment(self, *args, **kwargs):
+    def _second_moment(self, eigE):
         raise NotImplementedError("Must be subclassed.")
 
 
@@ -71,7 +53,7 @@ class WignerIntegral(MomentIntegral):
     def neig(self):
         return self.n
 
-    def _compute_basis_integrals(self, *args, **kwargs):
+    def _compute_basis_integrals(self, **kwargs):
         raise NotImplementedError("Must be subclassed.")
 
     def _compute_U(self):
@@ -88,8 +70,8 @@ class WignerIntegral(MomentIntegral):
             i = slice(l ** 2, (l + 1) ** 2)
             self.T[l] = tt.swapaxes(tt.dot(self.R[l], self.U[i]), 1, 2)
 
-    def _set_params(self, *args, **kwargs):
-        self._compute_basis_integrals(*args, **kwargs)
+    def set_params(self, **kwargs):
+        self._compute_basis_integrals(**kwargs)
         self._compute_U()
         self._compute_t()
         self._compute_T()

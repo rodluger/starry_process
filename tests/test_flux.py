@@ -15,8 +15,7 @@ def test_flux(ydeg=5, inc=60.0, period=1.0):
 
     # Get the SP design matrix
     t = np.linspace(-1, 1, 50)
-    F = FluxDesignMatrix(ydeg)
-    F.set_params(period, inc)
+    F = FluxDesignMatrix(ydeg, period=period, inc=inc)
     A = F(t).eval()
 
     # Compare to the starry design matrix

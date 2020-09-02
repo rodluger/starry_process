@@ -16,12 +16,11 @@ def pdf(xi, mu, sigma):
     )
 
 
-def test_contrast(ydeg=5, mu=0.5, sigma=0.1, rtol=1e-12, ftol=1e-12):
+def test_contrast(ydeg=5, mu_c=0.75, sigma_c=0.1, rtol=1e-12, ftol=1e-12):
 
     # Get analytic integrals
     print("Computing moments analytically...")
-    I = ContrastIntegral(ydeg=ydeg)
-    I._set_params(mu, sigma)
+    I = ContrastIntegral(ydeg=ydeg, mu_c=mu_c, sigma_c=sigma_c)
     e = I.fac1.eval()
     sqrtE = I.fac2.eval()
     E = sqrtE ** 2
@@ -30,7 +29,7 @@ def test_contrast(ydeg=5, mu=0.5, sigma=0.1, rtol=1e-12, ftol=1e-12):
     print("Computing first moment numerically...")
 
     def func(xi):
-        return xi * pdf(xi, mu, sigma)
+        return xi * pdf(xi, mu_c, sigma_c)
 
     e_num = quad(func, -np.inf, 1)[0]
 
@@ -38,7 +37,7 @@ def test_contrast(ydeg=5, mu=0.5, sigma=0.1, rtol=1e-12, ftol=1e-12):
     print("Computing second moment numerically...")
 
     def func(xi):
-        return xi ** 2 * pdf(xi, mu, sigma)
+        return xi ** 2 * pdf(xi, mu_c, sigma_c)
 
     E_num = quad(func, -np.inf, 1)[0]
 

@@ -12,12 +12,13 @@ from theano.configparser import change_flags
 # Use kwarg `SP_COMPUTE_G_NUMERICALLY=1` to circumvent this
 
 
-def test_size(ydeg=15, alpha=1.0, beta=50.0, rtol=1e-10, ftol=1e-7, **kwargs):
+def test_size(
+    ydeg=15, alpha_s=1.0, beta_s=50.0, rtol=1e-10, ftol=1e-7, **kwargs
+):
 
     # Get analytic integral
     print("Computing moments analytically...")
-    I = SizeIntegral(ydeg=ydeg, **kwargs)
-    I._set_params(alpha, beta)
+    I = SizeIntegral(ydeg=ydeg, alpha_s=alpha_s, beta_s=beta_s, **kwargs)
     e = I._first_moment().eval()
     eigE = I._second_moment().eval()
     E = eigE @ eigE.T
@@ -45,7 +46,7 @@ def test_size(ydeg=15, alpha=1.0, beta=50.0, rtol=1e-10, ftol=1e-7, **kwargs):
 
         def func(rho):
             s = I.transform.get_s(rho=rho)[0]
-            return s[n] * Beta.pdf(rho, alpha, beta)
+            return s[n] * Beta.pdf(rho, alpha_s, beta_s)
 
         e_num[l] = quad(func, 0, 1, epsabs=1e-12, epsrel=1e-12)[0]
 
@@ -62,7 +63,7 @@ def test_size(ydeg=15, alpha=1.0, beta=50.0, rtol=1e-10, ftol=1e-7, **kwargs):
 
             def func(rho):
                 s = I.transform.get_s(rho=rho)[0]
-                return s[n1] * s[n2] * Beta.pdf(rho, alpha, beta)
+                return s[n1] * s[n2] * Beta.pdf(rho, alpha_s, beta_s)
 
             E_num[l1, l2] = quad(func, 0, 1, epsabs=1e-12, epsrel=1e-12)[0]
 
@@ -74,15 +75,15 @@ def test_size(ydeg=15, alpha=1.0, beta=50.0, rtol=1e-10, ftol=1e-7, **kwargs):
 
 
 def test_size_grad(
-    ydeg=15, alpha=1.0, beta=50.0, abs_tol=1e-5, rel_tol=1e-5, eps=1e-7
+    ydeg=15, alpha_s=1.0, beta_s=50.0, abs_tol=1e-5, rel_tol=1e-5, eps=1e-7
 ):
     with change_flags(compute_test_value="off"):
         op = SizeIntegralOp(ydeg)
 
         # d/dq
         verify_grad(
-            lambda alpha, beta: op(alpha, beta)[0],
-            (alpha, beta,),
+            lambda alpha_s, beta_s: op(alpha_s, beta_s)[0],
+            (alpha_s, beta_s,),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,
@@ -91,8 +92,8 @@ def test_size_grad(
 
         # d/dQ
         verify_grad(
-            lambda alpha, beta: op(alpha, beta)[3],
-            (alpha, beta,),
+            lambda alpha_s, beta_s: op(alpha_s, beta_s)[3],
+            (alpha_s, beta_s,),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,

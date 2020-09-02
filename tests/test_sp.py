@@ -12,21 +12,26 @@ def test_moments(rtol=1e-4, ftol=2e-2):
     ydeg = 15
     ydeg_num = 5
     atol = 1e-4
-    size_alpha = 1.0
-    size_beta = 50.0
-    contrast_mu = 0.5
-    contrast_sigma = 0.1
-    latitude_alpha = 10.0
-    latitude_beta = 30.0
+    alpha_s = 1.0
+    beta_s = 50.0
+    mu_c = 0.5
+    sigma_c = 0.1
+    alpha_l = 10.0
+    beta_l = 30.0
     np.random.seed(0)
     nsamples = int(1e5)
 
     # Integrate analytically
     print("Computing moments analytically...")
-    gp = StarryProcess(ydeg)
-    gp.size.set_params(size_alpha, size_beta)
-    gp.contrast.set_params(contrast_mu, contrast_sigma)
-    gp.latitude.set_params(latitude_alpha, latitude_beta)
+    gp = StarryProcess(
+        ydeg,
+        alpha_s=alpha_s,
+        beta_s=beta_s,
+        mu_c=mu_c,
+        sigma_c=sigma_c,
+        alpha_l=alpha_l,
+        beta_l=beta_l,
+    )
     mu = gp.mean_ylm().eval()
     cov = gp.cov_ylm().eval()
 
@@ -35,13 +40,11 @@ def test_moments(rtol=1e-4, ftol=2e-2):
 
     # Draw the size, contrast, latitude, and amplitude
     hwhm = gp.size.transform.sample(
-        alpha=size_alpha, beta=size_beta, nsamples=nsamples
+        alpha=alpha_s, beta=beta_s, nsamples=nsamples
     )
-    xi = gp.contrast.transform.sample(
-        contrast_mu, contrast_sigma, nsamples=nsamples
-    )
+    xi = gp.contrast.transform.sample(mu_c, sigma_c, nsamples=nsamples)
     phi = gp.latitude.transform.sample(
-        alpha=latitude_alpha, beta=latitude_beta, nsamples=nsamples
+        alpha=alpha_l, beta=beta_l, nsamples=nsamples
     )
     lam = gp.longitude.transform.sample(nsamples=nsamples)
 
@@ -103,20 +106,26 @@ def test_sample():
 
     # Settings
     ydeg = 15
-    size_alpha = 1.0
-    size_beta = 50.0
-    latitude_alpha = 10.0
-    latitude_beta = 30.0
-    contrast_mu = 0.5
-    contrast_sigma = 0.1
+    alpha_s = 1.0
+    beta_s = 50.0
+    alpha_l = 10.0
+    beta_l = 30.0
+    mu_c = 0.5
+    sigma_c = 0.1
     t = np.linspace(0, 1, 500)
     period = 0.5
     inc = 60.0
 
     # Compute
-    gp = StarryProcess(ydeg)
-    gp.size.set_params(size_alpha, size_beta)
-    gp.latitude.set_params(latitude_alpha, latitude_beta)
-    gp.contrast.set_params(contrast_mu, contrast_sigma)
-    gp.design.set_params(period, inc)
+    gp = StarryProcess(
+        ydeg,
+        alpha_s=alpha_s,
+        beta_s=beta_s,
+        mu_c=mu_c,
+        sigma_c=sigma_c,
+        alpha_l=alpha_l,
+        beta_l=beta_l,
+        period=period,
+        inc=inc,
+    )
     fluxes = gp.sample(t=t, nsamples=10).eval()
