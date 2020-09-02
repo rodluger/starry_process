@@ -24,10 +24,13 @@ setup(
         "scipy>=1.5.0",
         "theano>=1.0.5",
         "tqdm",
-        "bokeh>=2.2.1",
     ],
+    extras_require={"app": ["bokeh>=2.2.1"]},
+    tests_require=["pymc3>=3.8", "exoplanet>=0.3.2"],
+    entry_points={
+        "console_scripts": ["starry-process=starry_process.app:main [app]"]
+    },
     setup_requires=["setuptools_scm"],
     include_package_data=True,
     zip_safe=False,
-    scripts=["bin/starry-process"],
 )

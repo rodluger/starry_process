@@ -1,6 +1,4 @@
 include starry.png
-include app/*.py
-include app/data/*.npz
-include bin/*
+include starry_process/app/data/*.npz
 recursive-exclude tex *
 recursive-exclude scratch *

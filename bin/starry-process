@@ -1,2 +1,0 @@
-APP=$(python -c "import starry_process; import os; print(os.path.join(os.path.dirname(os.path.dirname(starry_process.__file__)), 'app', 'app.py'))")
-bokeh serve --show $APP
