@@ -1,11 +1,23 @@
+import theano
 import theano.tensor as tt
 from theano.tensor import slinalg, nlinalg
 from theano.ifelse import ifelse
 import numpy as np
+from inspect import getmro
+
 
 # Force double precision in Theano
 tt.config.floatX = "float64"
 tt.config.cast_policy = "numpy+floatX"
+
+
+def is_tensor(*objs):
+    """Return ``True`` if any of ``objs`` is a ``Theano`` object."""
+    for obj in objs:
+        for c in getmro(type(obj)):
+            if c is theano.gof.graph.Node:
+                return True
+    return False
 
 
 def cho_solve(cho_A, b):

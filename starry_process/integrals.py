@@ -21,7 +21,7 @@ class MomentIntegral(object):
         self.N = (self.ydeg + 1) ** 2
         self.n = 2 * self.ydeg + 1
         self._precompute(**kwargs)
-        self.set_params(**kwargs)
+        self._set_params(**kwargs)
 
     @property
     def neig(self):
@@ -38,7 +38,7 @@ class MomentIntegral(object):
     def _precompute(self, **kwargs):
         raise NotImplementedError("Must be subclassed.")
 
-    def set_params(self, **kwargs):
+    def _set_params(self, **kwargs):
         raise NotImplementedError("Must be subclassed.")
 
     def _first_moment(self, e):
@@ -70,7 +70,7 @@ class WignerIntegral(MomentIntegral):
             i = slice(l ** 2, (l + 1) ** 2)
             self.T[l] = tt.swapaxes(tt.dot(self.R[l], self.U[i]), 1, 2)
 
-    def set_params(self, **kwargs):
+    def _set_params(self, **kwargs):
         self._compute_basis_integrals(**kwargs)
         self._compute_U()
         self._compute_t()

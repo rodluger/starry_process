@@ -11,7 +11,7 @@ class LongitudeIntegral(WignerIntegral):
         self.R = R(
             self.ydeg, cos_alpha=1, sin_alpha=0, cos_gamma=1, sin_gamma=0
         )
-        self.set_params()
+        self._set_params()
 
     def _compute_basis_integrals(self, **kwargs):
 

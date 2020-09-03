@@ -94,8 +94,11 @@ class StarryProcess(object):
         returns.
 
         """
-
-        return 0
+        return (
+            self.size._log_jac()
+            + self.latitude._log_jac()
+            + self.contrast._log_jac()
+        )
 
     def log_likelihood(
         self, t, flux, data_cov, baseline_mean=0.0, baseline_var=0.0

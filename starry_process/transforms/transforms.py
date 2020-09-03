@@ -1,4 +1,5 @@
 from .. import logger
+from ..math import cast, is_tensor
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import beta as Beta
@@ -8,23 +9,12 @@ from scipy.interpolate import interp1d
 from tqdm import tqdm
 import warnings
 import os
-import theano
 import theano.tensor as tt
 from theano.ifelse import ifelse
-from inspect import getmro
 
 
 # Get current path
 CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache")
-
-
-def is_theano(*objs):
-    """Return ``True`` if any of ``objs`` is a ``Theano`` object."""
-    for obj in objs:
-        for c in getmro(type(obj)):
-            if c is theano.gof.graph.Node:
-                return True
-    return False
 
 
 class BicubicSpline(object):
@@ -52,7 +42,7 @@ class BicubicSpline(object):
 
     def __init__(self, x, y, f):
         # Checks
-        assert not is_theano(x, y, f), "args cannot be theano nodes"
+        assert not is_tensor(x, y, f), "args cannot be theano nodes"
         assert x.ndim == y.ndim == 1
         assert f.ndim == 2
 
@@ -60,6 +50,11 @@ class BicubicSpline(object):
         self.x = np.concatenate(([-np.inf, -np.inf], x, [np.inf, np.inf]))
         self.y = np.concatenate(([-np.inf, -np.inf], y, [np.inf, np.inf]))
         self.f = np.pad(f, 2, "edge")
+
+        # Tensor versions
+        self.x_tensor = cast(x)
+        self.y_tensor = cast(y)
+        self.f_tensor = cast(f)
 
         # Check spacing
         self.dx = x[1] - x[0]
@@ -74,56 +69,62 @@ class BicubicSpline(object):
     def __call__(self, x, y):
 
         # Choose the backend
-        if is_theano(x, y):
+        if is_tensor(x, y):
             math = tt
+            func = self.f_tensor
+            xarr = self.x_tensor
+            yarr = self.y_tensor
         else:
             math = np
+            func = self.f
+            xarr = self.x
+            yarr = self.y
 
         # Grid vertex just *below* (x, y)
-        xi = math.argmin(x > self.x) - 1
-        yi = math.argmin(y > self.y) - 1
+        xi = math.argmin(x > xarr) - 1
+        yi = math.argmin(y > yarr) - 1
 
         # Function value and derivs at each vertex
         deriv = [
-            self.f[xi][yi],
-            self.f[xi + 1][yi],
-            self.f[xi][yi + 1],
-            self.f[xi + 1][yi + 1],
-            0.5 * (self.f[xi + 1][yi] - self.f[xi - 1][yi]),
-            0.5 * (self.f[xi + 2][yi] - self.f[xi][yi]),
-            0.5 * (self.f[xi + 1][yi + 1] - self.f[xi - 1][yi + 1]),
-            0.5 * (self.f[xi + 2][yi + 1] - self.f[xi][yi + 1]),
-            0.5 * (self.f[xi][yi + 1] - self.f[xi][yi - 1]),
-            0.5 * (self.f[xi + 1][yi + 1] - self.f[xi + 1][yi - 1]),
-            0.5 * (self.f[xi][yi + 2] - self.f[xi][yi]),
-            0.5 * (self.f[xi + 1][yi + 2] - self.f[xi + 1][yi]),
+            func[xi, yi],
+            func[xi + 1, yi],
+            func[xi, yi + 1],
+            func[xi + 1, yi + 1],
+            0.5 * (func[xi + 1, yi] - func[xi - 1, yi]),
+            0.5 * (func[xi + 2, yi] - func[xi, yi]),
+            0.5 * (func[xi + 1, yi + 1] - func[xi - 1, yi + 1]),
+            0.5 * (func[xi + 2, yi + 1] - func[xi, yi + 1]),
+            0.5 * (func[xi, yi + 1] - func[xi, yi - 1]),
+            0.5 * (func[xi + 1, yi + 1] - func[xi + 1, yi - 1]),
+            0.5 * (func[xi, yi + 2] - func[xi, yi]),
+            0.5 * (func[xi + 1, yi + 2] - func[xi + 1, yi]),
             0.25
             * (
-                self.f[xi + 1][yi + 1]
-                - self.f[xi - 1][yi + 1]
-                - self.f[xi + 1][yi - 1]
-                + self.f[xi - 1][yi - 1]
+                func[xi + 1, yi + 1]
+                - func[xi - 1, yi + 1]
+                - func[xi + 1, yi - 1]
+                + func[xi - 1, yi - 1]
             ),
             0.25
             * (
-                self.f[xi + 2][yi + 1]
-                - self.f[xi][yi + 1]
-                - self.f[xi + 2][yi - 1]
-                + self.f[xi][yi - 1]
+                func[xi + 2, yi + 1]
+                - func[xi, yi + 1]
+                - func[xi + 2, yi - 1]
+                + func[xi, yi - 1]
             ),
             0.25
             * (
-                self.f[xi + 1][yi + 2]
-                - self.f[xi - 1][yi + 2]
-                - self.f[xi + 1][yi]
-                + self.f[xi - 1][yi]
+                func[xi + 1, yi + 2]
+                - func[xi - 1, yi + 2]
+                - func[xi + 1, yi]
+                + func[xi - 1, yi]
             ),
             0.25
             * (
-                self.f[xi + 2][yi + 2]
-                - self.f[xi][yi + 2]
-                - self.f[xi + 2][yi]
-                + self.f[xi][yi]
+                func[xi + 2, yi + 2]
+                - func[xi, yi + 2]
+                - func[xi + 2, yi]
+                + func[xi, yi]
             ),
         ]
 
@@ -513,7 +514,7 @@ class BetaTransform(Transform):
 
         evaluated at `(alpha, beta)`.
         """
-        if is_theano(alpha, beta):
+        if is_tensor(alpha, beta):
             lnalpha = tt.log(alpha)
             lnbeta = tt.log(beta)
         else:
@@ -533,8 +534,8 @@ class BetaTransform(Transform):
         
         """
         # Theano-friendly implementation of this function
-        if is_theano(mu, sigma):
-            return self._transform_params_theano(mu, sigma)
+        if is_tensor(mu, sigma):
+            return self._transform_params_tensor(mu, sigma)
 
         # Bounds checks
         mu = np.array(mu)
@@ -566,7 +567,7 @@ class BetaTransform(Transform):
         beta = beta_mu + (beta_mu / beta_var) * (1 - beta_mu) ** 2 - 1
         return alpha, beta
 
-    def _transform_params_theano(self, mu, sigma):
+    def _transform_params_tensor(self, mu, sigma):
 
         # Bounds checks
         nan_if_bounds_error = ifelse(

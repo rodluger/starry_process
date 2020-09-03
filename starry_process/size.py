@@ -3,6 +3,7 @@ from .transforms import SizeTransform
 from .math import cast, eigen
 from .ops import SizeIntegralOp
 from .defaults import defaults
+import theano.tensor as tt
 
 
 class SizeIntegral(MomentIntegral):
@@ -18,7 +19,7 @@ class SizeIntegral(MomentIntegral):
         )
         self._integral_op = SizeIntegralOp(self.ydeg, **kwargs)
 
-    def set_params(
+    def _set_params(
         self, alpha_s=None, beta_s=None, mu_s=None, sigma_s=None, **kwargs
     ):
         p1 = [alpha_s, beta_s]
@@ -28,17 +29,21 @@ class SizeIntegral(MomentIntegral):
             mu_s = defaults["mu_s"]
             sigma_s = defaults["sigma_s"]
             alpha_s, beta_s = self.transform.transform_params(mu_s, sigma_s)
+            self._compute_jac = False
         elif all([p is not None for p in p1]):
             # User provided `alpha` and `beta`
-            pass
+            self._compute_jac = True
         elif all([p is not None for p in p2]):
             # User provided `mu` and `sigma`
             alpha_s, beta_s = self.transform.transform_params(mu_s, sigma_s)
+            self._compute_jac = False
         else:
             raise ValueError("invalid parameter combination")
-        alpha_s = cast(alpha_s)
-        beta_s = cast(beta_s)
-        self.q, _, _, self.Q, _, _ = self._integral_op(alpha_s, beta_s)
+        self.alpha_s = cast(alpha_s)
+        self.beta_s = cast(beta_s)
+        self.q, _, _, self.Q, _, _ = self._integral_op(
+            self.alpha_s, self.beta_s
+        )
         self.eigQ = eigen(self.Q)
 
     def _first_moment(self, e=None):
@@ -46,3 +51,12 @@ class SizeIntegral(MomentIntegral):
 
     def _second_moment(self, eigE=None):
         return self.eigQ
+
+    def _log_jac(self):
+        if self._compute_jac:
+            dmda, dmdb, dsda, dsdb = self.transform.partials(
+                self.alpha_s, self.beta_s
+            )
+            return tt.log(tt.abs_(dmda * dsdb - dmdb * dsda))
+        else:
+            return cast(0.0)
