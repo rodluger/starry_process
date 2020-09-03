@@ -27,6 +27,125 @@ def is_theano(*objs):
     return False
 
 
+class BicubicSpline(object):
+
+    STENCIL = np.array(
+        [
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [-3, 3, 0, 0, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [2, -2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, -3, 3, 0, 0, -2, -1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 2, -2, 0, 0, 1, 1, 0, 0],
+            [-3, 0, 3, 0, 0, 0, 0, 0, -2, 0, -1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, -3, 0, 3, 0, 0, 0, 0, 0, -2, 0, -1, 0],
+            [9, -9, -9, 9, 6, 3, -6, -3, 6, -6, 3, -3, 4, 2, 2, 1],
+            [-6, 6, 6, -6, -3, -3, 3, 3, -4, 4, -2, 2, -2, -2, -1, -1],
+            [2, 0, -2, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 2, 0, -2, 0, 0, 0, 0, 0, 1, 0, 1, 0],
+            [-6, 6, 6, -6, -4, -2, 4, 2, -3, 3, -3, 3, -2, -1, -2, -1],
+            [4, -4, -4, 4, 2, 2, -2, -2, 2, -2, 2, -2, 1, 1, 1, 1],
+        ]
+    )
+
+    def __init__(self, x, y, f):
+        # Checks
+        assert not is_theano(x, y, f), "args cannot be theano nodes"
+        assert x.ndim == y.ndim == 1
+        assert f.ndim == 2
+
+        # Add padding
+        self.x = np.concatenate(([-np.inf, -np.inf], x, [np.inf, np.inf]))
+        self.y = np.concatenate(([-np.inf, -np.inf], y, [np.inf, np.inf]))
+        self.f = np.pad(f, 2, "edge")
+
+        # Check spacing
+        self.dx = x[1] - x[0]
+        self.dy = y[1] - y[0]
+        assert np.allclose(
+            np.diff(x), self.dx
+        ), "x array must be uniformly spaced"
+        assert np.allclose(
+            np.diff(y), self.dy
+        ), "y array must be uniformly spaced"
+
+    def __call__(self, x, y):
+
+        # Choose the backend
+        if is_theano(x, y):
+            math = tt
+        else:
+            math = np
+
+        # Grid vertex just *below* (x, y)
+        xi = math.argmin(x > self.x) - 1
+        yi = math.argmin(y > self.y) - 1
+
+        # Function value and derivs at each vertex
+        deriv = [
+            self.f[xi][yi],
+            self.f[xi + 1][yi],
+            self.f[xi][yi + 1],
+            self.f[xi + 1][yi + 1],
+            0.5 * (self.f[xi + 1][yi] - self.f[xi - 1][yi]),
+            0.5 * (self.f[xi + 2][yi] - self.f[xi][yi]),
+            0.5 * (self.f[xi + 1][yi + 1] - self.f[xi - 1][yi + 1]),
+            0.5 * (self.f[xi + 2][yi + 1] - self.f[xi][yi + 1]),
+            0.5 * (self.f[xi][yi + 1] - self.f[xi][yi - 1]),
+            0.5 * (self.f[xi + 1][yi + 1] - self.f[xi + 1][yi - 1]),
+            0.5 * (self.f[xi][yi + 2] - self.f[xi][yi]),
+            0.5 * (self.f[xi + 1][yi + 2] - self.f[xi + 1][yi]),
+            0.25
+            * (
+                self.f[xi + 1][yi + 1]
+                - self.f[xi - 1][yi + 1]
+                - self.f[xi + 1][yi - 1]
+                + self.f[xi - 1][yi - 1]
+            ),
+            0.25
+            * (
+                self.f[xi + 2][yi + 1]
+                - self.f[xi][yi + 1]
+                - self.f[xi + 2][yi - 1]
+                + self.f[xi][yi - 1]
+            ),
+            0.25
+            * (
+                self.f[xi + 1][yi + 2]
+                - self.f[xi - 1][yi + 2]
+                - self.f[xi + 1][yi]
+                + self.f[xi - 1][yi]
+            ),
+            0.25
+            * (
+                self.f[xi + 2][yi + 2]
+                - self.f[xi][yi + 2]
+                - self.f[xi + 2][yi]
+                + self.f[xi][yi]
+            ),
+        ]
+
+        # Dot with the stencil
+        coeff = math.dot(self.STENCIL, deriv)
+        dypow = 1
+        ijkn = 0
+        result = 0
+        for j in range(4):
+            result += dypow * (
+                coeff[ijkn]
+                + self.dx
+                * (
+                    coeff[ijkn + 1]
+                    + self.dx * (coeff[ijkn + 2] + self.dx * coeff[ijkn + 3])
+                )
+            )
+            ijkn += 4
+            dypow *= self.dy
+        return result
+
+
 class Transform(object):
     def __init__(self, *args, **kwargs):
         pass
@@ -60,7 +179,7 @@ class BetaTransform(Transform):
         "poly_order": 10,
     }
 
-    _extra_params = {}
+    _extra_arrays = {}
 
     def __init__(self, clobber=False, **kwargs):
         # Load the kwargs
@@ -78,30 +197,37 @@ class BetaTransform(Transform):
 
     @property
     def _cache_file(self):
-        return os.path.join(CACHE_PATH, self._name + "_" + self._hash + ".dat")
+        return os.path.join(CACHE_PATH, self._name + "_" + self._hash + ".npz")
+
+    @property
+    def _arrays(self):
+        return [
+            "_mu_coeffs",
+            "_mu_min",
+            "_mu_max",
+            "_sigma_coeffs",
+            "_sigma_min",
+            "_sigma_max",
+            "_xp",
+            "_y1p",
+            "_y2p",
+            "_lnalpha",
+            "_lnbeta",
+            "_dmudlnalpha",
+            "_dmudlnbeta",
+            "_dsigmadlnalpha",
+            "_dsigmadlnbeta",
+        ] + list(sorted(self._extra_arrays.keys()))
 
     def _save(self):
         """
         Save the contents of this class to disk.
         
         """
-        x = np.concatenate(
-            (
-                self._mu_coeffs,
-                np.atleast_1d(self._mu_min),
-                np.atleast_1d(self._mu_max),
-                self._sigma_coeffs,
-                np.atleast_1d(self._sigma_min),
-                np.atleast_1d(self._sigma_max),
-                self._sigma_min_func.x,
-                self._sigma_min_func.y,
-                self._sigma_max_func.x,
-                self._sigma_max_func.y,
-            )
-        )
-        for name, length in self._extra_params.items():
-            x = np.concatenate((x, getattr(self, "_{0}".format(name))))
-        np.savetxt(self._cache_file, x)
+        kwargs = {}
+        for name in self._arrays:
+            kwargs.update({name: getattr(self, name)})
+        np.savez(self._cache_file, **kwargs)
 
     def _load(self):
         """
@@ -109,34 +235,31 @@ class BetaTransform(Transform):
         
         """
         if os.path.exists(self._cache_file):
-            x = np.loadtxt(self._cache_file)
-            ncoeffs = 0
-            for i in range(self._poly_order + 1):
-                for j in range(i + 1):
-                    ncoeffs += 1
-            self._mu_coeffs, x = np.split(x, [ncoeffs])
-            self._mu_min, x = np.split(x, [1])
-            self._mu_min = self._mu_min[0]
-            self._mu_max, x = np.split(x, [1])
-            self._mu_max = self._mu_max[0]
-            self._sigma_coeffs, x = np.split(x, [ncoeffs])
-            self._sigma_min, x = np.split(x, [1])
-            self._sigma_min = self._sigma_min[0]
-            self._sigma_max, x = np.split(x, [1])
-            self._sigma_max = self._sigma_max[0]
-            _x, x = np.split(x, [self._mom_grid_res // 3])
-            _y, x = np.split(x, [self._mom_grid_res // 3])
+            # Load the arrays
+            data = np.load(self._cache_file)
+            for name in self._arrays:
+                setattr(self, name, data[name])
+
+            # Instantiate the interpolants
             self._sigma_min_func = interp1d(
-                _x, _y, kind="cubic", fill_value="extrapolate"
+                self._xp, self._y1p, kind="cubic", fill_value="extrapolate"
             )
-            _x, x = np.split(x, [self._mom_grid_res // 3])
-            _y, x = np.split(x, [self._mom_grid_res // 3])
             self._sigma_max_func = interp1d(
-                _x, _y, kind="cubic", fill_value="extrapolate"
+                self._xp, self._y2p, kind="cubic", fill_value="extrapolate"
             )
-            for name, length in self._extra_params.items():
-                value, x = np.split(x, [length])
-                setattr(self, "_{0}".format(name), value)
+            self._dmu_dlnalpha = BicubicSpline(
+                self._lnbeta, self._lnalpha, self._dmudlnalpha
+            )
+            self._dmu_dlnbeta = BicubicSpline(
+                self._lnbeta, self._lnalpha, self._dmudlnbeta
+            )
+            self._dsigma_dlnalpha = BicubicSpline(
+                self._lnbeta, self._lnalpha, self._dsigmadlnalpha
+            )
+            self._dsigma_dlnbeta = BicubicSpline(
+                self._lnbeta, self._lnalpha, self._dsigmadlnbeta
+            )
+
             return True
         else:
             return False
@@ -260,17 +383,17 @@ class BetaTransform(Transform):
         logger.info("Computing {0} pdf transform...".format(self._name))
 
         # Grid of Beta params
-        lnalpha = np.linspace(
+        self._lnalpha = np.linspace(
             self._ln_alpha_min, self._ln_alpha_max, self._mom_grid_res
         )
-        lnbeta = np.linspace(
+        self._lnbeta = np.linspace(
             self._ln_beta_min, self._ln_beta_max, self._mom_grid_res
         )
-        lnalpha, lnbeta = np.meshgrid(lnalpha, lnbeta)
-        lnalpha = lnalpha.reshape(-1)
-        lnbeta = lnbeta.reshape(-1)
-        alpha = np.exp(lnalpha)
-        beta = np.exp(lnbeta)
+        self._lnalpha, self._lnbeta = np.meshgrid(self._lnalpha, self._lnbeta)
+        self._lnalpha = self._lnalpha.reshape(-1)
+        self._lnbeta = self._lnbeta.reshape(-1)
+        alpha = np.exp(self._lnalpha)
+        beta = np.exp(self._lnbeta)
         beta_mu = alpha / (alpha + beta)
         beta_sigma = np.sqrt(
             alpha * beta / ((alpha + beta) ** 2 * (alpha + beta + 1))
@@ -302,20 +425,20 @@ class BetaTransform(Transform):
                 y1[k] = np.min(vals)
 
         # Add a little padding
-        xp = (
+        self._xp = (
             (x + self._sigma_lim_tol)
             * (self._mu_max - self._mu_min)
             / (self._mu_max - self._mu_min + 2 * self._sigma_lim_tol)
         )
-        y1p = y1 + self._sigma_lim_tol
-        y2p = y2 - self._sigma_lim_tol
+        self._y1p = y1 + self._sigma_lim_tol
+        self._y2p = y2 - self._sigma_lim_tol
 
         # Get the interpolant
         self._sigma_min_func = interp1d(
-            xp, y1p, kind="cubic", fill_value="extrapolate"
+            self._xp, self._y1p, kind="cubic", fill_value="extrapolate"
         )
         self._sigma_max_func = interp1d(
-            xp, y2p, kind="cubic", fill_value="extrapolate"
+            self._xp, self._y2p, kind="cubic", fill_value="extrapolate"
         )
 
         # Fit a bivariate polynomial to the grid data
@@ -324,6 +447,84 @@ class BetaTransform(Transform):
         A = self._get_BiV(x1, x2)
         self._mu_coeffs = np.linalg.solve(A.T @ A, A.T @ beta_mu)
         self._sigma_coeffs = np.linalg.solve(A.T @ A, A.T @ beta_sigma)
+
+        # Now compute the (logarithmic) derivatives
+        dmu = np.array(
+            np.gradient(mu.reshape(self._mom_grid_res, self._mom_grid_res))
+        )
+        dsigma = np.array(
+            np.gradient(sigma.reshape(self._mom_grid_res, self._mom_grid_res))
+        )
+        dlnalpha = np.gradient(
+            self._lnalpha.reshape(self._mom_grid_res, self._mom_grid_res)
+        )[1]
+        dlnbeta = np.gradient(
+            self._lnbeta.reshape(self._mom_grid_res, self._mom_grid_res)
+        )[0]
+        self._dmudlnalpha = dmu[1] / dlnalpha
+        self._dmudlnbeta = dmu[0] / dlnbeta
+        self._dsigmadlnalpha = dsigma[1] / dlnalpha
+        self._dsigmadlnbeta = dsigma[0] / dlnbeta
+
+        # Reshape everything
+        self._lnbeta = self._lnbeta.reshape(
+            self._mom_grid_res, self._mom_grid_res
+        )[:, 0]
+        self._lnalpha = self._lnalpha.reshape(
+            self._mom_grid_res, self._mom_grid_res
+        )[0]
+        self._dmudlnalpha = self._dmudlnalpha.reshape(
+            self._mom_grid_res, self._mom_grid_res
+        )
+        self._dmudlnbeta = self._dmudlnbeta.reshape(
+            self._mom_grid_res, self._mom_grid_res
+        )
+        self._dsigmadlnalpha = self._dsigmadlnalpha.reshape(
+            self._mom_grid_res, self._mom_grid_res
+        )
+        self._dsigmadlnbeta = self._dsigmadlnbeta.reshape(
+            self._mom_grid_res, self._mom_grid_res
+        )
+
+        # Fit a bicubic spline to each
+        self._dmu_dlnalpha = BicubicSpline(
+            self._lnbeta, self._lnalpha, self._dmudlnalpha
+        )
+        self._dmu_dlnbeta = BicubicSpline(
+            self._lnbeta, self._lnalpha, self._dmudlnbeta
+        )
+        self._dsigma_dlnalpha = BicubicSpline(
+            self._lnbeta, self._lnalpha, self._dsigmadlnalpha
+        )
+        self._dsigma_dlnbeta = BicubicSpline(
+            self._lnbeta, self._lnalpha, self._dsigmadlnbeta
+        )
+
+    def partials(self, alpha, beta):
+        """
+        Returns the tuple of partial derivatives
+
+            (
+                dmu / dalpha,
+                dmu / dbeta,
+                dsigma / dalpha,
+                dsigma / dbeta
+            )
+
+        evaluated at `(alpha, beta)`.
+        """
+        if is_theano(alpha, beta):
+            lnalpha = tt.log(alpha)
+            lnbeta = tt.log(beta)
+        else:
+            lnalpha = np.log(alpha)
+            lnbeta = np.log(beta)
+        return (
+            self._dmu_dlnalpha(lnbeta, lnalpha) / alpha,
+            self._dmu_dlnbeta(lnbeta, lnalpha) / beta,
+            self._dsigma_dlnalpha(lnbeta, lnalpha) / alpha,
+            self._dsigma_dlnbeta(lnbeta, lnalpha) / beta,
+        )
 
     def transform_params(self, mu, sigma):
         """
@@ -385,12 +586,8 @@ class BetaTransform(Transform):
         y2 = tt.as_tensor_variable(self._sigma_max_func.y)
         nan_if_bounds_error += ifelse(
             tt.lt(sigma, y2[tt.argmin(tt.abs_(x2 - mu))]),
-            ifelse(
-                tt.gt(sigma, y1[tt.argmin(tt.abs_(x1 - mu))]),
-                0.0,
-                np.nan
-            ),
-            np.nan
+            ifelse(tt.gt(sigma, y1[tt.argmin(tt.abs_(x1 - mu))]), 0.0, np.nan),
+            np.nan,
         )
 
         # Linear fit

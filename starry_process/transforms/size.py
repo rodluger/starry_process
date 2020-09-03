@@ -167,7 +167,7 @@ class SizeTransform(BetaTransform):
         "hwhm_min": 15,
         "c_npts": 100,
     }
-    _extra_params = {"c": 4}
+    _extra_arrays = {"_c": 4}
 
     def _f(self, x):
         # hwhwm --> rho

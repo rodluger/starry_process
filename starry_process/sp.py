@@ -56,6 +56,47 @@ class StarryProcess(object):
         ylm = self.sample_ylm(nsamples=nsamples, eps=eps)
         return tt.dot(ylm, tt.transpose(self.design(t)))
 
+    def log_jac(self):
+        """
+        The log of the absolute value of the determinant of the Jacobian matrix.
+
+        This term should be added to the log likelihood when one wishes to
+        sample in the `alpha` and `beta` parameters of the spot size and latitude 
+        distributions, while placing a prior on the (more interpretable)
+        quantities `mu` and `sigma`.
+
+        The spot size and latitude are Beta-distributed, with shape parameters
+        `alpha` and `beta`. From Bayes' theorem, the joint posterior in these two
+        quantities is
+
+            p(alpha, beta | data) ~ p(data | alpha, beta) * p(alpha, beta)
+
+        However, this is a rather awkward parametrization, since it's hard to
+        visualize how exactly `alpha` and `beta` determine quantities we
+        actually care about, such as the mean `mu` and standard deviation 
+        `sigma` of the distributions. This parameterization is especially clumsy 
+        when it comes to specifying the prior `p(alpha, beta)`, since any prior 
+        on these quantities will imply a very different prior on `mu` and 
+        `sigma`. In most cases, we probably want to place a prior on `mu` and 
+        `sigma` directly. We can do this by noting that
+
+            p(alpha, beta) = p(mu, sigma) * J
+
+        where
+
+            J = | dmu / dalpha * dsigma / dbeta - dmu / dbeta * dsigma / dalpha |
+
+        is the absolute value of the determinant of the Jacobian matrix.
+
+        Thus, to enforce a uniform prior on `mu` and `sigma`, we simply
+        multiply the PDF by `J`. Since we're in log space, we therefore add
+        to the log of the PDF the quantity `log J`, which this function 
+        returns.
+
+        """
+
+        return 0
+
     def log_likelihood(
         self, t, flux, data_cov, baseline_mean=0.0, baseline_var=0.0
     ):
