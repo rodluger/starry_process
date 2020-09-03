@@ -8,10 +8,10 @@ import exoplanet
 
 def get_functions():
     def _lnlike(
-        alpha_s,
-        beta_s,
-        alpha_l,
-        beta_l,
+        mu_s,
+        sigma_s,
+        mu_l,
+        sigma_l,
         mu_c,
         sigma_c,
         period,
@@ -21,30 +21,31 @@ def get_functions():
         data_cov,
     ):
         gp = StarryProcess(
-            alpha_s=alpha_s,
-            beta_s=beta_s,
+            mu_s=mu_s,
+            sigma_s=sigma_s,
             mu_c=mu_c,
             sigma_c=sigma_c,
-            alpha_l=alpha_l,
-            beta_l=beta_l,
+            mu_l=mu_l,
+            sigma_l=sigma_l,
             period=period,
             inc=inc,
         )
         return gp.log_likelihood(t, flux, data_cov)
 
     def _sample(
-        alpha_s, beta_s, alpha_l, beta_l, mu_c, sigma_c, period, inc, t,
+        mu_s, sigma_s, mu_l, sigma_l, mu_c, sigma_c, period, inc, t,
     ):
         gp = StarryProcess(
-            alpha_s=alpha_s,
-            beta_s=beta_s,
+            mu_s=mu_s,
+            sigma_s=sigma_s,
             mu_c=mu_c,
             sigma_c=sigma_c,
-            alpha_l=alpha_l,
-            beta_l=beta_l,
+            mu_l=mu_l,
+            sigma_l=sigma_l,
             period=period,
             inc=inc,
         )
+        gp.random.seed(42)
         return tt.reshape(gp.sample(t), (-1,))
 
     # Likelihood func
@@ -66,19 +67,37 @@ def test_lnlike_array():
     lnlike, sample = get_functions()
 
     # Generate a dataset
-    params = [10.0, 30.0, 10.0, 30.0, 0.75, 0.1, 1.0, 60.0]
+    mu_s = 15.0
+    sigma_s = 5.0
+    mu_l = 10.0
+    sigma_l = 5.0
+    mu_c = 0.75
+    sigma_c = 0.1
+    period = 1.0
+    inc = 60.0
+    params = [
+        mu_s,
+        sigma_s,
+        mu_l,
+        sigma_l,
+        mu_c,
+        sigma_c,
+        period,
+        inc,
+    ]
     t = np.linspace(0, 3, 1000)
     flux = sample(*params, t)
     flux_err = 1e-6
     data_cov = flux_err ** 2
+    np.random.seed(42)
     flux += np.random.randn(len(t)) * flux_err
 
-    # Compute the pdf of beta_l
+    # Compute the pdf of `mu_l`
     ll = np.zeros(100)
-    beta = np.linspace(0.01, 100, len(ll))
+    mu_l_arr = np.linspace(0.0, 90.0, len(ll))
     for i in range(len(ll)):
-        params[3] = beta[i]
+        params[2] = mu_l_arr[i]
         ll[i] = lnlike(*params, t, flux, data_cov)
 
-    # A very simple test
-    assert np.abs(beta[np.argmax(ll)] - 30.0) < 5.0
+    # A *very* simple test
+    assert np.abs(mu_l_arr[np.nanargmax(ll)] - mu_l) < 10.0

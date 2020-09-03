@@ -13,6 +13,7 @@
 #include <exception>
 #include <iomanip>
 #include <iostream>
+#include <math.h>
 #include <stdlib.h>
 #include <vector>
 

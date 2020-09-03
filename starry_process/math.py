@@ -1,22 +1,26 @@
 import theano.tensor as tt
 from theano.tensor import slinalg, nlinalg
+from theano.ifelse import ifelse
+import numpy as np
 
 # Force double precision in Theano
 tt.config.floatX = "float64"
 tt.config.cast_policy = "numpy+floatX"
 
 
-# Theano Cholesky solve
-_solve_lower = slinalg.Solve(A_structure="lower_triangular", lower=True)
-_solve_upper = slinalg.Solve(A_structure="upper_triangular", lower=False)
-
-
 def cho_solve(cho_A, b):
-    return _solve_upper(tt.transpose(cho_A), _solve_lower(cho_A, b))
+    solve_lower = slinalg.Solve(A_structure="lower_triangular", lower=True)
+    solve_upper = slinalg.Solve(A_structure="upper_triangular", lower=False)
+    return ifelse(
+        tt.any(tt.isnan(cho_A)),
+        tt.ones_like(b),
+        solve_upper(tt.transpose(cho_A), solve_lower(cho_A, b)),
+    )
 
 
 def cho_factor(A):
-    return slinalg.cholesky(A)
+    cholesky = slinalg.Cholesky(on_error="nan")
+    return ifelse(tt.any(tt.isnan(A)), tt.ones_like(A) * np.nan, cholesky(A))
 
 
 def cast(*args):

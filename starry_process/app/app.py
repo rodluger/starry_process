@@ -62,20 +62,23 @@ class Samples(object):
         self.A_I = get_intensity_design_matrix(ydeg, npix)
         self.A_F = get_flux_design_matrix(ydeg, npts)
 
-        # The GP
-        self.gp = StarryProcess(ydeg)
+        # Compile the GP
+        mu_s = tt.dscalar()
+        sigma_s = tt.dscalar()
+        mu_l = tt.dscalar()
+        sigma_l = tt.dscalar()
+        mu_c = tt.dscalar()
+        sigma_c = tt.dscalar()
+        self.gp = StarryProcess(
+            ydeg,
+            mu_s=mu_s,
+            sigma_s=sigma_s,
+            mu_l=mu_l,
+            sigma_l=sigma_l,
+            mu_c=mu_c,
+            sigma_c=sigma_c,
+        )
         self.gp.random.seed(238)
-
-        # Compile the function
-        size_alpha = tt.dscalar()
-        size_beta = tt.dscalar()
-        latitude_alpha = tt.dscalar()
-        latitude_beta = tt.dscalar()
-        contrast_mu = tt.dscalar()
-        contrast_sigma = tt.dscalar()
-        self.gp.size.set_params(size_alpha, size_beta)
-        self.gp.latitude.set_params(latitude_alpha, latitude_beta)
-        self.gp.contrast.set_params(contrast_mu, contrast_sigma)
 
         print("Compiling...")
         if debug:
@@ -84,14 +87,7 @@ class Samples(object):
             ]
         else:
             self.sample_ylm = theano.function(
-                [
-                    size_alpha,
-                    size_beta,
-                    latitude_alpha,
-                    latitude_beta,
-                    contrast_mu,
-                    contrast_sigma,
-                ],
+                [mu_s, sigma_s, mu_l, sigma_l, mu_c, sigma_c,],
                 [self.gp.sample_ylm(self.nmaps)],
                 no_default_updates=True,
             )
@@ -99,13 +95,10 @@ class Samples(object):
 
         # Draw three samples from the default distr
         self.ylm = self.sample_ylm(
-            *self.gp.size.transform.transform_params(
-                params["size"]["mu"]["value"], params["size"]["sigma"]["value"]
-            ),
-            *self.gp.latitude.transform.transform_params(
-                params["latitude"]["mu"]["value"],
-                params["latitude"]["sigma"]["value"],
-            ),
+            params["size"]["mu"]["value"],
+            params["size"]["sigma"]["value"],
+            params["latitude"]["mu"]["value"],
+            params["latitude"]["sigma"]["value"],
             params["contrast"]["mu"]["value"],
             params["contrast"]["sigma"]["value"],
         )[0]
@@ -308,13 +301,10 @@ class Samples(object):
 
             # Draw the samples
             self.ylm = self.sample_ylm(
-                *self.gp.size.transform.transform_params(
-                    self.Size.slider_mu.value, self.Size.slider_sigma.value
-                ),
-                *self.gp.latitude.transform.transform_params(
-                    self.Latitude.slider_mu.value,
-                    self.Latitude.slider_sigma.value,
-                ),
+                self.Size.slider_mu.value,
+                self.Size.slider_sigma.value,
+                self.Latitude.slider_mu.value,
+                self.Latitude.slider_sigma.value,
                 self.Contrast.slider_mu.value,
                 self.Contrast.slider_sigma.value,
             )[0]
@@ -517,7 +507,7 @@ class Distribution(object):
 
 
 class Application(object):
-    def __init__(self, doc, ydeg=15, npix=100, npts=300, debug=True):
+    def __init__(self, doc, ydeg=15, npix=100, npts=300, debug=False):
 
         self.ydeg = ydeg
         self.npix = npix

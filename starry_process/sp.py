@@ -97,4 +97,6 @@ class StarryProcess(object):
         lnlike = -0.5 * tt.dot(tt.transpose(r), cho_solve(cho_gp_cov, r))
         lnlike -= tt.sum(tt.log(tt.diag(cho_gp_cov)))
         lnlike -= 0.5 * K * tt.log(2 * np.pi)
-        return lnlike[0, 0]
+
+        # NANs --> -inf
+        return ifelse(tt.isnan(lnlike[0, 0]), -np.inf, lnlike[0, 0])
