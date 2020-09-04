@@ -47,14 +47,26 @@ class BicubicSpline(object):
         assert f.ndim == 2
 
         # Add padding
-        self.x = np.concatenate(([-np.inf, -np.inf, 2 * x[0] - x[1]], x, [2 * x[-1] - x[-2], np.inf, np.inf]))
-        self.y = np.concatenate(([-np.inf, -np.inf, 2 * y[0] - y[1]], y, [2 * y[-1] - y[-2], np.inf, np.inf]))
+        self.x = np.concatenate(
+            (
+                [-np.inf, -np.inf, 2 * x[0] - x[1]],
+                x,
+                [2 * x[-1] - x[-2], np.inf, np.inf],
+            )
+        )
+        self.y = np.concatenate(
+            (
+                [-np.inf, -np.inf, 2 * y[0] - y[1]],
+                y,
+                [2 * y[-1] - y[-2], np.inf, np.inf],
+            )
+        )
         self.f = np.pad(f, 3, "edge")
 
         # Tensor versions
-        self.x_tensor = cast(x)
-        self.y_tensor = cast(y)
-        self.f_tensor = cast(f)
+        self.x_tensor = cast(self.x)
+        self.y_tensor = cast(self.y)
+        self.f_tensor = cast(self.f)
 
     def __call__(self, x, y):
 

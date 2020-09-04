@@ -54,6 +54,6 @@ class SizeIntegral(MomentIntegral):
 
     def _log_jac(self):
         if self._compute_jac:
-            return self.transform.log_jac(self.alpha_l, self.beta_l)
+            return self.transform.log_jac(self.alpha_s, self.beta_s)
         else:
             return cast(0.0)
