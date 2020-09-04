@@ -28,14 +28,14 @@ class SizeIntegral(MomentIntegral):
             # No params provided: use defaults
             mu_s = defaults["mu_s"]
             sigma_s = defaults["sigma_s"]
-            alpha_s, beta_s = self.transform.transform_params(mu_s, sigma_s)
+            alpha_s, beta_s = self.transform.transform(mu_s, sigma_s)
             self._compute_jac = False
         elif all([p is not None for p in p1]):
             # User provided `alpha` and `beta`
             self._compute_jac = True
         elif all([p is not None for p in p2]):
             # User provided `mu` and `sigma`
-            alpha_s, beta_s = self.transform.transform_params(mu_s, sigma_s)
+            alpha_s, beta_s = self.transform.transform(mu_s, sigma_s)
             self._compute_jac = False
         else:
             raise ValueError("invalid parameter combination")
@@ -54,9 +54,6 @@ class SizeIntegral(MomentIntegral):
 
     def _log_jac(self):
         if self._compute_jac:
-            dmda, dmdb, dsda, dsdb = self.transform.partials(
-                self.alpha_s, self.beta_s
-            )
-            return tt.log(tt.abs_(dmda * dsdb - dmdb * dsda))
+            return self.transform.log_jac(self.alpha_l, self.beta_l)
         else:
             return cast(0.0)

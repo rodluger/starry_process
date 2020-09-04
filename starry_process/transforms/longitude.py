@@ -13,5 +13,5 @@ class LongitudeTransform(IdentityTransform):
     def sample(self, nsamples=1):
         return 360.0 * np.random.random(size=nsamples)
 
-    def transform_params(self):
+    def transform(self):
         return

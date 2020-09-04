@@ -27,7 +27,7 @@ class ContrastTransform(IdentityTransform):
         xi = 1 - b
         return xi
 
-    def transform_params(self, mu, sigma):
+    def transform(self, mu, sigma):
         # Bounds checks
         mu = np.array(mu)
         sigma = np.array(sigma)

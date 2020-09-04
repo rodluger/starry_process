@@ -24,14 +24,14 @@ class LatitudeIntegral(WignerIntegral):
             # No params provided: use defaults
             mu_l = defaults["mu_l"]
             sigma_l = defaults["sigma_l"]
-            alpha_l, beta_l = self.transform.transform_params(mu_l, sigma_l)
+            alpha_l, beta_l = self.transform.transform(mu_l, sigma_l)
             self._compute_jac = False
         elif all([p is not None for p in p1]):
             # User provided `alpha` and `beta`
             self._compute_jac = True
         elif all([p is not None for p in p2]):
             # User provided `mu` and `sigma`
-            alpha_l, beta_l = self.transform.transform_params(mu_l, sigma_l)
+            alpha_l, beta_l = self.transform.transform(mu_l, sigma_l)
             self._compute_jac = False
         else:
             raise ValueError("invalid parameter combination")
@@ -43,9 +43,6 @@ class LatitudeIntegral(WignerIntegral):
 
     def _log_jac(self):
         if self._compute_jac:
-            dmda, dmdb, dsda, dsdb = self.transform.partials(
-                self.alpha_l, self.beta_l
-            )
-            return tt.log(tt.abs_(dmda * dsdb - dmdb * dsda))
+            return self.transform.log_jac(self.alpha_l, self.beta_l)
         else:
             return cast(0.0)

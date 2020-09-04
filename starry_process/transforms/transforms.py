@@ -47,24 +47,14 @@ class BicubicSpline(object):
         assert f.ndim == 2
 
         # Add padding
-        self.x = np.concatenate(([-np.inf, -np.inf], x, [np.inf, np.inf]))
-        self.y = np.concatenate(([-np.inf, -np.inf], y, [np.inf, np.inf]))
-        self.f = np.pad(f, 2, "edge")
+        self.x = np.concatenate(([-np.inf, -np.inf, 2 * x[0] - x[1]], x, [2 * x[-1] - x[-2], np.inf, np.inf]))
+        self.y = np.concatenate(([-np.inf, -np.inf, 2 * y[0] - y[1]], y, [2 * y[-1] - y[-2], np.inf, np.inf]))
+        self.f = np.pad(f, 3, "edge")
 
         # Tensor versions
         self.x_tensor = cast(x)
         self.y_tensor = cast(y)
         self.f_tensor = cast(f)
-
-        # Check spacing
-        self.dx = x[1] - x[0]
-        self.dy = y[1] - y[0]
-        assert np.allclose(
-            np.diff(x), self.dx
-        ), "x array must be uniformly spaced"
-        assert np.allclose(
-            np.diff(y), self.dy
-        ), "y array must be uniformly spaced"
 
     def __call__(self, x, y):
 
@@ -83,6 +73,10 @@ class BicubicSpline(object):
         # Grid vertex just *below* (x, y)
         xi = math.argmin(x > xarr) - 1
         yi = math.argmin(y > yarr) - 1
+
+        # Normalized distance to grid points
+        dx = (x - xarr[xi]) / (xarr[xi + 1] - xarr[xi])
+        dy = (y - yarr[yi]) / (yarr[yi + 1] - yarr[yi])
 
         # Function value and derivs at each vertex
         deriv = [
@@ -136,14 +130,15 @@ class BicubicSpline(object):
         for j in range(4):
             result += dypow * (
                 coeff[ijkn]
-                + self.dx
+                + dx
                 * (
                     coeff[ijkn + 1]
-                    + self.dx * (coeff[ijkn + 2] + self.dx * coeff[ijkn + 3])
+                    + dx * (coeff[ijkn + 2] + dx * coeff[ijkn + 3])
                 )
             )
             ijkn += 4
-            dypow *= self.dy
+            dypow *= dy
+
         return result
 
 
@@ -157,12 +152,12 @@ class Transform(object):
     def sample(self, *args, **kwargs):
         raise NotImplementedError("Must be subclassed.")
 
-    def transform_params(self, *args, **kwargs):
+    def transform(self, *args, **kwargs):
         raise NotImplementedError("Must be subclassed.")
 
 
 class IdentityTransform(Transform):
-    def transform_params(self, *args):
+    def transform(self, *args):
         return args
 
 
@@ -214,10 +209,7 @@ class BetaTransform(Transform):
             "_y2p",
             "_lnalpha",
             "_lnbeta",
-            "_dmudlnalpha",
-            "_dmudlnbeta",
-            "_dsigmadlnalpha",
-            "_dsigmadlnbeta",
+            "_logjac_arr",
         ] + list(sorted(self._extra_arrays.keys()))
 
     def _save(self):
@@ -248,17 +240,8 @@ class BetaTransform(Transform):
             self._sigma_max_func = interp1d(
                 self._xp, self._y2p, kind="cubic", fill_value="extrapolate"
             )
-            self._dmu_dlnalpha = BicubicSpline(
-                self._lnbeta, self._lnalpha, self._dmudlnalpha
-            )
-            self._dmu_dlnbeta = BicubicSpline(
-                self._lnbeta, self._lnalpha, self._dmudlnbeta
-            )
-            self._dsigma_dlnalpha = BicubicSpline(
-                self._lnbeta, self._lnalpha, self._dsigmadlnalpha
-            )
-            self._dsigma_dlnbeta = BicubicSpline(
-                self._lnbeta, self._lnalpha, self._dsigmadlnbeta
+            self._logjac_spline = BicubicSpline(
+                self._lnbeta, self._lnalpha, self._logjac_arr
             )
 
             return True
@@ -359,11 +342,15 @@ class BetaTransform(Transform):
 
         return res
 
-    def _get_mu_sigma(self, alpha, beta):
+    def inverse_transform(self, alpha, beta):
         """
-        Return the mu and sigma. dev given `alpha` and `beta`.
+        Return the mean and std. dev given `alpha` and `beta`.
         
         """
+        if is_tensor(alpha, beta):
+            raise NotImplementedError(
+                "Inverse transform not implemented for tensor types."
+            )
         mu = self._get_moment(alpha, beta, 1)
         sigma = np.sqrt(self._get_moment(alpha, beta, 2) - mu ** 2)
         return mu, sigma
@@ -404,7 +391,7 @@ class BetaTransform(Transform):
         mu = np.empty_like(alpha)
         sigma = np.empty_like(alpha)
         for k in tqdm(range(len(alpha))):
-            mu[k], sigma[k] = self._get_mu_sigma(alpha[k], beta[k])
+            mu[k], sigma[k] = self.inverse_transform(alpha[k], beta[k])
 
         # Global max and min values for each
         self._mu_min, self._mu_max = (np.min(mu), np.max(mu))
@@ -449,7 +436,7 @@ class BetaTransform(Transform):
         self._mu_coeffs = np.linalg.solve(A.T @ A, A.T @ beta_mu)
         self._sigma_coeffs = np.linalg.solve(A.T @ A, A.T @ beta_sigma)
 
-        # Now compute the (logarithmic) derivatives
+        # Now compute the derivatives
         dmu = np.array(
             np.gradient(mu.reshape(self._mom_grid_res, self._mom_grid_res))
         )
@@ -462,72 +449,42 @@ class BetaTransform(Transform):
         dlnbeta = np.gradient(
             self._lnbeta.reshape(self._mom_grid_res, self._mom_grid_res)
         )[0]
-        self._dmudlnalpha = dmu[1] / dlnalpha
-        self._dmudlnbeta = dmu[0] / dlnbeta
-        self._dsigmadlnalpha = dsigma[1] / dlnalpha
-        self._dsigmadlnbeta = dsigma[0] / dlnbeta
+        alpha = np.exp(
+            self._lnalpha.reshape(self._mom_grid_res, self._mom_grid_res)
+        )
+        beta = np.exp(
+            self._lnbeta.reshape(self._mom_grid_res, self._mom_grid_res)
+        )
+        dmda = dmu[1] / dlnalpha / alpha
+        dmdb = dmu[0] / dlnbeta / beta
+        dsda = dsigma[1] / dlnalpha / alpha
+        dsdb = dsigma[0] / dlnbeta / beta
 
-        # Reshape everything
+        # Compute log abs det jac
+        self._logjac_arr = np.log(np.abs(dmda * dsdb - dmdb * dsda))
+
+        # Keep only the arrays
         self._lnbeta = self._lnbeta.reshape(
             self._mom_grid_res, self._mom_grid_res
         )[:, 0]
         self._lnalpha = self._lnalpha.reshape(
             self._mom_grid_res, self._mom_grid_res
         )[0]
-        self._dmudlnalpha = self._dmudlnalpha.reshape(
-            self._mom_grid_res, self._mom_grid_res
-        )
-        self._dmudlnbeta = self._dmudlnbeta.reshape(
-            self._mom_grid_res, self._mom_grid_res
-        )
-        self._dsigmadlnalpha = self._dsigmadlnalpha.reshape(
-            self._mom_grid_res, self._mom_grid_res
-        )
-        self._dsigmadlnbeta = self._dsigmadlnbeta.reshape(
-            self._mom_grid_res, self._mom_grid_res
+
+        # Compute the interpolant
+        self._logjac_spline = BicubicSpline(
+            self._lnbeta, self._lnalpha, self._logjac_arr
         )
 
-        # Fit a bicubic spline to each
-        self._dmu_dlnalpha = BicubicSpline(
-            self._lnbeta, self._lnalpha, self._dmudlnalpha
-        )
-        self._dmu_dlnbeta = BicubicSpline(
-            self._lnbeta, self._lnalpha, self._dmudlnbeta
-        )
-        self._dsigma_dlnalpha = BicubicSpline(
-            self._lnbeta, self._lnalpha, self._dsigmadlnalpha
-        )
-        self._dsigma_dlnbeta = BicubicSpline(
-            self._lnbeta, self._lnalpha, self._dsigmadlnbeta
-        )
-
-    def partials(self, alpha, beta):
+    def log_jac(self, alpha, beta):
         """
-        Returns the tuple of partial derivatives
+        Returns the log of the abs value of the determinant of the Jacobian
+        for this transformation.
 
-            (
-                dmu / dalpha,
-                dmu / dbeta,
-                dsigma / dalpha,
-                dsigma / dbeta
-            )
-
-        evaluated at `(alpha, beta)`.
         """
-        if is_tensor(alpha, beta):
-            lnalpha = tt.log(alpha)
-            lnbeta = tt.log(beta)
-        else:
-            lnalpha = np.log(alpha)
-            lnbeta = np.log(beta)
-        return (
-            self._dmu_dlnalpha(lnbeta, lnalpha) / alpha,
-            self._dmu_dlnbeta(lnbeta, lnalpha) / beta,
-            self._dsigma_dlnalpha(lnbeta, lnalpha) / alpha,
-            self._dsigma_dlnbeta(lnbeta, lnalpha) / beta,
-        )
+        return self._logjac_spline(np.log(beta), np.log(alpha))
 
-    def transform_params(self, mu, sigma):
+    def transform(self, mu, sigma):
         """
         Return the `alpha` and `beta` parameters of the Beta distribution
         corresponding to a given `mu` and `sigma`.
@@ -535,7 +492,7 @@ class BetaTransform(Transform):
         """
         # Theano-friendly implementation of this function
         if is_tensor(mu, sigma):
-            return self._transform_params_tensor(mu, sigma)
+            return self._transform_tensor(mu, sigma)
 
         # Bounds checks
         mu = np.array(mu)
@@ -567,7 +524,7 @@ class BetaTransform(Transform):
         beta = beta_mu + (beta_mu / beta_var) * (1 - beta_mu) ** 2 - 1
         return alpha, beta
 
-    def _transform_params_tensor(self, mu, sigma):
+    def _transform_tensor(self, mu, sigma):
 
         # Bounds checks
         nan_if_bounds_error = ifelse(
@@ -630,7 +587,7 @@ class BetaTransform(Transform):
 
         # Transform to the standard params
         if alpha is None:
-            alpha, beta = self.transform_params(mu, sigma)
+            alpha, beta = self.transform(mu, sigma)
 
         # Easy!
         return self._jac(x) * Beta.pdf(self._f(x), alpha, beta)
@@ -650,7 +607,7 @@ class BetaTransform(Transform):
 
         # Transform to the standard params
         if alpha is None:
-            alpha, beta = self.transform_params(mu, sigma)
+            alpha, beta = self.transform(mu, sigma)
 
         # Sample
         x = Beta.rvs(alpha, beta, size=nsamples)
@@ -676,8 +633,8 @@ class BetaTransform(Transform):
                 try:
 
                     # Get the error on the mu and sigma dev
-                    val1, val2 = self._get_mu_sigma(
-                        *self.transform_params(mu[j], sigma[i])
+                    val1, val2 = self.inverse_transform(
+                        *self.transform(mu[j], sigma[i])
                     )
                     mu_error[i, j] = np.abs(val1 - mu[j]) / mu[j]
                     sigma_error[i, j] = np.abs(val2 - sigma[i]) / sigma[i]
