@@ -1,4 +1,5 @@
 from starry_process.flux import FluxDesignMatrix
+from starry_process.defaults import defaults
 import numpy as np
 import pytest
 
@@ -11,7 +12,7 @@ except:
 
 
 @pytest.mark.skipif(skip, reason="unable to import starry")
-def test_flux(ydeg=5, inc=60.0, period=1.0):
+def test_flux(ydeg=5, inc=defaults["inc"], period=defaults["inc"]):
 
     # Get the SP design matrix
     t = np.linspace(-1, 1, 50)

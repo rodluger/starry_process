@@ -63,20 +63,14 @@ class Samples(object):
         self.A_F = get_flux_design_matrix(ydeg, npts)
 
         # Compile the GP
-        mu_s = tt.dscalar()
-        sigma_s = tt.dscalar()
-        mu_l = tt.dscalar()
-        sigma_l = tt.dscalar()
-        mu_c = tt.dscalar()
-        sigma_c = tt.dscalar()
+        sa = tt.dscalar()
+        sb = tt.dscalar()
+        la = tt.dscalar()
+        lb = tt.dscalar()
+        ca = tt.dscalar()
+        cb = tt.dscalar()
         self.gp = StarryProcess(
-            ydeg,
-            mu_s=mu_s,
-            sigma_s=sigma_s,
-            mu_l=mu_l,
-            sigma_l=sigma_l,
-            mu_c=mu_c,
-            sigma_c=sigma_c,
+            ydeg, sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=cb,
         )
         self.gp.random.seed(238)
 
@@ -86,11 +80,22 @@ class Samples(object):
                 np.random.randn(self.nmaps, (ydeg + 1) ** 2)
             ]
         else:
-            self.sample_ylm = theano.function(
-                [mu_s, sigma_s, mu_l, sigma_l, mu_c, sigma_c,],
+            function = theano.function(
+                [sa, sb, la, lb, ca, cb,],
                 [self.gp.sample_ylm(self.nmaps)],
                 no_default_updates=True,
             )
+
+            def sample_ylm(mu_s, sigma_s, mu_l, sigma_l, mu_c, sigma_c):
+                sa, sb = self.gp.size.transform.transform(mu_s, sigma_s)
+                print(sa, sb)
+                la, lb = self.gp.latitude.transform.transform(mu_l, sigma_l)
+                ca = mu_c
+                cb = sigma_c
+                return function(sa, sb, la, lb, ca, cb)
+
+            self.sample_ylm = sample_ylm
+
         print("Done!")
 
         # Draw three samples from the default distr
@@ -213,18 +218,14 @@ class Samples(object):
             )
             for i in range(self.nmaps)
         ]
-        y_range = None
         for i in range(self.nmaps):
             self.flux_plot[i] = figure(
                 toolbar_location=None,
                 x_range=(0, 2),
-                y_range=y_range,
+                y_range=None,
                 min_border_left=50,
             )
-            y_range = self.flux_plot[0].y_range
-            if i > 0:
-                self.flux_plot[i].yaxis.visible = False
-            else:
+            if i == 0:
                 self.flux_plot[i].yaxis.axis_label = "flux [ppt]"
                 self.flux_plot[i].yaxis.axis_label_text_font_style = "normal"
             self.flux_plot[i].xaxis.axis_label = "rotational phase"

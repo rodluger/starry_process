@@ -9,11 +9,9 @@ class ContrastIntegral(MomentIntegral):
     def _precompute(self, **kwargs):
         self.transform = ContrastTransform(**kwargs)
 
-    def _set_params(
-        self, mu_c=defaults["mu_c"], sigma_c=defaults["sigma_c"], **kwargs
-    ):
-        self.mu_c = cast(mu_c)
-        self.sigma_c = cast(sigma_c)
+    def _set_params(self, ca=defaults["ca"], cb=defaults["cb"], **kwargs):
+        self.mu_c = cast(ca)
+        self.sigma_c = cast(cb)
         self.fac1 = self.mu_c
         self.fac2 = tt.sqrt(self.sigma_c ** 2 + self.mu_c ** 2)
 

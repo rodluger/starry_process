@@ -19,31 +19,16 @@ class SizeIntegral(MomentIntegral):
         )
         self._integral_op = SizeIntegralOp(self.ydeg, **kwargs)
 
-    def _set_params(
-        self, alpha_s=None, beta_s=None, mu_s=None, sigma_s=None, **kwargs
-    ):
-        p1 = [alpha_s, beta_s]
-        p2 = [mu_s, sigma_s]
-        if all([p is None for p in p1 + p2]):
-            # No params provided: use defaults
-            mu_s = defaults["mu_s"]
-            sigma_s = defaults["sigma_s"]
-            alpha_s, beta_s = self.transform.transform(mu_s, sigma_s)
-            self._compute_jac = False
-        elif all([p is not None for p in p1]):
-            # User provided `alpha` and `beta`
-            self._compute_jac = True
-        elif all([p is not None for p in p2]):
-            # User provided `mu` and `sigma`
-            alpha_s, beta_s = self.transform.transform(mu_s, sigma_s)
-            self._compute_jac = False
-        else:
-            raise ValueError("invalid parameter combination")
-        self.alpha_s = cast(alpha_s)
-        self.beta_s = cast(beta_s)
-        self.q, _, _, self.Q, _, _ = self._integral_op(
-            self.alpha_s, self.beta_s
-        )
+    def _set_params(self, sa=defaults["sa"], sb=defaults["sb"], **kwargs):
+        self.sa = sa
+        sa1 = self.transform._ln_alpha_min
+        sa2 = self.transform._ln_alpha_max
+        alpha_s = tt.exp(cast(sa1 + self.sa * (sa2 - sa1)))
+        self.sb = sb
+        sb1 = self.transform._ln_beta_min
+        sb2 = self.transform._ln_beta_max
+        beta_s = tt.exp(cast(sb1 + self.sb * (sb2 - sb1)))
+        self.q, _, _, self.Q, _, _ = self._integral_op(alpha_s, beta_s)
         self.eigQ = eigen(self.Q)
 
     def _first_moment(self, e=None):
@@ -53,7 +38,4 @@ class SizeIntegral(MomentIntegral):
         return self.eigQ
 
     def _log_jac(self):
-        if self._compute_jac:
-            return self.transform.log_jac(self.alpha_s, self.beta_s)
-        else:
-            return cast(0.0)
+        return self.transform.log_jac(self.sa, self.sb)

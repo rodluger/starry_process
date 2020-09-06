@@ -1,49 +1,27 @@
 from starry_process import StarryProcess
+from starry_process.defaults import defaults
 import numpy as np
 import theano.tensor as tt
 import theano
 import pymc3 as pm
 import exoplanet
+import matplotlib.pyplot as plt
 
 
 def get_functions():
     def _lnlike(
-        mu_s,
-        sigma_s,
-        mu_l,
-        sigma_l,
-        mu_c,
-        sigma_c,
-        period,
-        inc,
-        t,
-        flux,
-        data_cov,
+        sa, sb, la, lb, ca, cb, period, inc, t, flux, data_cov,
     ):
         gp = StarryProcess(
-            mu_s=mu_s,
-            sigma_s=sigma_s,
-            mu_c=mu_c,
-            sigma_c=sigma_c,
-            mu_l=mu_l,
-            sigma_l=sigma_l,
-            period=period,
-            inc=inc,
+            sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=cb, period=period, inc=inc,
         )
         return gp.log_likelihood(t, flux, data_cov)
 
     def _sample(
-        mu_s, sigma_s, mu_l, sigma_l, mu_c, sigma_c, period, inc, t,
+        sa, sb, la, lb, ca, cb, period, inc, t,
     ):
         gp = StarryProcess(
-            mu_s=mu_s,
-            sigma_s=sigma_s,
-            mu_c=mu_c,
-            sigma_c=sigma_c,
-            mu_l=mu_l,
-            sigma_l=sigma_l,
-            period=period,
-            inc=inc,
+            sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=cb, period=period, inc=inc,
         )
         gp.random.seed(42)
         return tt.reshape(gp.sample(t), (-1,))
@@ -61,29 +39,21 @@ def get_functions():
     return lnlike, sample
 
 
-def test_lnlike_array():
+def test_lnlike_array(plot=False):
 
     # Get the functions
     lnlike, sample = get_functions()
 
     # Generate a dataset
-    mu_s = 15.0
-    sigma_s = 5.0
-    mu_l = 10.0
-    sigma_l = 5.0
-    mu_c = 0.75
-    sigma_c = 0.1
-    period = 1.0
-    inc = 60.0
     params = [
-        mu_s,
-        sigma_s,
-        mu_l,
-        sigma_l,
-        mu_c,
-        sigma_c,
-        period,
-        inc,
+        defaults["sa"],
+        defaults["sb"],
+        defaults["la"],
+        defaults["lb"],
+        defaults["ca"],
+        defaults["cb"],
+        defaults["period"],
+        defaults["inc"],
     ]
     t = np.linspace(0, 3, 1000)
     flux = sample(*params, t)
@@ -92,12 +62,16 @@ def test_lnlike_array():
     np.random.seed(42)
     flux += np.random.randn(len(t)) * flux_err
 
-    # Compute the pdf of `mu_l`
+    # Compute the pdf of `lb`
     ll = np.zeros(100)
-    mu_l_arr = np.linspace(0.0, 90.0, len(ll))
+    lb_arr = np.linspace(0.0, 1.0, len(ll))
     for i in range(len(ll)):
-        params[2] = mu_l_arr[i]
+        params[3] = lb_arr[i]
         ll[i] = lnlike(*params, t, flux, data_cov)
 
+    if plot:
+        plt.plot(lb_arr, np.exp(ll - np.nanmax(ll)))
+        plt.show()
+
     # A *very* simple test
-    assert np.abs(mu_l_arr[np.nanargmax(ll)] - mu_l) < 10.0
+    assert np.abs(lb_arr[np.nanargmax(ll)] - defaults["lb"]) < 0.10

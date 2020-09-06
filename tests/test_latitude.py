@@ -1,6 +1,7 @@
 from starry_process.latitude import LatitudeIntegral
 from starry_process.ops import LatitudeIntegralOp
 from starry_process.wigner import R
+from starry_process.defaults import defaults
 import numpy as np
 from scipy.integrate import quad
 from scipy.stats import beta as Beta
@@ -10,7 +11,12 @@ from theano.configparser import change_flags
 
 
 def test_latitude(
-    ydeg=3, alpha_l=10.0, beta_l=30.0, rtol=1e-12, ftol=1e-10, **kwargs
+    ydeg=3,
+    la=defaults["la"],
+    lb=defaults["lb"],
+    rtol=1e-12,
+    ftol=1e-10,
+    **kwargs
 ):
 
     # Random input moment matrices
@@ -22,12 +28,18 @@ def test_latitude(
 
     # Get analytic integrals
     print("Computing moments analytically...")
-    I = LatitudeIntegral(ydeg=ydeg, alpha_l=alpha_l, beta_l=beta_l, **kwargs)
+    I = LatitudeIntegral(ydeg=ydeg, la=la, lb=lb, **kwargs)
     e = I._first_moment(s).eval()
     eigE = I._second_moment(eigS).eval()
     E = eigE @ eigE.T
 
     # Get the first moment by numerical integration
+    a1 = I.transform._ln_alpha_min
+    a2 = I.transform._ln_alpha_max
+    b1 = I.transform._ln_beta_min
+    b2 = I.transform._ln_beta_max
+    alpha_l = np.exp(la * (a2 - a1) + a1)
+    beta_l = np.exp(lb * (b2 - b1) + b1)
     e_num = np.zeros(N)
     print("Computing first moment numerically...")
     for n in tqdm(range(N)):
@@ -87,10 +99,23 @@ def test_latitude(
 
 
 def test_latitude_grad(
-    ydeg=3, alpha_l=10.0, beta_l=30.0, abs_tol=1e-5, rel_tol=1e-5, eps=1e-7
+    ydeg=3,
+    la=defaults["la"],
+    lb=defaults["lb"],
+    abs_tol=1e-5,
+    rel_tol=1e-5,
+    eps=1e-7,
 ):
     with change_flags(compute_test_value="off"):
         op = LatitudeIntegralOp(ydeg)
+
+        # Get Beta params
+        a1 = -5
+        a2 = 5
+        b1 = -5
+        b2 = 5
+        alpha_l = np.exp(la * (a2 - a1) + a1)
+        beta_l = np.exp(lb * (b2 - b1) + b1)
 
         # d/dq
         verify_grad(

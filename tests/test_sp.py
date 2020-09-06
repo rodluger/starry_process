@@ -1,37 +1,24 @@
 from starry_process.sp import StarryProcess
 from starry_process.wigner import R
+from starry_process.defaults import defaults
 import numpy as np
 from tqdm import tqdm
 from scipy.stats import beta as Beta
 from scipy.stats import lognorm as LogNormal
 
 
-def test_moments(rtol=1e-4, ftol=2e-2):
+def test_moments(rtol=5e-3, ftol=1e-2):
 
     # Settings
     ydeg = 15
     ydeg_num = 5
     atol = 1e-4
-    alpha_s = 1.0
-    beta_s = 50.0
-    mu_c = 0.5
-    sigma_c = 0.1
-    alpha_l = 10.0
-    beta_l = 30.0
     np.random.seed(0)
     nsamples = int(1e5)
 
     # Integrate analytically
     print("Computing moments analytically...")
-    gp = StarryProcess(
-        ydeg,
-        alpha_s=alpha_s,
-        beta_s=beta_s,
-        mu_c=mu_c,
-        sigma_c=sigma_c,
-        alpha_l=alpha_l,
-        beta_l=beta_l,
-    )
+    gp = StarryProcess(ydeg, **defaults)
     mu = gp.mean_ylm().eval()
     cov = gp.cov_ylm().eval()
 
@@ -40,11 +27,13 @@ def test_moments(rtol=1e-4, ftol=2e-2):
 
     # Draw the size, contrast, latitude, and amplitude
     hwhm = gp.size.transform.sample(
-        alpha=alpha_s, beta=beta_s, nsamples=nsamples
+        a=defaults["sa"], b=defaults["sb"], nsamples=nsamples
     )
-    xi = gp.contrast.transform.sample(mu_c, sigma_c, nsamples=nsamples)
+    xi = gp.contrast.transform.sample(
+        defaults["ca"], defaults["cb"], nsamples=nsamples
+    )
     phi = gp.latitude.transform.sample(
-        alpha=alpha_l, beta=beta_l, nsamples=nsamples
+        a=defaults["la"], b=defaults["lb"], nsamples=nsamples
     )
     lam = gp.longitude.transform.sample(nsamples=nsamples)
 
@@ -87,8 +76,8 @@ def test_moments(rtol=1e-4, ftol=2e-2):
     cov_num = np.cov(y.T)
 
     # Avoid div by zero in the comparison
-    nonzero_i = np.abs(mu[:N]) > 1e-15
-    nonzero_ij = np.abs(cov[:N, :N]) > 1e-15
+    nonzero_i = np.abs(mu[:N]) > 1e-4
+    nonzero_ij = np.abs(cov[:N, :N]) > 1e-4
 
     # Compare
     assert np.max(np.abs(mu[:N] - mu_num)) < rtol, "error in mean"
@@ -106,26 +95,8 @@ def test_sample():
 
     # Settings
     ydeg = 15
-    alpha_s = 1.0
-    beta_s = 50.0
-    alpha_l = 10.0
-    beta_l = 30.0
-    mu_c = 0.5
-    sigma_c = 0.1
     t = np.linspace(0, 1, 500)
-    period = 0.5
-    inc = 60.0
 
     # Compute
-    gp = StarryProcess(
-        ydeg,
-        alpha_s=alpha_s,
-        beta_s=beta_s,
-        mu_c=mu_c,
-        sigma_c=sigma_c,
-        alpha_l=alpha_l,
-        beta_l=beta_l,
-        period=period,
-        inc=inc,
-    )
+    gp = StarryProcess(ydeg, **defaults)
     fluxes = gp.sample(t=t, nsamples=10).eval()

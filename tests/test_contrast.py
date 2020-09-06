@@ -1,9 +1,11 @@
 from starry_process.contrast import ContrastIntegral
 import numpy as np
 from scipy.integrate import quad
+from starry_process.defaults import defaults
 
 
-def pdf(xi, mu, sigma):
+def pdf(xi, ca, cb):
+    mu, sigma = ca, cb
     p = sigma ** 2
     q = (1 - mu) ** 2
     mu_b = np.log(q / np.sqrt(q + p))
@@ -16,11 +18,13 @@ def pdf(xi, mu, sigma):
     )
 
 
-def test_contrast(ydeg=5, mu_c=0.75, sigma_c=0.1, rtol=1e-12, ftol=1e-12):
+def test_contrast(
+    ydeg=5, ca=defaults["ca"], cb=defaults["cb"], rtol=1e-12, ftol=1e-12
+):
 
     # Get analytic integrals
     print("Computing moments analytically...")
-    I = ContrastIntegral(ydeg=ydeg, mu_c=mu_c, sigma_c=sigma_c)
+    I = ContrastIntegral(ydeg=ydeg, ca=ca, cb=cb)
     e = I.fac1.eval()
     sqrtE = I.fac2.eval()
     E = sqrtE ** 2
@@ -29,7 +33,7 @@ def test_contrast(ydeg=5, mu_c=0.75, sigma_c=0.1, rtol=1e-12, ftol=1e-12):
     print("Computing first moment numerically...")
 
     def func(xi):
-        return xi * pdf(xi, mu_c, sigma_c)
+        return xi * pdf(xi, ca, cb)
 
     e_num = quad(func, -np.inf, 1)[0]
 
@@ -37,7 +41,7 @@ def test_contrast(ydeg=5, mu_c=0.75, sigma_c=0.1, rtol=1e-12, ftol=1e-12):
     print("Computing second moment numerically...")
 
     def func(xi):
-        return xi ** 2 * pdf(xi, mu_c, sigma_c)
+        return xi ** 2 * pdf(xi, ca, cb)
 
     E_num = quad(func, -np.inf, 1)[0]
 

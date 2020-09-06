@@ -354,15 +354,21 @@ class BetaTransform(Transform):
 
         return res
 
-    def inverse_transform(self, alpha, beta):
+    def inverse_transform(self, a, b):
         """
-        Return the mean and std. dev given `alpha` and `beta`.
+        Return the mean and std. dev given `a` and `b`.
         
         """
-        if is_tensor(alpha, beta):
+        if is_tensor(a, b):
             raise NotImplementedError(
                 "Inverse transform not implemented for tensor types."
             )
+        a1 = self._ln_alpha_min
+        a2 = self._ln_alpha_max
+        b1 = self._ln_beta_min
+        b2 = self._ln_beta_max
+        alpha = np.exp(a * (a2 - a1) + a1)
+        beta = np.exp(b * (b2 - b1) + b1)
         mu = self._get_moment(alpha, beta, 1)
         sigma = np.sqrt(self._get_moment(alpha, beta, 2) - mu ** 2)
         return mu, sigma
@@ -488,17 +494,29 @@ class BetaTransform(Transform):
             self._lnbeta, self._lnalpha, self._logjac_arr
         )
 
-    def log_jac(self, alpha, beta):
+    def log_jac(self, a, b):
         """
         Returns the log of the abs value of the determinant of the Jacobian
         for this transformation.
 
         """
-        return self._logjac_spline(np.log(beta), np.log(alpha))
+        # Jacobian for (a, b) <--> (alpha, beta) transform
+        a1 = self._ln_alpha_min
+        a2 = self._ln_alpha_max
+        b1 = self._ln_beta_min
+        b2 = self._ln_beta_max
+        log_alpha = a * (a2 - a1) + a1
+        log_beta = b * (b2 - b1) + b1
+        log_jac = np.log(a2 - a1) + log_alpha + np.log(b2 - b1) + log_beta
+
+        # Jacobian for (alpha, beta) <--> (mu, sigma) transform
+        log_jac += self._logjac_spline(log_beta, log_alpha)
+
+        return log_jac
 
     def transform(self, mu, sigma):
         """
-        Return the `alpha` and `beta` parameters of the Beta distribution
+        Return the `a` and `b` (scaled) parameters of the Beta distribution
         corresponding to a given `mu` and `sigma`.
         
         """
@@ -531,10 +549,18 @@ class BetaTransform(Transform):
         beta_mu = (A @ self._mu_coeffs).reshape(mu.shape)
         beta_var = ((A @ self._sigma_coeffs).reshape(sigma.shape)) ** 2
 
-        # Convert to standard params
+        # Convert to standard params of the Beta distribution
         alpha = (beta_mu / beta_var) * ((1 - beta_mu) * beta_mu - beta_var)
         beta = beta_mu + (beta_mu / beta_var) * (1 - beta_mu) ** 2 - 1
-        return alpha, beta
+
+        # Scale them to the [0, 1] range
+        a1 = self._ln_alpha_min
+        a2 = self._ln_alpha_max
+        a = (np.log(alpha) - a1) / (a2 - a1)
+        b1 = self._ln_beta_min
+        b2 = self._ln_beta_max
+        b = (np.log(beta) - b1) / (b2 - b1)
+        return a, b
 
     def _transform_tensor(self, mu, sigma):
 
@@ -578,129 +604,71 @@ class BetaTransform(Transform):
         alpha = (beta_mu / beta_var) * ((1 - beta_mu) * beta_mu - beta_var)
         beta = beta_mu + (beta_mu / beta_var) * (1 - beta_mu) ** 2 - 1
 
+        # Scale them to the [0, 1] range
+        a1 = self._ln_alpha_min
+        a2 = self._ln_alpha_max
+        a = (tt.log(alpha) - a1) / (a2 - a1)
+        b1 = self._ln_beta_min
+        b2 = self._ln_beta_max
+        b = (tt.log(beta) - b1) / (b2 - b1)
+
         # Make NAN if bounds error
-        alpha += nan_if_bounds_error
-        beta += nan_if_bounds_error
+        a += nan_if_bounds_error
+        b += nan_if_bounds_error
 
-        return alpha, beta
+        return a, b
 
-    def pdf(self, x, mu=None, sigma=None, alpha=None, beta=None):
+    def pdf(self, x, mu=None, sigma=None, a=None, b=None):
         """
         Return the probability density function evaluated at `x`.
         
         """
         assert ((mu is not None) and (sigma is not None)) or (
-            (alpha is not None) and (beta is not None)
-        ), "must provide either `mu` and `sigma` or `alpha` and `beta`"
+            (a is not None) and (b is not None)
+        ), "must provide either `mu` and `sigma` or `a` and `b`"
 
         assert not (
-            (mu is not None) and (alpha is not None)
-        ), "cannot provide both `mu, sigma` and `alpha, beta`."
+            (mu is not None) and (a is not None)
+        ), "cannot provide both `mu, sigma` and `a, b`."
 
         # Transform to the standard params
-        if alpha is None:
-            alpha, beta = self.transform(mu, sigma)
+        if a is None:
+            a, b = self.transform(mu, sigma)
+
+        a1 = self._ln_alpha_min
+        a2 = self._ln_alpha_max
+        b1 = self._ln_beta_min
+        b2 = self._ln_beta_max
+        alpha = np.exp(a * (a2 - a1) + a1)
+        beta = np.exp(b * (b2 - b1) + b1)
 
         # Easy!
         return self._jac(x) * Beta.pdf(self._f(x), alpha, beta)
 
-    def sample(self, mu=None, sigma=None, alpha=None, beta=None, nsamples=1):
+    def sample(self, mu=None, sigma=None, a=None, b=None, nsamples=1):
         """
         Draw samples from the distribution.
         
         """
         assert ((mu is not None) and (sigma is not None)) or (
-            (alpha is not None) and (beta is not None)
-        ), "must provide either `mu` and `sigma` or `alpha` and `beta`"
+            (a is not None) and (b is not None)
+        ), "must provide either `mu` and `sigma` or `a` and `b`"
 
         assert not (
-            (mu is not None) and (alpha is not None)
-        ), "cannot provide both `mu, sigma` and `alpha, beta`."
+            (mu is not None) and (a is not None)
+        ), "cannot provide both `mu, sigma` and `a, b`."
 
         # Transform to the standard params
-        if alpha is None:
-            alpha, beta = self.transform(mu, sigma)
+        if a is None:
+            a, b = self.transform(mu, sigma)
+
+        a1 = self._ln_alpha_min
+        a2 = self._ln_alpha_max
+        b1 = self._ln_beta_min
+        b2 = self._ln_beta_max
+        alpha = np.exp(a * (a2 - a1) + a1)
+        beta = np.exp(b * (b2 - b1) + b1)
 
         # Sample
         x = Beta.rvs(alpha, beta, size=nsamples)
         return self._finv(x)
-
-    def get_transform_error(self, res=100, plot=True):
-        """
-        Compute (and optionally plot) the empirical error in the transform
-        between `alpha` and `beta` and the mean and standard deviation
-        on a grid of resolution `res`.
-
-        """
-        # Compute the errors on a grid
-        sigma = np.linspace(self._sigma_min, self._sigma_max, res)
-        mu = np.linspace(self._mu_min, self._mu_max, res)
-        mu_error = np.zeros((res, res))
-        sigma_error = np.zeros((res, res))
-
-        # Loop
-        for i in tqdm(range(res)):
-            for j in range(res):
-
-                try:
-
-                    # Get the error on the mu and sigma dev
-                    val1, val2 = self.inverse_transform(
-                        *self.transform(mu[j], sigma[i])
-                    )
-                    mu_error[i, j] = np.abs(val1 - mu[j]) / mu[j]
-                    sigma_error[i, j] = np.abs(val2 - sigma[i]) / sigma[i]
-
-                except AssertionError:
-
-                    # We are out of bounds; not a problem
-                    mu_error[i, j] = np.nan
-                    sigma_error[i, j] = np.nan
-
-        if plot:
-
-            # Plot the results
-            fig, ax = plt.subplots(
-                1, 2, figsize=(12, 5), sharex=True, sharey=True
-            )
-            extent = (
-                self._mu_min,
-                self._mu_max,
-                self._sigma_min,
-                self._sigma_max,
-            )
-            im = ax[0].imshow(
-                mu_error, origin="lower", extent=extent, aspect="auto"
-            )
-            plt.colorbar(im, ax=ax[0])
-            im = ax[1].imshow(
-                sigma_error, origin="lower", extent=extent, aspect="auto"
-            )
-            plt.colorbar(im, ax=ax[1])
-
-            # Plot the empirical data boundary
-            x = np.linspace(self._mu_min, self._mu_max, 100)
-            for axis in ax:
-                axis.plot(x, self._sigma_min_func(x), color="k")
-                axis.plot(x, self._sigma_max_func(x), color="k")
-                axis.fill_between(
-                    x, self._sigma_max_func(x), self._sigma_max, color="w"
-                )
-                axis.fill_between(
-                    x, self._sigma_min, self._sigma_min_func(x), color="w"
-                )
-
-            # Appearance
-            ax[0].set_title("mu error")
-            ax[1].set_title("sigma error")
-            ax[0].set_xlim(self._mu_min, self._mu_max)
-            ax[0].set_ylim(self._sigma_min, self._sigma_max)
-            ax[0].set_xlabel("mu")
-            ax[1].set_xlabel("mu")
-            ax[0].set_ylabel("sigma")
-
-            return mu, mu_error, sigma, sigma_error, fig, ax
-
-        else:
-
-            return mu, mu_error, sigma, sigma_error

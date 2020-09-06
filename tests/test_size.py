@@ -1,5 +1,6 @@
 from starry_process.size import SizeIntegral
 from starry_process.ops.size import SizeIntegralOp
+from starry_process.defaults import defaults
 import numpy as np
 from scipy.stats import beta as Beta
 from scipy.integrate import quad
@@ -8,17 +9,18 @@ from theano.tests.unittest_tools import verify_grad
 from theano.configparser import change_flags
 
 
-# TODO: alpha = 10, beta = 20 is unstable for some reason!
-# Use kwarg `SP_COMPUTE_G_NUMERICALLY=1` to circumvent this
-
-
 def test_size(
-    ydeg=15, alpha_s=1.0, beta_s=50.0, rtol=1e-10, ftol=1e-7, **kwargs
+    ydeg=15,
+    sa=defaults["sa"],
+    sb=defaults["sb"],
+    rtol=1e-10,
+    ftol=1e-7,
+    **kwargs
 ):
 
     # Get analytic integral
     print("Computing moments analytically...")
-    I = SizeIntegral(ydeg=ydeg, alpha_s=alpha_s, beta_s=beta_s, **kwargs)
+    I = SizeIntegral(ydeg=ydeg, sa=sa, sb=sb, **kwargs)
     e = I._first_moment().eval()
     eigE = I._second_moment().eval()
     E = eigE @ eigE.T
@@ -38,6 +40,12 @@ def test_size(
     E = E[ij]
 
     # Get the first moment by numerical integration
+    a1 = I.transform._ln_alpha_min
+    a2 = I.transform._ln_alpha_max
+    b1 = I.transform._ln_beta_min
+    b2 = I.transform._ln_beta_max
+    alpha_s = np.exp(sa * (a2 - a1) + a1)
+    beta_s = np.exp(sb * (b2 - b1) + b1)
     e_num = np.zeros(ydeg + 1)
     print("Computing first moment numerically...")
     for l in tqdm(range(ydeg + 1)):
@@ -75,10 +83,23 @@ def test_size(
 
 
 def test_size_grad(
-    ydeg=15, alpha_s=1.0, beta_s=50.0, abs_tol=1e-5, rel_tol=1e-5, eps=1e-7
+    ydeg=15,
+    sa=defaults["sa"],
+    sb=defaults["sb"],
+    abs_tol=1e-5,
+    rel_tol=1e-5,
+    eps=1e-7,
 ):
     with change_flags(compute_test_value="off"):
         op = SizeIntegralOp(ydeg)
+
+        # Get Beta params
+        a1 = -5
+        a2 = 5
+        b1 = -5
+        b2 = 5
+        alpha_s = np.exp(sa * (a2 - a1) + a1)
+        beta_s = np.exp(sb * (b2 - b1) + b1)
 
         # d/dq
         verify_grad(
