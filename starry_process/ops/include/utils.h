@@ -23,6 +23,7 @@ namespace utils {
 //! Commonly used stuff
 using std::abs;
 using std::isinf;
+using std::isnan;
 using std::max;
 
 //! Eigen shorthand

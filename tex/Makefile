@@ -6,8 +6,8 @@ LATEX       = pdflatex -interaction=nonstopmode -halt-on-error
 SUFF        = pdf
 RM_TMP      = $(foreach d, ${TEX_FILES}, rm -rf $(foreach suff, ${TMP_SUFFS}, ${d}.${suff})) msNotes.bib
 CHECK_RERUN = grep Rerun ms.log
-FIGURES     = $(patsubst %.py,%.pdf,$(wildcard figures/*.py))
-TESTS       = $(patsubst %.py,%.tex,$(wildcard tests/test_*.py))
+FIGURES     = $(patsubst %.py,%.pdf,$(sort $(wildcard figures/*.py)))
+TESTS       = $(patsubst %.py,%.tex,$(sort $(wildcard tests/test_*.py)))
 TECTONIC    = $(shell command -v tectonic >/dev/null && echo true || echo false )
 
 default: ms.pdf
