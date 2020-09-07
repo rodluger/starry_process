@@ -34,6 +34,7 @@ setup(
             "pytest-env",
             "pymc3>=3.8",
             "exoplanet>=0.3.2",
+            "corner",
         ],
     },
     entry_points={
