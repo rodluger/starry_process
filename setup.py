@@ -36,7 +36,7 @@ setup(
             "exoplanet>=0.3.2",
             "corner",
         ],
-        "paper": ["tectonic"],
+        "paper": ["starry"],
     },
     entry_points={
         "console_scripts": ["starry-process=starry_process.app:main [app]"]
