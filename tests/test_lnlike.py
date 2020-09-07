@@ -75,3 +75,7 @@ def test_lnlike_array(plot=False):
 
     # A *very* simple test
     assert np.abs(lb_arr[np.nanargmax(ll)] - defaults["lb"]) < 0.10
+
+
+if __name__ == "__main__":
+    test_lnlike_array()

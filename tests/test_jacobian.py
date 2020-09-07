@@ -64,3 +64,7 @@ def test_latitude_jacobian(**kwargs):
 
 def test_size_jacobian(**kwargs):
     sample("size", **kwargs)
+
+
+if __name__ == "__main__":
+    test_latitude_jacobian()

@@ -74,7 +74,9 @@ def test_profile(ydeg=15, npts=1000):
     data_cov = tt.dscalar()
 
     # Compute the mean and covariance
-    gp = StarryProcess(**defaults)
+    gp = StarryProcess(
+        sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=cb, period=period, inc=inc
+    )
 
     # Compile the function
     log_likelihood = theano.function(
@@ -103,3 +105,7 @@ def test_profile(ydeg=15, npts=1000):
 
     # Log the summary
     print(log_likelihood.profile.summary())
+
+
+if __name__ == "__main__":
+    test_profile()

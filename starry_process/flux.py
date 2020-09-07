@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from .ops import RxOp, tensordotRzOp, rTA1Op
+from .ops import RxOp, tensordotRzOp, rTA1Op, CheckBoundsOp
 from .defaults import defaults
+from .math import cast
 import numpy as np
 import theano.tensor as tt
 
@@ -14,13 +15,17 @@ class FluxDesignMatrix(object):
         self._Rx = RxOp(ydeg, **kwargs)
         self._tensordotRz = tensordotRzOp(ydeg, **kwargs)
         self._rTA1 = rTA1Op(ydeg, **kwargs)()
+        self.check_bounds_period = CheckBoundsOp(
+            name="period", lower=0, upper=np.inf
+        )
+        self.check_bounds_inc = CheckBoundsOp(name="inc", lower=0, upper=90)
         self.set_params(**kwargs)
 
     def set_params(
         self, period=defaults["period"], inc=defaults["inc"], **kwargs
     ):
-        self._omega = 2 * np.pi / period
-        self._inc = inc * np.pi / 180
+        self._omega = cast(2 * np.pi / self.check_bounds_period(period))
+        self._inc = cast(self.check_bounds_inc(inc) * np.pi / 180)
 
     def _nwig(self, l):
         return ((l + 1) * (2 * l + 1) * (2 * l + 3)) // 3
