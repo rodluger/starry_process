@@ -6,6 +6,8 @@ import pytest
 try:
     import starry
 
+    starry.config.lazy = False
+
     skip = False
 except:
     skip = True
@@ -21,6 +23,6 @@ def test_flux(ydeg=5, inc=defaults["inc"], period=defaults["inc"]):
 
     # Compare to the starry design matrix
     theta = 360.0 / period * t
-    map = starry.Map(ydeg, lazy=False, inc=inc)
+    map = starry.Map(ydeg, inc=inc)
     A_starry = map.design_matrix(theta=theta)
     assert np.allclose(A, A_starry)
