@@ -29,6 +29,8 @@ setup(
     extras_require={
         "app": ["bokeh>=2.2.1"],
         "tests": [
+            "parameterized",
+            "nose",
             "pytest",
             "pytest-dependency",
             "pytest-env",
