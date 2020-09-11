@@ -50,6 +50,8 @@ jobs:
       cd $(Build.SourcesDirectory)/tex
       make
     displayName: 'Build the paper'
+    env:
+      ON_AZURE: 1
   
   - script: |
       cd $(Build.SourcesDirectory)

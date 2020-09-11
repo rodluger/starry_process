@@ -134,7 +134,7 @@ def test_grad(
 
 if __name__ == "__main__":
 
-    # DEBUG
+    # DEBUG: Check for smoothness
     np.random.seed(0)
     npts = 1000
     t = np.linspace(0, 1, npts)
