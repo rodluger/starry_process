@@ -1,11 +1,12 @@
-from .math import eigen
+from .math import matrix_sqrt
 import theano.tensor as tt
 from theano.ifelse import ifelse
 
 
 class MomentIntegral(object):
-    def __init__(self, ydeg, child=None, **kwargs):
+    def __init__(self, ydeg, child=None, driver="scipy", **kwargs):
         self.ydeg = ydeg
+        self.driver = driver
         if child is None:
 
             class NoChild(object):
@@ -57,7 +58,7 @@ class WignerIntegral(MomentIntegral):
         raise NotImplementedError("Must be subclassed.")
 
     def _compute_U(self):
-        self.U = eigen(self.Q, self.neig)
+        self.U = matrix_sqrt(self.Q, neig=self.neig, driver=self.driver)
 
     def _compute_t(self):
         self.t = [None for l in range(self.ydeg + 1)]
@@ -92,7 +93,11 @@ class WignerIntegral(MomentIntegral):
         # Sometimes it's useful to reduce the size of `sqrtC` by
         # finding the equivalent lower dimension representation
         # via eigendecomposition. This is not an approximation!
+        # TODO: Investigate the numerical stability of the gradient
+        # of this operation! Many of the eigenvalues are VERY small.
         sqrtC = ifelse(
-            sqrtC.shape[1] > self.N, eigen(tt.dot(sqrtC, sqrtC.T)), sqrtC,
+            sqrtC.shape[1] > self.N,
+            matrix_sqrt(tt.dot(sqrtC, sqrtC.T), driver=self.driver),
+            sqrtC,
         )
         return sqrtC

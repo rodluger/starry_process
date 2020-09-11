@@ -1,6 +1,6 @@
 from .integrals import MomentIntegral
 from .transforms import SizeTransform
-from .math import cast, eigen
+from .math import cast, matrix_sqrt
 from .ops import SizeIntegralOp, CheckBoundsOp
 from .defaults import defaults
 import theano.tensor as tt
@@ -31,7 +31,7 @@ class SizeIntegral(MomentIntegral):
         sb2 = self.transform._ln_beta_max
         beta_s = tt.exp(cast(sb1 + self.sb * (sb2 - sb1)))
         self.q, _, _, self.Q, _, _ = self._integral_op(alpha_s, beta_s)
-        self.eigQ = eigen(self.Q)
+        self.eigQ = matrix_sqrt(self.Q, driver=self.driver)
 
     def _first_moment(self, e=None):
         return self.q

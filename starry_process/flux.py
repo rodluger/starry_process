@@ -19,9 +19,9 @@ class FluxDesignMatrix(object):
             name="period", lower=0, upper=np.inf
         )
         self.check_bounds_inc = CheckBoundsOp(name="inc", lower=0, upper=90)
-        self.set_params(**kwargs)
+        self._set_params(**kwargs)
 
-    def set_params(
+    def _set_params(
         self, period=defaults["period"], inc=defaults["inc"], **kwargs
     ):
         self._omega = cast(2 * np.pi / self.check_bounds_period(period))
