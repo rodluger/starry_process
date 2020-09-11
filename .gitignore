@@ -19,6 +19,7 @@ docs/.build
 tex/tests/*.tex
 *.dat
 pip-wheel-metadata/
+starry_process/starry_process_version.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
