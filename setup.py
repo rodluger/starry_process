@@ -38,7 +38,10 @@ setup(
             "exoplanet>=0.3.2",
             "corner",
         ],
-        "paper": ["starry"],
+        "paper": [
+            "starry@git+https://github.com/rodluger/starry@master",
+            "healpy",
+        ],
     },
     entry_points={
         "console_scripts": ["starry-process=starry_process.app:main [app]"]
