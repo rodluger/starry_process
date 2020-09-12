@@ -63,7 +63,7 @@ def _func(res, theta):
     xyz = map.ops.compute_moll_grid(res)[-1]
     pT = map.ops.pT(xyz[0], xyz[1], xyz[2])
     Ry = tt.transpose(tt.tile(map.y, [theta.shape[0], 1]))
-    A1Ry = ts.dot(map.ops.A1, Ry)
+    A1Ry = tt.dot(ts.dense_from_sparse(map.ops.A1), Ry)
     res = tt.dot(pT, A1Ry)
     return res
 
