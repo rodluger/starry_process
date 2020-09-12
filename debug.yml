@@ -3,6 +3,9 @@ jobs:
   timeoutInMinutes: 90
   pool:
     vmImage: Ubuntu-16.04
+  variables:
+    CC: gcc-7
+    CXX: g++-7
   steps:
   
   - script: |
