@@ -74,7 +74,7 @@ def _func(res, theta):
     pT = map.ops.pT(xyz[0], xyz[1], xyz[2])
     Ry = tt.transpose(tt.tile(map.y, [theta.shape[0], 1]))
     A1Ry = ts.dot(map.ops.A1, Ry)
-    res = tt.reshape(tt.dot(pT, A1Ry), [res, res, -1])
+    res = tt.dot(pT, A1Ry)
     return res
 
 
@@ -83,6 +83,24 @@ func = theano.function(
 )
 x = func(300, np.array([0.0]))
 logger.info("5 ok")
+logger.info(x.shape)
+
+
+def _func(res, theta):
+    xyz = map.ops.compute_moll_grid(res)[-1]
+    pT = map.ops.pT(xyz[0], xyz[1], xyz[2])
+    Ry = tt.transpose(tt.tile(map.y, [theta.shape[0], 1]))
+    A1Ry = ts.dot(map.ops.A1, Ry)
+    res = tt.dot(pT, A1Ry)
+    return res.shape
+
+
+func = theano.function(
+    [_res, _theta], _func(_res, _theta), on_unused_input="ignore"
+)
+x = func(300, np.array([0.0]))
+logger.info("5 ok")
+logger.info(x)
 
 
 def _func(res, theta):
@@ -91,7 +109,7 @@ def _func(res, theta):
     Ry = tt.transpose(tt.tile(map.y, [theta.shape[0], 1]))
     A1Ry = ts.dot(map.ops.A1, Ry)
     res = tt.reshape(tt.dot(pT, A1Ry), [res, res, -1])
-    return res.dimshuffle(2, 0, 1)
+    return res
 
 
 func = theano.function(
