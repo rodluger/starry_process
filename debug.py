@@ -2,6 +2,8 @@ import starry
 import numpy as np
 import matplotlib.pyplot as plt
 
+ydeg = 15
+
 print("1")
 map = starry.Map(ydeg, lazy=True)
 print("2")
