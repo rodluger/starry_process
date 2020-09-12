@@ -32,7 +32,7 @@ jobs:
       . $CONDA/etc/profile.d/conda.sh
       conda activate debug
       gcc --version
-      STARRY_DEBUG=1 pip install starry@git+https://github.com/rodluger/starry@master
+      CC=gcc-7 CXX=g++-7 STARRY_DEBUG=1 pip install starry@git+https://github.com/rodluger/starry@master
       pip install healpy
     displayName: 'Install starry'
   
