@@ -2,23 +2,25 @@ import starry
 import numpy as np
 import matplotlib.pyplot as plt
 
+from starry.maps import logger
+
 ydeg = 15
 
-print("1")
+logger.info("1")
 map = starry.Map(ydeg, lazy=True)
-print("2")
+logger.info("2")
 map.load("earth")
-print("3")
+logger.info("3")
 x = map.render(projection="moll").eval()
-print(x)
-print("4")
+logger.info(x)
+logger.info("4")
 
 
-print("1")
+logger.info("1")
 map = starry.Map(ydeg, lazy=False)
-print("2")
+logger.info("2")
 map.load("earth")
-print("3")
+logger.info("3")
 x = map.render(projection="moll")
-print(x)
-print("4")
+logger.info(x)
+logger.info("4")
