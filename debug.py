@@ -24,14 +24,14 @@ def _func(res, theta):
 func = theano.function(
     [_res, _theta], _func(_res, _theta), on_unused_input="ignore"
 )
-x = func(100, np.array([0.0]))
+x = func(250, np.array([0.0]))
 logger.info("pT (1):")
 logger.info(x.shape)
 
 func = theano.function(
     [_res, _theta], _func(_res, _theta).shape, on_unused_input="ignore"
 )
-x = func(100, np.array([0.0]))
+x = func(250, np.array([0.0]))
 logger.info("pT (2):")
 logger.info(x)
 
@@ -47,14 +47,14 @@ def _func(res, theta):
 func = theano.function(
     [_res, _theta], _func(_res, _theta), on_unused_input="ignore"
 )
-x = func(100, np.array([0.0]))
+x = func(250, np.array([0.0]))
 logger.info("A1Ry (1):")
 logger.info(x.shape)
 
 func = theano.function(
     [_res, _theta], _func(_res, _theta).shape, on_unused_input="ignore"
 )
-x = func(100, np.array([0.0]))
+x = func(250, np.array([0.0]))
 logger.info("A1Ry (2):")
 logger.info(x)
 
@@ -71,5 +71,5 @@ def _func(res, theta):
 func = theano.function(
     [_res, _theta], _func(_res, _theta), on_unused_input="ignore"
 )
-x = func(100, np.array([0.0]))
+x = func(250, np.array([0.0]))
 logger.info("5 ok")
