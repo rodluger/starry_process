@@ -1,3 +1,4 @@
+import theano
 import theano.tensor as tt
 from theano.tensor import slinalg
 from theano.tensor.nlinalg import Eig
