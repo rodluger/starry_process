@@ -11,10 +11,13 @@ class SizeIntegral(MomentIntegral):
         self.transform = SizeTransform(ydeg=self.ydeg, **kwargs)
         kwargs.update(
             {
-                "SP__C0": "{:.15f}".format(self.transform._c[0]),
-                "SP__C1": "{:.15f}".format(self.transform._c[1]),
-                "SP__C2": "{:.15f}".format(self.transform._c[2]),
-                "SP__C3": "{:.15f}".format(self.transform._c[3]),
+                "compile_args": kwargs.get("compile_args", [])
+                + [
+                    ("SP__C0", "{:.15f}".format(self.transform._c[0])),
+                    ("SP__C1", "{:.15f}".format(self.transform._c[1])),
+                    ("SP__C2", "{:.15f}".format(self.transform._c[2])),
+                    ("SP__C3", "{:.15f}".format(self.transform._c[3])),
+                ]
             }
         )
         self._integral_op = SizeIntegralOp(self.ydeg, **kwargs)

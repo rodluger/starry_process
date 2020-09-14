@@ -1,3 +1,4 @@
+from ..base_op import BaseOp
 import theano
 import theano.tensor as tt
 from theano.tensor import slinalg
@@ -13,7 +14,10 @@ __all__ = ["EighOp"]
 
 def _numpy_eigh(x, neig):
     eigvals, eigvecs = np.linalg.eigh(x)
-    return eigvals[-neig:], eigvecs[:, -neig:]
+    return (
+        np.ascontiguousarray(eigvals[-neig:]),
+        np.ascontiguousarray(eigvecs[:, -neig:]),
+    )
 
 
 def _scipy_eigh(x, neig):
@@ -40,17 +44,19 @@ class EighOp(Eig):
 
     _sciop = staticmethod(_scipy_eigh)
     _numop = staticmethod(_numpy_eigh)
-    __props__ = ("mindiff",)
+    __props__ = ("neig", "driver", "mindiff")
 
     def __init__(self, neig=None, driver="numpy", mindiff=1e-15):
         self.mindiff = mindiff
         self.neig = neig
+        self.driver = driver
         if driver == "scipy":
             self._op = self._sciop
         elif driver == "numpy":
             self._op = self._numop
         else:
             raise ValueError("invalid driver")
+        self._grad_op = EighGradPython(mindiff=self.mindiff)  # DEBUG
 
     def make_node(self, x):
         x = tt.as_tensor_variable(x)
@@ -75,7 +81,7 @@ class EighOp(Eig):
         # Replace gradients wrt disconnected variables with
         # zeros. This is a work-around for issue #1063.
         gw, gv = _zero_disconnected([w, v], g_outputs)
-        return [EighGrad(self.neig, self.mindiff)(x, w, v, gw, gv)]
+        return [self._grad_op(x, w, v, gw, gv)]
 
     def infer_shape(self, node, shapes):
         N = shapes[0][0]
@@ -96,16 +102,40 @@ def _zero_disconnected(outputs, grads):
     return l
 
 
-class EighGrad(Op):
+class EighGrad(BaseOp):
+    func_file = "./eigh.cc"
+    func_name = "APPLY_SPECIFIC(eigh)"
+
+    def __init__(self, mindiff=1e-15):
+        compile_args = [("SP__EIGH_MINDIFF", "{:.5e}".format(mindiff))]
+        super().__init__(compile_args=compile_args)
+
+    def make_node(self, x, w, v, gw, gv):
+        x = tt.as_tensor_variable(x).astype(tt.config.floatX)
+        w = tt.as_tensor_variable(w).astype(tt.config.floatX)
+        v = tt.as_tensor_variable(v).astype(tt.config.floatX)
+        gw = tt.as_tensor_variable(gw).astype(tt.config.floatX)
+        gv = tt.as_tensor_variable(gv).astype(tt.config.floatX)
+        assert x.ndim == 2
+        assert w.ndim == 1
+        assert v.ndim == 2
+        assert gw.ndim == 1
+        assert gv.ndim == 2
+        out = tt.dmatrix()
+        return Apply(self, [x, w, v, gw, gv], [out])
+
+    def infer_shape(self, node, shapes):
+        return [shapes[0]]
+
+
+class EighGradPython(Op):
     """
     Gradient of an eigensystem of a Hermitian matrix.
-
     """
 
     __props__ = ("mindiff",)
 
-    def __init__(self, neig=None, mindiff=1e-15):
-        self.neig = neig
+    def __init__(self, mindiff=1e-15):
         self.tri0 = np.tril
         self.tri1 = partial(np.triu, k=1)
         self.mindiff = mindiff
@@ -127,15 +157,11 @@ class EighGrad(Op):
         """
         Implements the "reverse-mode" gradient for the eigensystem of
         a square matrix.
-
         """
         x, w, v, W, V = inputs
         N = x.shape[0]
         outer = np.outer
-        if self.neig is None:
-            neig = N
-        else:
-            neig = self.neig
+        neig = w.shape[0]
 
         def G(n):
             # NOTE: If two eigenvalues `w` are the same (or very

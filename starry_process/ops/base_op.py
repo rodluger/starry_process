@@ -5,20 +5,30 @@ import theano
 import theano.tensor as tt
 import sys
 import pkg_resources
+import numpy as np
 
 __all__ = ["BaseOp", "IntegralOp"]
 
 
 class BaseOp(gof.COp):
 
-    __props__ = ()
+    __props__ = ("ydeg", "compile_args")
     func_file = None
     func_name = None
 
-    def __init__(self, ydeg, **compile_kwargs):
-        self.ydeg = ydeg
-        self.N = (self.ydeg + 1) ** 2
-        self.compile_kwargs = compile_kwargs
+    def __init__(self, ydeg=None, compile_args=[], **kwargs):
+        if ydeg is not None:
+            self.ydeg = ydeg
+            self.N = (self.ydeg + 1) ** 2
+        else:
+            self.ydeg = None
+        assert type(compile_args) is list, "arg `compile_args` must be a list"
+        for item in compile_args:
+            assert (
+                type(item) is tuple
+            ), "items in `compile_args` must be tuples"
+            assert len(item) == 2, "tuples in `compile_args` must have 2 items"
+        self.compile_args = tuple(compile_args)
         super().__init__(self.func_file, self.func_name)
 
     def c_code_cache_version(self):
@@ -33,6 +43,7 @@ class BaseOp(gof.COp):
             "latitude.h",
             "size.h",
             "wigner.h",
+            "eigh.h",
             "flux.h",
             "theano_helpers.h",
             "vector",
@@ -53,8 +64,9 @@ class BaseOp(gof.COp):
         args = ["-std=c++14", "-O2", "-DNDEBUG"]
         if sys.platform == "darwin":
             args += ["-stdlib=libc++", "-mmacosx-version-min=10.7"]
-        args += ["-DSP__LMAX={0}".format(self.ydeg)]
-        for key, value in self.compile_kwargs.items():
+        if self.ydeg is not None:
+            args += ["-DSP__LMAX={0}".format(self.ydeg)]
+        for (key, value) in self.compile_args:
             if key.startswith("SP_"):
                 args += ["-D{0}={1}".format(key, value)]
         return args

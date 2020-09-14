@@ -54,6 +54,11 @@
 //! Spot profile correction constant
 #define SP__ZBAR (SP__C1 / SP__P)
 
+//! Eigendecomposition tolerance
+#ifndef SP__EIGH_MINDIFF
+#define SP__EIGH_MINDIFF 1.0e-15
+#endif
+
 // --------------
 // USER CONSTANTS
 // --------------
