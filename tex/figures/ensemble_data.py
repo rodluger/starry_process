@@ -124,7 +124,7 @@ for k in tqdm(range(nlc)):
     flux0[k] = star.flux(t, period=period, inc=incs[k], smoothing=smoothing)
 
     # Render the surface
-    images[k] = star.map.render(projection="moll")
+    images[k] = star.map.render(projection="moll", res=150)
 
 # Add photon noise
 flux = flux0 + ferr * np.random.randn(*flux0.shape)
