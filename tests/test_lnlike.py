@@ -6,6 +6,9 @@ import theano
 import pymc3 as pm
 import exoplanet
 import matplotlib.pyplot as plt
+from theano.tests.unittest_tools import verify_grad
+from theano.configparser import change_flags
+import pytest
 
 
 def get_functions():
@@ -77,5 +80,21 @@ def test_lnlike_array(plot=False):
     assert np.abs(lb_arr[np.nanargmax(ll)] - defaults["lb"]) < 0.10
 
 
-if __name__ == "__main__":
-    test_lnlike_array()
+@pytest.mark.parametrize(
+    "param", ["la", "lb", "sa", "sb", "ca", "cb", "period", "inc"]
+)
+def test_lnlike_grad(param):
+
+    # Generate a fake dataset
+    np.random.seed(42)
+    t = np.linspace(0, 3, 100)
+    flux = np.random.randn(len(t))
+    data_cov = 1.0
+
+    def lnlike(x):
+        kwargs = {param: x}
+        gp = StarryProcess(**kwargs)
+        return gp.log_likelihood(t, flux, data_cov)
+
+    with change_flags(compute_test_value="off"):
+        verify_grad(lnlike, (defaults[param],), n_tests=1)

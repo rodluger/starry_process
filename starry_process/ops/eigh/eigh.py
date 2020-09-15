@@ -22,7 +22,11 @@ def _numpy_eigh(x, neig):
 
 def _scipy_eigh(x, neig):
     N = x.shape[0]
-    return scipy.linalg.eigh(x, subset_by_index=(N - neig, N - 1))
+    eigvals, eigvecs = scipy.linalg.eigh(x, subset_by_index=(N - neig, N - 1))
+    return (
+        np.ascontiguousarray(eigvals),
+        np.ascontiguousarray(eigvecs),
+    )
 
 
 class EighOp(Eig):
@@ -56,7 +60,7 @@ class EighOp(Eig):
             self._op = self._numop
         else:
             raise ValueError("invalid driver")
-        self._grad_op = EighGradPython(mindiff=self.mindiff)  # DEBUG
+        self._grad_op = EighGrad(mindiff=self.mindiff)
 
     def make_node(self, x):
         x = tt.as_tensor_variable(x)

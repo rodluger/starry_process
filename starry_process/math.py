@@ -61,7 +61,10 @@ def matrix_sqrt(Q, neig=None, driver="numpy", mindiff=1e-15):
     w, U = eigh(Q)
 
     # Get the square root of the positive eigenvalues
-    sqrtw = tt.switch(tt.gt(w, tt.zeros_like(w)), tt.sqrt(w), tt.zeros_like(w))
+    # DEBUG
+    sqrtw = tt.switch(
+        tt.gt(w, 1e-12 * tt.ones_like(w)), tt.sqrt(w), tt.zeros_like(w)
+    )
 
     # Dot them in: the result is the matrix square root of `Q`
     return tt.dot(U, tt.diag(sqrtw))

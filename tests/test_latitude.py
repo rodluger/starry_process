@@ -1,5 +1,6 @@
 from starry_process.latitude import LatitudeIntegral
 from starry_process.ops import LatitudeIntegralOp
+from starry_process.math import matrix_sqrt
 from starry_process.wigner import R
 from starry_process.defaults import defaults
 import numpy as np
@@ -119,7 +120,7 @@ def test_latitude_grad(
 
         # d/dq
         verify_grad(
-            lambda alpha, beta: op(alpha_l, beta_l)[0],
+            lambda alpha, beta: op(alpha, beta)[0],
             (alpha_l, beta_l,),
             n_tests=1,
             abs_tol=abs_tol,
@@ -129,7 +130,7 @@ def test_latitude_grad(
 
         # d/dQ
         verify_grad(
-            lambda alpha, beta: op(alpha_l, beta_l)[3],
+            lambda alpha, beta: op(alpha, beta)[3],
             (alpha_l, beta_l,),
             n_tests=1,
             abs_tol=abs_tol,

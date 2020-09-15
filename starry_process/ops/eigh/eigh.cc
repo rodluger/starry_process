@@ -49,8 +49,6 @@ int APPLY_SPECIFIC(eigh)(PyArrayObject *input0,  // x
   npy_intp *shape2;
   auto v_in = get_input<DI2>(&ndim2, &shape2, input2, &success);
   if (ndim2 != 2) {
-    std::cout << success << std::endl;
-    std::cout << "NDIM2: " << ndim2 << std::endl;
     PyErr_Format(PyExc_ValueError, "v must be a matrix");
     return 1;
   }

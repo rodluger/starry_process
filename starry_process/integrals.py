@@ -4,7 +4,7 @@ from theano.ifelse import ifelse
 
 
 class MomentIntegral(object):
-    def __init__(self, ydeg, child=None, driver="scipy", **kwargs):
+    def __init__(self, ydeg, child=None, driver="numpy", **kwargs):
         self.ydeg = ydeg
         self.driver = driver
         if child is None:
