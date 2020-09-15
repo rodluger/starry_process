@@ -7,14 +7,16 @@ import exoplanet as xo
 from corner import corner
 import theano.tensor as tt
 import os
-
+import sys
 
 # Don't run this script on Azure
 if int(os.environ.get("ON_AZURE", 0)):
-    import sys
-
     sys.exit(0)
 
+# Directory for saving the trace
+TRACE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chains")
+if not os.path.exists(TRACE_DIR):
+    os.mkdir(TRACE_DIR)
 
 # Load the data
 data = np.load("ensemble_data.npz")
@@ -23,9 +25,10 @@ flux = data["flux"]
 ferr = data["ferr"]
 period = data["period"]
 
-# DEBUG: Just two light curves
-flux = flux[:2]
+# DEBUG: Only 5 light curves
+flux = flux[:5]
 
+# Let's go
 np.random.seed(0)
 with pm.Model() as model:
 
@@ -70,5 +73,8 @@ with pm.Model() as model:
     print("Sampling...")
     trace = pm.sample(tune=500, draws=1000, chains=4, start=map_soln)
 
+    # DEBUG
     breakpoint()
-    pass
+
+    # Save to disk
+    pm.save_trace(trace, directory=TRACE_DIR)
