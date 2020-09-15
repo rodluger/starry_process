@@ -20,7 +20,7 @@ from bokeh.models import (
     CustomJS,
     Button,
     Span,
-    MultiLine,
+    HoverTool,
 )
 from bokeh.plotting import figure, curdoc
 from bokeh.models.tickers import FixedTicker
@@ -37,7 +37,7 @@ params = {
         "sigma": {"start": 1.0, "stop": 30.0, "step": 0.01, "value": 5.0},
     },
     "size": {
-        "mu": {"start": 0.0, "stop": 90.0, "step": 0.1, "value": 15.0},
+        "mu": {"start": 0.0, "stop": 90.0, "step": 0.1, "value": 20.0},
         "sigma": {"start": 1.0, "stop": 30.0, "step": 0.1, "value": 5.0},
     },
     "contrast": {
@@ -213,6 +213,7 @@ class Samples(object):
                     xs=[np.linspace(0, 2, npts) for j in range(6)],
                     ys=[mednorm(self.A_F[j] @ self.ylm[i]) for j in range(6)],
                     color=[OrRd6[j] for j in range(6)][::-1],
+                    inc=[15, 30, 45, 60, 75, 90],
                 )
             )
             for i in range(self.nmaps)
@@ -486,16 +487,10 @@ class Distribution(object):
             self.plot.background_fill_color = "firebrick"
             self.plot.background_fill_alpha = 0.2
 
-        finally:
+        else:
 
-            try:
-
-                # Update the GP samples
-                self.gp_callback(attr, old, new)
-
-            except AssertionError as e:
-
-                pass
+            # Update the GP samples
+            self.gp_callback(attr, old, new)
 
     def callback_throttled(self, attr, old, new):
         # manual throttling (not perfect)
@@ -507,7 +502,7 @@ class Distribution(object):
 
 
 class Application(object):
-    def __init__(self, doc, ydeg=15, npix=100, npts=300, debug=True):
+    def __init__(self, doc, ydeg=15, npix=100, npts=300, debug=False):
 
         self.ydeg = ydeg
         self.npix = npix
