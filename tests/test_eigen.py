@@ -53,17 +53,17 @@ def test_sqrt_grad_low_rank():
 
 
 @pytest.mark.xfail
-"""
-TODO: Is this failing test actually an issue? As long as the likelihood
-gradients are passing (`test_lnlike.py`), should we care about this? 
-The eigenvectors are defined only up to a multiplicative constant, so 
-perhaps the gradient is itself ill defined on its own? The likelihood 
-tests show that our implementation of the matrix square root within the 
-latitude and size integrals yields the correct gradients, 
-so perhaps this test is unnecessary. Also, we should keep in mind that
-the numerical gradient here is *extremely* unstable.
-"""
 def test_eigh_grad_low_rank():
+    """
+    TODO: Is this failing test actually an issue? As long as the likelihood
+    gradients are passing (`test_lnlike.py`), should we care about this? 
+    The eigenvectors are defined only up to a multiplicative constant, so 
+    perhaps the gradient is itself ill defined on its own? The likelihood 
+    tests show that our implementation of the matrix square root within the 
+    latitude and size integrals yields the correct gradients, 
+    so perhaps this test is unnecessary. Also, we should keep in mind that
+    the numerical gradient here is *extremely* unstable.
+    """
     with change_flags(compute_test_value="off"):
         np.random.seed(0)
         Q = np.random.randn(10, 3)
