@@ -5,6 +5,50 @@ import os
 
 __all__ = ["plasma", "svg_mu", "svg_nu", "loader", "style"]
 
+# jinja template
+TEMPLATE = """
+{% from macros import embed %}
+<!DOCTYPE html>
+<html>
+  {% block head %}
+  <head>
+    {% block inner_head %}
+      <meta charset="utf-8">
+      <title>{% block title %}{{ title | e if title else "Bokeh Plot" }}{% endblock %}</title>
+      {% block preamble %}{% endblock %}
+      {% block resources %}
+        {% block css_resources %}
+          {{ bokeh_css | indent(8) if bokeh_css }}
+        {% endblock %}
+        {% block js_resources %}
+          {{ bokeh_js | indent(8) if bokeh_js }}
+        {% endblock %}
+      {% endblock %}
+      {% block postamble %}{% endblock %}
+    {% endblock %}
+  </head>
+  {% endblock %}
+  {% block body %}
+  <body style="min-width: 700px; !important">
+    <div style="width:90%; height:90%; margin-left: auto; margin-right: auto;">
+    {% block inner_body %}
+      {% block contents %}
+        {% for doc in docs %}
+          {{ embed(doc) if doc.elementid }}
+          {% for root in doc.roots %}
+            {% block root scoped %}
+              {{ embed(root) | indent(10) }}
+            {% endblock %}
+          {% endfor %}
+        {% endfor %}
+      {% endblock %}
+      {{ plot_script | indent(8) }}
+    {% endblock %}
+    </div>
+  </body>
+  {% endblock %}
+</html>
+"""
 
 # Plasma gradient
 idx = np.array(np.linspace(0, 255, 101), dtype=int)
@@ -115,6 +159,8 @@ style = lambda: Div(
         font-weight: 600;
         color: #999;
         margin: 100px auto;
+        position: absolute;
+        left: -40px;
     }
     .spinner {
         margin: 100px auto;
@@ -128,6 +174,7 @@ style = lambda: Div(
         height: 100%%;
         display: inline-block;
         position: absolute;
+        right: 0px;
         top: 0;
         background-color: #999;
         border-radius: 100%%;
@@ -141,7 +188,7 @@ style = lambda: Div(
         width: 40%%;
         height: 40%%;
         top: 60px;
-        left: 0px;
+        left: -40px;
         z-index: 2;
         -webkit-animation: sk-orbit 0.75s infinite linear;
         animation: sk-orbit 0.75s infinite linear;

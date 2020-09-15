@@ -1,4 +1,4 @@
-from .css import loader, style
+from .css import loader, style, TEMPLATE
 from .design import get_intensity_design_matrix, get_flux_design_matrix
 from .moll import get_latitude_lines, get_longitude_lines
 from starry_process import StarryProcess
@@ -88,7 +88,6 @@ class Samples(object):
 
             def sample_ylm(mu_s, sigma_s, mu_l, sigma_l, mu_c, sigma_c):
                 sa, sb = self.gp.size.transform.transform(mu_s, sigma_s)
-                print(sa, sb)
                 la, lb = self.gp.latitude.transform.transform(mu_l, sigma_l)
                 ca = mu_c
                 cb = sigma_c
@@ -508,7 +507,7 @@ class Distribution(object):
 
 
 class Application(object):
-    def __init__(self, doc, ydeg=15, npix=100, npts=300, debug=False):
+    def __init__(self, doc, ydeg=15, npix=100, npts=300, debug=True):
 
         self.ydeg = ydeg
         self.npix = npix
@@ -519,6 +518,7 @@ class Application(object):
         self.layout = column(loader(), style(), sizing_mode="scale_both")
         doc.add_root(self.layout)
         doc.title = "starry process"
+        doc.template = TEMPLATE
 
         # Set up the starry process
         doc.add_timeout_callback(self.run, 1000)
