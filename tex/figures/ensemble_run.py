@@ -68,13 +68,7 @@ with pm.Model() as model:
 
     # Sample
     print("Sampling...")
-    trace = pm.sample(
-        tune=500,
-        draws=1000,
-        chains=4,
-        start=map_soln,
-        step=xo.get_dense_nuts_step(target_accept=0.9),
-    )
+    trace = pm.sample(tune=500, draws=1000, chains=4, start=map_soln)
 
     breakpoint()
     pass
