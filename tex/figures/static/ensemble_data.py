@@ -83,12 +83,12 @@ ydeg = 30
 smoothing = 0.1
 
 # Light curve settings
-nlc = 10
+nlc = 8
 npts = 1000
 tmax = 4.0
 t = np.linspace(0, tmax, npts)
-period = 1.0
-ferr = 5e-3
+periods = 1.0 * np.ones(nlc)
+ferr = 5e-3 * np.ones(nlc)
 
 # Spot settings
 nspots = 10
@@ -100,9 +100,10 @@ cmu = 0.75
 csig = 0.10
 
 # Generate `nlc` light curves
-np.random.seed(0)
+np.random.seed(42)
 star = Star(nlon=nlon, ydeg=ydeg)
 flux0 = np.empty((nlc, npts))
+flux = np.empty((nlc, npts))
 images = [None for k in range(nlc)]
 incs = np.zeros(nlc)
 for k in tqdm(range(nlc)):
@@ -121,19 +122,36 @@ for k in tqdm(range(nlc)):
         star.add_spot(lon, lat, radius, contrast)
 
     # Get the light curve
-    flux0[k] = star.flux(t, period=period, inc=incs[k], smoothing=smoothing)
+    flux0[k] = star.flux(
+        t, period=periods[k], inc=incs[k], smoothing=smoothing
+    )
 
     # Render the surface
     images[k] = star.map.render(projection="moll", res=150)
 
 # Add photon noise
-flux = flux0 + ferr * np.random.randn(*flux0.shape)
+for k in tqdm(range(nlc)):
+    flux[k] = flux0[k] + ferr[k] * np.random.randn(npts)
 
 # Save the data
-np.savez("ensemble_data.npz", t=t, period=period, flux=flux, ferr=ferr)
+np.savez(
+    "ensemble_data.npz",
+    t=t,
+    periods=periods,
+    incs=incs,
+    flux=flux,
+    ferr=ferr,
+    nspots=nspots,
+    rmu=rmu,
+    rsig=rsig,
+    lmu=lmu,
+    lsig=lsig,
+    cmu=cmu,
+    csig=csig,
+)
 
 # Plot the data
-fig, ax = plt.subplots(2, nlc, figsize=(16, 2))
+fig, ax = plt.subplots(2, nlc, figsize=(12, 2))
 vmin = 0
 vmax = 1
 yrng = 1.1 * np.max(np.abs(1e3 * (flux0 - 1)))
