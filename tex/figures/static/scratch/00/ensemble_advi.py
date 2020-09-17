@@ -16,16 +16,22 @@ optimize = False
 nadvi = 10000
 nsamples = 10000
 seed = 0
+compute = False
+nlc = 1
 
-# Directory for saving the trace
-TRACE_DIR = os.path.abspath(__file__).replace(".py", "_trace")
 
 # Load the data
-data = np.load("ensemble_data.npz")
+FILE = os.path.abspath(__file__)
+data = np.load(__file__.replace(".py", "_data.py"))
 t = data["t"]
 flux = data["flux"]
 ferr = data["ferr"]
 periods_true = data["periods"]
+
+# Keep only `nlc` light curves
+flux = flux[:nlc]
+ferr = ferr[:nlc]
+periods_true = periods_true[:nlcc]
 
 # Number of light curves
 nlc = len(flux)
@@ -34,7 +40,8 @@ nlc = len(flux)
 nvars = 6 + nlc
 
 # Let's go
-try:
+if compute:
+
     with pm.Model() as model:
 
         # Priors
@@ -98,26 +105,7 @@ try:
         # Display the summary
         print(pm.summary(advi_trace))
 
-        # Save the trace
-        pm.save_trace(advi_trace, directory=TRACE_DIR, overwrite=True)
-
-        # Quickplot of the trace
-        ax = pm.traceplot(advi_trace)
-        fig = ax.flatten()[0].figure
-        fig.savefig(
-            __file__.replace(".py", "_traceplot.pdf"), bbox_inches="tight"
-        )
-
         # Transform to params we care about
-        varnames = [
-            "r$\mu_s$",
-            "r$\sig_s$",
-            "r$\mu_l$",
-            "r$\sig_l$",
-            "r$\mu_c$",
-            "r$\sig_c$",
-        ]
-        varnames += ["$i_{{{:02d}}}$".format(k) for k in range(nlc)]
         samples = np.empty((nvars, nsamples))
         samples[4] = advi_trace["ca"]
         samples[5] = advi_trace["cb"]
@@ -136,45 +124,87 @@ try:
                 advi_trace["la"][k], advi_trace["lb"][k]
             )
 
-        # True values
-        truths = [
-            data["rmu"],
-            data["rsig"],
-            data["lmu"],
-            data["lsig"],
-            data["cmu"],
-            data["csig"],
-        ]
-        truths += list(data["incs"])
+        # Save the samples
+        np.savez_compressed(
+            FILE.replace(".py", "_samples.npz"), samples=samples
+        )
 
-        # Plot the 1d posteriors
-        fig, ax = plt.subplots(1, 6, figsize=(12, 1.5))
-        for k in range(6):
-            ax[k].hist(samples[k], bins=30, histtype="step", color="k")
-            ax[k].axvline(truths[k], color="C0", lw=1, alpha=0.5)
-            ax[k].set_yticks([])
-            ax[k].set_xlabel(varnames[k])
-            for tick in ax[k].xaxis.get_major_ticks():
-                tick.label.set_fontsize(10)
-        fig.savefig(__file__.replace(".py", ".pdf"), bbox_inches="tight")
+else:
 
-        # Plot the 1d inclination posteriors
-        fig, ax = plt.subplots(1, nlc, figsize=(2 * nlc, 1.5))
-        ax = np.atleast_1d(ax)
-        for k in range(nlc):
-            ax[k].hist(samples[6 + k], bins=30, histtype="step", color="k")
-            ax[k].axvline(truths[6 + k], color="C0", lw=1, alpha=0.5)
-            ax[k].set_yticks([])
-            ax[k].set_xlabel(varnames[6 + k])
-            for tick in ax[k].xaxis.get_major_ticks():
-                tick.label.set_fontsize(10)
-        fig.savefig(__file__.replace(".py", "_inc.pdf"), bbox_inches="tight")
+    samples = np.load(FILE.replace(".py", "_samples.npz"))["samples"]
 
-        # DEBUG
-        breakpoint()
-        pass
+# Transformed variable names
+varnames = [
+    r"$\mu_s$",
+    r"$\sigma_s$",
+    r"$\mu_l$",
+    r"$\sigma_l$",
+    r"$\mu_c$",
+    r"$\sigma_c$",
+]
+varnames += ["$i_{{{:02d}}}$".format(k) for k in range(nlc)]
 
-except:
+# True values
+truths = [
+    data["rmu"],
+    data["rsig"],
+    data["lmu"],
+    data["lsig"],
+    data["cmu"],
+    data["csig"],
+]
+truths += list(data["incs"])
 
-    breakpoint()
-    pass
+# Bounds
+bounds = [(0, 90), (0, 50), (0, 90), (0, 50), (0, 1), (0, 1)]
+bounds += [(0, 90) for k in range(nlc)]
+
+# X axis ticks
+xticks = [
+    (0, 15, 30, 45, 60, 75, 90),
+    (0, 10, 20, 30, 40, 50),
+    (0, 15, 30, 45, 60, 75, 90),
+    (0, 10, 20, 30, 40, 50),
+    (0, 0.25, 0.5, 0.75, 1.0),
+    (0, 0.25, 0.5, 0.75, 1.0),
+]
+xticks += [(0, 15, 30, 45, 60, 75, 90) for k in range(nlc)]
+
+# Plot the 1d posteriors
+fig, ax = plt.subplots(1, 6, figsize=(12, 1.5))
+for k in range(6):
+    ax[k].hist(
+        samples[k],
+        bins=np.linspace(xticks[k][0], xticks[k][-1], 50),
+        histtype="step",
+        color="k",
+    )
+    ax[k].axvline(truths[k], color="C0", lw=1)
+    ax[k].set_yticks([])
+    ax[k].set_xlabel(varnames[k])
+    ax[k].set_xlim(bounds[k])
+    ax[k].set_xticks(xticks[k])
+    for tick in ax[k].xaxis.get_major_ticks():
+        tick.label.set_fontsize(6)
+        tick.label.set_rotation(45)
+fig.savefig(FILE.replace(".py", ".pdf"), bbox_inches="tight")
+
+# Plot the 1d inclination posteriors
+fig, ax = plt.subplots(1, nlc, figsize=(2 * nlc, 1.5))
+ax = np.atleast_1d(ax)
+for k in range(nlc):
+    ax[k].hist(
+        samples[6 + k],
+        bins=np.linspace(xticks[6 + k][0], xticks[6 + k][-1], 50),
+        histtype="step",
+        color="k",
+    )
+    ax[k].axvline(truths[6 + k], color="C0", lw=1)
+    ax[k].set_yticks([])
+    ax[k].set_xlabel(varnames[6 + k])
+    ax[k].set_xlim(bounds[6 + k])
+    ax[k].set_xticks(xticks[6 + k])
+    for tick in ax[k].xaxis.get_major_ticks():
+        tick.label.set_fontsize(6)
+        tick.label.set_rotation(45)
+fig.savefig(FILE.replace(".py", "_inc.pdf"), bbox_inches="tight")

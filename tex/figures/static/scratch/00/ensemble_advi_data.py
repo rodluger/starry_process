@@ -4,9 +4,11 @@ from scipy.stats import norm as Normal
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import os
 
 
 starry.config.lazy = False
+FILE = os.path.abspath(__file__)
 
 
 def lat2y(lat):
@@ -135,7 +137,7 @@ for k in tqdm(range(nlc)):
 
 # Save the data
 np.savez(
-    "ensemble_data.npz",
+    FILE.replace(".py", ".npz"),
     t=t,
     periods=periods,
     incs=incs,
@@ -197,4 +199,4 @@ for k in range(nlc):
         ax[1, k].axis("off")
 
 # Save the figure
-fig.savefig(__file__.replace("py", "pdf"), bbox_inches="tight", dpi=300)
+fig.savefig(FILE.replace("py", "pdf"), bbox_inches="tight", dpi=300)
