@@ -104,7 +104,7 @@ class StarryProcess(object):
         )
 
     def log_likelihood(
-        self, t, flux, data_cov, baseline_mean=0.0, baseline_var=0.0
+        self, t, flux, data_cov, N=1.0, baseline_mean=0.0, baseline_var=0.0
     ):
         """
         Compute the log marginal likelihood of a light curve.
@@ -130,7 +130,7 @@ class StarryProcess(object):
             C = data_cov
 
         # GP covariance from e.g., Luger et al. (2017)
-        gp_cov = C + self.cov(t)
+        gp_cov = C + N ** 2 * self.cov(t)
 
         # Marginalize over the baseline
         gp_cov += baseline_var
@@ -140,7 +140,7 @@ class StarryProcess(object):
 
         # Compute the marginal likelihood
         K = t.shape[0]
-        r = tt.reshape(flux - self.mean(t) - baseline_mean, (-1, 1))
+        r = tt.reshape(flux - N * self.mean(t) - baseline_mean, (-1, 1))
         lnlike = -0.5 * tt.dot(tt.transpose(r), cho_solve(cho_gp_cov, r))
         lnlike -= tt.sum(tt.log(tt.diag(cho_gp_cov)))
         lnlike -= 0.5 * K * tt.log(2 * np.pi)

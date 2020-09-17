@@ -14,15 +14,16 @@ import os
 # Options
 optimize = False
 nadvi = 10000
+noptim = 1000
 nsamples = 10000
 seed = 0
 compute = False
-nlc = 1
+nlc = -1
 
 
 # Load the data
 FILE = os.path.abspath(__file__)
-data = np.load(__file__.replace(".py", "_data.py"))
+data = np.load(__file__.replace(".py", "_data.npz"))
 t = data["t"]
 flux = data["flux"]
 ferr = data["ferr"]
@@ -31,7 +32,7 @@ periods_true = data["periods"]
 # Keep only `nlc` light curves
 flux = flux[:nlc]
 ferr = ferr[:nlc]
-periods_true = periods_true[:nlcc]
+periods_true = periods_true[:nlc]
 
 # Number of light curves
 nlc = len(flux)
@@ -87,7 +88,7 @@ if compute:
         if optimize:
             print("Optimizing...")
             map_soln = xo.optimize(
-                start=model.test_point, options=dict(maxiter=10)
+                start=model.test_point, options=dict(maxiter=noptim)
             )
         else:
             map_soln = model.test_point
@@ -146,14 +147,14 @@ varnames += ["$i_{{{:02d}}}$".format(k) for k in range(nlc)]
 
 # True values
 truths = [
-    data["rmu"],
-    data["rsig"],
-    data["lmu"],
-    data["lsig"],
-    data["cmu"],
-    data["csig"],
+    data["rmu"][:nlc],
+    data["rsig"][:nlc],
+    data["lmu"][:nlc],
+    data["lsig"][:nlc],
+    data["cmu"][:nlc],
+    data["csig"][:nlc],
 ]
-truths += list(data["incs"])
+truths += list(data["incs"][:nlc])
 
 # Bounds
 bounds = [(0, 90), (0, 50), (0, 90), (0, 50), (0, 1), (0, 1)]
