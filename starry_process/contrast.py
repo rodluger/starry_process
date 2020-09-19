@@ -10,7 +10,9 @@ import numpy as np
 class ContrastIntegral(MomentIntegral):
     def _precompute(self, **kwargs):
         self.transform = ContrastTransform(**kwargs)
-        self.check_bounds_ca = CheckBoundsOp(name="ca", lower=-np.inf, upper=1)
+        self.check_bounds_ca = CheckBoundsOp(
+            name="ca", lower=-np.inf, upper=np.inf
+        )
         self.check_bounds_cb = CheckBoundsOp(name="cb", lower=0, upper=np.inf)
 
     def _set_params(self, ca=defaults["ca"], cb=defaults["cb"], **kwargs):

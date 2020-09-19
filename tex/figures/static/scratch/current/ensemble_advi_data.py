@@ -55,7 +55,7 @@ class Star(object):
 
     def add_spot(self, lon, lat, radius, contrast):
         idx = self._angular_distance(lon, self.lon, lat, self.lat) <= radius
-        self.intensity[idx] = 1 - contrast
+        self.intensity[idx] -= contrast
 
     def flux(self, t, period=1.0, inc=60.0, smoothing=0.1):
         # Expand in Ylms
@@ -90,7 +90,7 @@ npts = 1000
 tmax = 4.0
 t = np.linspace(0, tmax, npts)
 periods = 1.0 * np.ones(nlc)
-ferr = 5e-3 * np.ones(nlc)
+ferr = 3e-4 * np.ones(nlc)
 
 # Spot settings
 nspots = 10
@@ -98,8 +98,8 @@ rmu = 20.0
 rsig = 5.0
 lmu = 30.0
 lsig = 5.0
-cmu = 0.75
-csig = 0.10
+cmu = 0.20
+csig = 0.0
 
 # Generate `nlc` light curves
 np.random.seed(42)
@@ -154,7 +154,7 @@ np.savez(
 
 # Plot the data
 fig, ax = plt.subplots(2, nlc, figsize=(12, 2))
-vmin = 0
+vmin = 0.5
 vmax = 1
 yrng = 1.1 * np.max(np.abs(1e3 * (flux0 - 1)))
 ymin = -yrng

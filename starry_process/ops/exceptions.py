@@ -11,6 +11,8 @@ class CheckBoundsOp(tt.Op):
 
     """
 
+    __props__ = ("lower", "upper", "name")
+
     def __init__(self, lower=-np.inf, upper=np.inf, name=None):
         self.lower = lower
         self.upper = upper

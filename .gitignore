@@ -10,6 +10,7 @@ dist/
 docs/_build
 docs/_generate
 *.pytest_cache/
+*.npz
 *callgrind.out.*
 *.vscode
 docs/.doxyxml
@@ -20,6 +21,8 @@ tex/tests/*.tex
 pip-wheel-metadata/
 starry_process/starry_process_version.py
 metadata.json
+tex/figures/static/scratch/
+scratch/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

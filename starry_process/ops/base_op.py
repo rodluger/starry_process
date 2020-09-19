@@ -7,6 +7,12 @@ import sys
 import pkg_resources
 import numpy as np
 
+# Allow C code caching even in dev mode?
+try:
+    from ..starry_process import CACHE_DEV_C_CODE
+except:
+    CACHE_DEV_C_CODE = False
+
 __all__ = ["BaseOp", "IntegralOp"]
 
 
@@ -32,7 +38,7 @@ class BaseOp(gof.COp):
         super().__init__(self.func_file, self.func_name)
 
     def c_code_cache_version(self):
-        if "dev" in __version__:
+        if ("dev" in __version__) and not CACHE_DEV_C_CODE:
             return ()
         return tuple(map(int, __version__.split(".")))
 
