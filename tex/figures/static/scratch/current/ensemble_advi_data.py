@@ -85,7 +85,8 @@ ydeg = 30
 smoothing = 0.1
 
 # Light curve settings
-nlc = 8
+seed = 0
+nlc = 10
 npts = 1000
 tmax = 4.0
 t = np.linspace(0, tmax, npts)
@@ -102,7 +103,7 @@ cmu = 0.20
 csig = 0.0
 
 # Generate `nlc` light curves
-np.random.seed(42)
+np.random.seed(seed)
 star = Star(nlon=nlon, ydeg=ydeg)
 flux0 = np.empty((nlc, npts))
 flux = np.empty((nlc, npts))
