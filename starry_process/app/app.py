@@ -47,8 +47,8 @@ params = {
 }
 
 
-def mednorm(x, **kwargs):
-    return x - np.median(x, **kwargs)
+def fluxnorm(x, **kwargs):
+    return 1e3 * ((1 + x) / np.median(1 + x, **kwargs) - 1)
 
 
 class Samples(object):
@@ -211,8 +211,8 @@ class Samples(object):
             ColumnDataSource(
                 data=dict(
                     xs=[np.linspace(0, 2, npts) for j in range(6)],
-                    ys=[mednorm(self.A_F[j] @ self.ylm[i]) for j in range(6)],
-                    color=[OrRd6[j] for j in range(6)][::-1],
+                    ys=[fluxnorm(self.A_F[j] @ self.ylm[i]) for j in range(6)],
+                    color=[OrRd6[5 - j] for j in range(6)],
                     inc=[15, 30, 45, 60, 75, 90],
                 )
             )
@@ -249,7 +249,7 @@ class Samples(object):
         # Legend
         for j, label in enumerate(["15", "30", "45", "60", "75", "90"]):
             self.flux_plot[-1].line(
-                [0, 0], [0, 0], legend_label=label, line_color=OrRd6[j]
+                [0, 0], [0, 0], legend_label=label, line_color=OrRd6[5 - j]
             )
         self.flux_plot[-1].legend.location = "bottom_right"
         self.flux_plot[-1].legend.title = "inclination"
@@ -320,7 +320,7 @@ class Samples(object):
                 ]
 
                 self.flux_source[i].data["ys"] = [
-                    mednorm(self.A_F[j] @ self.ylm[i])
+                    fluxnorm(self.A_F[j] @ self.ylm[i])
                     for j in range(len(self.A_F))
                 ]
 
@@ -328,12 +328,15 @@ class Samples(object):
                 for slider in [dist.slider_mu, dist.slider_sigma]:
                     slider.bar_color = "white"
 
-        except LinAlgError:
+        except Exception as e:
 
             # Something went wrong inverting the covariance!
             for dist in [self.Size, self.Latitude, self.Contrast]:
                 for slider in [dist.slider_mu, dist.slider_sigma]:
                     slider.bar_color = "firebrick"
+
+            print("An error occurred when computing the covariance:")
+            print(e)
 
 
 class Distribution(object):
@@ -474,16 +477,16 @@ class Distribution(object):
                 self.slider_mu.value + self.slider_sigma.value
             )
 
-        except AssertionError as e:
+        except Exception as e:
 
             # A param is out of bounds!
-            if "std" in str(e):
+            if "std" in str(e) or "sigma" in str(e):
                 self.slider_sigma.bar_color = "firebrick"
-            elif "mean" in str(e):
+            elif "mean" in str(e) or "mu" in str(e):
                 self.slider_mu.bar_color = "firebrick"
             else:
-                self.slider_sigma.bar_color = "firebrick"
-                self.slider_mu.bar_color = "firebrick"
+                print("An error occurred when setting the parameters:")
+                print(e)
             self.plot.background_fill_color = "firebrick"
             self.plot.background_fill_alpha = 0.2
 

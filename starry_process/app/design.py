@@ -68,7 +68,7 @@ def get_flux_design_matrix(ydeg, npts=300):
         for i, inc in enumerate(incs):
             map.inc = inc
             theta = np.linspace(0, 360, npts) * 2
-            A_F[i] = 1e3 * map.design_matrix(theta=theta)  # ppt
+            A_F[i] = map.design_matrix(theta=theta)
         np.savez(file, A_F=A_F)
 
     # Else load from disk

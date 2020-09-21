@@ -9,7 +9,7 @@ import numpy as np
 
 # Allow C code caching even in dev mode?
 try:
-    from ..starry_process import CACHE_DEV_C_CODE
+    from .. import CACHE_DEV_C_CODE
 except:
     CACHE_DEV_C_CODE = False
 
@@ -40,7 +40,14 @@ class BaseOp(gof.COp):
     def c_code_cache_version(self):
         if ("dev" in __version__) and not CACHE_DEV_C_CODE:
             return ()
-        return tuple(map(int, __version__.split(".")))
+        else:
+            v = []
+            for sv in __version__.split("."):
+                try:
+                    v.append(int(sv))
+                except:
+                    v.append(sv)
+            return tuple(v)
 
     def c_headers(self, compiler):
         return [
