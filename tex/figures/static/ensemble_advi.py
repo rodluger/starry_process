@@ -9,7 +9,6 @@ import theano
 import theano.tensor as tt
 import os
 
-plt.switch_backend("MacOSX")
 
 # Options
 nlc = 10
@@ -20,8 +19,7 @@ baseline_var = 1e-2
 compute = True
 
 # Get the data
-data, truth, _ = generate(nlc=nlc, plot=True)
-plt.show()
+data, truth = generate(nlc=nlc, plot=False)
 t = data["t"]
 flux = data["flux"]
 ferr = data["ferr"]
