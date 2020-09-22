@@ -37,6 +37,7 @@ setup(
             "pymc3>=3.8",
             "exoplanet>=0.3.2",
             "corner",
+            "xarray==0.16.0",  # DEBUG: https://github.com/arviz-devs/arviz/issues/1387
         ],
         "paper": [
             "starry@git+https://github.com/rodluger/starry@master",
