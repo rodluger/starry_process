@@ -31,7 +31,10 @@ class StarryProcess(object):
         self.design = FluxDesignMatrix(self.ydeg, **kwargs)
 
         # NB: Change this by setting `self.random.seed(XXX)`
-        self.random = tt.shared_randomstreams.RandomStreams(0)
+        # TODO: Check if that is actually working.
+        self.random = tt.shared_randomstreams.RandomStreams(
+            kwargs.get("seed", 0)
+        )
 
     def mean_ylm(self):
         return self.contrast.first_moment()
@@ -55,7 +58,7 @@ class StarryProcess(object):
 
     def sample(self, t, nsamples=1, eps=1e-12):
         ylm = self.sample_ylm(nsamples=nsamples, eps=eps)
-        return tt.dot(ylm, tt.transpose(self.design(t)))
+        return tt.transpose(tt.dot(self.design(t), tt.transpose(ylm)))
 
     def sample_ylm_conditional(
         self, t, flux, data_cov, baseline_mean=0.0, nsamples=1, eps=1e-12

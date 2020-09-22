@@ -10,8 +10,14 @@ __all__ = ["FluxDesignMatrix"]
 
 
 class FluxDesignMatrix(object):
-    def __init__(self, ydeg, **kwargs):
+    def __init__(self, ydeg, angle_unit="deg", **kwargs):
         self.ydeg = ydeg
+        if angle_unit.startswith("deg"):
+            self._angle_fac = np.pi / 180
+        elif angle_unit.startswith("rad"):
+            self._angle_fac = 1.0
+        else:
+            raise ValueError("Invalid `angle_unit`.")
         self._Rx = RxOp(ydeg, **kwargs)
         self._tensordotRz = tensordotRzOp(ydeg, **kwargs)
         self._rTA1 = rTA1Op(ydeg, **kwargs)()
@@ -25,7 +31,7 @@ class FluxDesignMatrix(object):
         self, period=defaults["period"], inc=defaults["inc"], **kwargs
     ):
         self._omega = cast(2 * np.pi / self.check_bounds_period(period))
-        self._inc = cast(self.check_bounds_inc(inc) * np.pi / 180)
+        self._inc = cast(self.check_bounds_inc(inc) * self._angle_fac)
 
     def _nwig(self, l):
         return ((l + 1) * (2 * l + 1) * (2 * l + 3)) // 3

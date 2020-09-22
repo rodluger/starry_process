@@ -14,7 +14,7 @@ except:
 
 
 @pytest.mark.skipif(skip, reason="unable to import starry")
-def test_flux(ydeg=5, inc=defaults["inc"], period=defaults["inc"]):
+def test_flux(ydeg=5, inc=defaults["inc"], period=defaults["period"]):
 
     # Get the SP design matrix
     t = np.linspace(-1, 1, 50)

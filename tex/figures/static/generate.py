@@ -312,12 +312,6 @@ def generate(
             else:
                 axbot[k].axis("off")
 
-        return data, fig
+        return data, truth, fig
 
-    return data
-
-
-if __name__ == "__main__":
-    plt.switch_backend("MacOSX")
-    generate(use_starry_process=True, normalize=False)
-    plt.show()
+    return data, truth
