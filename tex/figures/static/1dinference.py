@@ -71,14 +71,14 @@ def get_log_probability(
 
 # Generate the data
 data, truth, fig = generate(
-    cmu=1.0,
-    nspots=1,
-    nlc=10,
+    cmu=1.0 / 30,
+    nspots=30,
+    nlc=30,
     periods=1.0,
     plot=True,
-    ferr=1e-2,
-    use_starry_process=True,
-    normalize=False,
+    ferr=1e-4,
+    use_starry_process=False,
+    normalize=True,
 )
 t = data["t"]
 ferr = data["ferr"]
@@ -90,25 +90,25 @@ plt.show()
 params = {
     "sa": truth["sa"],
     "sb": truth["sb"],
-    "la": "free",
-    "lb": "free",
+    "la": "free",  # truth["la"],
+    "lb": "free",  # truth["lb"],
     "ca": truth["ca"],
     "cb": truth["cb"],
     "incs": truth["incs"],
     "periods": truth["periods"],
 }
-guesses = [truth["la"], truth["lb"]]
-bounds = [(0.0, 1.0), (0.0, 1.0)]
-log_prob = get_log_probability(t, flux, ferr, params, gradient=False)
+log_prob = get_log_probability(
+    t, flux, ferr, params, gradient=False, baseline_var=1e-2
+)
 
 # Grid search
 npts = 30
-la = np.linspace(0, 1, npts)
-lb = np.linspace(0, 1, npts)
+a = np.linspace(0, 1, npts)
+b = np.linspace(0, 1, npts)
 logp = np.zeros((npts, npts))
 for i in tqdm(range(npts)):
     for j in range(npts):
-        logp[j, i] = log_prob(la[i], lb[j])
+        logp[j, i] = log_prob(a[i], b[j])
 prob = np.exp(logp - np.max(logp))
 plt.imshow(prob, origin="lower", extent=(0, 1, 0, 1), cmap="plasma")
 plt.axvline(truth["la"], color="w")
