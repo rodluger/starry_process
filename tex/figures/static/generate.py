@@ -217,15 +217,6 @@ def generate(
             cb=cb,
             periods=periods,
             incs=incs,
-        )
-        np.savez_compressed(BASE + "_truth.npz", **truth)
-
-        # Save the data
-        data = dict(
-            t=t,
-            flux0=flux0,
-            flux=flux,
-            ferr=ferr,
             nspots=nspots,
             smu=smu,
             ssig=ssig,
@@ -235,6 +226,10 @@ def generate(
             csig=csig,
             images=images,
         )
+        np.savez_compressed(BASE + "_truth.npz", **truth)
+
+        # Save the data
+        data = dict(t=t, flux0=flux0, flux=flux, ferr=ferr,)
         np.savez_compressed(BASE + "_data.npz", **data)
 
     else:
@@ -244,11 +239,11 @@ def generate(
         t = data["t"]
         flux0 = data["flux0"]
         flux = data["flux"]
-        images = data["images"]
 
         truth = np.load(BASE + "_truth.npz")
         truth = {key: truth[key] for key in truth.keys()}
         incs = truth["incs"]
+        images = truth["images"]
 
     # Plot the data
     if plot:

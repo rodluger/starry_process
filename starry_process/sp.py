@@ -61,7 +61,14 @@ class StarryProcess(object):
         return tt.transpose(tt.dot(self.design(t), tt.transpose(ylm)))
 
     def sample_ylm_conditional(
-        self, t, flux, data_cov, baseline_mean=0.0, nsamples=1, eps=1e-12
+        self,
+        t,
+        flux,
+        data_cov,
+        baseline_mean=0.0,
+        baseline_var=0.0,
+        nsamples=1,
+        eps=1e-12,
     ):
         # Equation (11) of Hogg, Price-Whelan, & Leistedt (2020)
         # https://arxiv.org/pdf/2005.14199.pdf
@@ -72,15 +79,15 @@ class StarryProcess(object):
         flux = tt.reshape(cast(flux - baseline_mean), (-1,))
         data_cov = cast(data_cov)
         if data_cov.ndim == 0:
-            CInvM = M / data_cov
-            CInvy = flux / data_cov
+            C = data_cov * tt.eye(t.shape[0])
         elif data_cov.ndim == 1:
-            CInvM = tt.dot(tt.diag(1.0 / data_cov), M)
-            CInvy = flux / data_cov
+            C = tt.diag(data_cov)
         else:
-            cho_cov = cho_factor(data_cov)
-            CInvM = cho_solve(cho_cov, M)
-            CInvy = cho_solve(cho_cov, flux)
+            C = data_cov
+        C += baseline_var
+        cho_C = cho_factor(C)
+        CInvM = cho_solve(cho_C, M)
+        CInvy = cho_solve(cho_C, flux)
         cho_cov_ylm = cho_factor(self.cov_ylm() + tt.eye(self.N) * eps)
         LInv = cho_solve(cho_cov_ylm, tt.eye(self.N))
         AInv = LInv + tt.dot(tt.transpose(M), CInvM)
