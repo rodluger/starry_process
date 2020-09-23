@@ -18,6 +18,7 @@ class StarryProcess(object):
         assert ydeg > 10, "Degree of map must be > 10."
         self.ydeg = ydeg
         self.N = (ydeg + 1) ** 2
+        eps = kwargs.pop("eps", 1e-12)
 
         # Initialize the integral ops
         self.size = SizeIntegral(self.ydeg, **kwargs)
@@ -36,25 +37,23 @@ class StarryProcess(object):
             kwargs.get("seed", 0)
         )
 
-    def mean_ylm(self):
-        return self.contrast.first_moment()
-
-    def cov_ylm(self):
-        e4 = self.contrast.first_moment()
+        # Pre-compute
+        e4 = self.mean_ylm = self.contrast.first_moment()
         eigE4 = self.contrast.second_moment()
-        return tt.dot(eigE4, tt.transpose(eigE4)) - tt.outer(e4, e4)
+        self.cov_ylm = tt.dot(eigE4, tt.transpose(eigE4)) - tt.outer(e4, e4)
+        self.cho_cov_ylm = cho_factor(self.cov_ylm + tt.eye(self.N) * eps)
+        self.q0 = cho_solve(self.cho_cov_ylm, self.mean_ylm)
 
     def sample_ylm(self, nsamples=1, eps=1e-12):
-        cho_cov_ylm = cho_factor(self.cov_ylm() + tt.eye(self.N) * eps)
         u = self.random.normal((self.N, nsamples))
-        return tt.transpose(self.mean_ylm()[:, None] + tt.dot(cho_cov_ylm, u))
+        return tt.transpose(self.mean_ylm[:, None] + tt.dot(self.cho_cov_ylm, u))
 
     def mean(self, t):
-        return tt.dot(self.design(t), self.mean_ylm())
+        return tt.dot(self.design(t), self.mean_ylm)
 
     def cov(self, t):
         A = self.design(t)
-        return tt.dot(tt.dot(A, self.cov_ylm()), tt.transpose(A))
+        return tt.dot(tt.dot(A, self.cov_ylm), tt.transpose(A))
 
     def sample(self, t, nsamples=1, eps=1e-12):
         ylm = self.sample_ylm(nsamples=nsamples, eps=eps)
@@ -88,12 +87,11 @@ class StarryProcess(object):
         cho_C = cho_factor(C)
         CInvM = cho_solve(cho_C, M)
         CInvy = cho_solve(cho_C, flux)
-        cho_cov_ylm = cho_factor(self.cov_ylm() + tt.eye(self.N) * eps)
-        LInv = cho_solve(cho_cov_ylm, tt.eye(self.N))
+        LInv = cho_solve(self.cho_cov_ylm, tt.eye(self.N))
         AInv = LInv + tt.dot(tt.transpose(M), CInvM)
         cho_AInv = cho_factor(AInv)
         A = cho_solve(cho_AInv, tt.eye(self.N))
-        q = cho_solve(cho_cov_ylm, self.mean_ylm()) + tt.dot(
+        q = self.q0 + tt.dot(
             tt.transpose(M), CInvy
         )
         a = tt.dot(A, q)
