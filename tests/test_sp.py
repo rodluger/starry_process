@@ -24,8 +24,8 @@ def test_moments(rtol=5e-3, ftol=1e-2):
     # Integrate analytically
     print("Computing moments analytically...")
     gp = StarryProcess(ydeg, **defaults)
-    mu = gp.mean_ylm().eval()
-    cov = gp.cov_ylm().eval()
+    mu = gp.mean_ylm.eval()
+    cov = gp.cov_ylm.eval()
 
     # Integrate numerically
     print("Computing moments numerically...")
