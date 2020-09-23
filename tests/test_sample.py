@@ -18,4 +18,4 @@ def test_sample_conditional():
     flux_pred = map.flux(theta=360 * t)
 
     # The computed flux should match the data pretty well
-    assert np.sum((flux - flux_pred) ** 2) < 100 * data_cov
+    assert np.sum((flux - flux_pred) ** 2) < 1000 * data_cov
