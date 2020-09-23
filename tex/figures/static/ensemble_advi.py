@@ -11,6 +11,7 @@ import theano.tensor as tt
 import os
 from corner import corner
 import pandas as pd
+from scipy.signal import medfilt
 
 FILE = os.path.abspath(__file__)
 SAMPLES_FILE = FILE.replace(".py", "_samples.pkl")
@@ -18,7 +19,7 @@ HIST_FILE = FILE.replace(".py", "_hist.npz")
 
 # Options
 nlc = 10
-nadvi = 10000
+nadvi = 25000
 nsamples = 100000
 seed = 0
 baseline_var = 1e-2
@@ -110,7 +111,6 @@ if clobber or not os.path.exists(SAMPLES_FILE):
             )
 
         # Pickle the trace
-        samples = pm.trace_to_dataframe(trace)
         samples.to_pickle(SAMPLES_FILE)
         hist = advi_fit.hist
         np.savez(HIST_FILE, hist=hist)
@@ -121,6 +121,7 @@ else:
     samples = pd.read_pickle(SAMPLES_FILE)
     hist = np.load(HIST_FILE)["hist"]
 
+
 # Diagnostic plots
 varnames = ["sa", "sb", "la", "lb", "ca"]
 truths = [truth[v] for v in varnames]
@@ -128,6 +129,14 @@ varnames += ["incs__{:d}".format(k) for k in range(nlc)]
 truths += list(truth["incs"])
 fig = corner(samples[varnames], truths=truths)
 fig.savefig(FILE.replace(".py", "_corner_diagnostic.pdf"), bbox_inches="tight")
+fig, ax = plt.subplots(1)
+lh = np.log10(hist - np.min(hist) + 1)
+ax.plot(range(len(lh)), lh)
+w = 299
+ax.plot(range(len(lh))[w // 2 : -w // 2], medfilt(lh, w)[w // 2 : -w // 2])
+ax.set_ylabel("relative log loss")
+ax.set_xlabel("iteration number")
+fig.savefig(FILE.replace(".py", "_hist_diagnostic.pdf"), bbox_inches="tight")
 
 # Inclination histograms
 fig, ax = plt.subplots(2, 5, figsize=(16, 5), sharex=True)
