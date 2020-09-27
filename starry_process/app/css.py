@@ -72,7 +72,7 @@ loader = lambda: Div(
         <div class="loader-message">
             &nbsp;Compiling...
             <div style="font-size: 8pt; font-weight: 100; width: 160px; margin-top: 10px;">
-                This may take up to 15 orbits.
+                This may take up to 60 orbits.
             </div>
         </div>
     </div>
