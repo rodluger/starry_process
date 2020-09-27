@@ -72,35 +72,8 @@ class StarryProcess(object):
         nsamples=1,
         eps=1e-12,
     ):
-        # Equation (11) of Hogg, Price-Whelan, & Leistedt (2020)
-        # https://arxiv.org/pdf/2005.14199.pdf
-        # Note that we use their exact notation here:
-        #    The conditional ylm mean is `a`
-        #    The conditional ylm covariance is `A`
-        M = self.design(t)
-        flux = tt.reshape(cast(flux - baseline_mean), (-1,))
-        data_cov = cast(data_cov)
-        if data_cov.ndim == 0:
-            C = data_cov * tt.eye(t.shape[0])
-        elif data_cov.ndim == 1:
-            C = tt.diag(data_cov)
-        else:
-            C = data_cov
-        C += baseline_var
-        cho_C = cho_factor(C)
-        CInvM = cho_solve(cho_C, M)
-        CInvy = cho_solve(cho_C, flux)
-        LInv = cho_solve(self.cho_cov_ylm, tt.eye(self.N))
-        AInv = LInv + tt.dot(tt.transpose(M), CInvM)
-        cho_AInv = cho_factor(AInv)
-        A = cho_solve(cho_AInv, tt.eye(self.N))
-        q = self.q0 + tt.dot(tt.transpose(M), CInvy)
-        a = tt.dot(A, q)
-
-        # Draw the samples
-        cho_A = cho_factor(A)
-        u = self.random.normal((self.N, nsamples))
-        return tt.transpose(a[:, None] + tt.dot(cho_A, u))
+        # TODO
+        raise ValueError("Not yet implemented!")
 
     def log_jac(self):
         """
