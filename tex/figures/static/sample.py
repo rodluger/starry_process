@@ -335,7 +335,3 @@ def sample(runid, clobber=False):
     )
     fig.savefig(CORNER_PLOT, bbox_inches="tight")
     plt.close()
-
-
-if __name__ == "__main__":
-    sample(1)
