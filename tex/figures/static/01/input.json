@@ -21,8 +21,8 @@
     },
     "sample": {
         "method": "advi",
-        "nadvi": 10,
-        "nadvi_samples": 100,
+        "nadvi": 25000,
+        "nadvi_samples": 100000,
         "baseline_var": 1e-2
     },
     "plot": {
