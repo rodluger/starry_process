@@ -70,10 +70,43 @@ class StarryProcess(object):
         baseline_mean=0.0,
         baseline_var=0.0,
         nsamples=1,
-        eps=1e-12,
     ):
-        # TODO
-        raise ValueError("Not yet implemented!")
+        # Get the full data covariance
+        data_cov = cast(data_cov)
+        if data_cov.ndim == 0:
+            C = data_cov * tt.eye(t.shape[0])
+        elif data_cov.ndim == 1:
+            C = tt.diag(data_cov)
+        else:
+            C = data_cov
+
+        # TODO: If we're not marginalizing over the baseline,
+        # we don't need to instantiate the full covariance matrix!
+
+        # Marginalize over the baseline; note we're adding
+        # `baseline_var` to *every* entry in the covariance matrix
+        C += baseline_var
+
+        # Compute C^-1 . A
+        A = self.design(t)
+        cho_C = cho_factor(C)
+        CInvA = cho_solve(cho_C, A)
+
+        # Compute W = A^T . C^-1 . A + L^-1
+        W = tt.dot(tt.transpose(A), CInvA)
+        W += cho_solve(self.cho_cov_ylm, tt.eye((self.ydeg + 1) ** 2))
+        LInvmu = cho_solve(self.cho_cov_ylm, self.mean_ylm)
+
+        # Compute the conditional mean and covariance
+        cho_W = cho_factor(W)
+        M = cho_solve(cho_W, tt.transpose(CInvA))
+        ymu = tt.dot(M, cast(flux) - baseline_mean) + _cho_solve(cho_W, LInvmu)
+        ycov = cho_solve(cho_W, tt.eye(cho_W.shape[0]))
+        cho_ycov = cho_factor(ycov)
+
+        # Sample from it
+        u = self.random.normal((self.N, nsamples))
+        return tt.transpose(ymu[:, None] + tt.dot(cho_ycov, u))
 
     def log_jac(self):
         """
@@ -151,7 +184,8 @@ class StarryProcess(object):
         # GP covariance from e.g., Luger et al. (2017)
         gp_cov = C + self.cov(t)
 
-        # Marginalize over the baseline
+        # Marginalize over the baseline; note we're adding
+        # `baseline_var` to *every* entry in the covariance matrix
         gp_cov += baseline_var
 
         # Cholesky factorization

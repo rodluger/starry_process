@@ -99,8 +99,16 @@ def generate(runid):
 
     # Convert to standard params
     sp = StarryProcess()
-    sa, sb = sp.size.transform.transform(smu, ssig)
-    la, lb = sp.latitude.transform.transform(lmu, lsig)
+    try:
+        sa, sb = sp.size.transform.transform(smu, ssig)
+    except:
+        sa = 0
+        sb = 0
+    try:
+        la, lb = sp.latitude.transform.transform(lmu, lsig)
+    except:
+        la = 0
+        lb = 0
     ca, cb = cmu * nspots, csig * nspots
     sp = StarryProcess(sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=cb)
 
