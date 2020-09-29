@@ -102,13 +102,13 @@ def generate(runid):
     try:
         sa, sb = sp.size.transform.transform(smu, ssig)
     except:
-        sa = 0
-        sb = 0
+        sa = 0.01
+        sb = 0.01
     try:
         la, lb = sp.latitude.transform.transform(lmu, lsig)
     except:
-        la = 0
-        lb = 0
+        la = 0.01
+        lb = 0.01
     ca, cb = cmu * nspots, csig * nspots
     sp = StarryProcess(sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=cb)
 

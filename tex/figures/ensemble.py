@@ -4,4 +4,4 @@ import os
 
 # DEBUG
 if not int(os.getenv("ON_AZURE", "0")):
-    sample(1)
+    sample(2)

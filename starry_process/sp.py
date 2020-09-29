@@ -100,7 +100,7 @@ class StarryProcess(object):
         # Compute the conditional mean and covariance
         cho_W = cho_factor(W)
         M = cho_solve(cho_W, tt.transpose(CInvA))
-        ymu = tt.dot(M, cast(flux) - baseline_mean) + _cho_solve(cho_W, LInvmu)
+        ymu = tt.dot(M, cast(flux) - baseline_mean) + cho_solve(cho_W, LInvmu)
         ycov = cho_solve(cho_W, tt.eye(cho_W.shape[0]))
         cho_ycov = cho_factor(ycov)
 
