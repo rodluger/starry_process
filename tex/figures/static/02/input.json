@@ -11,12 +11,12 @@
         "tmax": 4.0,
         "periods": 1.0,
         "ferr": 1e-4,
-        "nspots": 20,
+        "nspots": 5,
         "smu": 40.0,
         "ssig": 5.0,
         "lmu": 0.0,
         "lsig": 5.0,
-        "cmu": 0.05,
+        "cmu": 0.2,
         "csig": 0.0
     },
     "sample": {
@@ -26,9 +26,8 @@
         "baseline_var": 1e-2
     },
     "plot": {
-        "vmin": 0.73,
+        "vmin": 0.48,
         "vmax": 1.02,
-        "remove_nullspace": true,
         "ndraws": 5,
         "res": 300
     }

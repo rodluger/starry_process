@@ -47,6 +47,9 @@ def sample(runid, clobber=False):
     nuts_draws = inputs.get("nuts_draws", 2000)
     nuts_chains = inputs.get("nuts_chains", 4)
     baseline_var = inputs.get("baseline_var", 1e-2)
+    with open(INPUT_FILE, "r") as f:
+        inputs = json.load(f).get("generate", {})
+    ydeg_true = inputs.get("ydeg", 30)
 
     # File names
     DATA_FILE = os.path.join(PATH, "{:02d}".format(runid), "data.npz")
@@ -74,6 +77,11 @@ def sample(runid, clobber=False):
     )
     POSTERIOR_SAMPLES_PLOT = os.path.join(
         PATH, "{:02d}".format(runid), "{}_posterior_samples.pdf".format(method)
+    )
+    POSTERIOR_SAMPLES_NO_NULLSPACE_PLOT = os.path.join(
+        PATH,
+        "{:02d}".format(runid),
+        "{}_posterior_samples_no_nullspace.pdf".format(method),
     )
 
     # Run the sampler
@@ -195,7 +203,6 @@ def sample(runid, clobber=False):
         inputs = json.load(f).get("plot", {})
     vmin = inputs.get("vmin", 0.73)
     vmax = inputs.get("vmax", 1.02)
-    remove_nullspace = inputs.get("remove_nullspace", True)
     ndraws = inputs.get("ndraws", 5)
     res = inputs.get("res", 300)
 
@@ -360,11 +367,12 @@ def sample(runid, clobber=False):
         [_flux, _sa, _sb, _la, _lb, _ca, _inc, _period],
         _draw(_flux, _sa, _sb, _la, _lb, _ca, _inc, _period),
     )
-    ydeg = 15
+    ydeg_inf = 15
     image_pred = np.empty((nlc, ndraws, res, res))
+    image_pred_no_null = np.empty((nlc, ndraws, res, res))
     flux_pred = np.empty((nlc, ndraws, len(t)))
     incs_pred = np.empty((nlc, ndraws))
-    map = starry.Map(ydeg, lazy=False)
+    map = starry.Map(ydeg_inf, lazy=False)
     for n in tqdm(range(nlc)):
         for i in range(ndraws):
             idx = np.random.choice(nsamples)
@@ -380,115 +388,141 @@ def sample(runid, clobber=False):
             )
             map[:, :] = y
             map.inc = samples["incs__{:d}".format(n)][idx] * 180 / np.pi
+
+            # Flux sample
             flux_pred[n, i] = map.flux(theta=360 / truth["periods"][n] * t)
-            if remove_nullspace:
-                for l in range(3, ydeg + 1, 2):
-                    map[l, :] = 0
+
+            # Image sample
             image_pred[n, i] = 1.0 + map.render(projection="moll", res=res)
+
+            # Image sample (null space zeroed out)
+            for l in range(3, ydeg_inf + 1, 2):
+                map[l, :] = 0
+            image_pred_no_null[n, i] = 1.0 + map.render(
+                projection="moll", res=res
+            )
 
             # The background intensity is not an observable, so let's
             # renormalize so it's unity
-            hist, edges = np.histogram(
-                image_pred[n, i].flatten(),
-                bins=100,
-                range=(
-                    np.nanmin(image_pred[n, i]),
-                    np.nanmax(image_pred[n, i]),
-                ),
-            )
-            j = np.argmax(hist)
-            bkg = 0.5 * (edges[j] + edges[j + 1])
-            image_pred[n, i] += 1 - bkg
+            for img in [image_pred, image_pred_no_null]:
+                hist, edges = np.histogram(
+                    img[n, i].flatten(),
+                    bins=100,
+                    range=(np.nanmin(img[n, i]), np.nanmax(img[n, i]),),
+                )
+                j = np.argmax(hist)
+                bkg = 0.5 * (edges[j] + edges[j + 1])
+                img[n, i] += 1 - bkg
 
             incs_pred[n, i] = samples["incs__{:d}".format(n)][idx]
 
+    # Get the true images w/ and w/out null space
+    map_true = starry.Map(ydeg_true, lazy=False)
+    image = np.empty((nlc, res, res))
+    image_no_null = np.empty((nlc, res, res))
+    for n in tqdm(range(nlc)):
+        map_true[:, :] = truth["y"][n]
+        image[n] = 1.0 + map_true.render(projection="moll", res=res)
+        for l in range(3, ydeg_true + 1, 2):
+            map_true[l, :] = 0
+        image_no_null[n] = 1.0 + map_true.render(projection="moll", res=res)
+
     # Show the map & flux samples
-    fig, ax = plt.subplots(
-        1 + ndraws, nlc, figsize=(12 * (1 + (nlc - 1) // 10), (1 + ndraws))
-    )
-    for axis in ax.flatten():
-        axis.axis("off")
-    fig.subplots_adjust(bottom=0.25)
-    axflux = [None for n in range(nlc)]
-    for n in range(nlc):
-        pos = ax[-1, n].get_position()
-        left = pos.x0
-        width = pos.width
-        bottom = pos.y0 - (ax[-2, n].get_position().y0 - pos.y0)
-        height = pos.height
-        axflux[n] = fig.add_axes([left, bottom, width, height])
-
-    xe = 2 * np.linspace(-1, 1, 1000)
-    ye = np.sqrt(1 - (0.5 * xe) ** 2)
-    eps = 0.02
-    xe = 0.5 * eps + (1 - eps) * xe
-    ye = 0.5 * eps + (1 - 0.5 * eps) * ye
-    yrng = 1.1 * np.max(np.abs(1e3 * (flux0)))
-    ymin = -yrng
-    ymax = yrng
-    for n in range(nlc):
-        # True map
-        ax[0, n].imshow(
-            truth["images"][n],
-            origin="lower",
-            extent=(-2, 2, -1, 1),
-            cmap="plasma",
-            vmin=vmin,
-            vmax=vmax,
+    for img, img_pred, FILE_NAME in zip(
+        [image, image_no_null],
+        [image_pred, image_pred_no_null],
+        [POSTERIOR_SAMPLES_PLOT, POSTERIOR_SAMPLES_NO_NULLSPACE_PLOT],
+    ):
+        fig, ax = plt.subplots(
+            1 + ndraws, nlc, figsize=(12 * (1 + (nlc - 1) // 10), (1 + ndraws))
         )
-        ax[0, n].plot(xe, ye, "k-", lw=1, clip_on=False)
-        ax[0, n].plot(xe, -ye, "k-", lw=1, clip_on=False)
-        ax[0, n].plot(0, lat2y(0.5 * np.pi - truth["incs"][n]), "kx", ms=3)
+        for axis in ax.flatten():
+            axis.axis("off")
+        fig.subplots_adjust(bottom=0.25)
+        axflux = [None for n in range(nlc)]
+        for n in range(nlc):
+            pos = ax[-1, n].get_position()
+            left = pos.x0
+            width = pos.width
+            bottom = pos.y0 - (ax[-2, n].get_position().y0 - pos.y0)
+            height = pos.height
+            axflux[n] = fig.add_axes([left, bottom, width, height])
 
-        # Map samples
-        for i in range(ndraws):
-            ax[1 + i, n].imshow(
-                image_pred[n, i],
+        xe = 2 * np.linspace(-1, 1, 1000)
+        ye = np.sqrt(1 - (0.5 * xe) ** 2)
+        eps = 0.02
+        xe = 0.5 * eps + (1 - eps) * xe
+        ye = 0.5 * eps + (1 - 0.5 * eps) * ye
+        yrng = 1.1 * np.max(np.abs(1e3 * (flux0)))
+        ymin = -yrng
+        ymax = yrng
+        for n in range(nlc):
+            # True map
+            ax[0, n].imshow(
+                img[n],
                 origin="lower",
                 extent=(-2, 2, -1, 1),
                 cmap="plasma",
                 vmin=vmin,
                 vmax=vmax,
             )
-            ax[1 + i, n].plot(xe, ye, "k-", lw=1, clip_on=False)
-            ax[1 + i, n].plot(xe, -ye, "k-", lw=1, clip_on=False)
-            ax[1 + i, n].plot(
-                0, lat2y(0.5 * np.pi - truth["incs"][n]), "kx", ms=3, alpha=0.5
-            )
-            ax[1 + i, n].plot(
-                0, lat2y(0.5 * np.pi - incs_pred[n, i]), "kx", ms=3
-            )
+            ax[0, n].plot(xe, ye, "k-", lw=1, clip_on=False)
+            ax[0, n].plot(xe, -ye, "k-", lw=1, clip_on=False)
+            ax[0, n].plot(0, lat2y(0.5 * np.pi - truth["incs"][n]), "kx", ms=3)
 
-        # True flux
-        axflux[n].plot(
-            t, 1e3 * (flux[n] - np.median(flux[n])), "k.", alpha=0.3, ms=1
-        )
-        axflux[n].set_ylim(ymin, ymax)
+            # Map samples
+            for i in range(ndraws):
+                ax[1 + i, n].imshow(
+                    img_pred[n, i],
+                    origin="lower",
+                    extent=(-2, 2, -1, 1),
+                    cmap="plasma",
+                    vmin=vmin,
+                    vmax=vmax,
+                )
+                ax[1 + i, n].plot(xe, ye, "k-", lw=1, clip_on=False)
+                ax[1 + i, n].plot(xe, -ye, "k-", lw=1, clip_on=False)
+                ax[1 + i, n].plot(
+                    0,
+                    lat2y(0.5 * np.pi - truth["incs"][n]),
+                    "kx",
+                    ms=3,
+                    alpha=0.5,
+                )
+                ax[1 + i, n].plot(
+                    0, lat2y(0.5 * np.pi - incs_pred[n, i]), "kx", ms=3
+                )
 
-        # Flux samples
-        for i in range(ndraws):
+            # True flux
             axflux[n].plot(
-                t,
-                1e3 * (flux_pred[n, i] - np.median(flux_pred[n, i])),
-                "C0-",
-                lw=1,
-                alpha=0.5,
+                t, 1e3 * (flux[n] - np.median(flux[n])), "k.", alpha=0.3, ms=1
             )
+            axflux[n].set_ylim(ymin, ymax)
 
-        if n == 0:
-            axflux[n].spines["top"].set_visible(False)
-            axflux[n].spines["right"].set_visible(False)
-            axflux[n].set_xlabel("rotations", fontsize=8)
-            axflux[n].set_ylabel("flux [ppt]", fontsize=8)
-            axflux[n].set_xticks([0, 1, 2, 3, 4])
-            for tick in (
-                axflux[n].xaxis.get_major_ticks()
-                + axflux[n].yaxis.get_major_ticks()
-            ):
-                tick.label.set_fontsize(6)
-            axflux[n].tick_params(direction="in")
-        else:
-            axflux[n].axis("off")
+            # Flux samples
+            for i in range(ndraws):
+                axflux[n].plot(
+                    t,
+                    1e3 * (flux_pred[n, i] - np.median(flux_pred[n, i])),
+                    "C0-",
+                    lw=1,
+                    alpha=0.5,
+                )
 
-    fig.savefig(POSTERIOR_SAMPLES_PLOT, bbox_inches="tight", dpi=300)
-    plt.close()
+            if n == 0:
+                axflux[n].spines["top"].set_visible(False)
+                axflux[n].spines["right"].set_visible(False)
+                axflux[n].set_xlabel("rotations", fontsize=8)
+                axflux[n].set_ylabel("flux [ppt]", fontsize=8)
+                axflux[n].set_xticks([0, 1, 2, 3, 4])
+                for tick in (
+                    axflux[n].xaxis.get_major_ticks()
+                    + axflux[n].yaxis.get_major_ticks()
+                ):
+                    tick.label.set_fontsize(6)
+                axflux[n].tick_params(direction="in")
+            else:
+                axflux[n].axis("off")
+
+        fig.savefig(FILE_NAME, bbox_inches="tight", dpi=300)
+        plt.close()

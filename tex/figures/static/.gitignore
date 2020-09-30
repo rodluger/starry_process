@@ -1,5 +1,5 @@
-*/*.pdf
+*.pdf
 
 # TODO: Commit these eventually
-*/*.pkl
-*/*.npz
+*.pkl
+*.npz

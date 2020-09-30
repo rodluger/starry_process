@@ -5,7 +5,7 @@
         "nlon": 300,
         "ydeg": 30,
         "smoothing": 0.1,
-        "seed": 0,
+        "seed": 1,
         "nlc": 10,
         "npts": 1000,
         "tmax": 4.0,
@@ -14,7 +14,7 @@
         "nspots": 20,
         "smu": 20.0,
         "ssig": 5.0,
-        "lmu": 30.0,
+        "lmu": 60.0,
         "lsig": 5.0,
         "cmu": 0.05,
         "csig": 0.0
