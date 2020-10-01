@@ -34,7 +34,7 @@ def lat2y(lat):
     return np.sin(theta)
 
 
-def sample(runid, clobber=False):
+def sample(runid, clobber=False, debug=False):
 
     # Get input kwargs
     INPUT_FILE = os.path.join(PATH, "{:02d}".format(runid), "input.json")
@@ -98,105 +98,87 @@ def sample(runid, clobber=False):
 
         # Set up the model
         np.random.seed(0)
-        with pm.Model() as model:
+        if not debug:
+            with pm.Model() as model:
 
-            # Priors
-            sa = pm.Uniform("sa", 0, 1, testval=truth["sa"])
-            sb = pm.Uniform("sb", 0, 1, testval=truth["sb"])
-            la = pm.Uniform("la", 0, 1, testval=truth["la"])
-            lb = pm.Uniform("lb", 0, 1, testval=truth["lb"])
-            ca = pm.Uniform("ca", 0, 5, testval=truth["ca"])
-            cb = truth["cb"]
-            incs = pm.Uniform(
-                "incs", 0, 0.5 * np.pi, shape=(nlc,), testval=truth["incs"]
-            )
-            periods = truth["periods"]
-
-            # Set up the GP
-            sp = StarryProcess(
-                sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=cb, angle_unit="rad"
-            )
-
-            # Likelihood for each light curve
-            log_like = []
-            for k in range(nlc):
-                sp.design._set_params(period=periods[k], inc=incs[k])
-                log_like.append(
-                    sp.log_likelihood(
-                        t, flux[k], ferr ** 2, baseline_var=baseline_var
-                    )
+                # Priors
+                sa = pm.Uniform("sa", 0, 1, testval=truth["sa"])
+                sb = pm.Uniform("sb", 0, 1, testval=truth["sb"])
+                la = pm.Uniform("la", 0, 1, testval=truth["la"])
+                lb = pm.Uniform("lb", 0, 1, testval=truth["lb"])
+                ca = pm.Uniform("ca", 0, 5, testval=truth["ca"])
+                cb = truth["cb"]
+                incs = pm.Uniform(
+                    "incs", 0, 0.5 * np.pi, shape=(nlc,), testval=truth["incs"]
                 )
-            pm.Potential("marginal", tt.sum(log_like))
+                periods = truth["periods"]
 
-            # Priors
-            pm.Potential("sini", tt.sum(tt.log(tt.sin(incs))))
-            pm.Potential("jacobian", sp.log_jac())
+                # Set up the GP
+                sp = StarryProcess(
+                    sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=cb, angle_unit="rad"
+                )
 
-            if method == "advi":
-
-                # Fit
-                print("Fitting...")
-                advi_fit = pm.fit(
-                    n=nadvi,
-                    method=pm.FullRankADVI(),
-                    random_seed=0,
-                    start=model.test_point,
-                    callbacks=[
-                        pm.callbacks.CheckParametersConvergence(
-                            diff="relative"
+                # Likelihood for each light curve
+                log_like = []
+                for k in range(nlc):
+                    sp.design._set_params(period=periods[k], inc=incs[k])
+                    log_like.append(
+                        sp.log_likelihood(
+                            t, flux[k], ferr ** 2, baseline_var=baseline_var
                         )
-                    ],
-                )
+                    )
+                pm.Potential("marginal", tt.sum(log_like))
 
-                # Sample
-                print("Sampling...")
-                trace = advi_fit.sample(nadvi_samples)
-                samples = pm.trace_to_dataframe(trace)
+                # Priors
+                pm.Potential("sini", tt.sum(tt.log(tt.sin(incs))))
+                pm.Potential("jacobian", sp.log_jac())
 
-                # Save the loss history
-                hist = advi_fit.hist
-                np.savez(HIST_FILE, hist=hist)
+                if method == "advi":
 
-            elif method == "nuts":
+                    # Fit
+                    print("Fitting...")
+                    advi_fit = pm.fit(
+                        n=nadvi,
+                        method=pm.FullRankADVI(),
+                        random_seed=0,
+                        start=model.test_point,
+                        callbacks=[
+                            pm.callbacks.CheckParametersConvergence(
+                                diff="relative"
+                            )
+                        ],
+                    )
 
-                print("Sampling...")
-                trace = pm.sample(
-                    tune=nuts_tune,
-                    draws=nuts_draws,
-                    start=model.test_point,
-                    chains=nuts_chains,
-                    step=xo.get_dense_nuts_step(target_accept=0.9),
-                )
-                samples = pm.trace_to_dataframe(trace)
+                    # Sample
+                    print("Sampling...")
+                    trace = advi_fit.sample(nadvi_samples)
+                    samples = pm.trace_to_dataframe(trace)
 
-            else:
+                    # Save the loss history
+                    hist = advi_fit.hist
+                    np.savez(HIST_FILE, hist=hist)
 
-                raise ValueError("invalid method")
+                elif method == "nuts":
 
-            # Display the summary
-            print(pm.summary(trace))
+                    print("Sampling...")
+                    trace = pm.sample(
+                        tune=nuts_tune,
+                        draws=nuts_draws,
+                        start=model.test_point,
+                        chains=nuts_chains,
+                        step=xo.get_dense_nuts_step(target_accept=0.9),
+                    )
+                    samples = pm.trace_to_dataframe(trace)
 
-            # Transform to physical parameters
-            samples["smu"] = np.empty_like(samples["sa"])
-            samples["ssig"] = np.empty_like(samples["sa"])
-            samples["lmu"] = np.empty_like(samples["sa"])
-            samples["lsig"] = np.empty_like(samples["sa"])
-            for n in tqdm(range(nadvi_samples)):
-                (
-                    samples["smu"][n],
-                    samples["ssig"][n],
-                ) = sp.size.transform.inverse_transform(
-                    samples["sa"][n], samples["sb"][n]
-                )
-                (
-                    samples["lmu"][n],
-                    samples["lsig"][n],
-                ) = sp.latitude.transform.inverse_transform(
-                    samples["la"][n], samples["lb"][n]
-                )
+                else:
 
-            # Pickle the trace
-            samples.to_pickle(SAMPLES_FILE)
+                    raise ValueError("invalid method")
+
+                # Display the summary
+                print(pm.summary(trace))
+
+                # Pickle the trace
+                samples.to_pickle(SAMPLES_FILE)
 
     # Plotting
     with open(INPUT_FILE, "r") as f:
@@ -207,9 +189,19 @@ def sample(runid, clobber=False):
     res = inputs.get("res", 300)
 
     # Load everything we'll need for plotting
-    samples = pd.read_pickle(SAMPLES_FILE)
-    if method == "advi":
-        hist = np.load(HIST_FILE)["hist"]
+    if not debug:
+        samples = pd.read_pickle(SAMPLES_FILE)
+        if method == "advi":
+            hist = np.load(HIST_FILE)["hist"]
+    else:
+        samples = pd.DataFrame()
+        for param in ["sa", "sb", "la", "lb", "ca"]:
+            samples[param] = np.random.random(1000)
+        for param in ["incs__{:d}".format(i) for i in range(nlc)]:
+            samples[param] = np.pi / 2 * np.random.random(1000)
+        if method == "advi":
+            hist = np.random.randn(1000)
+
     data = np.load(DATA_FILE)
     truth = np.load(TRUTH_FILE)
     t = data["t"]
@@ -332,25 +324,8 @@ def sample(runid, clobber=False):
     fig.savefig(INC_PLOT, bbox_inches="tight")
     plt.close()
 
-    # Corner plot
-    varnames = ["smu", "ssig", "lmu", "lsig", "ca"]
-    labels = [
-        r"$\mu_{\Delta\theta}$",
-        r"$\sigma_{\Delta\theta}$",
-        r"$\mu_{\phi}$",
-        r"$\sigma_{\phi}$",
-        r"$\xi$",
-    ]
-    fig = corner(
-        samples[varnames],
-        truths=[truth[v] for v in varnames],
-        labels=labels,
-        range=[0.99, 0.99, 1, 1, 1],
-    )
-    fig.savefig(CORNER_PLOT, bbox_inches="tight")
-    plt.close()
-
     # Draw posterior samples
+    theano.config.compute_test_value = "off"
     _draw = lambda flux, sa, sb, la, lb, ca, inc, period: StarryProcess(
         sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=0, inc=inc, period=period
     ).sample_ylm_conditional(t, flux, ferr ** 2, baseline_var=baseline_var)

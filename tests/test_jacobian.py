@@ -21,13 +21,19 @@ def sample(param="latitude", plot=False):
         if param == "latitude":
             sp = StarryProcess(la=a, lb=b)
             transform = sp.latitude.transform.inverse_transform
+            pdf = sp.latitude.transform.pdf
             m1, m2 = 15, 75
             s1, s2 = 10, 30
+            xmin = -89
+            xmax = 89
         else:
             sp = StarryProcess(sa=a, sb=b)
             transform = sp.size.transform.inverse_transform
+            pdf = sp.size.transform.pdf
             m1, m2 = 30, 60
             s1, s2 = 7, 20
+            xmin = 0
+            xmax = 75
         pm.Potential("jacobian", sp.log_jac())
 
         # Sample
@@ -47,6 +53,14 @@ def sample(param="latitude", plot=False):
 
         if plot:
             corner(tr_samples, plot_density=False, plot_contours=False)
+            plt.figure()
+            ndraws = 1000
+            idx = np.random.choice(len(samples), size=(ndraws,))
+            x = np.linspace(xmin, xmax, 1000)
+            p = np.empty((ndraws, len(x)))
+            for i in tqdm(range(ndraws)):
+                p[i] = pdf(x, a=a[idx[i]], b=b[idx[i]])
+                plt.plot(x, p[i], color="C0", lw=1, alpha=0.1)
             plt.show()
 
         # Approximate the density with a Gaussian KDE
@@ -67,4 +81,4 @@ def test_size_jacobian(**kwargs):
 
 
 if __name__ == "__main__":
-    test_latitude_jacobian()
+    test_latitude_jacobian(plot=True)
