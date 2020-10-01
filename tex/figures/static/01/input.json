@@ -6,7 +6,7 @@
         "ydeg": 30,
         "smoothing": 0.1,
         "seed": 1,
-        "nlc": 30,
+        "nlc": 10,
         "npts": 1000,
         "tmax": 4.0,
         "periods": 1.0,
