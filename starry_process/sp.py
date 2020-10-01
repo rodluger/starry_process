@@ -18,7 +18,6 @@ class StarryProcess(object):
         assert ydeg > 10, "Degree of map must be > 10."
         self.ydeg = ydeg
         self.N = (ydeg + 1) ** 2
-        eps = kwargs.pop("eps", 1e-12)
 
         # Initialize the integral ops
         self.size = SizeIntegral(self.ydeg, **kwargs)
@@ -37,15 +36,23 @@ class StarryProcess(object):
             kwargs.get("seed", 0)
         )
 
+        # Stability hacks
+        eps1 = kwargs.pop("eps1", 1e-12)
+        eps2 = kwargs.pop("eps2", 1e-9)
+        lam = np.ones(self.N) * eps1
+        lam[self.ydeg ** 2 :] = eps2
+        lam = tt.diag(lam)
+
         # Pre-compute
         e4 = self.contrast.first_moment()
         eigE4 = self.contrast.second_moment()
         self.mean_ylm = e4
         self.cov_ylm = tt.dot(eigE4, tt.transpose(eigE4)) - tt.outer(e4, e4)
-        self.cho_cov_ylm = cho_factor(self.cov_ylm + tt.eye(self.N) * eps)
+        self.cov_ylm += lam
+        self.cho_cov_ylm = cho_factor(self.cov_ylm)
         self.q0 = cho_solve(self.cho_cov_ylm, self.mean_ylm)
 
-    def sample_ylm(self, nsamples=1, eps=1e-12):
+    def sample_ylm(self, nsamples=1):
         u = self.random.normal((self.N, nsamples))
         return tt.transpose(
             self.mean_ylm[:, None] + tt.dot(self.cho_cov_ylm, u)
@@ -58,7 +65,7 @@ class StarryProcess(object):
         A = self.design(t)
         return tt.dot(tt.dot(A, self.cov_ylm), tt.transpose(A))
 
-    def sample(self, t, nsamples=1, eps=1e-12):
+    def sample(self, t, nsamples=1):
         ylm = self.sample_ylm(nsamples=nsamples, eps=eps)
         return tt.transpose(tt.dot(self.design(t), tt.transpose(ylm)))
 

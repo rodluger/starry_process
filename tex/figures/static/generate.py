@@ -18,7 +18,7 @@ class Star(object):
         self.lon = np.linspace(-180, 180, self.nlon)
         self.lat = np.linspace(-90, 90, self.nlat)
         self.lon, self.lat = np.meshgrid(self.lon, self.lat)
-        self.intensity = np.ones_like(self.lat)
+        self.intensity = np.zeros_like(self.lat)
 
         # Instantiate a starry map
         self.map = starry.Map(ydeg, lazy=False)

@@ -81,4 +81,4 @@ def test_size_jacobian(**kwargs):
 
 
 if __name__ == "__main__":
-    test_latitude_jacobian(plot=True)
+    test_size_jacobian(plot=True)

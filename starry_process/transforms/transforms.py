@@ -389,15 +389,17 @@ class BetaTransform(Transform):
         logger.info("Computing {0} pdf transform...".format(self._name))
 
         # Grid of Beta params
-        self._lnalpha = np.linspace(
-            self._ln_alpha_min, self._ln_alpha_max, self._mom_grid_res
-        )
-        self._lnbeta = np.linspace(
-            self._ln_beta_min, self._ln_beta_max, self._mom_grid_res
-        )
-        self._lnalpha, self._lnbeta = np.meshgrid(self._lnalpha, self._lnbeta)
-        self._lnalpha = self._lnalpha.reshape(-1)
-        self._lnbeta = self._lnbeta.reshape(-1)
+        self._a = np.linspace(0, 1, self._mom_grid_res)
+        self._b = np.linspace(0, 1, self._mom_grid_res)
+        self._a, self._b = np.meshgrid(self._a, self._b)
+        self._a = self._a.reshape(-1)
+        self._b = self._b.reshape(-1)
+        a1 = self._ln_alpha_min
+        a2 = self._ln_alpha_max
+        b1 = self._ln_beta_min
+        b2 = self._ln_beta_max
+        self._lnalpha = self._a * (a2 - a1) + a1
+        self._lnbeta = self._b * (b2 - b1) + b1
         alpha = np.exp(self._lnalpha)
         beta = np.exp(self._lnbeta)
         beta_mu = alpha / (alpha + beta)
@@ -409,7 +411,7 @@ class BetaTransform(Transform):
         mu = np.empty_like(alpha)
         sigma = np.empty_like(alpha)
         for k in tqdm(range(len(alpha))):
-            mu[k], sigma[k] = self.inverse_transform(alpha[k], beta[k])
+            mu[k], sigma[k] = self.inverse_transform(self._a[k], self._b[k])
 
         # Global max and min values for each
         self._mu_min, self._mu_max = (np.min(mu), np.max(mu))

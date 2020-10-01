@@ -148,7 +148,7 @@ def hwhm_empirical(ydeg, rhop):
 
 
 # Settings
-ydeg = 15
+ydeg = 14
 hwhm_min = 15
 hwhm_max = 75
 ncurves = 10
