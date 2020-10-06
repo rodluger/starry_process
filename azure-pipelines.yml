@@ -1,6 +1,8 @@
-trigger:
-  branches:
-    - master
+name: WriteThePaper
+on:
+  push:
+    branches:
+      - master
 
 jobs:
 - job: Default
