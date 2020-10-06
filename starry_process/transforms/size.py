@@ -170,7 +170,7 @@ class SizeTransform(BetaTransform):
     _extra_arrays = {"_c": 4}
 
     def _f(self, x):
-        # hwhwm --> rho
+        # hwhm --> rho
         theta = x * np.pi / 180
         rhop = (
             1 + np.cos(2 * theta / 3) + np.sqrt(3) * np.sin(2 * theta / 3)

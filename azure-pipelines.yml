@@ -1,3 +1,7 @@
+trigger:
+  branches:
+    - master
+
 jobs:
 - job: Default
   timeoutInMinutes: 90

@@ -15,13 +15,13 @@ logger.setLevel(logging.INFO)
 # Main imports
 from . import (
     math,
+    design,
     sp,
     ops,
     integrals,
     latitude,
     size,
     longitude,
-    contrast,
     wigner,
     transforms,
     defaults,

@@ -91,7 +91,7 @@ def generate(runid):
     ferr = inputs.get("ferr", 1e-4)
     nspots = inputs.get("nspots", 20)
     smu = inputs.get("smu", 20.0)
-    ssig = inputs.get("ssig", 5.0)
+    ssig = inputs.get("ssig", 1.0)
     lmu = inputs.get("lmu", 30.0)
     lsig = inputs.get("lsig", 5.0)
     cmu = inputs.get("cmu", 0.05)
@@ -99,18 +99,15 @@ def generate(runid):
 
     # Convert to standard params
     sp = StarryProcess()
-    try:
-        sa, sb = sp.size.transform.transform(smu, ssig)
-    except:
-        sa = 0.01
-        sb = 0.01
+    s = smu
     try:
         la, lb = sp.latitude.transform.transform(lmu, lsig)
     except:
         la = 0.01
         lb = 0.01
-    ca, cb = cmu * nspots, csig * nspots
-    sp = StarryProcess(sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=cb)
+    c = cmu
+    N = nspots
+    sp = StarryProcess(s=s, la=la, lb=lb, c=c, N=N)
 
     # Generate `nlc` light curves
     np.random.seed(seed)
@@ -118,7 +115,7 @@ def generate(runid):
     flux0 = np.empty((nlc, npts))
     flux = np.empty((nlc, npts))
     images = [None for k in range(nlc)]
-    incs = np.arccos(np.random.uniform(0, 1, size=nlc))
+    incs = 180 / np.pi * np.arccos(np.random.uniform(0, 1, size=nlc))
     periods = periods * np.ones(nlc)
 
     if use_starry_process:
@@ -132,7 +129,7 @@ def generate(runid):
 
             # Get the light curve
             map[:, :] = y[k]
-            map.inc = incs[k] * 180 / np.pi
+            map.inc = incs[k]
             flux0[k] = 1 + map.flux(theta=360.0 / periods[k] * t)
 
             # Median-normalize it
@@ -165,7 +162,7 @@ def generate(runid):
             flux0[k] = star.flux(
                 t,
                 period=periods[k],
-                inc=incs[k] * 180 / np.pi,
+                inc=incs[k],
                 smoothing=smoothing,
                 normalize=normalize,
             )
@@ -180,12 +177,11 @@ def generate(runid):
 
     # Return dicts
     truth = dict(
-        sa=sa,
-        sb=sb,
+        s=s,
         la=la,
         lb=lb,
-        ca=ca,
-        cb=cb,
+        c=c,
+        N=N,
         periods=periods,
         incs=incs,
         nspots=nspots,

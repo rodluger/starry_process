@@ -25,7 +25,7 @@ def lat2y(lat):
     corresponding to a given latitude on a Mollweide grid.
     
     """
-    theta = lat
+    theta = lat * np.pi / 180
     niter = 100
     for n in range(niter):
         theta -= (2 * theta + np.sin(2 * theta) - np.pi * np.sin(lat)) / (
@@ -102,21 +102,18 @@ def sample(runid, clobber=False, debug=False):
             with pm.Model() as model:
 
                 # Priors
-                sa = pm.Uniform("sa", 0, 1, testval=truth["sa"])
-                sb = pm.Uniform("sb", 0, 1, testval=truth["sb"])
+                s = pm.Uniform("s", 10, 30, testval=truth["s"])
                 la = pm.Uniform("la", 0, 1, testval=truth["la"])
                 lb = pm.Uniform("lb", 0, 1, testval=truth["lb"])
-                ca = pm.Uniform("ca", 0, 5, testval=truth["ca"])
-                cb = truth["cb"]
+                c = pm.Uniform("c", 0, 1, testval=truth["c"])
+                N = pm.Uniform("N", 1, 50, testval=truth["N"])
                 incs = pm.Uniform(
-                    "incs", 0, 0.5 * np.pi, shape=(nlc,), testval=truth["incs"]
+                    "incs", 0, 90, shape=(nlc,), testval=truth["incs"]
                 )
                 periods = truth["periods"]
 
                 # Set up the GP
-                sp = StarryProcess(
-                    sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=cb, angle_unit="rad"
-                )
+                sp = StarryProcess(s=s, la=la, lb=lb, c=c, N=N)
 
                 # Likelihood for each light curve
                 log_like = []
@@ -130,7 +127,9 @@ def sample(runid, clobber=False, debug=False):
                 pm.Potential("marginal", tt.sum(log_like))
 
                 # Priors
-                pm.Potential("sini", tt.sum(tt.log(tt.sin(incs))))
+                pm.Potential(
+                    "sini", tt.sum(tt.log(tt.sin(incs * np.pi / 180)))
+                )
                 pm.Potential("jacobian", sp.log_jac())
 
                 if method == "advi":
@@ -195,10 +194,10 @@ def sample(runid, clobber=False, debug=False):
             hist = np.load(HIST_FILE)["hist"]
     else:
         samples = pd.DataFrame()
-        for param in ["sa", "sb", "la", "lb", "ca"]:
+        for param in ["s", "la", "lb", "c", "N"]:
             samples[param] = np.random.random(1000)
         for param in ["incs__{:d}".format(i) for i in range(nlc)]:
-            samples[param] = np.pi / 2 * np.random.random(1000)
+            samples[param] = 90 * np.random.random(1000)
         if method == "advi":
             hist = np.random.randn(1000)
 
@@ -244,7 +243,7 @@ def sample(runid, clobber=False, debug=False):
         )
         axtop[k].plot(xe, ye, "k-", lw=1, clip_on=False)
         axtop[k].plot(xe, -ye, "k-", lw=1, clip_on=False)
-        axtop[k].plot(0, lat2y(0.5 * np.pi - truth["incs"][k]), "kx", ms=3)
+        axtop[k].plot(0, lat2y(90 - truth["incs"][k]), "kx", ms=3)
         axtop[k].axis("off")
         axbot[k].plot(t, 1e3 * (flux[k]), "k.", alpha=0.3, ms=1)
         axbot[k].plot(t, 1e3 * (flux0[k]), "C0-", lw=1)
@@ -273,7 +272,7 @@ def sample(runid, clobber=False, debug=False):
     plt.close()
 
     # Diagnostic plots
-    varnames = ["sa", "sb", "la", "lb", "ca"]
+    varnames = ["s", "la", "lb", "c", "N"]
     truths = [truth[v] for v in varnames]
     varnames += ["incs__{:d}".format(k) for k in range(nlc)]
     truths += list(truth["incs"])
@@ -301,12 +300,12 @@ def sample(runid, clobber=False, debug=False):
             axis.axis("off")
             continue
         axis.hist(
-            samples["incs__{:d}".format(k)] * 180 / np.pi,
+            samples["incs__{:d}".format(k)],
             bins=bins,
             histtype="step",
             color="k",
         )
-        axis.axvline(truth["incs"][k] * 180 / np.pi)
+        axis.axvline(truth["incs"][k])
         axis.set_yticks([])
         axis.set_xticks([0, 30, 60, 90])
         if k >= 5:
@@ -326,21 +325,20 @@ def sample(runid, clobber=False, debug=False):
 
     # Draw posterior samples
     theano.config.compute_test_value = "off"
-    _draw = lambda flux, sa, sb, la, lb, ca, inc, period: StarryProcess(
-        sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=0, inc=inc, period=period
+    _draw = lambda flux, s, la, lb, c, N, inc, period: StarryProcess(
+        s=s, la=la, lb=lb, c=c, N=N, inc=inc, period=period
     ).sample_ylm_conditional(t, flux, ferr ** 2, baseline_var=baseline_var)
-    _sa = tt.dscalar()
-    _sb = tt.dscalar()
+    _s = tt.dscalar()
     _la = tt.dscalar()
     _lb = tt.dscalar()
-    _ca = tt.dscalar()
-    _ca = tt.dscalar()
+    _c = tt.dscalar()
+    _N = tt.dscalar()
     _inc = tt.dscalar()
     _period = tt.dscalar()
     _flux = tt.dvector()
     draw = theano.function(
-        [_flux, _sa, _sb, _la, _lb, _ca, _inc, _period],
-        _draw(_flux, _sa, _sb, _la, _lb, _ca, _inc, _period),
+        [_flux, _s, _la, _lb, _c, _N, _inc, _period],
+        _draw(_flux, _s, _la, _lb, _c, _N, _inc, _period),
     )
     ydeg_inf = 15
     image_pred = np.empty((nlc, ndraws, res, res))
@@ -353,16 +351,16 @@ def sample(runid, clobber=False, debug=False):
             idx = np.random.choice(nsamples)
             y = draw(
                 flux[n],
-                samples["sa"][idx],
-                samples["sb"][idx],
+                samples["s"][idx],
                 samples["la"][idx],
                 samples["lb"][idx],
-                samples["ca"][idx],
-                samples["incs__{:d}".format(n)][idx] * 180 / np.pi,
+                samples["c"][idx],
+                samples["N"][idx],
+                samples["incs__{:d}".format(n)][idx],
                 truth["periods"][n],
             )
             map[:, :] = y
-            map.inc = samples["incs__{:d}".format(n)][idx] * 180 / np.pi
+            map.inc = samples["incs__{:d}".format(n)][idx]
 
             # Flux sample
             flux_pred[n, i] = map.flux(theta=360 / truth["periods"][n] * t)
@@ -443,7 +441,7 @@ def sample(runid, clobber=False, debug=False):
             )
             ax[0, n].plot(xe, ye, "k-", lw=1, clip_on=False)
             ax[0, n].plot(xe, -ye, "k-", lw=1, clip_on=False)
-            ax[0, n].plot(0, lat2y(0.5 * np.pi - truth["incs"][n]), "kx", ms=3)
+            ax[0, n].plot(0, lat2y(90 - truth["incs"][n]), "kx", ms=3)
 
             # Map samples
             for i in range(ndraws):
@@ -458,15 +456,9 @@ def sample(runid, clobber=False, debug=False):
                 ax[1 + i, n].plot(xe, ye, "k-", lw=1, clip_on=False)
                 ax[1 + i, n].plot(xe, -ye, "k-", lw=1, clip_on=False)
                 ax[1 + i, n].plot(
-                    0,
-                    lat2y(0.5 * np.pi - truth["incs"][n]),
-                    "kx",
-                    ms=3,
-                    alpha=0.5,
+                    0, lat2y(90 - truth["incs"][n]), "kx", ms=3, alpha=0.5,
                 )
-                ax[1 + i, n].plot(
-                    0, lat2y(0.5 * np.pi - incs_pred[n, i]), "kx", ms=3
-                )
+                ax[1 + i, n].plot(0, lat2y(90 - incs_pred[n, i]), "kx", ms=3)
 
             # True flux
             axflux[n].plot(

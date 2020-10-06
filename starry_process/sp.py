@@ -1,8 +1,7 @@
 from .size import SizeIntegral
-from .contrast import ContrastIntegral
 from .latitude import LatitudeIntegral
 from .longitude import LongitudeIntegral
-from .flux import FluxDesignMatrix
+from .design import FluxDesignMatrix
 from .math import cho_factor, cho_solve, cast
 from .defaults import defaults
 import theano.tensor as tt
@@ -14,7 +13,9 @@ __all__ = ["StarryProcess"]
 
 
 class StarryProcess(object):
-    def __init__(self, ydeg=15, **kwargs):
+    def __init__(
+        self, ydeg=defaults["ydeg"], c=defaults["c"], N=defaults["N"], **kwargs
+    ):
         assert ydeg > 10, "Degree of map must be > 10."
         self.ydeg = ydeg
         self.N = (ydeg + 1) ** 2
@@ -25,16 +26,7 @@ class StarryProcess(object):
         self.longitude = LongitudeIntegral(
             self.ydeg, child=self.latitude, **kwargs
         )
-        self.contrast = ContrastIntegral(
-            self.ydeg, child=self.longitude, **kwargs
-        )
         self.design = FluxDesignMatrix(self.ydeg, **kwargs)
-
-        # NB: Change this by setting `self.random.seed(XXX)`
-        # TODO: Check if that is actually working.
-        self.random = tt.shared_randomstreams.RandomStreams(
-            kwargs.get("seed", 0)
-        )
 
         # Stability hacks
         eps1 = kwargs.pop("eps1", 1e-12)
@@ -43,14 +35,20 @@ class StarryProcess(object):
         lam[self.ydeg ** 2 :] = eps2
         lam = tt.diag(lam)
 
-        # Pre-compute
-        e4 = self.contrast.first_moment()
-        eigE4 = self.contrast.second_moment()
-        self.mean_ylm = e4
-        self.cov_ylm = tt.dot(eigE4, tt.transpose(eigE4)) - tt.outer(e4, e4)
+        # Pre-compute the moments
+        mom1 = self.longitude.first_moment()
+        eig_mom2 = self.longitude.second_moment()
+        mom2 = tt.dot(eig_mom2, tt.transpose(eig_mom2))
+        self.mean_ylm = np.pi * c * N * mom1
+        self.cov_ylm = (np.pi * c) ** 2 * N * (mom2 - tt.outer(mom1, mom1))
         self.cov_ylm += lam
         self.cho_cov_ylm = cho_factor(self.cov_ylm)
         self.q0 = cho_solve(self.cho_cov_ylm, self.mean_ylm)
+
+        # Seed the randomizer
+        self.random = tt.shared_randomstreams.RandomStreams(
+            kwargs.get("seed", 0)
+        )
 
     def sample_ylm(self, nsamples=1):
         u = self.random.normal((self.N, nsamples))
@@ -156,11 +154,7 @@ class StarryProcess(object):
         log likelihood.
 
         """
-        return (
-            self.size._log_jac()
-            + self.latitude._log_jac()
-            + self.contrast._log_jac()
-        )
+        return self.size._log_jac() + self.latitude._log_jac()
 
     def log_likelihood(
         self, t, flux, data_cov, baseline_mean=0.0, baseline_var=0.0

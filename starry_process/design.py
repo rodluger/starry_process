@@ -10,7 +10,7 @@ __all__ = ["FluxDesignMatrix"]
 
 
 class FluxDesignMatrix(object):
-    def __init__(self, ydeg, angle_unit="deg", **kwargs):
+    def __init__(self, ydeg, angle_unit=defaults["angle_unit"], **kwargs):
         self.ydeg = ydeg
         if angle_unit.startswith("deg"):
             self._angle_fac = np.pi / 180
@@ -24,14 +24,16 @@ class FluxDesignMatrix(object):
         self.check_bounds_period = CheckBoundsOp(
             name="period", lower=0, upper=np.inf
         )
-        self.check_bounds_inc = CheckBoundsOp(name="inc", lower=0, upper=90)
+        self.check_bounds_inc = CheckBoundsOp(
+            name="inc", lower=0, upper=0.5 * np.pi
+        )
         self._set_params(**kwargs)
 
     def _set_params(
         self, period=defaults["period"], inc=defaults["inc"], **kwargs
     ):
         self._omega = cast(2 * np.pi / self.check_bounds_period(period))
-        self._inc = cast(self.check_bounds_inc(inc) * self._angle_fac)
+        self._inc = cast(self.check_bounds_inc(inc * self._angle_fac))
 
     def _nwig(self, l):
         return ((l + 1) * (2 * l + 1) * (2 * l + 3)) // 3

@@ -1,6 +1,7 @@
 from starry_process.sp import StarryProcess
 from starry_process.wigner import R
 from starry_process.defaults import defaults
+from starry_process.size import DiscreteSpot
 import numpy as np
 from tqdm import tqdm
 from scipy.stats import beta as Beta
@@ -10,9 +11,11 @@ from theano.tests.unittest_tools import verify_grad
 from theano.configparser import change_flags
 import theano.tensor as tt
 import pytest
+import starry
+import matplotlib.pyplot as plt
 
 
-def test_moments(rtol=5e-3, ftol=1e-2):
+def test_moments_by_integration(rtol=5e-3, ftol=1e-2):
 
     # Settings
     ydeg = 15
@@ -96,6 +99,74 @@ def test_moments(rtol=5e-3, ftol=1e-2):
     ), "error in cov"
 
 
+def test_moments_by_sampling(plot=False):
+
+    la = 0.5
+    lb = 0.5
+    s = 20.0
+    c = 0.5
+    N = 20
+
+    # Generate from the true distribution
+    nsamples = 1000
+    np.random.seed(0)
+    sp = StarryProcess()
+    ydeg = 15
+    map = starry.Map(ydeg, lazy=False)
+    y0 = c * sp.size.spot.get_y(s * np.pi / 180).eval()
+    y_true = np.zeros((nsamples, (ydeg + 1) ** 2))
+    for k in tqdm(range(nsamples)):
+        for n in range(N):
+            lat = sp.latitude.transform.sample(a=la, b=lb)
+            lon = np.random.uniform(-180, 180)
+            map[:, :] = y0
+            map.rotate([1, 0, 0], lat)
+            map.rotate([0, 1, 0], lon)
+            y_true[k] += map.amp * map.y
+    mean_true = np.mean(y_true, axis=0)
+    std_true = np.std(y_true, axis=0)
+
+    # Sample from the GP
+    sp = StarryProcess(s=s, la=la, lb=lb, c=c, N=N)
+    mean_gp = sp.mean_ylm.eval()
+    std_gp = np.sqrt(np.diag(sp.cov_ylm.eval()))
+
+    # Compute the ratio
+    mean_ratio = mean_true / mean_gp
+    mean_ratio[np.abs(mean_gp) < 1e-5] = np.nan
+    std_ratio = std_true / std_gp
+    std_ratio[np.abs(std_gp) < 1e-5] = np.nan
+
+    # Plot
+    if plot:
+
+        fig, ax = plt.subplots(3, sharex=True)
+        ax[0].plot(mean_true, label="true")
+        ax[0].plot(mean_gp, label="gp")
+        ax[0].set_ylabel("mean")
+        ax[0].legend()
+
+        ax[1].plot(std_true, label="true")
+        ax[1].plot(std_gp, label="gp")
+        ax[1].set_ylabel("std")
+        ax[1].legend()
+
+        ax[2].plot(mean_ratio, ".", label="mean")
+        ax[2].plot(std_ratio, label="std")
+        ax[2].set_ylabel("true / gp")
+        ax[2].set_xlabel("ylm index")
+        ax[2].legend()
+
+        for axis in ax:
+            for l in range(ydeg + 1):
+                axis.axvline(l * (l + 1), color="k", lw=1, alpha=0.5, ls="--")
+
+        plt.show()
+
+    assert np.abs(np.nanmean(mean_ratio) - 1) < 1e-2
+    assert np.abs(np.nanmean(std_ratio) - 1) < 1e-2
+
+
 def test_sample():
 
     # Settings
@@ -133,33 +204,4 @@ def test_grad(
 
 
 if __name__ == "__main__":
-
-    # DEBUG: Check for smoothness
-    np.random.seed(0)
-    npts = 1000
-    t = np.linspace(0, 1, npts)
-    flux = np.random.randn(npts)
-    la = np.linspace(0, 1, 100)
-
-    _la = tt.dscalar()
-
-    _func_scipy = lambda _la: StarryProcess(
-        la=_la, driver="scipy"
-    ).log_likelihood(t, flux, 1.0)
-    func_scipy = theano.function([_la], tt.grad(_func_scipy(_la), _la))
-    f_scipy = np.array([func_scipy(la_i) for la_i in la])
-
-    _func_numpy = lambda _la: StarryProcess(
-        la=_la, driver="numpy"
-    ).log_likelihood(t, flux, 1.0)
-    func_numpy = theano.function([_la], tt.grad(_func_numpy(_la), _la))
-    f_numpy = np.array([func_numpy(la_i) for la_i in la])
-
-    import matplotlib.pyplot as plt
-
-    plt.plot(la, f_scipy)
-    plt.plot(la, f_numpy)
-    plt.show()
-
-    breakpoint()
-    pass
+    test_moments_by_sampling(plot=True)
