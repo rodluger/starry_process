@@ -1,8 +1,9 @@
 name: WriteThePaper
-on:
-  push:
-    branches:
-      - master
+
+trigger:
+  branches:
+    include:
+    - master
 
 jobs:
 - job: Default
