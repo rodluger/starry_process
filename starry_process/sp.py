@@ -18,7 +18,7 @@ class StarryProcess(object):
     ):
         assert ydeg > 10, "Degree of map must be > 10."
         self.ydeg = ydeg
-        self.N = (ydeg + 1) ** 2
+        self.nylm = (ydeg + 1) ** 2
 
         # Initialize the integral ops
         self.size = SizeIntegral(self.ydeg, **kwargs)
@@ -31,7 +31,7 @@ class StarryProcess(object):
         # Stability hacks
         eps1 = kwargs.pop("eps1", 1e-12)
         eps2 = kwargs.pop("eps2", 1e-9)
-        lam = np.ones(self.N) * eps1
+        lam = np.ones(self.nylm) * eps1
         lam[self.ydeg ** 2 :] = eps2
         lam = tt.diag(lam)
 
@@ -51,7 +51,7 @@ class StarryProcess(object):
         )
 
     def sample_ylm(self, nsamples=1):
-        u = self.random.normal((self.N, nsamples))
+        u = self.random.normal((self.nylm, nsamples))
         return tt.transpose(
             self.mean_ylm[:, None] + tt.dot(self.cho_cov_ylm, u)
         )
@@ -110,7 +110,7 @@ class StarryProcess(object):
         cho_ycov = cho_factor(ycov)
 
         # Sample from it
-        u = self.random.normal((self.N, nsamples))
+        u = self.random.normal((self.nylm, nsamples))
         return tt.transpose(ymu[:, None] + tt.dot(cho_ycov, u))
 
     def log_jac(self):
@@ -185,8 +185,11 @@ class StarryProcess(object):
         # GP covariance from e.g., Luger et al. (2017)
         gp_cov = C + self.cov(t)
 
-        # Marginalize over the baseline; note we're adding
+        # Marginalize over the baseline; note that we are adding
         # `baseline_var` to *every* entry in the covariance matrix
+        # To see why, c.f. Equation (4) in Luger et al. (2017),
+        # where `A` is a column vector of ones (our baseline regressor)
+        # and `Lambda` is our prior baseline variance
         gp_cov += baseline_var
 
         # Cholesky factorization
