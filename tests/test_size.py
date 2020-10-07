@@ -1,6 +1,5 @@
 from starry_process.size import SizeIntegral
 from starry_process.ops.size import SizeIntegralOp
-from starry_process.defaults import defaults
 import numpy as np
 from scipy.stats import beta as Beta
 from scipy.integrate import quad
@@ -9,18 +8,11 @@ from theano.tests.unittest_tools import verify_grad
 from theano.configparser import change_flags
 
 
-def test_size(
-    ydeg=15,
-    sa=defaults["sa"],
-    sb=defaults["sb"],
-    rtol=1e-10,
-    ftol=1e-7,
-    **kwargs
-):
+def test_size(ydeg=15, params=[0.5, 0.5], rtol=1e-10, ftol=1e-7, **kwargs):
 
     # Get analytic integral
     print("Computing moments analytically...")
-    I = SizeIntegral(ydeg=ydeg, sa=sa, sb=sb, **kwargs)
+    I = SizeIntegral(params, ydeg=ydeg, **kwargs)
     e = I._first_moment().eval()
     eigE = I._second_moment().eval()
     E = eigE @ eigE.T
@@ -40,12 +32,7 @@ def test_size(
     E = E[ij]
 
     # Get the first moment by numerical integration
-    a1 = I.transform._ln_alpha_min
-    a2 = I.transform._ln_alpha_max
-    b1 = I.transform._ln_beta_min
-    b2 = I.transform._ln_beta_max
-    alpha_s = np.exp(sa * (a2 - a1) + a1)
-    beta_s = np.exp(sb * (b2 - b1) + b1)
+    alpha, beta = I._transform._ab_to_alphabeta(*params)
     e_num = np.zeros(ydeg + 1)
     print("Computing first moment numerically...")
     for l in tqdm(range(ydeg + 1)):
@@ -53,8 +40,8 @@ def test_size(
         n = l * (l + 1)
 
         def func(rho):
-            s = I.transform.get_s(rho=rho)[0]
-            return s[n] * Beta.pdf(rho, alpha_s, beta_s)
+            s = I._transform.get_s(rho=rho)[0]
+            return s[n] * Beta.pdf(rho, alpha, beta)
 
         e_num[l] = quad(func, 0, 1, epsabs=1e-12, epsrel=1e-12)[0]
 
@@ -70,8 +57,8 @@ def test_size(
             n2 = l2 * (l2 + 1)
 
             def func(rho):
-                s = I.transform.get_s(rho=rho)[0]
-                return s[n1] * s[n2] * Beta.pdf(rho, alpha_s, beta_s)
+                s = I._transform.get_s(rho=rho)[0]
+                return s[n1] * s[n2] * Beta.pdf(rho, alpha, beta)
 
             E_num[l1, l2] = quad(func, 0, 1, epsabs=1e-12, epsrel=1e-12)[0]
 
@@ -83,28 +70,24 @@ def test_size(
 
 
 def test_size_grad(
-    ydeg=15,
-    sa=defaults["sa"],
-    sb=defaults["sb"],
-    abs_tol=1e-5,
-    rel_tol=1e-5,
-    eps=1e-7,
+    ydeg=15, params=[0.5, 0.5], abs_tol=1e-5, rel_tol=1e-5, eps=1e-7,
 ):
     with change_flags(compute_test_value="off"):
         op = SizeIntegralOp(ydeg)
 
         # Get Beta params
+        a, b = params
         a1 = -5
         a2 = 5
         b1 = -5
         b2 = 5
-        alpha_s = np.exp(sa * (a2 - a1) + a1)
-        beta_s = np.exp(sb * (b2 - b1) + b1)
+        alpha = np.exp(a * (a2 - a1) + a1)
+        beta = np.exp(b * (b2 - b1) + b1)
 
         # d/dq
         verify_grad(
-            lambda alpha_s, beta_s: op(alpha_s, beta_s)[0],
-            (alpha_s, beta_s,),
+            lambda alpha, beta: op(alpha, beta)[0],
+            (alpha, beta,),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,
@@ -113,8 +96,8 @@ def test_size_grad(
 
         # d/dQ
         verify_grad(
-            lambda alpha_s, beta_s: op(alpha_s, beta_s)[3],
-            (alpha_s, beta_s,),
+            lambda alpha, beta: op(alpha, beta)[3],
+            (alpha, beta,),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,

@@ -25,7 +25,8 @@ def lat2y(lat):
     corresponding to a given latitude on a Mollweide grid.
     
     """
-    theta = lat * np.pi / 180
+    lat = lat * np.pi / 180
+    theta = lat
     niter = 100
     for n in range(niter):
         theta -= (2 * theta + np.sin(2 * theta) - np.pi * np.sin(lat)) / (
@@ -113,15 +114,19 @@ def sample(runid, clobber=False, debug=False):
                 periods = truth["periods"]
 
                 # Set up the GP
-                sp = StarryProcess(s=s, la=la, lb=lb, c=c, N=N)
+                sp = StarryProcess(size=s, latitude=[la, lb], contrast=[c, N])
 
                 # Likelihood for each light curve
                 log_like = []
                 for k in range(nlc):
-                    sp.design._set_params(period=periods[k], inc=incs[k])
                     log_like.append(
                         sp.log_likelihood(
-                            t, flux[k], ferr ** 2, baseline_var=baseline_var
+                            t,
+                            flux[k],
+                            ferr ** 2,
+                            baseline_var=baseline_var,
+                            period=periods[k],
+                            inc=incs[k],
                         )
                     )
                 pm.Potential("marginal", tt.sum(log_like))
@@ -326,8 +331,10 @@ def sample(runid, clobber=False, debug=False):
     # Draw posterior samples
     theano.config.compute_test_value = "off"
     _draw = lambda flux, s, la, lb, c, N, inc, period: StarryProcess(
-        s=s, la=la, lb=lb, c=c, N=N, inc=inc, period=period
-    ).sample_ylm_conditional(t, flux, ferr ** 2, baseline_var=baseline_var)
+        size=s, latitude=[la, lb], contrast=[c, N]
+    ).sample_ylm_conditional(
+        t, flux, ferr ** 2, baseline_var=baseline_var, period=period, inc=inc
+    )
     _s = tt.dscalar()
     _la = tt.dscalar()
     _lb = tt.dscalar()

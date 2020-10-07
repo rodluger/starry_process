@@ -1,5 +1,5 @@
 from .integrals import MomentIntegral
-from .transforms import SizeTransform
+from .transforms import FixedTransform, SizeTransform
 from .math import cast, matrix_sqrt
 from .ops import SizeIntegralOp, CheckBoundsOp
 from .defaults import defaults
@@ -43,69 +43,71 @@ class DiscreteSpot(object):
 
 
 class SizeIntegral(MomentIntegral):
-    def _precompute(
-        self,
-        fix_size=defaults["fix_size"],
-        angle_unit=defaults["angle_unit"],
-        **kwargs
-    ):
-        self.fixed = fix_size
-        if angle_unit.startswith("deg"):
-            self._angle_fac = np.pi / 180
-        elif angle_unit.startswith("rad"):
-            self._angle_fac = 1.0
-        else:
-            raise ValueError("Invalid `angle_unit`.")
-        if self.fixed:
-            self.transform = None
-            self.check_bounds_s = CheckBoundsOp(
-                name="sa", lower=0, upper=0.5 * np.pi
-            )
-            self.spot = DiscreteSpot(ydeg=self.ydeg, **kwargs)
-        else:
-            self.transform = SizeTransform(ydeg=self.ydeg, **kwargs)
+    def _ingest(self, params, **kwargs):
+        """
+        Ingest the parameters of the distribution and 
+        set up the transform and rotation operators.
+
+        """
+        if not hasattr(params, "__len__"):
+            params = [params]
+
+        if len(params) == 1:
+
+            # User passed the *constant* size value
+            self._fixed = True
+
+            # Ingest it
+            self._params = [
+                CheckBoundsOp(name="value", lower=0, upper=0.5 * np.pi)(
+                    params[0] * self._angle_fac
+                )
+            ]
+
+            # Set up the transform
+            self._transform = FixedTransform()
+
+            # Set up the spot operator
+            self._spot = DiscreteSpot(ydeg=self._ydeg, **kwargs)
+            self._q = self._spot.get_y(self._params[0])
+            self._eigQ = tt.reshape(self._q, (-1, 1))
+
+        elif len(params) == 2:
+
+            # User passed `a`, `b` characterizing the size distribution
+            self._fixed = False
+
+            # Ingest them
+            self._params = [
+                CheckBoundsOp(name="a", lower=0, upper=1)(params[0]),
+                CheckBoundsOp(name="b", lower=0, upper=1)(params[1]),
+            ]
+
+            # Set up the transform
+            self._transform = SizeTransform(ydeg=self._ydeg, **kwargs)
+
+            # Compute the integrals
             kwargs.update(
                 {
                     "compile_args": kwargs.get("compile_args", [])
                     + [
-                        ("SP__C0", "{:.15f}".format(self.transform._c[0])),
-                        ("SP__C1", "{:.15f}".format(self.transform._c[1])),
-                        ("SP__C2", "{:.15f}".format(self.transform._c[2])),
-                        ("SP__C3", "{:.15f}".format(self.transform._c[3])),
+                        ("SP__C0", "{:.15f}".format(self._transform._c[0])),
+                        ("SP__C1", "{:.15f}".format(self._transform._c[1])),
+                        ("SP__C2", "{:.15f}".format(self._transform._c[2])),
+                        ("SP__C3", "{:.15f}".format(self._transform._c[3])),
                     ]
                 }
             )
-            self._integral_op = SizeIntegralOp(self.ydeg, **kwargs)
-            self.check_bounds_sa = CheckBoundsOp(name="sa", lower=0, upper=1)
-            self.check_bounds_sb = CheckBoundsOp(name="sb", lower=0, upper=1)
+            self._integral_op = SizeIntegralOp(self._ydeg, **kwargs)
+            alpha, beta = self._transform._ab_to_alphabeta(*self._params)
+            self._q, _, _, self._Q, _, _ = self._integral_op(alpha, beta)
+            self._eigQ = matrix_sqrt(self._Q, driver=self._driver)
 
-    def _set_params(
-        self, s=defaults["s"], sa=defaults["sa"], sb=defaults["sb"], **kwargs
-    ):
-        if self.fixed:
-            self.s = self.check_bounds_s(s * self._angle_fac)
-            self.q = self.spot.get_y(self.s)
-            self.eigQ = tt.reshape(self.q, (-1, 1))
-        else:
-            self.sa = self.check_bounds_sa(sa)
-            sa1 = self.transform._ln_alpha_min
-            sa2 = self.transform._ln_alpha_max
-            alpha_s = tt.exp(cast(sa1 + self.sa * (sa2 - sa1)))
-            self.sb = self.check_bounds_sb(sb)
-            sb1 = self.transform._ln_beta_min
-            sb2 = self.transform._ln_beta_max
-            beta_s = tt.exp(cast(sb1 + self.sb * (sb2 - sb1)))
-            self.q, _, _, self.Q, _, _ = self._integral_op(alpha_s, beta_s)
-            self.eigQ = matrix_sqrt(self.Q, driver=self.driver)
+    def _compute(self):
+        pass
 
     def _first_moment(self, e=None):
-        return self.q
+        return self._q
 
     def _second_moment(self, eigE=None):
-        return self.eigQ
-
-    def _log_jac(self):
-        if self.fixed:
-            return 0.0
-        else:
-            return self.transform.log_jac(self.sa, self.sb)
+        return self._eigQ

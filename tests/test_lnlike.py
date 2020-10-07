@@ -16,18 +16,16 @@ def get_functions():
         sa, sb, la, lb, ca, cb, period, inc, t, flux, data_cov,
     ):
         gp = StarryProcess(
-            sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=cb, period=period, inc=inc,
+            size=[sa, sb], latitude=[la, lb], contrast=[ca, cb],
         )
-        return gp.log_likelihood(t, flux, data_cov)
+        return gp.log_likelihood(t, flux, data_cov, period=period, inc=inc)
 
     def _sample(
         sa, sb, la, lb, ca, cb, period, inc, t,
     ):
-        gp = StarryProcess(
-            sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=cb, period=period, inc=inc,
-        )
+        gp = StarryProcess(size=[sa, sb], latitude=[la, lb], contrast=[ca, cb])
         gp.random.seed(42)
-        return tt.reshape(gp.sample(t), (-1,))
+        return tt.reshape(gp.sample(t, period=period, inc=inc), (-1,))
 
     # Likelihood func
     inputs = [tt.dscalar() for n in range(8)]
@@ -49,14 +47,14 @@ def test_lnlike_array(plot=False):
 
     # Generate a dataset
     params = [
-        defaults["sa"],
-        defaults["sb"],
-        defaults["la"],
-        defaults["lb"],
-        defaults["ca"],
-        defaults["cb"],
-        defaults["period"],
-        defaults["inc"],
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        10.0,
+        1.0,
+        60.0,
     ]
     t = np.linspace(0, 3, 1000)
     flux = sample(*params, t)
@@ -65,7 +63,7 @@ def test_lnlike_array(plot=False):
     np.random.seed(42)
     flux += np.random.randn(len(t)) * flux_err
 
-    # Compute the pdf of `lb`
+    # Compute the pdf of `lb` for definiteness
     ll = np.zeros(100)
     lb_arr = np.linspace(0.0, 1.0, len(ll))
     for i in range(len(ll)):
@@ -77,11 +75,11 @@ def test_lnlike_array(plot=False):
         plt.show()
 
     # A *very* simple test
-    assert np.abs(lb_arr[np.nanargmax(ll)] - defaults["lb"]) < 0.10
+    assert np.abs(lb_arr[np.nanargmax(ll)] - 0.5) < 0.10
 
 
 @pytest.mark.parametrize(
-    "param", ["la", "lb", "sa", "sb", "ca", "cb", "period", "inc"]
+    "param", ["l", "la", "lb", "s", "sa", "sb", "ca", "cb", "period", "inc"]
 )
 def test_lnlike_grad(param):
 
@@ -91,10 +89,55 @@ def test_lnlike_grad(param):
     flux = np.random.randn(len(t))
     data_cov = 1.0
 
-    def lnlike(x):
-        kwargs = {param: x}
-        gp = StarryProcess(**kwargs)
-        return gp.log_likelihood(t, flux, data_cov)
-
     with change_flags(compute_test_value="off"):
-        verify_grad(lnlike, (defaults[param],), n_tests=1)
+        if param in ["period", "inc"]:
+            if param == "period":
+                value = 1.0
+            else:
+                value = 60.0
+            verify_grad(
+                lambda x: StarryProcess().log_likelihood(
+                    t, flux, data_cov, **{param: x}
+                ),
+                (value,),
+                n_tests=1,
+            )
+        else:
+            if param in ["s", "sa", "sb"]:
+                key = "size"
+                if param == "s":
+                    f = lambda x: x
+                    value = 20.0
+                elif param == "sa":
+                    f = lambda x: [x, 0.5]
+                    value = 0.5
+                else:
+                    f = lambda x: [0.5, x]
+                    value = 0.5
+            elif param in ["l", "la", "lb"]:
+                key = "latitude"
+                if param == "l":
+                    f = lambda x: x
+                    value = 20.0
+                elif param == "la":
+                    f = lambda x: [x, 0.5]
+                    value = 0.5
+                else:
+                    f = lambda x: [0.5, x]
+                    value = 0.5
+            else:
+                key = "contrast"
+                if param == "ca":
+                    f = lambda x: [x, 10.0]
+                    value = 0.5
+                else:
+                    f = lambda x: [0.5, x]
+                    value = 10.0
+            verify_grad(
+                lambda x: StarryProcess(**{key: f(x)}).log_likelihood(
+                    t, flux, data_cov
+                ),
+                (value,),
+                n_tests=1,
+            )
+

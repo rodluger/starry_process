@@ -172,6 +172,17 @@ class IdentityTransform(Transform):
     def transform(self, *args):
         return args
 
+    def inverse_transform(self, *args):
+        return args
+
+
+class FixedTransform(IdentityTransform):
+    def pdf(self, *args, **kwargs):
+        raise NotImplementedError("This distribution does not have a PDF.")
+
+    def sample(self, *args, **kwargs):
+        raise NotImplementedError("This distribution cannot be sampled from.")
+
 
 class BetaTransform(Transform):
 
@@ -353,6 +364,21 @@ class BetaTransform(Transform):
         warnings.resetwarnings()
 
         return res
+
+    def _ab_to_alphabeta(self, a, b):
+        a1 = self._ln_alpha_min
+        a2 = self._ln_alpha_max
+        if is_tensor(a):
+            alpha = tt.exp(cast(a1 + a * (a2 - a1)))
+        else:
+            alpha = np.exp(a1 + a * (a2 - a1))
+        b1 = self._ln_beta_min
+        b2 = self._ln_beta_max
+        if is_tensor(b):
+            beta = tt.exp(cast(b1 + b * (b2 - b1)))
+        else:
+            beta = np.exp(b1 + b * (b2 - b1))
+        return alpha, beta
 
     def inverse_transform(self, a, b):
         """
@@ -620,23 +646,11 @@ class BetaTransform(Transform):
 
         return a, b
 
-    def pdf(self, x, mu=None, sigma=None, a=None, b=None):
+    def pdf(self, x, a, b):
         """
         Return the probability density function evaluated at `x`.
         
         """
-        assert ((mu is not None) and (sigma is not None)) or (
-            (a is not None) and (b is not None)
-        ), "must provide either `mu` and `sigma` or `a` and `b`"
-
-        assert not (
-            (mu is not None) and (a is not None)
-        ), "cannot provide both `mu, sigma` and `a, b`."
-
-        # Transform to the standard params
-        if a is None:
-            a, b = self.transform(mu, sigma)
-
         a1 = self._ln_alpha_min
         a2 = self._ln_alpha_max
         b1 = self._ln_beta_min
@@ -647,23 +661,11 @@ class BetaTransform(Transform):
         # Easy!
         return self._jac(x) * Beta.pdf(self._f(x), alpha, beta)
 
-    def sample(self, mu=None, sigma=None, a=None, b=None, nsamples=1):
+    def sample(self, a, b, nsamples=1):
         """
         Draw samples from the distribution.
         
         """
-        assert ((mu is not None) and (sigma is not None)) or (
-            (a is not None) and (b is not None)
-        ), "must provide either `mu` and `sigma` or `a` and `b`"
-
-        assert not (
-            (mu is not None) and (a is not None)
-        ), "cannot provide both `mu, sigma` and `a, b`."
-
-        # Transform to the standard params
-        if a is None:
-            a, b = self.transform(mu, sigma)
-
         a1 = self._ln_alpha_min
         a2 = self._ln_alpha_max
         b1 = self._ln_beta_min

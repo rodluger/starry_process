@@ -101,13 +101,12 @@ def generate(runid):
     sp = StarryProcess()
     s = smu
     try:
-        la, lb = sp.latitude.transform.transform(lmu, lsig)
+        la, lb = sp.latitude._transform.transform(lmu, lsig)
     except:
         la = 0.01
         lb = 0.01
     c = cmu
     N = nspots
-    sp = StarryProcess(s=s, la=la, lb=lb, c=c, N=N)
 
     # Generate `nlc` light curves
     np.random.seed(seed)
@@ -121,6 +120,7 @@ def generate(runid):
     if use_starry_process:
 
         # Draw Ylms
+        sp = StarryProcess(size=s, latitude=[la, lb], contrast=[c, N])
         y = sp.sample_ylm(nsamples=nlc).eval()
 
         # Compute the fluxes

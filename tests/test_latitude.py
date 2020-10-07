@@ -2,7 +2,6 @@ from starry_process.latitude import LatitudeIntegral
 from starry_process.ops import LatitudeIntegralOp
 from starry_process.math import matrix_sqrt
 from starry_process.wigner import R
-from starry_process.defaults import defaults
 import numpy as np
 from scipy.integrate import quad
 from scipy.stats import beta as Beta
@@ -11,14 +10,7 @@ from theano.tests.unittest_tools import verify_grad
 from theano.configparser import change_flags
 
 
-def test_latitude(
-    ydeg=3,
-    la=defaults["la"],
-    lb=defaults["lb"],
-    rtol=1e-12,
-    ftol=1e-10,
-    **kwargs
-):
+def test_latitude(ydeg=3, params=[0.5, 0.5], rtol=1e-12, ftol=1e-10, **kwargs):
 
     # Random input moment matrices
     np.random.seed(0)
@@ -29,18 +21,13 @@ def test_latitude(
 
     # Get analytic integrals
     print("Computing moments analytically...")
-    I = LatitudeIntegral(ydeg=ydeg, la=la, lb=lb, **kwargs)
+    I = LatitudeIntegral(params, ydeg=ydeg, **kwargs)
     e = I._first_moment(s).eval()
     eigE = I._second_moment(eigS).eval()
     E = eigE @ eigE.T
 
     # Get the first moment by numerical integration
-    a1 = I.transform._ln_alpha_min
-    a2 = I.transform._ln_alpha_max
-    b1 = I.transform._ln_beta_min
-    b2 = I.transform._ln_beta_max
-    alpha_l = np.exp(la * (a2 - a1) + a1)
-    beta_l = np.exp(lb * (b2 - b1) + b1)
+    alpha, beta = I._transform._ab_to_alphabeta(*params)
     e_num = np.zeros(N)
     print("Computing first moment numerically...")
     for n in tqdm(range(N)):
@@ -59,7 +46,7 @@ def test_latitude(
                 i = slice(l ** 2, (l + 1) ** 2)
                 Rs[i] = Rl[l] @ s[i]
             jac = 0.5 * np.abs(np.sin(phi))
-            return Rs[n] * jac * Beta.pdf(np.cos(phi), alpha_l, beta_l)
+            return Rs[n] * jac * Beta.pdf(np.cos(phi), alpha, beta)
 
         e_num[n] = quad(func, -np.pi, np.pi)[0]
 
@@ -86,9 +73,7 @@ def test_latitude(
                         RSRT[i, j] = Rl[l1] @ S[i, j] @ Rl[l2].T
 
                 jac = 0.5 * np.abs(np.sin(phi))
-                return (
-                    RSRT[n1, n2] * jac * Beta.pdf(np.cos(phi), alpha_l, beta_l)
-                )
+                return RSRT[n1, n2] * jac * Beta.pdf(np.cos(phi), alpha, beta)
 
             E_num[n1, n2] = quad(func, -np.pi, np.pi)[0]
 
@@ -100,28 +85,24 @@ def test_latitude(
 
 
 def test_latitude_grad(
-    ydeg=3,
-    la=defaults["la"],
-    lb=defaults["lb"],
-    abs_tol=1e-5,
-    rel_tol=1e-5,
-    eps=1e-7,
+    ydeg=3, params=[0.5, 0.5], abs_tol=1e-5, rel_tol=1e-5, eps=1e-7,
 ):
     with change_flags(compute_test_value="off"):
         op = LatitudeIntegralOp(ydeg)
 
         # Get Beta params
+        a, b = params
         a1 = -5
         a2 = 5
         b1 = -5
         b2 = 5
-        alpha_l = np.exp(la * (a2 - a1) + a1)
-        beta_l = np.exp(lb * (b2 - b1) + b1)
+        alpha = np.exp(a * (a2 - a1) + a1)
+        beta = np.exp(b * (b2 - b1) + b1)
 
         # d/dq
         verify_grad(
             lambda alpha, beta: op(alpha, beta)[0],
-            (alpha_l, beta_l,),
+            (alpha, beta),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,
@@ -131,7 +112,7 @@ def test_latitude_grad(
         # d/dQ
         verify_grad(
             lambda alpha, beta: op(alpha, beta)[3],
-            (alpha_l, beta_l,),
+            (alpha, beta),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,

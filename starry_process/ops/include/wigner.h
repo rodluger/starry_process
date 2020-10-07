@@ -284,6 +284,16 @@ inline void computeRx(const SCALAR &theta, VECTOR &Rx, VECTOR &dRxdtheta) {
 }
 
 /**
+ * Compute the Wigner rotation matrix Ry(theta).
+*/
+template <typename SCALAR, typename VECTOR>
+inline void computeRy(const SCALAR &theta, VECTOR &Ry, VECTOR &dRydtheta) {
+
+  // TODO!!!!!!
+  throw std::runtime_error("yhat rotation not yet implemented!");
+}
+
+/**
  * Compute the tensor dot product M . Rz(theta)
 */
 template <typename VECTOR, typename MATRIX>

@@ -11,7 +11,4 @@ class LongitudeTransform(IdentityTransform):
         return pdf
 
     def sample(self, nsamples=1):
-        return 360.0 * np.random.random(size=nsamples)
-
-    def transform(self):
-        return
+        return 360.0 * (np.random.random(size=nsamples) - 0.5)

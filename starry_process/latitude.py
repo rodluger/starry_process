@@ -1,6 +1,6 @@
 from .wigner import R
 from .integrals import WignerIntegral
-from .transforms import LatitudeTransform
+from .transforms import FixedTransform, LatitudeTransform
 from .ops import RxOp, LatitudeIntegralOp, CheckBoundsOp
 from .math import cast
 from .defaults import defaults
@@ -9,67 +9,72 @@ import numpy as np
 
 
 class LatitudeIntegral(WignerIntegral):
-    def _precompute(
-        self,
-        fix_latitude=defaults["fix_latitude"],
-        angle_unit=defaults["angle_unit"],
-        **kwargs
-    ):
-        self.fixed = fix_latitude
-        if angle_unit.startswith("deg"):
-            self._angle_fac = np.pi / 180
-        elif angle_unit.startswith("rad"):
-            self._angle_fac = 1.0
-        else:
-            raise ValueError("Invalid `angle_unit`.")
-        if self.fixed:
-            self._Rx = RxOp(self.ydeg, **kwargs)
-            self.check_bounds_l = CheckBoundsOp(
-                name="l", lower=0, upper=0.5 * np.pi
+    def _ingest(self, params, **kwargs):
+        """
+        Ingest the parameters of the distribution and 
+        set up the transform and rotation operators.
+
+        """
+        if not hasattr(params, "__len__"):
+            params = [params]
+
+        if len(params) == 1:
+
+            # User passed the *constant* latitude value
+            self._fixed = True
+
+            # Ingest it
+            self._params = [
+                CheckBoundsOp(name="value", lower=0, upper=0.5 * np.pi)(
+                    params[0] * self._angle_fac
+                )
+            ]
+
+            # Set up the transform
+            self._transform = FixedTransform()
+
+            # Set up the rotation operator
+            self._Rx = RxOp(self._ydeg, **kwargs)
+
+        elif len(params) == 2:
+
+            # User passed `a`, `b` characterizing the latitude distribution
+            self._fixed = False
+
+            # Ingest them
+            self._params = [
+                CheckBoundsOp(name="a", lower=0, upper=1)(params[0]),
+                CheckBoundsOp(name="b", lower=0, upper=1)(params[1]),
+            ]
+
+            # Set up the transform
+            self._transform = LatitudeTransform(**kwargs)
+
+            # Set up the rotation operator
+            self._R = R(
+                self._ydeg, cos_alpha=0, sin_alpha=1, cos_gamma=0, sin_gamma=-1
             )
+
+            # Compute the integrals
+            self._integral_op = LatitudeIntegralOp(self._ydeg, **kwargs)
+            alpha, beta = self._transform._ab_to_alphabeta(*self._params)
+            self._q, _, _, self._Q, _, _ = self._integral_op(alpha, beta)
+
         else:
-            self.transform = LatitudeTransform(**kwargs)
-            self.R = R(
-                self.ydeg, cos_alpha=0, sin_alpha=1, cos_gamma=0, sin_gamma=-1
-            )
-            self._integral_op = LatitudeIntegralOp(self.ydeg, **kwargs)
-            self.check_bounds_la = CheckBoundsOp(name="la", lower=0, upper=1)
-            self.check_bounds_lb = CheckBoundsOp(name="lb", lower=0, upper=1)
 
-    def _compute_basis_integrals(
-        self, la=defaults["la"], lb=defaults["lb"], **kwargs
-    ):
-        self.la = self.check_bounds_la(la)
-        la1 = self.transform._ln_alpha_min
-        la2 = self.transform._ln_alpha_max
-        alpha_l = tt.exp(cast(la1 + self.la * (la2 - la1)))
-        self.lb = self.check_bounds_lb(lb)
-        lb1 = self.transform._ln_beta_min
-        lb2 = self.transform._ln_beta_max
-        beta_l = tt.exp(cast(lb1 + self.lb * (lb2 - lb1)))
-        self.q, _, _, self.Q, _, _ = self._integral_op(alpha_l, beta_l)
-
-    def _log_jac(self):
-        if self.fixed:
-            return 0.0
-        else:
-            return self.transform.log_jac(self.la, self.lb)
-
-    def _set_params(self, l=defaults["l"], **kwargs):
-        if self.fixed:
-            self.l = self.check_bounds_l(l * self._angle_fac)
-        else:
-            super()._set_params(**kwargs)
-
-    def _nwig(self, l):
-        return ((l + 1) * (2 * l + 1) * (2 * l + 3)) // 3
+            raise ValueError("Invalid number of parameters.")
 
     def _dotRx(self, M, theta):
+        """
+        Dot a matrix `M` into the Wigner x-hat rotation matrix `Rx`.
+
+        """
         f = tt.zeros_like(M)
         rx = self._Rx(theta)[0]
-        for l in range(self.ydeg + 1):
-            start = self._nwig(l - 1)
-            stop = self._nwig(l)
+        nwig = lambda l: ((l + 1) * (2 * l + 1) * (2 * l + 3)) // 3
+        for l in range(self._ydeg + 1):
+            start = nwig(l - 1)
+            stop = nwig(l)
             Rxl = tt.reshape(rx[start:stop], (2 * l + 1, 2 * l + 1))
             f = tt.set_subtensor(
                 f[:, l ** 2 : (l + 1) ** 2],
@@ -77,20 +82,17 @@ class LatitudeIntegral(WignerIntegral):
             )
         return f
 
-    def _first_moment(self, e):
-        if self.fixed:
-            eT = 0.5 * tt.reshape(e, (1, -1))
+    def _rotate(self, M):
+        """
+        Rotate a matrix `M` about the `x` axis.
+        
+        """
+        phi = self._params[0]
+        if M.ndim == 1:
+            MT = 0.5 * tt.reshape(M, (1, -1))
             return tt.reshape(
-                self._dotRx(eT, self.l) + self._dotRx(eT, -self.l), (-1,),
+                self._dotRx(MT, phi) + self._dotRx(MT, -phi), (-1,),
             )
         else:
-            return super()._first_moment(e)
-
-    def _second_moment(self, eigE):
-        if self.fixed:
-            eigET = 0.5 * tt.transpose(eigE)
-            return tt.transpose(
-                self._dotRx(eigET, self.l) + self._dotRx(eigET, -self.l)
-            )
-        else:
-            return super()._second_moment(eigE)
+            MT = 0.5 * tt.transpose(M)
+            return tt.transpose(self._dotRx(MT, phi) + self._dotRx(MT, -phi))

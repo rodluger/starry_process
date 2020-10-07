@@ -4,6 +4,7 @@ from .longitude import LongitudeIntegral
 from .design import FluxDesignMatrix
 from .math import cho_factor, cho_solve, cast
 from .defaults import defaults
+from .ops import CheckBoundsOp
 import theano.tensor as tt
 from theano.ifelse import ifelse
 import numpy as np
@@ -14,36 +15,51 @@ __all__ = ["StarryProcess"]
 
 class StarryProcess(object):
     def __init__(
-        self, ydeg=defaults["ydeg"], c=defaults["c"], N=defaults["N"], **kwargs
+        self,
+        size=defaults["size"],
+        latitude=defaults["latitude"],
+        longitude=defaults["longitude"],
+        contrast=defaults["contrast"],
+        **kwargs
     ):
-        assert ydeg > 10, "Degree of map must be > 10."
-        self.ydeg = ydeg
-        self.nylm = (ydeg + 1) ** 2
+        # Spherical harmonic degree of the process
+        self._ydeg = kwargs.get("ydeg", defaults["ydeg"])
+        assert self._ydeg > 10, "Degree of map must be > 10."
+        self._nylm = (self._ydeg + 1) ** 2
 
         # Initialize the integral ops
-        self.size = SizeIntegral(self.ydeg, **kwargs)
-        self.latitude = LatitudeIntegral(self.ydeg, child=self.size, **kwargs)
+        self.size = SizeIntegral(size, **kwargs)
+        self.latitude = LatitudeIntegral(latitude, child=self.size, **kwargs)
         self.longitude = LongitudeIntegral(
-            self.ydeg, child=self.latitude, **kwargs
+            longitude, child=self.latitude, **kwargs
         )
-        self.design = FluxDesignMatrix(self.ydeg, **kwargs)
+        self.design = FluxDesignMatrix(**kwargs)
+
+        # Contrast
+        assert (
+            hasattr(contrast, "__len__") and len(contrast) == 2
+        ), "Parameter `contrast` must be a tuple containing two values."
+        self._c = CheckBoundsOp(name="c", lower=0, upper=1)(contrast[0])
+        self._N = CheckBoundsOp(name="N", lower=1, upper=np.inf)(contrast[1])
 
         # Stability hacks
         eps1 = kwargs.pop("eps1", 1e-12)
         eps2 = kwargs.pop("eps2", 1e-9)
-        lam = np.ones(self.nylm) * eps1
-        lam[self.ydeg ** 2 :] = eps2
+        lam = np.ones(self._nylm) * eps1
+        lam[self._ydeg ** 2 :] = eps2
         lam = tt.diag(lam)
 
         # Pre-compute the moments
         mom1 = self.longitude.first_moment()
         eig_mom2 = self.longitude.second_moment()
         mom2 = tt.dot(eig_mom2, tt.transpose(eig_mom2))
-        self.mean_ylm = np.pi * c * N * mom1
-        self.cov_ylm = (np.pi * c) ** 2 * N * (mom2 - tt.outer(mom1, mom1))
+        self.mean_ylm = np.pi * self._c * self._N * mom1
+        self.cov_ylm = (
+            (np.pi * self._c) ** 2 * self._N * (mom2 - tt.outer(mom1, mom1))
+        )
         self.cov_ylm += lam
         self.cho_cov_ylm = cho_factor(self.cov_ylm)
-        self.q0 = cho_solve(self.cho_cov_ylm, self.mean_ylm)
+        self._q0 = cho_solve(self.cho_cov_ylm, self.mean_ylm)
 
         # Seed the randomizer
         self.random = tt.shared_randomstreams.RandomStreams(
@@ -51,27 +67,33 @@ class StarryProcess(object):
         )
 
     def sample_ylm(self, nsamples=1):
-        u = self.random.normal((self.nylm, nsamples))
+        u = self.random.normal((self._nylm, nsamples))
         return tt.transpose(
             self.mean_ylm[:, None] + tt.dot(self.cho_cov_ylm, u)
         )
 
-    def mean(self, t):
-        return tt.dot(self.design(t), self.mean_ylm)
+    def mean(self, t, period=defaults["period"], inc=defaults["inc"]):
+        return tt.dot(self.design(t, period, inc), self.mean_ylm)
 
-    def cov(self, t):
-        A = self.design(t)
+    def cov(self, t, period=defaults["period"], inc=defaults["inc"]):
+        A = self.design(t, period, inc)
         return tt.dot(tt.dot(A, self.cov_ylm), tt.transpose(A))
 
-    def sample(self, t, nsamples=1):
-        ylm = self.sample_ylm(nsamples=nsamples, eps=eps)
-        return tt.transpose(tt.dot(self.design(t), tt.transpose(ylm)))
+    def sample(
+        self, t, period=defaults["period"], inc=defaults["inc"], nsamples=1
+    ):
+        ylm = self.sample_ylm(nsamples=nsamples)
+        return tt.transpose(
+            tt.dot(self.design(t, period, inc), tt.transpose(ylm))
+        )
 
     def sample_ylm_conditional(
         self,
         t,
         flux,
         data_cov,
+        period=defaults["period"],
+        inc=defaults["inc"],
         baseline_mean=0.0,
         baseline_var=0.0,
         nsamples=1,
@@ -93,13 +115,13 @@ class StarryProcess(object):
         C += baseline_var
 
         # Compute C^-1 . A
-        A = self.design(t)
+        A = self.design(t, period, inc)
         cho_C = cho_factor(C)
         CInvA = cho_solve(cho_C, A)
 
         # Compute W = A^T . C^-1 . A + L^-1
         W = tt.dot(tt.transpose(A), CInvA)
-        W += cho_solve(self.cho_cov_ylm, tt.eye((self.ydeg + 1) ** 2))
+        W += cho_solve(self.cho_cov_ylm, tt.eye((self._ydeg + 1) ** 2))
         LInvmu = cho_solve(self.cho_cov_ylm, self.mean_ylm)
 
         # Compute the conditional mean and covariance
@@ -110,7 +132,7 @@ class StarryProcess(object):
         cho_ycov = cho_factor(ycov)
 
         # Sample from it
-        u = self.random.normal((self.nylm, nsamples))
+        u = self.random.normal((self._nylm, nsamples))
         return tt.transpose(ymu[:, None] + tt.dot(cho_ycov, u))
 
     def log_jac(self):
@@ -154,10 +176,17 @@ class StarryProcess(object):
         log likelihood.
 
         """
-        return self.size._log_jac() + self.latitude._log_jac()
+        return self.size.log_jac() + self.latitude.log_jac()
 
     def log_likelihood(
-        self, t, flux, data_cov, baseline_mean=0.0, baseline_var=0.0
+        self,
+        t,
+        flux,
+        data_cov,
+        period=defaults["period"],
+        inc=defaults["inc"],
+        baseline_mean=0.0,
+        baseline_var=0.0,
     ):
         """
         Compute the log marginal likelihood of a light curve.
@@ -173,6 +202,11 @@ class StarryProcess(object):
             marginalized over all possible spherical harmonic vectors.
 
         """
+        # Get the flux gp mean and covariance
+        A = self.design(t, period, inc)
+        gp_mean = tt.dot(A, self.mean_ylm)
+        gp_cov = tt.dot(tt.dot(A, self.cov_ylm), tt.transpose(A))
+
         # Get the full data covariance
         data_cov = cast(data_cov)
         if data_cov.ndim == 0:
@@ -182,8 +216,8 @@ class StarryProcess(object):
         else:
             C = data_cov
 
-        # GP covariance from e.g., Luger et al. (2017)
-        gp_cov = C + self.cov(t)
+        # Covariances add!
+        gp_cov += C
 
         # Marginalize over the baseline; note that we are adding
         # `baseline_var` to *every* entry in the covariance matrix
@@ -197,7 +231,7 @@ class StarryProcess(object):
 
         # Compute the marginal likelihood
         K = t.shape[0]
-        r = tt.reshape(flux - self.mean(t) - baseline_mean, (-1, 1))
+        r = tt.reshape(flux - gp_mean - baseline_mean, (-1, 1))
         lnlike = -0.5 * tt.dot(tt.transpose(r), cho_solve(cho_gp_cov, r))
         lnlike -= tt.sum(tt.log(tt.diag(cho_gp_cov)))
         lnlike -= 0.5 * K * tt.log(2 * np.pi)

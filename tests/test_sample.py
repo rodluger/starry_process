@@ -14,7 +14,9 @@ def test_sample_conditional():
 
     # Now sample the ylms conditioned on the flux
     data_cov = 1e-12
-    y = sp.sample_ylm_conditional(t, flux, data_cov).eval()
+    y = sp.sample_ylm_conditional(
+        t, flux, data_cov, period=1.0, inc=60.0
+    ).eval()
     map = starry.Map(15, inc=60, lazy=False)
     map[:, :] = y.reshape(-1)
     flux_pred = map.flux(theta=360 * t)

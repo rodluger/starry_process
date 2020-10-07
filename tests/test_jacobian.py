@@ -19,17 +19,17 @@ def sample(param="latitude", plot=False):
 
         # Likelihood w/ no data: just the prior!
         if param == "latitude":
-            sp = StarryProcess(la=a, lb=b)
-            transform = sp.latitude.transform.inverse_transform
-            pdf = sp.latitude.transform.pdf
+            sp = StarryProcess(latitude=[a, b])
+            transform = sp.latitude._transform.inverse_transform
+            pdf = sp.latitude.pdf
             m1, m2 = 15, 75
             s1, s2 = 10, 30
             xmin = -89
             xmax = 89
         else:
-            sp = StarryProcess(sa=a, sb=b)
-            transform = sp.size.transform.inverse_transform
-            pdf = sp.size.transform.pdf
+            sp = StarryProcess(size=[a, b])
+            transform = sp.size._transform.inverse_transform
+            pdf = sp.size.pdf
             m1, m2 = 30, 60
             s1, s2 = 7, 20
             xmin = 0
@@ -81,4 +81,4 @@ def test_size_jacobian(**kwargs):
 
 
 if __name__ == "__main__":
-    test_size_jacobian(plot=True)
+    test_latitude_jacobian(plot=True)

@@ -16,7 +16,7 @@ def test_longitude(ydeg=3, rtol=1e-12, ftol=1e-10):
 
     # Get analytic integrals
     print("Computing moments analytically...")
-    I = LongitudeIntegral(ydeg=ydeg)
+    I = LongitudeIntegral(None, ydeg=ydeg)
     e = I._first_moment(s).eval()
     eigE = I._second_moment(eigS).eval()
     E = eigE @ eigE.T
