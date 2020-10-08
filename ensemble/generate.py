@@ -100,11 +100,19 @@ def generate(runid):
     # Convert to standard params
     sp = StarryProcess()
     s = smu
+    l = lmu
     try:
         la, lb = sp.latitude._transform.transform(lmu, lsig)
+        assert not (np.isnan(la) or np.isnan(lb))
     except:
-        la = 0.01
-        lb = 0.01
+        la = 0.5
+        lb = 0.5
+    try:
+        sa, sb = sp.size._transform.transform(smu, ssig)
+        assert not (np.isnan(sa) or np.isnan(sb))
+    except:
+        sa = 0.5
+        sb = 0.5
     c = cmu
     N = nspots
 
@@ -178,6 +186,9 @@ def generate(runid):
     # Return dicts
     truth = dict(
         s=s,
+        sa=sa,
+        sb=sb,
+        l=l,
         la=la,
         lb=lb,
         c=c,

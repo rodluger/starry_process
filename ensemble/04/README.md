@@ -1,0 +1,1 @@
+Same as 00, but not fitting for latitude variance.

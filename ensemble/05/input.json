@@ -5,7 +5,7 @@
         "nlon": 300,
         "ydeg": 30,
         "smoothing": 0.1,
-        "seed": 0,
+        "seed": 5,
         "nlc": 10,
         "npts": 1000,
         "tmax": 4.0,
@@ -14,7 +14,7 @@
         "nspots": 20,
         "smu": 20.0,
         "ssig": 1.0,
-        "lmu": 30.0,
+        "lmu": 60.0,
         "lsig": 5.0,
         "cmu": 0.05,
         "csig": 0.0
@@ -25,7 +25,8 @@
         "nadvi_samples": 100000,
         "baseline_var": 1e-2,
         "fit_for_s_var": false,
-        "fit_for_l_var": true
+        "fit_for_l_var": true,
+        "good_guess": false
     },
     "plot": {
         "vmin": 0.73,

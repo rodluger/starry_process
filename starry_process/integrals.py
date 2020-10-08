@@ -100,7 +100,7 @@ class MomentIntegral(object):
 
     def log_jac(self):
         if self._fixed:
-            return 0.0
+            return tt.as_tensor_variable(0.0)
         else:
             return self._transform.log_jac(*self._params)
 

@@ -23,7 +23,9 @@
         "method": "advi",
         "nadvi": 25000,
         "nadvi_samples": 100000,
-        "baseline_var": 1e-2
+        "baseline_var": 1e-2,
+        "fit_for_s_var": false,
+        "fit_for_l_var": true
     },
     "plot": {
         "vmin": 0.73,

@@ -112,12 +112,12 @@ def test_moments_by_sampling(plot=False):
 
     # Sample from the true distribution, then
     # compute empirical mean and std dev
-    nsamples = 1000
+    nsamples = 10000
     np.random.seed(0)
     sp = StarryProcess(size=s, latitude=[la, lb], contrast=[c, N])
     ydeg = 15
     map = starry.Map(ydeg)
-    y0 = c * sp.size._spot.get_y(s * np.pi / 180).eval()
+    y0 = np.pi * c * sp.size._spot.get_y(s * np.pi / 180).eval()
     y_true = np.zeros((nsamples, (ydeg + 1) ** 2))
     lat = sp.latitude.sample(nsamples=nsamples * N).eval().reshape(nsamples, N)
     lon = (
@@ -173,4 +173,5 @@ def test_moments_by_sampling(plot=False):
 
 
 if __name__ == "__main__":
+    starry.config.lazy = False
     test_moments_by_sampling(plot=True)

@@ -5,7 +5,7 @@
         "nlon": 300,
         "ydeg": 30,
         "smoothing": 0.1,
-        "seed": 0,
+        "seed": 2,
         "nlc": 10,
         "npts": 1000,
         "tmax": 4.0,
@@ -13,7 +13,7 @@
         "ferr": 1e-4,
         "nspots": 20,
         "smu": 20.0,
-        "ssig": 1.0,
+        "ssig": 5.0,
         "lmu": 30.0,
         "lsig": 5.0,
         "cmu": 0.05,
@@ -23,9 +23,7 @@
         "method": "advi",
         "nadvi": 25000,
         "nadvi_samples": 100000,
-        "baseline_var": 1e-2,
-        "fit_for_s_var": false,
-        "fit_for_l_var": true
+        "baseline_var": 1e-2
     },
     "plot": {
         "vmin": 0.73,
