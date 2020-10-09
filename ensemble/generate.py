@@ -98,7 +98,7 @@ def generate(runid):
     csig = inputs.get("csig", 0.0)
 
     # Convert to standard params
-    sp = StarryProcess()
+    sp = StarryProcess(size=[0.5, 0.5], latitude=[0.5, 0.5])
     s = smu
     l = lmu
     try:

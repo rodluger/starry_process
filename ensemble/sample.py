@@ -7,7 +7,7 @@ from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import matplotlib.lines as lines
 from tqdm import tqdm
 import pymc3 as pm
-import exoplanet as xo
+import pymc3_ext as pmx
 import theano
 import theano.tensor as tt
 import os
@@ -16,7 +16,6 @@ import pandas as pd
 from scipy.signal import medfilt
 from scipy.stats import norm as Normal
 import json
-
 
 PATH = os.path.abspath(os.path.dirname(__file__))
 
@@ -44,6 +43,7 @@ def sample(runid, clobber=False, debug=False):
     with open(INPUT_FILE, "r") as f:
         inputs = json.load(f).get("sample", {})
     method = inputs.get("method", "advi")
+    noptim = inputs.get("noptim", 0)
     nadvi = inputs.get("nadvi", 25000)
     nadvi_samples = inputs.get("nadvi_samples", 100000)
     nuts_tune = inputs.get("nuts_tune", 500)
@@ -128,8 +128,6 @@ def sample(runid, clobber=False, debug=False):
         ferr = data["ferr"]
         nlc = len(flux)
 
-        breakpoint()
-
         # Set up the model
         np.random.seed(0)
         if not debug:
@@ -149,7 +147,7 @@ def sample(runid, clobber=False, debug=False):
                         "s",
                         smin,
                         smax,
-                        testval=max(min(truth["s"], smax), smin)
+                        testval=max(min(truth["s"], smax - 0.01), smin + 0.01)
                         if good_guess
                         else 0.5 * (smin + smax),
                     )
@@ -211,6 +209,13 @@ def sample(runid, clobber=False, debug=False):
                 )
                 pm.Potential("jacobian", sp.log_jac())
 
+                # Optimize
+                if noptim > 0:
+                    start = pmx.optimize(options=dict(maxiter=noptim))
+                else:
+                    start = model.test_point
+
+                # Sample
                 if method == "advi":
 
                     # Fit
@@ -219,7 +224,7 @@ def sample(runid, clobber=False, debug=False):
                         n=nadvi,
                         method=pm.FullRankADVI(),
                         random_seed=0,
-                        start=model.test_point,
+                        start=start,
                         callbacks=[
                             pm.callbacks.CheckParametersConvergence(
                                 diff="relative"
@@ -239,12 +244,11 @@ def sample(runid, clobber=False, debug=False):
                 elif method == "nuts":
 
                     print("Sampling...")
-                    trace = pm.sample(
+                    trace = pmx.sample(
                         tune=nuts_tune,
                         draws=nuts_draws,
-                        start=model.test_point,
+                        start=start,
                         chains=nuts_chains,
-                        step=xo.get_dense_nuts_step(target_accept=0.9),
                     )
                     samples = pm.trace_to_dataframe(trace)
 
