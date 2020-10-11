@@ -48,7 +48,7 @@ def test_latitude(ydeg=3, params=[0.5, 0.5], rtol=1e-12, ftol=1e-10, **kwargs):
             jac = 0.5 * np.abs(np.sin(phi))
             return Rs[n] * jac * Beta.pdf(np.cos(phi), alpha, beta)
 
-        e_num[n] = quad(func, -np.pi, np.pi)[0]
+        e_num[n] = quad(func, -np.pi / 2, np.pi / 2)[0]
 
     # Get the second moment by numerical integration
     E_num = np.zeros((N, N))
@@ -75,7 +75,7 @@ def test_latitude(ydeg=3, params=[0.5, 0.5], rtol=1e-12, ftol=1e-10, **kwargs):
                 jac = 0.5 * np.abs(np.sin(phi))
                 return RSRT[n1, n2] * jac * Beta.pdf(np.cos(phi), alpha, beta)
 
-            E_num[n1, n2] = quad(func, -np.pi, np.pi)[0]
+            E_num[n1, n2] = quad(func, -np.pi / 2, np.pi / 2)[0]
 
     # Compare
     assert np.max(np.abs(e - e_num)) < rtol, "error in first moment"

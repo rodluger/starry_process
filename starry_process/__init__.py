@@ -19,6 +19,7 @@ from . import (
     sp,
     ops,
     integrals,
+    inclination,
     latitude,
     size,
     longitude,
