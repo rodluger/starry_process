@@ -19,11 +19,13 @@ int APPLY_SPECIFIC(tensordotRz)(PyArrayObject *input0,  // M
   int success = 0;
   int ndim = -1;
   npy_intp *shape;
+
   auto M_in = get_input<DI0>(&ndim, &shape, input0, &success);
   if (ndim != 2) {
     PyErr_Format(PyExc_ValueError, "M must be a matrix");
     return 1;
   }
+
   ndim = -1;
   auto theta_in = get_input<DI1>(&ndim, &shape, input1, &success);
   if (ndim != 1) {

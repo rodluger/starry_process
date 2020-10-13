@@ -2,7 +2,7 @@
 from .starry_process_version import __version__
 
 # Allow C code caching even in dev mode?
-CACHE_DEV_C_CODE = True
+CACHE_DEV_C_CODE = False
 
 # Set up the logger
 import logging
@@ -26,5 +26,6 @@ from . import (
     wigner,
     transforms,
     defaults,
+    optimize,
 )
 from .sp import StarryProcess

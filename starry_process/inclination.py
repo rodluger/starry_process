@@ -33,7 +33,8 @@ class InclinationIntegral(WignerIntegral):
                 self._ydeg, cos_alpha=0, sin_alpha=1, cos_gamma=0, sin_gamma=-1
             )
 
-            # Integrate the basis terms
+            """
+            # Old parametrization: rotate from equatorial frame
             G = lambda i, j: (
                 gamma(0.5 * (i + 1))
                 * gamma(0.5 * (j + 1))
@@ -46,6 +47,24 @@ class InclinationIntegral(WignerIntegral):
             for i in range(4 * self._ydeg + 1):
                 for j in range(0, 4 * self._ydeg + 1):
                     term[i, j] = G(i + 2, j) - G(i, j + 2)
+            """
+
+            # Integrate the basis terms in the *polar frame*
+            # This is the integral of
+            #
+            #    cos(x / 2)^i sin(x / 2)^j sin(x)
+            #
+            # from 0 to pi/2.
+            term = np.zeros((4 * self._ydeg + 1, 4 * self._ydeg + 1))
+            for i in range(4 * self._ydeg + 1):
+                for j in range(0, 4 * self._ydeg + 1):
+                    term[i, j] = 2 * gamma(1 + 0.5 * i) * gamma(
+                        1 + 0.5 * j
+                    ) / gamma(0.5 * (4 + i + j)) - (
+                        2 ** (1 - 0.5 * i) / (2 + i)
+                    ) * hyp2f1(
+                        1 + 0.5 * i, -0.5 * j, 2 + 0.5 * i, 0.5
+                    )
 
             # Compute the moment integrals
             self._q = np.zeros(self._nylm)

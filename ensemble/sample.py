@@ -120,9 +120,13 @@ def sample(runid, clobber=False, debug=False):
     if clobber or not os.path.exists(SAMPLES_FILE):
 
         # Generate (and save) the data
-        data, truth = generate(runid)
-        np.savez(DATA_FILE, **data)
-        np.savez(TRUTH_FILE, **truth)
+        if clobber or not os.path.exists(DATA_FILE):
+            data, truth = generate(runid)
+            np.savez(DATA_FILE, **data)
+            np.savez(TRUTH_FILE, **truth)
+        else:
+            data = np.load(DATA_FILE)
+            truth = np.load(TRUTH_FILE)
         t = data["t"]
         flux = data["flux"]
         ferr = data["ferr"]

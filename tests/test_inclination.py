@@ -29,7 +29,7 @@ def test_inclination(ydeg=3, rtol=1e-12, ftol=1e-10):
         def func(phi):
             Rl = R(
                 ydeg,
-                phi=0.5 * np.pi - phi,
+                phi=phi,
                 cos_alpha=0,
                 sin_alpha=1,
                 cos_gamma=0,
@@ -52,7 +52,7 @@ def test_inclination(ydeg=3, rtol=1e-12, ftol=1e-10):
             def func(phi):
                 Rl = R(
                     ydeg,
-                    phi=0.5 * np.pi - phi,
+                    phi=phi,
                     cos_alpha=0,
                     sin_alpha=1,
                     cos_gamma=0,

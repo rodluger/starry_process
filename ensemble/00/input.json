@@ -27,6 +27,12 @@
         "fit_for_s_var": false,
         "fit_for_l_var": true
     },
+    "optimize": {
+        "method": "NAdam",
+        "lr": 1e-2,
+        "niter": 5000,
+        "baseline_var": 1e-2
+    },
     "plot": {
         "vmin": 0.73,
         "vmax": 1.02,
