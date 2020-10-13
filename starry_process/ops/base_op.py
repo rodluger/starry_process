@@ -54,7 +54,6 @@ class BaseOp(gof.COp):
             "utils.h",
             "special.h",
             "latitude.h",
-            "size.h",
             "wigner.h",
             "eigh.h",
             "flux.h",

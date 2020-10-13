@@ -55,11 +55,11 @@ class NoChild(object):
 class MomentIntegral(object):
     def __init__(
         self,
-        params,
+        *params,
         ydeg=defaults["ydeg"],
         angle_unit=defaults["angle_unit"],
         child=NoChild(),
-        transform=IdentityTransform(),
+        transform=None,
         driver=defaults["driver"],
         **kwargs
     ):
@@ -74,8 +74,7 @@ class MomentIntegral(object):
             self._angle_fac = 1.0
         else:
             raise ValueError("Invalid `angle_unit`.")
-        self._fixed = False
-        self._ingest(params, **kwargs)
+        self._ingest(*params, **kwargs)
         self._compute()
 
     def first_moment(self):
@@ -99,9 +98,7 @@ class MomentIntegral(object):
             return PDFOp(self._transform.pdf)(x, *self._params)
 
     def log_jac(self):
-        if self._fixed:
-            return tt.as_tensor_variable(0.0)
-        else:
+        if self._transform is not None:
             return self._transform.log_jac(*self._params)
 
     @property
@@ -110,7 +107,7 @@ class MomentIntegral(object):
 
     # All of the following methods must be defined in the subclasses:
 
-    def _ingest(self, params, **kwargs):
+    def _ingest(self, *params, **kwargs):
         raise NotImplementedError("Must be subclassed.")
 
     def _compute(self):
@@ -129,55 +126,43 @@ class WignerIntegral(MomentIntegral):
         return 2 * self._ydeg + 1
 
     def _compute(self):
-        if not self._fixed:
-            self._U = matrix_sqrt(
-                self._Q, neig=self._neig, driver=self._driver
-            )
-            self._t = [None for l in range(self._ydeg + 1)]
-            for l in range(self._ydeg + 1):
-                self._t[l] = tt.dot(self._R[l], self._q[l ** 2 : (l + 1) ** 2])
-            self._T = [None for l in range(self._ydeg + 1)]
-            for l in range(self._ydeg + 1):
-                i = slice(l ** 2, (l + 1) ** 2)
-                self._T[l] = tt.swapaxes(tt.dot(self._R[l], self._U[i]), 1, 2)
+        self._U = matrix_sqrt(self._Q, neig=self._neig, driver=self._driver)
+        self._t = [None for l in range(self._ydeg + 1)]
+        for l in range(self._ydeg + 1):
+            self._t[l] = tt.dot(self._R[l], self._q[l ** 2 : (l + 1) ** 2])
+        self._T = [None for l in range(self._ydeg + 1)]
+        for l in range(self._ydeg + 1):
+            i = slice(l ** 2, (l + 1) ** 2)
+            self._T[l] = tt.swapaxes(tt.dot(self._R[l], self._U[i]), 1, 2)
 
     def _first_moment(self, e):
-        if self._fixed:
-            return self._rotate(e)
-        else:
-            mu = tt.zeros(self._nylm)
-            for l in range(self._ydeg + 1):
-                i = slice(l ** 2, (l + 1) ** 2)
-                mu = tt.set_subtensor(mu[i], tt.dot(self._t[l], e[i]))
-            return mu
+        mu = tt.zeros(self._nylm)
+        for l in range(self._ydeg + 1):
+            i = slice(l ** 2, (l + 1) ** 2)
+            mu = tt.set_subtensor(mu[i], tt.dot(self._t[l], e[i]))
+        return mu
 
     def _second_moment(self, eigE):
-        if self._fixed:
-            return self._rotate(eigE)
-        else:
-            sqrtC = tt.zeros((self._nylm, self._neig, eigE.shape[-1]))
-            for l in range(self._ydeg + 1):
-                i = slice(l ** 2, (l + 1) ** 2)
-                sqrtC = tt.set_subtensor(sqrtC[i], tt.dot(self._T[l], eigE[i]))
-            sqrtC = tt.reshape(sqrtC, (self._nylm, -1))
-            # Sometimes it's useful to reduce the size of `sqrtC` by
-            # finding the equivalent lower dimension representation
-            # via eigendecomposition. This is not an approximation!
-            # TODO: Investigate the numerical stability of the gradient
-            # of this operation! Many of the eigenvalues are VERY small.
-            sqrtC = ifelse(
-                sqrtC.shape[1] > self._nylm,
-                matrix_sqrt(
-                    tt.dot(sqrtC, tt.transpose(sqrtC)), driver=self._driver
-                ),
-                sqrtC,
-            )
-            return sqrtC
+        sqrtC = tt.zeros((self._nylm, self._neig, eigE.shape[-1]))
+        for l in range(self._ydeg + 1):
+            i = slice(l ** 2, (l + 1) ** 2)
+            sqrtC = tt.set_subtensor(sqrtC[i], tt.dot(self._T[l], eigE[i]))
+        sqrtC = tt.reshape(sqrtC, (self._nylm, -1))
+        # Sometimes it's useful to reduce the size of `sqrtC` by
+        # finding the equivalent lower dimension representation
+        # via eigendecomposition. This is not an approximation!
+        # TODO: Investigate the numerical stability of the gradient
+        # of this operation! Many of the eigenvalues are VERY small.
+        sqrtC = ifelse(
+            sqrtC.shape[1] > self._nylm,
+            matrix_sqrt(
+                tt.dot(sqrtC, tt.transpose(sqrtC)), driver=self._driver
+            ),
+            sqrtC,
+        )
+        return sqrtC
 
     # All of the following methods must be defined in the subclasses:
 
-    def _ingest(self, params, **kwargs):
-        raise NotImplementedError("Must be subclassed.")
-
-    def _rotate(self, M):
+    def _ingest(self, *params, **kwargs):
         raise NotImplementedError("Must be subclassed.")

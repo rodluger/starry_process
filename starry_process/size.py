@@ -1,14 +1,11 @@
 from .integrals import MomentIntegral
-from .transforms import FixedTransform, SizeTransform
-from .math import cast, matrix_sqrt
-from .ops import SizeIntegralOp, CheckBoundsOp
-from .defaults import defaults
+from .ops import CheckBoundsOp
 import theano.tensor as tt
 import numpy as np
 from scipy.special import legendre as P
 
 
-class DiscreteSpot(object):
+class Spot:
     def __init__(
         self, ydeg=15, npts=1000, eps=1e-9, smoothing=0.075, sfac=300, **kwargs
     ):
@@ -43,65 +40,22 @@ class DiscreteSpot(object):
 
 
 class SizeIntegral(MomentIntegral):
-    def _ingest(self, params, **kwargs):
+    def _ingest(self, r, **kwargs):
         """
         Ingest the parameters of the distribution and 
         set up the transform and rotation operators.
 
         """
-        if not hasattr(params, "__len__"):
-            params = [params]
+        # Ingest it
+        self._r = CheckBoundsOp(name="r", lower=0, upper=0.5 * np.pi)(
+            r * self._angle_fac
+        )
+        self._params = [self._r]
 
-        if len(params) == 1:
-
-            # User passed the *constant* size value
-            self._fixed = True
-
-            # Ingest it
-            self._params = [
-                CheckBoundsOp(name="value", lower=0, upper=0.5 * np.pi)(
-                    params[0] * self._angle_fac
-                )
-            ]
-
-            # Set up the transform
-            self._transform = FixedTransform()
-
-            # Set up the spot operator
-            self._spot = DiscreteSpot(ydeg=self._ydeg, **kwargs)
-            self._q = self._spot.get_y(self._params[0])
-            self._eigQ = tt.reshape(self._q, (-1, 1))
-
-        elif len(params) == 2:
-
-            # User passed `a`, `b` characterizing the size distribution
-            self._fixed = False
-
-            # Ingest them
-            self._params = [
-                CheckBoundsOp(name="a", lower=0, upper=1)(params[0]),
-                CheckBoundsOp(name="b", lower=0, upper=1)(params[1]),
-            ]
-
-            # Set up the transform
-            self._transform = SizeTransform(ydeg=self._ydeg, **kwargs)
-
-            # Compute the integrals
-            kwargs.update(
-                {
-                    "compile_args": kwargs.get("compile_args", [])
-                    + [
-                        ("SP__C0", "{:.15f}".format(self._transform._c[0])),
-                        ("SP__C1", "{:.15f}".format(self._transform._c[1])),
-                        ("SP__C2", "{:.15f}".format(self._transform._c[2])),
-                        ("SP__C3", "{:.15f}".format(self._transform._c[3])),
-                    ]
-                }
-            )
-            self._integral_op = SizeIntegralOp(self._ydeg, **kwargs)
-            alpha, beta = self._transform._ab_to_alphabeta(*self._params)
-            self._q, _, _, self._Q, _, _ = self._integral_op(alpha, beta)
-            self._eigQ = matrix_sqrt(self._Q, driver=self._driver)
+        # Set up the spot operator
+        self._spot = Spot(ydeg=self._ydeg, **kwargs)
+        self._q = self._spot.get_y(self._r)
+        self._eigQ = tt.reshape(self._q, (-1, 1))
 
     def _compute(self):
         pass

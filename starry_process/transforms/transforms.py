@@ -13,8 +13,10 @@ import theano.tensor as tt
 from theano.ifelse import ifelse
 
 
-# Get current path
-CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache")
+# Get cache path
+CACHE_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cache"
+)
 
 
 class BicubicSpline(object):
@@ -167,6 +169,9 @@ class Transform(object):
     def transform(self, *args, **kwargs):
         raise NotImplementedError("Must be subclassed.")
 
+    def log_jac(self, *args, **kwargs):
+        raise NotImplementedError("Must be subclassed.")
+
 
 class IdentityTransform(Transform):
     def transform(self, *args):
@@ -175,13 +180,8 @@ class IdentityTransform(Transform):
     def inverse_transform(self, *args):
         return args
 
-
-class FixedTransform(IdentityTransform):
-    def pdf(self, *args, **kwargs):
-        raise NotImplementedError("This distribution does not have a PDF.")
-
-    def sample(self, *args, **kwargs):
-        raise NotImplementedError("This distribution cannot be sampled from.")
+    def log_jac(self, *args):
+        return cast(0.0)
 
 
 class BetaTransform(Transform):
