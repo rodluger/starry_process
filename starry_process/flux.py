@@ -7,6 +7,7 @@ from scipy.special import gamma, hyp2f1
 import numpy as np
 import theano
 import theano.tensor as tt
+from theano.ifelse import ifelse
 from tqdm import tqdm
 import os
 
@@ -138,6 +139,7 @@ class FluxIntegral:
     def _rotate(self, theta):
         """
         Rotate a moment matrix in phase.
+        TODO: This can be sped up, since it's not a tensordot!
         
         """
         return self._tensordotRz(self._Ez, tt.tile(theta, self._nylm))
@@ -215,29 +217,78 @@ class FluxIntegral:
             self._t = [data["t{:d}".format(l)] for l in range(self._ydeg + 1)]
 
     def _design_matrix(self, t):
-        theta = 2 * np.pi / self._p * t
+        theta = 2 * np.pi / self._p * cast(t, vectorize=True)
         rTA1 = tt.tile(self._rTA1, (theta.shape[0], 1))
         return self._right_project(rTA1, theta, self._i)
 
     def mean(self, t):
         if self._i is None:
             # Marginalized over inclination
-            return self._mean_marg * tt.ones_like(t)
+            return self._mean_marg * tt.ones_like(cast(t, vectorize=True))
         else:
             # Conditioned on inclination
-            return self._mean_cond * tt.ones_like(t)
+            return self._mean_cond * tt.ones_like(cast(t, vectorize=True))
 
-    def cov(self, t):
+    def cov(self, t, npts=None):
         if self._i is None:
+
             # Marginalized over inclination
-            theta = 2 * np.pi / self._p * t
+
+            # This is slower to compute, so we compute the kernel on
+            # a 1d grid of theta differences, then interpolate to the
+            # full covariance matrix.
+
+            # First, compute the variance (in case len(t) == 1)
+            t = cast(t, vectorize=True)
+            E0 = self._rotate(2 * np.pi / self._p * t[0])
+            var = (tt.tensordot(self._T, E0) - self._mean_marg ** 2) * tt.eye(
+                1
+            )
+
+            # Number of interpolation points. For a regular grid,
+            # the default returns the exact covariance.
+            if npts is None:
+                npts = tt.maximum(1, t.shape[0] - 1)
+
+            # Evaluate the kernel on a regular 1d grid in theta
+            dx = 2 * np.pi / npts
+            xp = tt.arange(-dx, 2 * np.pi + 2.5 * dx, dx)
             E = tt.transpose(
                 theano.scan(
-                    fn=self._rotate, outputs_info=None, sequences=[theta],
+                    fn=self._rotate, outputs_info=None, sequences=[xp],
                 )[0]
             )
             mom2 = tt.tensordot(self._T, E)
-            return mom2 - self._mean_marg ** 2
+            yp = mom2 - self._mean_marg ** 2
+
+            # We need to know the value of the kernel at the following points:
+            theta = 2 * np.pi / self._p * t
+            x = tt.reshape(tt.abs_(theta[:, None] - theta[None, :]), (-1,))
+
+            # Compute the interpolant
+            y0 = yp[:-3]
+            y1 = yp[1:-2]
+            y2 = yp[2:-1]
+            y3 = yp[3:]
+            a0 = y1
+            a1 = -y0 / 3.0 - 0.5 * y1 + y2 - y3 / 6.0
+            a2 = 0.5 * (y0 + y2) - y1
+            a3 = 0.5 * ((y1 - y2) + (y3 - y0) / 3.0)
+            inds = tt.cast(tt.floor(x / dx), "int64")
+            x0 = (x - xp[inds + 1]) / dx
+            cov = (
+                a0[inds]
+                + a1[inds] * x0
+                + a2[inds] * x0 ** 2
+                + a3[inds] * x0 ** 3
+            )
+
+            # Reshape to 2D and we're done
+            cov = tt.reshape(cov, (t.shape[0], t.shape[0]))
+
+            # On the off chance that len(t) == 1, return the variance instead
+            return ifelse(tt.eq(t.shape[0], 1), var, cov)
+
         else:
             # Conditioned on inclination
             A = self._design_matrix(t)

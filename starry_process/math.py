@@ -39,13 +39,27 @@ def cho_factor(A):
     return ifelse(tt.any(tt.isnan(A)), tt.ones_like(A) * np.nan, cholesky(A))
 
 
-def cast(*args):
-    if len(args) == 1:
-        return tt.as_tensor_variable(args[0]).astype(tt.config.floatX)
+def cast(*args, vectorize=False):
+    if vectorize:
+        if len(args) == 1:
+            return tt.reshape(
+                tt.as_tensor_variable(args[0]).astype(tt.config.floatX), (-1,)
+            )
+        else:
+            return [
+                tt.reshape(
+                    tt.as_tensor_variable(arg).astype(tt.config.floatX), (-1,)
+                )
+                for arg in args
+            ]
     else:
-        return [
-            tt.as_tensor_variable(arg).astype(tt.config.floatX) for arg in args
-        ]
+        if len(args) == 1:
+            return tt.as_tensor_variable(args[0]).astype(tt.config.floatX)
+        else:
+            return [
+                tt.as_tensor_variable(arg).astype(tt.config.floatX)
+                for arg in args
+            ]
 
 
 def matrix_sqrt(Q, neig=None, driver="numpy", mindiff=1e-15):

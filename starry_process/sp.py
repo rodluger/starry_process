@@ -81,11 +81,17 @@ class StarryProcess(object):
         baseline_var=0.0,
         nsamples=1,
     ):
+        # TODO
+        if self.flux._i is None:
+            raise NotImplementedError(
+                "Not yet implemented when marginalizing over inclination."
+            )
+
         # Get the full data covariance
-        t = cast(t)
+        flux = cast(flux)
         data_cov = cast(data_cov)
         if data_cov.ndim == 0:
-            C = data_cov * tt.eye(t.shape[0])
+            C = data_cov * tt.eye(flux.shape[0])
         elif data_cov.ndim == 1:
             C = tt.diag(data_cov)
         else:
@@ -109,9 +115,7 @@ class StarryProcess(object):
         # Compute the conditional mean and covariance
         cho_W = cho_factor(W)
         M = cho_solve(cho_W, tt.transpose(CInvA))
-        ymu = tt.dot(M, cast(flux) - baseline_mean) + cho_solve(
-            cho_W, self._LInvmu
-        )
+        ymu = tt.dot(M, flux - baseline_mean) + cho_solve(cho_W, self._LInvmu)
         ycov = cho_solve(cho_W, tt.eye(cho_W.shape[0]))
         cho_ycov = cho_factor(ycov)
 
@@ -120,15 +124,15 @@ class StarryProcess(object):
         return tt.transpose(ymu[:, None] + tt.dot(cho_ycov, u))
 
     def mean(self, t):
-        return self.flux.mean(cast(t))
+        return self.flux.mean(t)
 
-    def cov(self, t):
-        return self.flux.cov(cast(t))
+    def cov(self, t, **kwargs):
+        return self.flux.cov(t, **kwargs)
 
     def sample(self, t, nsamples=1):
         ylm = self.sample_ylm(nsamples=nsamples)
         return tt.transpose(
-            tt.dot(self.flux._design_matrix(cast(t)), tt.transpose(ylm))
+            tt.dot(self.flux._design_matrix(t), tt.transpose(ylm))
         )
 
     def log_jac(self):
