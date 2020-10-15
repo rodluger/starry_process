@@ -9,4 +9,8 @@ defaults = dict(
     i=60.0,
     angle_unit="deg",
     driver="numpy",
+    eps1=1e-12,
+    eps2=1e-9,
+    eps3=1e-8,
+    covpts=100,
 )

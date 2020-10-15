@@ -4,12 +4,22 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import pymc3 as pm
 import exoplanet as xo
+import theano
+import theano.tensor as tt
 from tqdm import tqdm
 from corner import corner
 from scipy.stats import gaussian_kde
 
 
-def sample(param="latitude", plot=False):
+def test_jacobian(plot=False):
+
+    # Compile the PDF
+    _x = tt.dvector()
+    _a = tt.dscalar()
+    _b = tt.dscalar()
+    pdf = theano.function(
+        [_x, _a, _b], StarryProcess(a=_a, b=_b).latitude.pdf(_x)
+    )
 
     with pm.Model() as model:
 
@@ -18,22 +28,11 @@ def sample(param="latitude", plot=False):
         b = pm.Uniform("b", 0, 1)
 
         # Likelihood w/ no data: just the prior!
-        if param == "latitude":
-            sp = StarryProcess(latitude=[a, b])
-            transform = sp.latitude._transform.inverse_transform
-            pdf = sp.latitude.pdf
-            m1, m2 = 15, 75
-            s1, s2 = 10, 30
-            xmin = -89
-            xmax = 89
-        else:
-            sp = StarryProcess(size=[a, b])
-            transform = sp.size._transform.inverse_transform
-            pdf = sp.size.pdf
-            m1, m2 = 30, 60
-            s1, s2 = 7, 20
-            xmin = 0
-            xmax = 75
+        sp = StarryProcess(a=a, b=b)
+        m1, m2 = 15, 75
+        s1, s2 = 10, 30
+        xmin = -89
+        xmax = 89
         pm.Potential("jacobian", sp.log_jac())
 
         # Sample
@@ -49,7 +48,9 @@ def sample(param="latitude", plot=False):
         a, b = samples.T
         tr_samples = np.zeros_like(samples)
         for k in tqdm(range(len(samples))):
-            tr_samples[k] = transform(a[k], b[k])
+            tr_samples[k] = sp.latitude._transform.inverse_transform(
+                a[k], b[k]
+            )
 
         if plot:
             corner(tr_samples, plot_density=False, plot_contours=False)
@@ -59,7 +60,7 @@ def sample(param="latitude", plot=False):
             x = np.linspace(xmin, xmax, 1000)
             p = np.empty((ndraws, len(x)))
             for i in tqdm(range(ndraws)):
-                p[i] = pdf(x, a=a[idx[i]], b=b[idx[i]])
+                p[i] = pdf(x, a[idx[i]], b[idx[i]])
                 plt.plot(x, p[i], color="C0", lw=1, alpha=0.1)
             plt.show()
 
@@ -72,13 +73,5 @@ def sample(param="latitude", plot=False):
         assert np.std(density) / np.mean(density) < 0.1
 
 
-def test_latitude_jacobian(**kwargs):
-    sample("latitude", **kwargs)
-
-
-def test_size_jacobian(**kwargs):
-    sample("size", **kwargs)
-
-
 if __name__ == "__main__":
-    test_latitude_jacobian(plot=True)
+    test_jacobian(plot=True)

@@ -1,84 +1,83 @@
-from starry_process.inclination import InclinationIntegral
-from starry_process.wigner import R
+from starry_process import StarryProcess
+from starry_process.flux import FluxIntegral
+import starry
 import numpy as np
-from scipy.integrate import quad
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 
-def test_inclination(ydeg=3, rtol=1e-12, ftol=1e-10):
+def get_numerical_mean_and_cov(t, nsamples=10000):
+    """
+    Compute the empirical covariance of the flux
+    marginalized over inclination.
 
-    # Random input moment matrices
+    """
+    # Draw random Ylm samples
+    sp = StarryProcess()
+    mu = sp.mean_ylm.eval()
+    cho_cov = sp.cho_cov_ylm.eval()
+    y = mu[:, None] + np.dot(cho_cov, np.random.randn(256, nsamples))
+
+    # Draw sin-distributed inclinations
+    inc = np.arccos(np.random.random(nsamples)) * 180 / np.pi
+
+    # Compute all the light curves
+    map = starry.Map(sp._ydeg)
+    f = np.zeros((nsamples, len(t)))
+    for k in tqdm(range(nsamples)):
+        map.inc = inc[k]
+        A = map.design_matrix(theta=360 * t)
+        f[k] = np.transpose(A @ y[:, k])
+
+    # Return the empirical mean and covariance
+    return np.mean(f, axis=0), np.cov(f.T)
+
+
+def test_inclination(nsamples=10000, plot=False, rtol=1e-4, ftol=0.25):
+    """
+    Test the inclination marginalization algorithm.
+
+    """
+    # Time array
+    t = np.linspace(0, 1, 1000)
+
+    # Compute the analytic moments
+    sp = StarryProcess(marginalize_over_inclination=True)
+    mean = sp.mean(t).eval()
+    cov = sp.cov(t).eval()
+
+    # Compute the numerical moments
     np.random.seed(0)
-    N = (ydeg + 1) ** 2
-    s = np.random.randn(N)
-    eigS = np.random.randn(N, N) / N
-    S = eigS @ eigS.T
+    mean_num, cov_num = get_numerical_mean_and_cov(t, nsamples=nsamples)
 
-    # Get analytic integrals
-    print("Computing moments analytically...")
-    I = InclinationIntegral(None, ydeg=ydeg)
-    e = I._first_moment(s).eval()
-    eigE = I._second_moment(eigS).eval()
-    E = eigE @ eigE.T
+    # Visualize
+    if plot:
 
-    # Get the first moment by numerical integration
-    e_num = np.zeros(N)
-    print("Computing first moment numerically...")
-    for n in tqdm(range(N)):
+        # The radial kernel
+        plt.figure()
+        plt.plot(cov[0])
+        plt.plot(cov_num[0])
 
-        def func(phi):
-            Rl = R(
-                ydeg,
-                phi=phi,
-                cos_alpha=0,
-                sin_alpha=1,
-                cos_gamma=0,
-                sin_gamma=-1,
-            )
-            Rs = np.zeros(N)
-            for l in range(ydeg + 1):
-                i = slice(l ** 2, (l + 1) ** 2)
-                Rs[i] = Rl[l] @ s[i]
-            return Rs[n] * np.sin(phi)
+        # The full covariance
+        fig, ax = plt.subplots(1, 3)
+        vmin = np.min(cov)
+        vmax = np.max(cov)
+        im = ax[0].imshow(cov, vmin=vmin, vmax=vmax)
+        plt.colorbar(im, ax=ax[0])
+        im = ax[1].imshow(cov_num, vmin=vmin, vmax=vmax)
+        plt.colorbar(im, ax=ax[1])
+        im = ax[2].imshow(np.log10(np.abs((cov - cov_num) / cov)))
+        plt.colorbar(im, ax=ax[2])
+        plt.show()
 
-        e_num[n] = quad(func, 0, 0.5 * np.pi)[0]
+    # Check
+    rerr = np.abs(cov[0] - cov_num[0])
+    assert np.max(rerr) < rtol, "relative error too large"
 
-    # Get the second moment by numerical integration
-    E_num = np.zeros((N, N))
-    print("Computing second moment numerically...")
-    for n1 in tqdm(range(N)):
-        for n2 in range(N):
+    ferr = np.abs((cov[0] - cov_num[0]) / cov[0, 0])
+    assert np.max(ferr) < ftol, "fractional error too large"
 
-            def func(phi):
-                Rl = R(
-                    ydeg,
-                    phi=phi,
-                    cos_alpha=0,
-                    sin_alpha=1,
-                    cos_gamma=0,
-                    sin_gamma=-1,
-                )
-                RSRT = np.zeros((N, N))
-                for l1 in range(ydeg + 1):
-                    for l2 in range(ydeg + 1):
-                        i = slice(l1 ** 2, (l1 + 1) ** 2)
-                        j = slice(l2 ** 2, (l2 + 1) ** 2)
-                        RSRT[i, j] = Rl[l1] @ S[i, j] @ Rl[l2].T
 
-                return RSRT[n1, n2] * np.sin(phi)
-
-            E_num[n1, n2] = quad(func, 0, 0.5 * np.pi)[0]
-
-    # Avoid div by zero in the comparison
-    nonzero_i = np.abs(e_num) > 1e-15
-    nonzero_ij = np.abs(E_num) > 1e-15
-
-    # Compare
-    assert np.max(np.abs(e - e_num)) < rtol, "error in first moment"
-    assert (
-        np.max(np.abs(1 - e[nonzero_i] / e_num[nonzero_i])) < ftol
-    ), "error in first moment"
-    assert np.max(np.abs(E - E_num)) < rtol, "error in second moment"
-    assert (
-        np.max(np.abs(1 - E[nonzero_ij] / E_num[nonzero_ij])) < ftol
-    ), "error in second moment"
+if __name__ == "__main__":
+    starry.config.lazy = False
+    test_inclination(plot=True)

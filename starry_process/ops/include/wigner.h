@@ -284,20 +284,10 @@ inline void computeRx(const SCALAR &theta, VECTOR &Rx, VECTOR &dRxdtheta) {
 }
 
 /**
- * Compute the Wigner rotation matrix Ry(theta).
-*/
-template <typename SCALAR, typename VECTOR>
-inline void computeRy(const SCALAR &theta, VECTOR &Ry, VECTOR &dRydtheta) {
-
-  // TODO!!!!!!
-  throw std::runtime_error("yhat rotation not yet implemented!");
-}
-
-/**
  * Compute the tensor dot product M . Rz(theta)
 */
 template <typename VECTOR, typename MATRIX>
-inline void computeTensordotRz(const MATRIX &M, VECTOR const &theta,
+inline void computeTensordotRz(const MATRIX &M, const VECTOR &theta,
                                MATRIX &f) {
 
   using Scalar = typename VECTOR::Scalar;
@@ -352,7 +342,7 @@ inline void computeTensordotRz(const MATRIX &M, VECTOR const &theta,
  * Computes the gradient of the tensor dot product M . Rz(theta).
 */
 template <typename VECTOR, typename MATRIX>
-inline void computeTensordotRzGradient(const MATRIX &M, VECTOR const &theta,
+inline void computeTensordotRzGradient(const MATRIX &M, const VECTOR &theta,
                                        const MATRIX &bf, MATRIX &bM,
                                        VECTOR &btheta) {
 
@@ -411,6 +401,137 @@ inline void computeTensordotRzGradient(const MATRIX &M, VECTOR const &theta,
       bM.col(l * l + j) += tmp_c;
     }
   }
+}
+
+/**
+ * Compute the batched tensor dot product T_ij R_ilk M_lj
+*/
+template <typename VECTOR, typename MATRIX>
+inline void computeSpecialTensordotRz(const MATRIX &T, const MATRIX &M,
+                                      const VECTOR &theta, VECTOR &f) {
+
+  using Scalar = typename VECTOR::Scalar;
+  int K = theta.size();
+
+  // Compute sin & cos
+  auto costheta = theta.array().cos();
+  auto sintheta = theta.array().sin();
+
+  // Initialize our z rotation vectors
+  RowMatrix<Scalar, Dynamic, SP__LMAX + 1> cosnt(K, SP__LMAX + 1);
+  RowMatrix<Scalar, Dynamic, SP__LMAX + 1> sinnt(K, SP__LMAX + 1);
+  RowMatrix<Scalar, Dynamic, SP__N> cosmt(K, SP__N);
+  RowMatrix<Scalar, Dynamic, SP__N> sinmt(K, SP__N);
+  cosnt.col(0).setOnes();
+  sinnt.col(0).setZero();
+  RowMatrix<Scalar, Dynamic, Dynamic> TM1 = T.cwiseProduct(M);
+  RowMatrix<Scalar, Dynamic, Dynamic> TM2(SP__N, SP__N);
+
+  // Compute the cos and sin vectors for the zhat rotation
+  cosnt.col(1) = costheta;
+  sinnt.col(1) = sintheta;
+  for (int n = 2; n < SP__LMAX + 1; ++n) {
+    cosnt.col(n) =
+        2.0 * cosnt.col(n - 1).cwiseProduct(cosnt.col(1)) - cosnt.col(n - 2);
+    sinnt.col(n) =
+        2.0 * sinnt.col(n - 1).cwiseProduct(cosnt.col(1)) - sinnt.col(n - 2);
+  }
+  int n = 0;
+  for (int l = 0; l < SP__LMAX + 1; ++l) {
+    for (int m = -l; m < 0; ++m) {
+      cosmt.col(n) = cosnt.col(-m);
+      sinmt.col(n) = -sinnt.col(-m);
+      TM2.col(l * l + l + m) =
+          T.col(l * l + l + m).cwiseProduct(M.col(l * l + l - m));
+      ++n;
+    }
+    for (int m = 0; m < l + 1; ++m) {
+      cosmt.col(n) = cosnt.col(m);
+      sinmt.col(n) = sinnt.col(m);
+      TM2.col(l * l + l + m) =
+          T.col(l * l + l + m).cwiseProduct(M.col(l * l + l - m));
+      ++n;
+    }
+  }
+
+  // Apply the rotation
+  f = (cosmt * TM1 + sinmt * TM2).rowwise().sum();
+}
+
+/**
+ * Computes the gradient of the batched tensor dot product T_ij R_ilk M_lj
+*/
+template <typename VECTOR, typename MATRIX>
+inline void computeSpecialTensordotRzGradient(const MATRIX &T, const MATRIX &M,
+                                              const VECTOR &theta,
+                                              const VECTOR &bf, MATRIX &bM,
+                                              VECTOR &btheta) {
+
+  using Scalar = typename VECTOR::Scalar;
+  int K = theta.size();
+
+  // Init grads
+  btheta.setZero();
+  bM.setZero();
+
+  // Compute sin & cos
+  auto costheta = theta.array().cos();
+  auto sintheta = theta.array().sin();
+
+  // Initialize our z rotation vectors
+  RowMatrix<Scalar, Dynamic, SP__LMAX + 1> cosnt(K, SP__LMAX + 1);
+  RowMatrix<Scalar, Dynamic, SP__LMAX + 1> sinnt(K, SP__LMAX + 1);
+  RowMatrix<Scalar, Dynamic, SP__N> cosmt(K, SP__N);
+  RowMatrix<Scalar, Dynamic, SP__N> sinmt(K, SP__N);
+  cosnt.col(0).setOnes();
+  sinnt.col(0).setZero();
+  RowMatrix<Scalar, Dynamic, Dynamic> TM1 = T.cwiseProduct(M);
+  RowMatrix<Scalar, Dynamic, Dynamic> TM2(SP__N, SP__N);
+  RowMatrix<Scalar, Dynamic, Dynamic> T_r(SP__N, SP__N);
+  RowMatrix<Scalar, Dynamic, Dynamic> mmat(SP__N, SP__N);
+
+  // Compute the cos and sin vectors for the zhat rotation
+  cosnt.col(1) = costheta;
+  sinnt.col(1) = sintheta;
+  for (int n = 2; n < SP__LMAX + 1; ++n) {
+    cosnt.col(n) =
+        2.0 * cosnt.col(n - 1).cwiseProduct(cosnt.col(1)) - cosnt.col(n - 2);
+    sinnt.col(n) =
+        2.0 * sinnt.col(n - 1).cwiseProduct(cosnt.col(1)) - sinnt.col(n - 2);
+  }
+  int n = 0;
+  for (int l = 0; l < SP__LMAX + 1; ++l) {
+    for (int m = -l; m < 0; ++m) {
+      cosmt.col(n) = cosnt.col(-m);
+      sinmt.col(n) = -sinnt.col(-m);
+      TM2.col(l * l + l + m) =
+          T.col(l * l + l + m).cwiseProduct(M.col(l * l + l - m));
+      T_r.col(l * l + l + m) = T.col(l * l + l - m);
+      mmat.col(n).setConstant(m);
+      ++n;
+    }
+    for (int m = 0; m < l + 1; ++m) {
+      cosmt.col(n) = cosnt.col(m);
+      sinmt.col(n) = sinnt.col(m);
+      TM2.col(l * l + l + m) =
+          T.col(l * l + l + m).cwiseProduct(M.col(l * l + l - m));
+      T_r.col(l * l + l + m) = T.col(l * l + l - m);
+      mmat.col(n).setConstant(m);
+      ++n;
+    }
+  }
+
+  // d/dM
+  for (n = 0; n < SP__N; ++n) {
+    bM.row(n) += bf.cwiseProduct(sinmt.col(n)).sum() * T_r.row(n) +
+                 bf.cwiseProduct(cosmt.col(n)).sum() * T.row(n);
+  }
+
+  // d/dtheta
+  btheta = bf.cwiseProduct(
+      (-mmat.cwiseProduct(sinmt) * TM1 + mmat.cwiseProduct(cosmt) * TM2)
+          .rowwise()
+          .sum());
 }
 
 } // namespace wigner

@@ -24,8 +24,8 @@ class ContrastIntegral:
         )
 
         # Stability hacks
-        eps1 = kwargs.pop("eps1", 1e-12)
-        eps2 = kwargs.pop("eps2", 1e-9)
+        eps1 = kwargs.pop("eps1", defaults["eps1"])
+        eps2 = kwargs.pop("eps2", defaults["eps2"])
         lam = np.ones(self._nylm) * eps1
         lam[self._ydeg ** 2 :] = eps2
         lam = tt.diag(lam)

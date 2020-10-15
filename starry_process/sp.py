@@ -22,8 +22,7 @@ class StarryProcess(object):
         b=defaults["b"],
         c=defaults["c"],
         n=defaults["n"],
-        i=defaults["i"],
-        p=defaults["p"],
+        marginalize_over_inclination=False,
         **kwargs,
     ):
         # Spherical harmonic degree of the process
@@ -47,7 +46,12 @@ class StarryProcess(object):
         self._LInvmu = cho_solve(self._cho_cov_ylm, self._mean_ylm)
 
         # Initialize the flux integral op
-        self.flux = FluxIntegral(i, p, child=self.contrast, **kwargs)
+        self._marginalize_over_inclination = marginalize_over_inclination
+        self.flux = FluxIntegral(
+            child=self.contrast,
+            marginalize_over_inclination=marginalize_over_inclination,
+            **kwargs,
+        )
 
         # Seed the randomizer
         self.random = tt.shared_randomstreams.RandomStreams(
@@ -77,12 +81,14 @@ class StarryProcess(object):
         t,
         flux,
         data_cov,
+        i=defaults["i"],
+        p=defaults["p"],
         baseline_mean=0.0,
         baseline_var=0.0,
         nsamples=1,
     ):
         # TODO
-        if self.flux._i is None:
+        if self._marginalize_over_inclination:
             raise NotImplementedError(
                 "Not yet implemented when marginalizing over inclination."
             )
@@ -105,7 +111,7 @@ class StarryProcess(object):
         C += baseline_var
 
         # Compute C^-1 . A
-        A = self.flux._design_matrix(t)
+        A = self.flux._design_matrix(t, i, p)
         cho_C = cho_factor(C)
         CInvA = cho_solve(cho_C, A)
 
@@ -123,17 +129,27 @@ class StarryProcess(object):
         u = self.random.normal((self._nylm, nsamples))
         return tt.transpose(ymu[:, None] + tt.dot(cho_ycov, u))
 
-    def mean(self, t):
-        return self.flux.mean(t)
+    def mean(self, t, i=defaults["i"], p=defaults["p"]):
+        return self.flux.mean(t, i, p)
 
-    def cov(self, t, **kwargs):
-        return self.flux.cov(t, **kwargs)
+    def cov(self, t, i=defaults["i"], p=defaults["p"], **kwargs):
+        return self.flux.cov(t, i, p, **kwargs)
 
-    def sample(self, t, nsamples=1):
-        ylm = self.sample_ylm(nsamples=nsamples)
-        return tt.transpose(
-            tt.dot(self.flux._design_matrix(t), tt.transpose(ylm))
-        )
+    def sample(
+        self, t, i=defaults["i"], p=defaults["p"], nsamples=1, **kwargs
+    ):
+        if self._marginalize_over_inclination:
+            t = cast(t)
+            u = self.random.normal((t.shape[0], nsamples))
+            cho_cov = cho_factor(self.cov(t, i, p, **kwargs))
+            return tt.transpose(
+                self.mean(t, i, p)[:, None] + tt.dot(cho_cov, u)
+            )
+        else:
+            ylm = self.sample_ylm(nsamples=nsamples)
+            return tt.transpose(
+                tt.dot(self.flux._design_matrix(t, i, p), tt.transpose(ylm))
+            )
 
     def log_jac(self):
         """
@@ -174,7 +190,15 @@ class StarryProcess(object):
         return self.latitude.log_jac()
 
     def log_likelihood(
-        self, t, flux, data_cov, baseline_mean=0.0, baseline_var=0.0,
+        self,
+        t,
+        flux,
+        data_cov,
+        i=defaults["i"],
+        p=defaults["p"],
+        baseline_mean=0.0,
+        baseline_var=0.0,
+        **kwargs,
     ):
         """
         Compute the log marginal likelihood of a light curve.
@@ -186,13 +210,13 @@ class StarryProcess(object):
 
         Returns:
             The log marginal likelihood of the `flux` vector conditioned on
-            the the current properties of the model. This is the likelihood 
+            the current properties of the model. This is the likelihood 
             marginalized over all possible spherical harmonic vectors.
 
         """
         # Get the flux gp mean and covariance
-        gp_mean = self.mean(t)
-        gp_cov = self.cov(t)
+        gp_mean = self.mean(t, i, p)
+        gp_cov = self.cov(t, i, p, **kwargs)
         K = gp_mean.shape[0]
 
         # Get the full data covariance

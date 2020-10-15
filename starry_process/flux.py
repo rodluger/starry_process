@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
-from .ops import RxOp, tensordotRzOp, rTA1Op, CheckBoundsOp
+from .ops import (
+    RxOp,
+    tensordotRzOp,
+    special_tensordotRzOp,
+    rTA1Op,
+    CheckBoundsOp,
+)
 from .wigner import R
 from .defaults import defaults
 from .math import cast
@@ -22,9 +28,8 @@ CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache")
 class FluxIntegral:
     def __init__(
         self,
-        i,
-        p,
         child=None,
+        marginalize_over_inclination=False,
         ydeg=defaults["ydeg"],
         angle_unit=defaults["angle_unit"],
         clobber=False,
@@ -33,6 +38,7 @@ class FluxIntegral:
         # General
         assert child is not None
         self._child = child
+        self._marginalize_over_inclination = marginalize_over_inclination
         self._mean_ylm = self._child.mean()
         self._cov_ylm = self._child.cov()
         self._ydeg = ydeg
@@ -45,6 +51,7 @@ class FluxIntegral:
             raise ValueError("Invalid `angle_unit`.")
 
         # Set up the ops
+        self._special_tensordotRz = special_tensordotRzOp(ydeg, **kwargs)
         self._tensordotRz = tensordotRzOp(ydeg, **kwargs)
         self._Rx = RxOp(ydeg, **kwargs)
         self._R = R(
@@ -65,43 +72,25 @@ class FluxIntegral:
         # Pre-compute the integrals
         self._precompute(clobber=clobber)
 
-        # Ingest the parameters
-        self.update(i, p)
+        # Stability hacks
+        self._eps = kwargs.pop("eps3", defaults["eps3"])
 
     @property
     def _cache_file(self):
         return os.path.join(CACHE_PATH, "flux_{}.npz".format(self._ydeg))
 
-    def update(self, i, p):
-        """
-        Update the process with new values of the inclination and period.
+    def _check_params(self, i, p):
+        # Period
+        p = CheckBoundsOp(name="p", lower=0, upper=np.inf)(p)
 
-        """
-        self._p = CheckBoundsOp(name="p", lower=0, upper=np.inf)(p)
-        if i is None:
+        # Inclination
+        if not self._marginalize_over_inclination:
 
-            # We're going to marginalize over inclination
-            self._i = None
-
-            # Compute the flux mean marginalized over inclination
-            self._mean_marg = tt.sum(
-                [
-                    tt.dot(self._t[l], self._ez[slice(l ** 2, (l + 1) ** 2)])
-                    for l in range(self._ydeg + 1)
-                ]
-            )
-
-        else:
-
-            # We're conditioning the GP on a value of the inclination
-            self._i = CheckBoundsOp(name="i", lower=0, upper=0.5 * np.pi)(
+            i = CheckBoundsOp(name="i", lower=0, upper=0.5 * np.pi)(
                 i * self._angle_fac
             )
 
-            # Update the flux mean at this inclination
-            self._mean_cond = tt.dot(
-                self._design_matrix(cast([0.0])), self._mean_ylm
-            )[0]
+        return i, p
 
     def _dotRx(self, M, theta):
         f = tt.zeros_like(M)
@@ -135,14 +124,6 @@ class FluxIntegral:
         M = self._dotRx(M, 0.5 * np.pi)
 
         return M
-
-    def _rotate(self, theta):
-        """
-        Rotate a moment matrix in phase.
-        TODO: This can be sped up, since it's not a tensordot!
-        
-        """
-        return self._tensordotRz(self._Ez, tt.tile(theta, self._nylm))
 
     def _G(self, j, i):
         """
@@ -216,21 +197,36 @@ class FluxIntegral:
             self._T = data["T"]
             self._t = [data["t{:d}".format(l)] for l in range(self._ydeg + 1)]
 
-    def _design_matrix(self, t):
-        theta = 2 * np.pi / self._p * cast(t, vectorize=True)
+    def _design_matrix(self, t, i, p):
+        i, p = self._check_params(i, p)
+        theta = 2 * np.pi / p * cast(t, vectorize=True)
         rTA1 = tt.tile(self._rTA1, (theta.shape[0], 1))
-        return self._right_project(rTA1, theta, self._i)
+        return self._right_project(rTA1, theta, i)
 
-    def mean(self, t):
-        if self._i is None:
-            # Marginalized over inclination
-            return self._mean_marg * tt.ones_like(cast(t, vectorize=True))
+    def mean(self, t, i, p):
+        i, p = self._check_params(i, p)
+
+        if self._marginalize_over_inclination:
+
+            # Flux mean marginalized over inclination
+            mean = tt.sum(
+                [
+                    tt.dot(self._t[l], self._ez[slice(l ** 2, (l + 1) ** 2)])
+                    for l in range(self._ydeg + 1)
+                ]
+            )
+
         else:
-            # Conditioned on inclination
-            return self._mean_cond * tt.ones_like(cast(t, vectorize=True))
 
-    def cov(self, t, npts=None):
-        if self._i is None:
+            # Flux mean at this inclination
+            mean = tt.dot(
+                self._design_matrix(cast([0.0]), i, p), self._mean_ylm
+            )[0]
+
+        return mean * tt.ones_like(cast(t, vectorize=True))
+
+    def cov(self, t, i, p, npts=None):
+        if self._marginalize_over_inclination:
 
             # Marginalized over inclination
 
@@ -238,31 +234,47 @@ class FluxIntegral:
             # a 1d grid of theta differences, then interpolate to the
             # full covariance matrix.
 
-            # First, compute the variance (in case len(t) == 1)
-            t = cast(t, vectorize=True)
-            E0 = self._rotate(2 * np.pi / self._p * t[0])
-            var = (tt.tensordot(self._T, E0) - self._mean_marg ** 2) * tt.eye(
-                1
+            # Flux mean marginalized over inclination
+            mean = tt.sum(
+                [
+                    tt.dot(self._t[l], self._ez[slice(l ** 2, (l + 1) ** 2)])
+                    for l in range(self._ydeg + 1)
+                ]
             )
 
-            # Number of interpolation points. For a regular grid,
-            # the default returns the exact covariance.
+            # Number of interpolation points.
+            t = cast(t, vectorize=True)
             if npts is None:
-                npts = tt.maximum(1, t.shape[0] - 1)
+                npts = tt.maximum(defaults["covpts"], t.shape[0] - 1)
 
             # Evaluate the kernel on a regular 1d grid in theta
             dx = 2 * np.pi / npts
             xp = tt.arange(-dx, 2 * np.pi + 2.5 * dx, dx)
-            E = tt.transpose(
-                theano.scan(
-                    fn=self._rotate, outputs_info=None, sequences=[xp],
-                )[0]
+
+            """
+            # Old parametrization (slow)
+            mom2 = tt.tensordot(
+                self._T,
+                tt.transpose(
+                    theano.scan(
+                        fn=lambda xp: self._tensordotRz(
+                            self._Ez, tt.tile(xp, self._nylm)
+                        ),
+                        outputs_info=None,
+                        sequences=[xp],
+                    )[0]
+                ),
             )
-            mom2 = tt.tensordot(self._T, E)
-            yp = mom2 - self._mean_marg ** 2
+            """
+
+            # Compute the batched tensor dot product T_ij R_ilk M_lj
+            mom2 = self._special_tensordotRz(self._T, self._Ez, xp)
+
+            # The actual covaraince
+            yp = mom2 - mean ** 2
 
             # We need to know the value of the kernel at the following points:
-            theta = 2 * np.pi / self._p * t
+            theta = 2 * np.pi * tt.mod(t / p, 1.0)
             x = tt.reshape(tt.abs_(theta[:, None] - theta[None, :]), (-1,))
 
             # Compute the interpolant
@@ -283,13 +295,21 @@ class FluxIntegral:
                 + a3[inds] * x0 ** 3
             )
 
-            # Reshape to 2D and we're done
+            # Reshape to 2D
             cov = tt.reshape(cov, (t.shape[0], t.shape[0]))
 
+            # Add a diagonal term for stability
+            cov += self._eps * tt.eye(t.shape[0])
+
             # On the off chance that len(t) == 1, return the variance instead
-            return ifelse(tt.eq(t.shape[0], 1), var, cov)
+            return ifelse(
+                tt.eq(t.shape[0], 1),
+                (tt.tensordot(self._T, self._Ez) - mean ** 2) * tt.eye(1),
+                cov,
+            )
 
         else:
+
             # Conditioned on inclination
-            A = self._design_matrix(t)
+            A = self._design_matrix(t, i, p)
             return tt.dot(tt.dot(A, self._cov_ylm), tt.transpose(A))
