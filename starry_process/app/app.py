@@ -33,16 +33,45 @@ from bokeh.server.server import Server
 # Parameter ranges & default values
 params = {
     "latitude": {
-        "mu": {"start": 0.0, "stop": 90.0, "step": 0.01, "value": 30.0},
-        "sigma": {"start": 1.0, "stop": 30.0, "step": 0.01, "value": 5.0},
+        "mu": {
+            "start": 0.0,
+            "stop": 90.0,
+            "step": 0.01,
+            "value": 30.0,
+            "label": "μ",
+        },
+        "sigma": {
+            "start": 1.0,
+            "stop": 30.0,
+            "step": 0.01,
+            "value": 5.0,
+            "label": "σ",
+        },
     },
     "size": {
-        "mu": {"start": 0.0, "stop": 90.0, "step": 0.1, "value": 20.0},
-        "sigma": {"start": 1.0, "stop": 30.0, "step": 0.1, "value": 5.0},
+        "r": {
+            "start": 10.0,
+            "stop": 45.0,
+            "step": 0.1,
+            "value": 20.0,
+            "label": "r",
+        }
     },
     "contrast": {
-        "mu": {"start": -0.99, "stop": 0.99, "step": 0.01, "value": 0.80},
-        "sigma": {"start": 0.01, "stop": 1.0, "step": 0.01, "value": 0.05},
+        "c": {
+            "start": 0.01,
+            "stop": 1.00,
+            "step": 0.01,
+            "value": 0.1,
+            "label": "c",
+        },
+        "n": {
+            "start": 1.00,
+            "stop": 50.0,
+            "step": 0.1,
+            "value": 10.0,
+            "label": "n",
+        },
     },
 }
 
@@ -68,7 +97,7 @@ class Samples(object):
         b = tt.dscalar()
         c = tt.dscalar()
         n = tt.dscalar()
-        self.gp = StarryProcess(ydeg, r=r, a=a, b=b, c=c, n=n)
+        self.gp = StarryProcess(ydeg=ydeg, r=r, a=a, b=b, c=c, n=n)
         self.gp.random.seed(238)
 
         print("Compiling...")
@@ -84,7 +113,7 @@ class Samples(object):
             )
 
             def sample_ylm(r, mu_l, sigma_l, c, n):
-                a, b = self.gp.latitude.transform.transform(mu_l, sigma_l)
+                a, b = self.gp.latitude._transform.transform(mu_l, sigma_l)
                 return function(r, a, b, c, n)
 
             self.sample_ylm = sample_ylm
@@ -295,11 +324,11 @@ class Samples(object):
 
             # Draw the samples
             self.ylm = self.sample_ylm(
-                self.Size.slider_s.value,
-                self.Latitude.slider_mu.value,
-                self.Latitude.slider_sigma.value,
-                self.Contrast.slider_c.value,
-                self.Contrast.slider_n.value,
+                self.Size.sliders[0].value,
+                self.Latitude.sliders[0].value,
+                self.Latitude.sliders[1].value,
+                self.Contrast.sliders[0].value,
+                self.Contrast.sliders[1].value,
             )[0]
 
             # Compute the images & plot the light curves
@@ -316,176 +345,180 @@ class Samples(object):
                     for j in range(len(self.A_F))
                 ]
 
-            for slider in [
-                self.Size.slider_s,
-                self.Latitude.slider_mu,
-                self.Latitude.slider_sigma,
-                self.Contrast.slider_c,
-                self.Contrast.slider_N,
-            ]:
+            for slider in (
+                self.Size.sliders
+                + self.Latitude.sliders
+                + self.Contrast.sliders
+            ):
                 slider.bar_color = "white"
 
         except Exception as e:
 
             # Something went wrong inverting the covariance!
-            for slider in [
-                self.Size.slider_s,
-                self.Latitude.slider_mu,
-                self.Latitude.slider_sigma,
-                self.Contrast.slider_c,
-                self.Contrast.slider_N,
-            ]:
+            for slider in (
+                self.Size.sliders
+                + self.Latitude.sliders
+                + self.Contrast.sliders
+            ):
                 slider.bar_color = "firebrick"
 
             print("An error occurred when computing the covariance:")
             print(e)
 
 
-class Distribution(object):
-    def __init__(self, name, xmin, xmax, mu, sigma, pdf, gp_callback):
+class Integral(object):
+    def __init__(
+        self,
+        params,
+        gp_callback,
+        limits=(0, 90),
+        func=None,
+        xlabel="",
+        ylabel="",
+        distribution=False,
+    ):
         # Store
-        self.pdf = pdf
+        self.params = params
+        self.limits = limits
+        self.func = func
         self.gp_callback = gp_callback
         self.last_run = 0.0
         self.throttle_time = 0.0
+        self.distribution = distribution
 
         # Arrays
-        x = np.linspace(xmin, xmax, 300)
-        y = self.pdf(x, mu["value"], sigma["value"])
-        self.source = ColumnDataSource(data=dict(x=x, y=y))
+        if self.func is not None:
+            xmin, xmax = self.limits
+            x = np.linspace(xmin, xmax, 300)
+            y = self.func(
+                x, *[self.params[p]["value"] for p in self.params.keys()]
+            )
+            self.source = ColumnDataSource(data=dict(x=x, y=y))
 
-        # Plot them
-        dx = (xmax - xmin) * 0.01
-        self.plot = figure(
-            plot_width=400,
-            plot_height=600,
-            toolbar_location=None,
-            x_range=(xmin - dx, xmax + dx),
-            title="{} distribution".format(name),
-            sizing_mode="stretch_both",
-        )
-        self.plot.title.align = "center"
-        self.plot.title.text_font_size = "14pt"
-        self.plot.line(
-            "x", "y", source=self.source, line_width=3, line_alpha=0.6
-        )
-        # self.plot.xaxis.axis_label = name
-        self.plot.xaxis.axis_label_text_font_style = "normal"
-        self.plot.xaxis.axis_label_text_font_size = "12pt"
-        self.plot.yaxis[0].formatter = FuncTickFormatter(code="return '  ';")
-        self.plot.yaxis.axis_label = "probability"
-        self.plot.yaxis.axis_label_text_font_style = "normal"
-        self.plot.yaxis.axis_label_text_font_size = "12pt"
-        self.plot.outline_line_width = 1
-        self.plot.outline_line_alpha = 1
-        self.plot.outline_line_color = "black"
-        self.plot.toolbar.active_drag = None
-        self.plot.toolbar.active_scroll = None
-        self.plot.toolbar.active_tap = None
+            # Plot them
+            dx = (xmax - xmin) * 0.01
+            self.plot = figure(
+                plot_width=400,
+                plot_height=600,
+                toolbar_location=None,
+                x_range=(xmin - dx, xmax + dx),
+                title=xlabel,
+                sizing_mode="stretch_both",
+            )
+            self.plot.title.align = "center"
+            self.plot.title.text_font_size = "14pt"
+            self.plot.line(
+                "x", "y", source=self.source, line_width=3, line_alpha=0.6
+            )
+            self.plot.xaxis.axis_label_text_font_style = "normal"
+            self.plot.xaxis.axis_label_text_font_size = "12pt"
+            self.plot.yaxis[0].formatter = FuncTickFormatter(
+                code="return '  ';"
+            )
+            self.plot.yaxis.axis_label = ylabel
+            self.plot.yaxis.axis_label_text_font_style = "normal"
+            self.plot.yaxis.axis_label_text_font_size = "12pt"
+            self.plot.outline_line_width = 1
+            self.plot.outline_line_alpha = 1
+            self.plot.outline_line_color = "black"
+            self.plot.toolbar.active_drag = None
+            self.plot.toolbar.active_scroll = None
+            self.plot.toolbar.active_tap = None
+        else:
+
+            # TODO
+            self.plot = self.plot = figure(
+                plot_width=400,
+                plot_height=600,
+                toolbar_location=None,
+                sizing_mode="stretch_both",
+            )
 
         # Sliders
-        self.slider_mu = Slider(
-            start=mu["start"],
-            end=mu["stop"],
-            step=mu["step"],
-            value=mu["value"],
-            orientation="horizontal",
-            format="0.3f",
-            css_classes=["custom-slider"],
-            sizing_mode="stretch_width",
-            height=10,
-            show_value=False,
-            title="μ",
-        )
-        self.slider_mu.on_change("value_throttled", self.callback)
-        self.slider_mu.on_change("value", self.callback_throttled)
-        self.slider_sigma = Slider(
-            start=sigma["start"],
-            end=sigma["stop"],
-            step=sigma["step"],
-            value=sigma["value"],
-            orientation="horizontal",
-            format="0.3f",
-            css_classes=["custom-slider"],
-            name="sigma",
-            sizing_mode="stretch_width",
-            height=10,
-            show_value=False,
-            title="σ",
-        )
-        self.slider_sigma.on_change("value_throttled", self.callback)
-        self.slider_sigma.on_change("value", self.callback_throttled)
+        self.sliders = []
+        for p in self.params.keys():
+            slider = Slider(
+                start=self.params[p]["start"],
+                end=self.params[p]["stop"],
+                step=self.params[p]["step"],
+                value=self.params[p]["value"],
+                orientation="horizontal",
+                format="0.3f",
+                css_classes=["custom-slider"],
+                sizing_mode="stretch_width",
+                height=10,
+                show_value=False,
+                title=self.params[p]["label"],
+            )
+            slider.on_change("value_throttled", self.callback)
+            slider.on_change("value", self.callback_throttled)
+            self.sliders.append(slider)
 
-        # Show mean and std. dev.
-        self.mean_vline = Span(
-            location=self.slider_mu.value,
-            dimension="height",
-            line_color="black",
-            line_width=1,
-            line_dash="dashed",
-        )
-        self.std_vline1 = Span(
-            location=self.slider_mu.value - self.slider_sigma.value,
-            dimension="height",
-            line_color="black",
-            line_width=1,
-            line_dash="dotted",
-        )
-        self.std_vline2 = Span(
-            location=self.slider_mu.value + self.slider_sigma.value,
-            dimension="height",
-            line_color="black",
-            line_width=1,
-            line_dash="dotted",
-        )
-        self.plot.renderers.extend(
-            [self.mean_vline, self.std_vline1, self.std_vline2]
-        )
+        # Show mean and std. dev.?
+        if self.distribution:
+            self.mean_vline = Span(
+                location=self.sliders[0].value,
+                dimension="height",
+                line_color="black",
+                line_width=1,
+                line_dash="dashed",
+            )
+            self.std_vline1 = Span(
+                location=self.sliders[0].value - self.sliders[1].value,
+                dimension="height",
+                line_color="black",
+                line_width=1,
+                line_dash="dotted",
+            )
+            self.std_vline2 = Span(
+                location=self.sliders[0].value + self.sliders[1].value,
+                dimension="height",
+                line_color="black",
+                line_width=1,
+                line_dash="dotted",
+            )
+            self.plot.renderers.extend(
+                [self.mean_vline, self.std_vline1, self.std_vline2]
+            )
 
         # Full layout
         self.layout = grid(
             [
                 [self.plot],
-                [
-                    column(
-                        self.slider_mu,
-                        self.slider_sigma,
-                        sizing_mode="stretch_width",
-                    )
-                ],
+                [column(*self.sliders, sizing_mode="stretch_width",)],
             ]
         )
 
     def callback(self, attr, old, new):
         try:
 
-            # Update the distribution
-            self.source.data["y"] = self.pdf(
-                self.source.data["x"],
-                self.slider_mu.value,
-                self.slider_sigma.value,
-            )
-            self.slider_mu.bar_color = "white"
-            self.slider_sigma.bar_color = "white"
-            self.plot.background_fill_color = "white"
-            self.plot.background_fill_alpha = 1
+            # Update the plot
+            if self.func is not None:
 
-            # Update the mean and std. dev. lines
-            self.mean_vline.location = self.slider_mu.value
-            self.std_vline1.location = (
-                self.slider_mu.value - self.slider_sigma.value
-            )
-            self.std_vline2.location = (
-                self.slider_mu.value + self.slider_sigma.value
-            )
+                self.source.data["y"] = self.func(
+                    self.source.data["x"],
+                    *[slider.value for slider in self.sliders],
+                )
+                for slider in self.sliders:
+                    slider.bar_color = "white"
+                self.plot.background_fill_color = "white"
+                self.plot.background_fill_alpha = 1
+
+                # Update the mean and std. dev. lines
+                if self.distribution:
+                    self.mean_vline.location = self.sliders[0].value
+                    self.std_vline1.location = (
+                        self.sliders[0].value - self.sliders[1].value
+                    )
+                    self.std_vline2.location = (
+                        self.sliders[0].value + self.sliders[1].value
+                    )
 
         except Exception as e:
 
             # A param is out of bounds!
-            if "std" in str(e) or "sigma" in str(e):
-                self.slider_sigma.bar_color = "firebrick"
-            elif "mean" in str(e) or "mu" in str(e):
-                self.slider_mu.bar_color = "firebrick"
+            for slider in self.sliders:
+                slider.bar_color = "firebrick"
             else:
                 print("An error occurred when setting the parameters:")
                 print(e)
@@ -530,38 +563,31 @@ class Application(object):
             self.ydeg, self.npix, self.npts, debug=self.debug
         )
 
-        # The distributions
-        self.Latitude = Distribution(
-            "latitude",
-            -90,
-            90,
-            params["latitude"]["mu"],
-            params["latitude"]["sigma"],
-            lambda x, mu, sigma: self.Samples.gp.latitude.transform.pdf(
-                x, mu=mu, sigma=sigma
-            ),
-            self.Samples.callback,
+        # The integrals
+        sp = StarryProcess()
+        pdf = lambda x, mu, sigma: sp.latitude._transform.pdf(
+            x, *sp.latitude._transform.transform(mu, sigma)
         )
-        self.Size = Distribution(
-            "size",
-            0,
-            90,
-            params["size"]["mu"],
-            params["size"]["sigma"],
-            lambda x, mu, sigma: self.Samples.gp.size.transform.pdf(
-                x, mu=mu, sigma=sigma
-            ),
+        self.Latitude = Integral(
+            params["latitude"],
             self.Samples.callback,
+            limits=(-90, 90),
+            func=pdf,
+            xlabel="latitude distribution",
+            ylabel="probability",
+            distribution=True,
         )
-        self.Contrast = Distribution(
-            "contrast",
-            -1,
-            1,
-            params["contrast"]["mu"],
-            params["contrast"]["sigma"],
-            self.Samples.gp.contrast.transform.pdf,
+        self.Size = Integral(
+            params["size"],
             self.Samples.callback,
+            limits=(-90, 90),
+            func=lambda x, r: 1
+            / (1 + np.exp(-300 * np.pi / 180 * (np.abs(x) - r)))
+            - 1,
+            xlabel="spot size",
+            ylabel="spot profile",
         )
+        self.Contrast = Integral(params["contrast"], self.Samples.callback)
 
         # Tell the GP about the sliders
         self.Samples.Latitude = self.Latitude
