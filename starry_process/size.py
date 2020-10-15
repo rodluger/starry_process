@@ -28,12 +28,12 @@ class Spot:
         self.A = tt.as_tensor_variable(A)
         self.sfac = sfac
 
-    def S(self, s):
-        z = self.sfac * (self.theta - s)
+    def S(self, r):
+        z = self.sfac * (self.theta - r)
         return 1 / (1 + tt.exp(-z)) - 1
 
-    def get_y(self, s):
-        I = self.S(s)
+    def get_y(self, r):
+        I = self.S(r)
         y = tt.zeros(self.N)
         y = tt.set_subtensor(y[self.i], tt.dot(self.A, I))
         return y

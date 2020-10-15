@@ -270,7 +270,7 @@ class FluxIntegral:
             # Compute the batched tensor dot product T_ij R_ilk M_lj
             mom2 = self._special_tensordotRz(self._T, self._Ez, xp)
 
-            # The actual covaraince
+            # The actual covariance
             yp = mom2 - mean ** 2
 
             # We need to know the value of the kernel at the following points:
@@ -287,6 +287,7 @@ class FluxIntegral:
             a2 = 0.5 * (y0 + y2) - y1
             a3 = 0.5 * ((y1 - y2) + (y3 - y0) / 3.0)
             inds = tt.cast(tt.floor(x / dx), "int64")
+
             x0 = (x - xp[inds + 1]) / dx
             cov = (
                 a0[inds]

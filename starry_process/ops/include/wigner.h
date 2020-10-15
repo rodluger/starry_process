@@ -470,10 +470,6 @@ inline void computeSpecialTensordotRzGradient(const MATRIX &T, const MATRIX &M,
   using Scalar = typename VECTOR::Scalar;
   int K = theta.size();
 
-  // Init grads
-  btheta.setZero();
-  bM.setZero();
-
   // Compute sin & cos
   auto costheta = theta.array().cos();
   auto sintheta = theta.array().sin();
@@ -523,8 +519,8 @@ inline void computeSpecialTensordotRzGradient(const MATRIX &T, const MATRIX &M,
 
   // d/dM
   for (n = 0; n < SP__N; ++n) {
-    bM.row(n) += bf.cwiseProduct(sinmt.col(n)).sum() * T_r.row(n) +
-                 bf.cwiseProduct(cosmt.col(n)).sum() * T.row(n);
+    bM.row(n) = bf.cwiseProduct(sinmt.col(n)).sum() * T_r.row(n) +
+                bf.cwiseProduct(cosmt.col(n)).sum() * T.row(n);
   }
 
   // d/dtheta

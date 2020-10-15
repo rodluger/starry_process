@@ -63,15 +63,12 @@ class Samples(object):
         self.A_F = get_flux_design_matrix(ydeg, npts)
 
         # Compile the GP
-        sa = tt.dscalar()
-        sb = tt.dscalar()
-        la = tt.dscalar()
-        lb = tt.dscalar()
-        ca = tt.dscalar()
-        cb = tt.dscalar()
-        self.gp = StarryProcess(
-            ydeg, sa=sa, sb=sb, la=la, lb=lb, ca=ca, cb=cb,
-        )
+        r = tt.dscalar()
+        a = tt.dscalar()
+        b = tt.dscalar()
+        c = tt.dscalar()
+        n = tt.dscalar()
+        self.gp = StarryProcess(ydeg, r=r, a=a, b=b, c=c, n=n)
         self.gp.random.seed(238)
 
         print("Compiling...")
@@ -81,17 +78,14 @@ class Samples(object):
             ]
         else:
             function = theano.function(
-                [sa, sb, la, lb, ca, cb,],
+                [r, a, b, c, n,],
                 [self.gp.sample_ylm(self.nmaps)],
                 no_default_updates=True,
             )
 
-            def sample_ylm(mu_s, sigma_s, mu_l, sigma_l, mu_c, sigma_c):
-                sa, sb = self.gp.size.transform.transform(mu_s, sigma_s)
-                la, lb = self.gp.latitude.transform.transform(mu_l, sigma_l)
-                ca = mu_c
-                cb = sigma_c
-                return function(sa, sb, la, lb, ca, cb)
+            def sample_ylm(r, mu_l, sigma_l, c, n):
+                a, b = self.gp.latitude.transform.transform(mu_l, sigma_l)
+                return function(r, a, b, c, n)
 
             self.sample_ylm = sample_ylm
 
@@ -99,12 +93,11 @@ class Samples(object):
 
         # Draw three samples from the default distr
         self.ylm = self.sample_ylm(
-            params["size"]["mu"]["value"],
-            params["size"]["sigma"]["value"],
+            params["size"]["r"]["value"],
             params["latitude"]["mu"]["value"],
             params["latitude"]["sigma"]["value"],
-            params["contrast"]["mu"]["value"],
-            params["contrast"]["sigma"]["value"],
+            params["contrast"]["c"]["value"],
+            params["contrast"]["n"]["value"],
         )[0]
 
         # Plot the GP ylm samples
@@ -302,12 +295,11 @@ class Samples(object):
 
             # Draw the samples
             self.ylm = self.sample_ylm(
-                self.Size.slider_mu.value,
-                self.Size.slider_sigma.value,
+                self.Size.slider_s.value,
                 self.Latitude.slider_mu.value,
                 self.Latitude.slider_sigma.value,
-                self.Contrast.slider_mu.value,
-                self.Contrast.slider_sigma.value,
+                self.Contrast.slider_c.value,
+                self.Contrast.slider_n.value,
             )[0]
 
             # Compute the images & plot the light curves
@@ -324,16 +316,26 @@ class Samples(object):
                     for j in range(len(self.A_F))
                 ]
 
-            for dist in [self.Size, self.Latitude, self.Contrast]:
-                for slider in [dist.slider_mu, dist.slider_sigma]:
-                    slider.bar_color = "white"
+            for slider in [
+                self.Size.slider_s,
+                self.Latitude.slider_mu,
+                self.Latitude.slider_sigma,
+                self.Contrast.slider_c,
+                self.Contrast.slider_N,
+            ]:
+                slider.bar_color = "white"
 
         except Exception as e:
 
             # Something went wrong inverting the covariance!
-            for dist in [self.Size, self.Latitude, self.Contrast]:
-                for slider in [dist.slider_mu, dist.slider_sigma]:
-                    slider.bar_color = "firebrick"
+            for slider in [
+                self.Size.slider_s,
+                self.Latitude.slider_mu,
+                self.Latitude.slider_sigma,
+                self.Contrast.slider_c,
+                self.Contrast.slider_N,
+            ]:
+                slider.bar_color = "firebrick"
 
             print("An error occurred when computing the covariance:")
             print(e)

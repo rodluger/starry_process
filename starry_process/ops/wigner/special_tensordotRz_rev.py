@@ -25,5 +25,5 @@ class special_tensordotRzRevOp(BaseOp):
         return gof.Apply(self, in_args, out_args)
 
     def infer_shape(self, node, shapes):
-        K = shapes[0][0]
+        K = shapes[2][0]
         return ([self.N, self.N], [K,])

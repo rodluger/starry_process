@@ -112,18 +112,21 @@ def test_lnlike_grad(param, marginalize_over_inclination):
 
     with change_flags(compute_test_value="off"):
         if param in ["i", "p"]:
+            if param == "i" and marginalize_over_inclination:
+                return
             verify_grad(
-                lambda x: StarryProcess().log_likelihood(
-                    t, flux, data_cov, **{param: x}
-                ),
+                lambda x: StarryProcess(
+                    marginalize_over_inclination=marginalize_over_inclination
+                ).log_likelihood(t, flux, data_cov, **{param: x}),
                 (defaults[param],),
                 n_tests=1,
             )
         else:
             verify_grad(
-                lambda x: StarryProcess(**{param: x}).log_likelihood(
-                    t, flux, data_cov
-                ),
+                lambda x: StarryProcess(
+                    marginalize_over_inclination=marginalize_over_inclination,
+                    **{param: x}
+                ).log_likelihood(t, flux, data_cov),
                 (defaults[param],),
                 n_tests=1,
             )

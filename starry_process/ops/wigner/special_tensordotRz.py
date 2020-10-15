@@ -27,7 +27,7 @@ class special_tensordotRzOp(BaseOp):
         return gof.Apply(self, in_args, out_args)
 
     def infer_shape(self, node, shapes):
-        K = shapes[0][0]
+        K = shapes[2][0]
         return ([K,],)
 
     def grad(self, inputs, gradients):
