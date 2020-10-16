@@ -215,8 +215,8 @@ class StarryProcess(object):
 
         """
         # Get the flux gp mean and covariance
-        gp_mean = self.mean(t, i, p)
-        gp_cov = self.cov(t, i, p, **kwargs)
+        gp_mean = self.mean(t, i=i, p=p)
+        gp_cov = self.cov(t, i=i, p=p, **kwargs)
         K = gp_mean.shape[0]
 
         # Get the full data covariance

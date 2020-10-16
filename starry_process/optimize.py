@@ -1,5 +1,6 @@
 import theano
 import theano.tensor as tt
+import numpy as np
 
 
 def Adam(cost, params, lr=0.001, b1=0.9, b2=0.999, e=1e-8):

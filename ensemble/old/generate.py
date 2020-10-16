@@ -90,25 +90,31 @@ def generate(runid):
     periods = inputs.get("periods", 1.0)
     ferr = inputs.get("ferr", 1e-4)
     nspots = inputs.get("nspots", 20)
-    rmu = inputs.get("rmu", 20.0)
-    rsig = inputs.get("rsig", 1.0)
+    smu = inputs.get("smu", 20.0)
+    ssig = inputs.get("ssig", 1.0)
     lmu = inputs.get("lmu", 30.0)
     lsig = inputs.get("lsig", 5.0)
     cmu = inputs.get("cmu", 0.05)
     csig = inputs.get("csig", 0.0)
 
     # Convert to standard params
-    sp = StarryProcess()
-    r = rmu
+    sp = StarryProcess(size=[0.5, 0.5], latitude=[0.5, 0.5])
+    s = smu
     l = lmu
     try:
-        a, b = sp.latitude._transform.transform(lmu, lsig)
-        assert not (np.isnan(a) or np.isnan(b))
+        la, lb = sp.latitude._transform.transform(lmu, lsig)
+        assert not (np.isnan(la) or np.isnan(lb))
     except:
-        a = 0.5
-        b = 0.5
+        la = 0.5
+        lb = 0.5
+    try:
+        sa, sb = sp.size._transform.transform(smu, ssig)
+        assert not (np.isnan(sa) or np.isnan(sb))
+    except:
+        sa = 0.5
+        sb = 0.5
     c = cmu
-    n = float(nspots)
+    N = nspots
 
     # Generate `nlc` light curves
     np.random.seed(seed)
@@ -122,7 +128,7 @@ def generate(runid):
     if use_starry_process:
 
         # Draw Ylms
-        sp = StarryProcess(r=r, a=a, b=b, c=c, n=n)
+        sp = StarryProcess(size=s, latitude=[la, lb], contrast=[c, N])
         y = sp.sample_ylm(nsamples=nlc).eval()
 
         # Compute the fluxes
@@ -152,8 +158,8 @@ def generate(runid):
 
             # Generate the stellar map
             star.reset()
-            for _ in range(nspots):
-                radius = Normal.rvs(rmu, rsig)
+            for n in range(nspots):
+                radius = Normal.rvs(smu, ssig)
                 sign = 1 if np.random.random() < 0.5 else -1
                 lat = sign * Normal.rvs(lmu, lsig)
                 lon = np.random.uniform(-180, 180)
@@ -179,16 +185,19 @@ def generate(runid):
 
     # Return dicts
     truth = dict(
-        r=r,
-        a=a,
-        b=b,
+        s=s,
+        sa=sa,
+        sb=sb,
+        l=l,
+        la=la,
+        lb=lb,
         c=c,
-        n=n,
+        N=N,
         periods=periods,
         incs=incs,
         nspots=nspots,
-        rmu=rmu,
-        rsig=rsig,
+        smu=smu,
+        ssig=ssig,
         lmu=lmu,
         lsig=lsig,
         cmu=cmu,

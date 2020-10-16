@@ -1,5 +1,6 @@
 from .ops import CheckBoundsOp
 from .defaults import defaults
+from .math import cast
 import theano.tensor as tt
 import numpy as np
 
@@ -10,8 +11,8 @@ class ContrastIntegral:
         self._child = child
         self._ydeg = ydeg
         self._nylm = (self._ydeg + 1) ** 2
-        self._c = CheckBoundsOp(name="c", lower=0, upper=1)(c)
-        self._n = CheckBoundsOp(name="n", lower=1, upper=np.inf)(n)
+        self._c = cast(c)
+        self._n = CheckBoundsOp(name="n", lower=0, upper=np.inf)(n)
 
         # Compute the full Ylm mean and covariance weighted by
         # the spot contrast & number of spots
