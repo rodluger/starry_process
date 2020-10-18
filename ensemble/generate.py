@@ -1,4 +1,6 @@
 from starry_process import StarryProcess
+from starry_process.wigner import R
+from starry_process.size import Spot
 import starry
 from scipy.stats import norm as Normal
 import numpy as np
@@ -121,32 +123,54 @@ def generate(runid):
 
     if use_starry_process:
 
-        # Draw Ylms
-        sp = StarryProcess(r=r, a=a, b=b, c=c, n=n)
-        y = sp.sample_ylm(nsamples=nlc).eval()
-
-        # Compute the fluxes
-        map = starry.Map(15, lazy=False)
+        y = np.zeros((nlc, (ydeg + 1) ** 2))
+        map = starry.Map(ydeg, lazy=False)
         for k in tqdm(range(nlc)):
 
-            # Get the light curve
+            # Generate the stellar map
+            for _ in range(nspots):
+                radius = Normal.rvs(rmu, rsig)
+                sign = 1 if np.random.random() < 0.5 else -1
+                lat = sign * Normal.rvs(lmu, lsig)
+                lon = np.random.uniform(-180, 180)
+                contrast = Normal.rvs(cmu, csig)
+                y0 = (
+                    np.pi
+                    * contrast
+                    * Spot(ydeg=ydeg).get_y(radius * np.pi / 180).eval()
+                )
+                Rx = R(
+                    ydeg,
+                    phi=lat * np.pi / 180.0,
+                    cos_alpha=0,
+                    sin_alpha=1,
+                    cos_gamma=0,
+                    sin_gamma=-1,
+                )
+                Ry = R(
+                    ydeg,
+                    phi=lon * np.pi / 180.0,
+                    cos_alpha=1,
+                    sin_alpha=0,
+                    cos_gamma=1,
+                    sin_gamma=0,
+                )
+                for l in range(ydeg + 1):
+                    i = slice(l ** 2, (l + 1) ** 2)
+                    y[k, i] += Ry[l] @ (Rx[l] @ y0[i])
+
             map[:, :] = y[k]
+            images[k] = 1.0 + map.render(projection="moll", res=300)
+
             map.inc = incs[k]
             flux0[k] = 1 + map.flux(theta=360.0 / periods[k] * t)
-
-            # Median-normalize it
             if normalize:
                 flux0[k] /= np.median(flux0[k])
-
-            # Remove the baseline
             flux0[k] -= 1
-
-            # Render the surface
-            images[k] = 1.0 + map.render(projection="moll", res=300)
 
     else:
 
-        y = np.empty((nlc, (ydeg + 1) ** 2))
+        y = np.zeros((nlc, (ydeg + 1) ** 2))
         star = Star(nlon=nlon, ydeg=ydeg)
         for k in tqdm(range(nlc)):
 
