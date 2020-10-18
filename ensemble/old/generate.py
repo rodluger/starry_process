@@ -11,7 +11,7 @@ PATH = os.path.abspath(os.path.dirname(__file__))
 
 
 class Star(object):
-    def __init__(self, nlon=300, ydeg=30):
+    def __init__(self, nlon=300, ydeg=30, eps=1e-9):
         # Generate a uniform intensity grid
         self.nlon = nlon
         self.nlat = nlon // 2
@@ -22,6 +22,12 @@ class Star(object):
 
         # Instantiate a starry map
         self.map = starry.Map(ydeg, lazy=False)
+
+        # Pixels to ylm transform
+        P = self.map.intensity_design_matrix(
+            lat=self.lat.flatten(), lon=self.lon.flatten()
+        )
+        self.A = np.linalg.solve(P.T @ P + eps * np.eye(self.map.Ny), P.T)
 
     def _angular_distance(self, lam1, lam2, phi1, phi2):
         # https://en.wikipedia.org/wiki/Great-circle_distance
@@ -48,7 +54,7 @@ class Star(object):
 
     def flux(self, t, period=1.0, inc=60.0, smoothing=0.1, normalize=True):
         # Expand in Ylms
-        self.map.load(self.intensity)
+        self.map[:, :] = self.A @ self.intensity.flatten()
         self.map.inc = inc
 
         # Smooth to get rid of ringing
