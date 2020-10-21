@@ -2,7 +2,7 @@
     "name": "default",
     "generate": {
         "seed": 0,
-        "normalize": true,
+        "normalized": true,
         "nlon": 300,
         "ydeg": 30,
         "smoothing": 0.1,
@@ -33,7 +33,6 @@
         "maxiter": 20000,
         "maxiter_batch": 20000,
         "use_stop": true,
-        "marginalize_over_inclination": true,
         "ydeg": 15,
         "baseline_var": 1e-4,
         "max_radius": 30,
@@ -49,5 +48,18 @@
         "res": 300,
         "nlat_samples": 1000,
         "nlat_pts": 1000
+    },
+    "optimize": {
+        "seed": 0,
+        "niter": 500,
+        "ntries": 10,
+        "lr": 1e-2,
+        "ydeg": 15,
+        "baseline_var": 1e-4,
+        "max_radius": 30,
+        "min_radius": 5,
+        "max_spots": 50,
+        "min_spots": 1,
+        "apply_jac": true
     }
 }

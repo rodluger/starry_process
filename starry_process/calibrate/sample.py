@@ -11,7 +11,7 @@ def sample(data, clobber=False, **kwargs):
     kwargs = update_with_defaults(**kwargs)
     name = kwargs["name"]
     gen_kwargs = kwargs["generate"]
-    normalize = gen_kwargs["normalize"]
+    normalized = gen_kwargs["normalized"]
     period = gen_kwargs["period"]
     sample_kwargs = kwargs["sample"]
     ydeg = sample_kwargs["ydeg"]
@@ -37,7 +37,7 @@ def sample(data, clobber=False, **kwargs):
         ydeg=ydeg,
         baseline_var=baseline_var,
         apply_jac=apply_jac,
-        normalized=normalize,
+        normalized=normalized,
     )
 
     # Prior transform

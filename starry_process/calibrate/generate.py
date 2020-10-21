@@ -63,7 +63,7 @@ def generate(**kwargs):
     # Get kwargs
     kwargs = update_with_defaults(**kwargs)
     gen_kwargs = kwargs["generate"]
-    normalize = gen_kwargs["normalize"]
+    normalized = gen_kwargs["normalized"]
     nlon = gen_kwargs["nlon"]
     ydeg = gen_kwargs["ydeg"]
     smoothing = gen_kwargs["smoothing"]
@@ -121,7 +121,7 @@ def generate(**kwargs):
     for k in tqdm(range(nlc)):
         flux[k] = flux0[k] + ferr * np.random.randn(npts)
 
-        if normalize:
+        if normalized:
             flux[k] = (1 + flux[k]) / (1 + np.median(flux[k])) - 1
 
     # Return a dict

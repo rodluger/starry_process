@@ -7,7 +7,7 @@ kwargs = dict()
 
 # Generate
 data = calibrate.generate(**kwargs)
-np.savez("data.npz", data=data)
+np.savez("data.npz", **data)
 fig = calibrate.plot_data(data, **kwargs)
 fig.savefig("data.pdf", bbox_inches="tight")
 
