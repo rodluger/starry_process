@@ -1,1 +1,0 @@
-Same as 05, but optimizing at the start.

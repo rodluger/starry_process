@@ -1,1 +1,0 @@
-Same as 00, but with spots at a higher latitude.

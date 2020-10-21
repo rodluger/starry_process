@@ -12,5 +12,5 @@ defaults = dict(
     eps1=1e-12,
     eps2=1e-9,
     eps3=1e-8,
-    covpts=100,
+    covpts=300,
 )

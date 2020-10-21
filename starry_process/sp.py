@@ -23,11 +23,12 @@ class StarryProcess(object):
         c=defaults["c"],
         n=defaults["n"],
         marginalize_over_inclination=False,
+        covpts=defaults["covpts"],
         **kwargs,
     ):
         # Spherical harmonic degree of the process
         self._ydeg = kwargs.get("ydeg", defaults["ydeg"])
-        assert self._ydeg > 10, "Degree of map must be > 10."
+        assert self._ydeg > 5, "Degree of map must be > 5."
         self._nylm = (self._ydeg + 1) ** 2
 
         # Initialize the Ylm integral ops
@@ -50,6 +51,7 @@ class StarryProcess(object):
         self.flux = FluxIntegral(
             child=self.contrast,
             marginalize_over_inclination=marginalize_over_inclination,
+            covpts=covpts,
             **kwargs,
         )
 
@@ -132,16 +134,14 @@ class StarryProcess(object):
     def mean(self, t, i=defaults["i"], p=defaults["p"]):
         return self.flux.mean(t, i, p)
 
-    def cov(self, t, i=defaults["i"], p=defaults["p"], **kwargs):
-        return self.flux.cov(t, i, p, **kwargs)
+    def cov(self, t, i=defaults["i"], p=defaults["p"]):
+        return self.flux.cov(t, i, p)
 
-    def sample(
-        self, t, i=defaults["i"], p=defaults["p"], nsamples=1, **kwargs
-    ):
+    def sample(self, t, i=defaults["i"], p=defaults["p"], nsamples=1):
         if self._marginalize_over_inclination:
             t = cast(t)
             u = self.random.normal((t.shape[0], nsamples))
-            cho_cov = cho_factor(self.cov(t, i, p, **kwargs))
+            cho_cov = cho_factor(self.cov(t, i, p))
             return tt.transpose(
                 self.mean(t, i, p)[:, None] + tt.dot(cho_cov, u)
             )
@@ -216,7 +216,7 @@ class StarryProcess(object):
         """
         # Get the flux gp mean and covariance
         gp_mean = self.mean(t, i=i, p=p)
-        gp_cov = self.cov(t, i=i, p=p, **kwargs)
+        gp_cov = self.cov(t, i=i, p=p)
         K = gp_mean.shape[0]
 
         # Get the full data covariance

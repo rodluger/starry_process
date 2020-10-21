@@ -30,6 +30,7 @@ class FluxIntegral:
         self,
         child=None,
         marginalize_over_inclination=False,
+        covpts=defaults["covpts"],
         ydeg=defaults["ydeg"],
         angle_unit=defaults["angle_unit"],
         clobber=False,
@@ -39,6 +40,7 @@ class FluxIntegral:
         assert child is not None
         self._child = child
         self._marginalize_over_inclination = marginalize_over_inclination
+        self._covpts = covpts
         self._mean_ylm = self._child.mean()
         self._cov_ylm = self._child.cov()
         self._ydeg = ydeg
@@ -192,10 +194,75 @@ class FluxIntegral:
 
         else:
 
+            # Load from cache
             data = np.load(self._cache_file)
             self._rTA1 = data["rTA1"]
             self._T = data["T"]
             self._t = [data["t{:d}".format(l)] for l in range(self._ydeg + 1)]
+
+        # If we're marginalizing over inclination, pre-compute the
+        # radial kernel on a fine grid. We'll interpolate over it
+        # when actually computing the covariance for a given `t`, `p`.
+        if self._marginalize_over_inclination:
+
+            # Pre-compute the mean
+            self._mean = tt.sum(
+                [
+                    tt.dot(self._t[l], self._ez[slice(l ** 2, (l + 1) ** 2)])
+                    for l in range(self._ydeg + 1)
+                ]
+            )
+
+            # Pre-compute the *variance*
+            self._var = (
+                tt.tensordot(self._T, self._Ez) - self._mean ** 2
+            ) * tt.eye(1)
+
+            # Evaluate the kernel on a regular 1d grid in theta
+            self._dx = 2 * np.pi / self._covpts
+            self._xp = tt.arange(
+                -self._dx, 2 * np.pi + 2.5 * self._dx, self._dx
+            )
+
+            # Compute the batched tensor dot product T_ij R_ilk M_lj
+            mom2 = self._special_tensordotRz(self._T, self._Ez, self._xp)
+
+            # The actual covariance
+            yp = mom2 - self._mean ** 2
+
+            # Compute the interpolant
+            y0 = yp[:-3]
+            y1 = yp[1:-2]
+            y2 = yp[2:-1]
+            y3 = yp[3:]
+            self._a0 = y1
+            self._a1 = -y0 / 3.0 - 0.5 * y1 + y2 - y3 / 6.0
+            self._a2 = 0.5 * (y0 + y2) - y1
+            self._a3 = 0.5 * ((y1 - y2) + (y3 - y0) / 3.0)
+
+    def _interpolate_cov(self, t, p):
+        """
+        Interpolate the pre-computed kernel onto a
+        grid of time lags in 2D to get the full covariance.
+
+        """
+        t = cast(t, vectorize=True)
+        theta = 2 * np.pi * tt.mod(t / p, 1.0)
+        x = tt.reshape(tt.abs_(theta[:, None] - theta[None, :]), (-1,))
+        inds = tt.cast(tt.floor(x / self._dx), "int64")
+        x0 = (x - self._xp[inds + 1]) / self._dx
+        cov = tt.reshape(
+            self._a0[inds]
+            + self._a1[inds] * x0
+            + self._a2[inds] * x0 ** 2
+            + self._a3[inds] * x0 ** 3,
+            (t.shape[0], t.shape[0]),
+        )
+        cov += self._eps * tt.eye(t.shape[0])
+
+        # If len(t) == 1, return the *variance* instead
+        cov = ifelse(tt.eq(t.shape[0], 1), self._var, cov)
+        return cov
 
     def _design_matrix(self, t, i, p):
         i, p = self._check_params(i, p)
@@ -204,17 +271,14 @@ class FluxIntegral:
         return self._right_project(rTA1, theta, i)
 
     def mean(self, t, i, p):
+
+        # Note that the mean doesn't actually depend on the period!
         i, p = self._check_params(i, p)
 
         if self._marginalize_over_inclination:
 
             # Flux mean marginalized over inclination
-            mean = tt.sum(
-                [
-                    tt.dot(self._t[l], self._ez[slice(l ** 2, (l + 1) ** 2)])
-                    for l in range(self._ydeg + 1)
-                ]
-            )
+            mean = self._mean
 
         else:
 
@@ -225,89 +289,11 @@ class FluxIntegral:
 
         return mean * tt.ones_like(cast(t, vectorize=True))
 
-    def cov(self, t, i, p, npts=None):
+    def cov(self, t, i, p):
         if self._marginalize_over_inclination:
 
             # Marginalized over inclination
-
-            # This is slower to compute, so we compute the kernel on
-            # a 1d grid of theta differences, then interpolate to the
-            # full covariance matrix.
-
-            # Flux mean marginalized over inclination
-            mean = tt.sum(
-                [
-                    tt.dot(self._t[l], self._ez[slice(l ** 2, (l + 1) ** 2)])
-                    for l in range(self._ydeg + 1)
-                ]
-            )
-
-            # Number of interpolation points.
-            t = cast(t, vectorize=True)
-            if npts is None:
-                npts = tt.maximum(defaults["covpts"], t.shape[0] - 1)
-
-            # Evaluate the kernel on a regular 1d grid in theta
-            dx = 2 * np.pi / npts
-            xp = tt.arange(-dx, 2 * np.pi + 2.5 * dx, dx)
-
-            """
-            # Old parametrization (slow)
-            mom2 = tt.tensordot(
-                self._T,
-                tt.transpose(
-                    theano.scan(
-                        fn=lambda xp: self._tensordotRz(
-                            self._Ez, tt.tile(xp, self._nylm)
-                        ),
-                        outputs_info=None,
-                        sequences=[xp],
-                    )[0]
-                ),
-            )
-            """
-
-            # Compute the batched tensor dot product T_ij R_ilk M_lj
-            mom2 = self._special_tensordotRz(self._T, self._Ez, xp)
-
-            # The actual covariance
-            yp = mom2 - mean ** 2
-
-            # We need to know the value of the kernel at the following points:
-            theta = 2 * np.pi * tt.mod(t / p, 1.0)
-            x = tt.reshape(tt.abs_(theta[:, None] - theta[None, :]), (-1,))
-
-            # Compute the interpolant
-            y0 = yp[:-3]
-            y1 = yp[1:-2]
-            y2 = yp[2:-1]
-            y3 = yp[3:]
-            a0 = y1
-            a1 = -y0 / 3.0 - 0.5 * y1 + y2 - y3 / 6.0
-            a2 = 0.5 * (y0 + y2) - y1
-            a3 = 0.5 * ((y1 - y2) + (y3 - y0) / 3.0)
-            inds = tt.cast(tt.floor(x / dx), "int64")
-
-            x0 = (x - xp[inds + 1]) / dx
-            cov = (
-                a0[inds]
-                + a1[inds] * x0
-                + a2[inds] * x0 ** 2
-                + a3[inds] * x0 ** 3
-            )
-
-            # Reshape to 2D
-            cov = tt.reshape(cov, (t.shape[0], t.shape[0]))
-
-            # Add a diagonal term for stability
-            cov += self._eps * tt.eye(t.shape[0])
-
-            # On the off chance that len(t) == 1, return the variance instead
-            return ifelse(
-                tt.eq(t.shape[0], 1),
-                (tt.tensordot(self._T, self._Ez) - mean ** 2) * tt.eye(1),
-                cov,
-            )
+            return self._interpolate_cov(t, p)
 
         else:
 

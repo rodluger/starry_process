@@ -1,0 +1,53 @@
+{
+    "name": "default",
+    "generate": {
+        "seed": 0,
+        "normalize": true,
+        "nlon": 300,
+        "ydeg": 30,
+        "smoothing": 0.1,
+        "nlc": 50,
+        "npts": 1000,
+        "tmax": 4.0,
+        "period": 1.0,
+        "ferr": 1e-4,
+        "nspots": {
+            "mu": 20,
+            "sigma": 0,
+            "linear": true
+        },
+        "radius": {
+            "mu": 15.0,
+            "sigma": 0.0
+        },
+        "latitude": {
+            "mu": 30.0,
+            "sigma": 5.0
+        },
+        "contrast": {
+            "mu": 0.05,
+            "sigma": 0.0
+        }
+    },
+    "sample": {
+        "maxiter": 20000,
+        "maxiter_batch": 20000,
+        "use_stop": true,
+        "marginalize_over_inclination": true,
+        "ydeg": 15,
+        "baseline_var": 1e-4,
+        "max_radius": 30,
+        "min_radius": 5,
+        "max_spots": 50,
+        "min_spots": 1,
+        "apply_jac": true
+    },
+    "plot": {
+        "vmin": 0.73,
+        "vmax": 1.02,
+        "ndraws": 5,
+        "res": 300,
+        "nlat_samples": 1000,
+        "nlat_pts": 1000
+    }
+}
