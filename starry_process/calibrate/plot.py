@@ -6,6 +6,7 @@ import theano
 import theano.tensor as tt
 import numpy as np
 from scipy.stats import norm as Normal
+import dynesty.plotting as dyplot
 
 
 def lat2y(lat):
@@ -176,7 +177,6 @@ def plot_trace(results, **kwargs):
         gen_kwargs["contrast"]["mu"],
         gen_kwargs["nspots"]["mu"],
     ]
-
     fig, _ = dyplot.traceplot(results, truths=truths, labels=labels)
     return fig
 

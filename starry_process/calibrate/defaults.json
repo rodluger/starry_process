@@ -2,11 +2,11 @@
     "name": "default",
     "generate": {
         "seed": 0,
-        "normalized": true,
+        "normalized": false,
         "nlon": 300,
         "ydeg": 30,
         "smoothing": 0.1,
-        "nlc": 50,
+        "nlc": 200,
         "npts": 1000,
         "tmax": 4.0,
         "period": 1.0,

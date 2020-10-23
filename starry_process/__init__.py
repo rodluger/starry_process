@@ -25,6 +25,5 @@ from . import (
     wigner,
     transforms,
     defaults,
-    optimize,
 )
 from .sp import StarryProcess
