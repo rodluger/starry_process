@@ -51,11 +51,11 @@ def optimize(data, **kwargs):
     with pm.Model() as model:
 
         # Vars
-        r = pm.Uniform("r", low=min_radius, high=max_radius, testval=r0)
-        a = pm.Uniform("a", low=0, high=1, testval=a0)
-        b = pm.Uniform("b", low=0, high=1, testval=b0)
-        c = pm.Uniform("c", low=0, high=1, testval=c0)
-        n = pm.Uniform("n", low=min_spots, high=max_spots, testval=n0)
+        r = pm.Uniform("r", lower=min_radius, upper=max_radius, testval=r0)
+        a = pm.Uniform("a", lower=0, upper=1, testval=a0)
+        b = pm.Uniform("b", lower=0, upper=1, testval=b0)
+        c = pm.Uniform("c", lower=0, upper=1, testval=c0)
+        n = pm.Uniform("n", lower=min_spots, upper=max_spots, testval=n0)
 
         # Compute the loss
         K = len(t)
