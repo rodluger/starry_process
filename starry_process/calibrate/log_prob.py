@@ -8,17 +8,17 @@ from theano.ifelse import ifelse
 
 def get_log_prob(
     t,
-    flux,
-    ferr,
-    p,
+    flux=None,
+    ferr=1.0e-3,
+    p=1.0,
     ydeg=15,
     baseline_var=1e-4,
     apply_jac=True,
     normalized=True,
+    marginalize_over_inclination=True,
 ):
 
     # Dimensions
-    nlc = len(flux)
     K = len(t)
 
     # Set up the model
@@ -27,6 +27,12 @@ def get_log_prob(
     b = tt.dscalar()
     c = tt.dscalar()
     n = tt.dscalar()
+    i = tt.dscalar()
+    if flux is None:
+        free_flux = True
+        flux = tt.dmatrix()
+    else:
+        free_flux = False
     sp = StarryProcess(
         ydeg=ydeg,
         r=r,
@@ -34,26 +40,30 @@ def get_log_prob(
         b=b,
         c=c,
         n=n,
-        marginalize_over_inclination=True,
+        marginalize_over_inclination=marginalize_over_inclination,
         covpts=len(t) - 1,
     )
 
+    # Get # of light curves in batch
+    flux = tt.as_tensor_variable(flux)
+    nlc = tt.shape(flux)[0]
+
     # Compute the mean and covariance of the process
-    gp_mean = sp.mean(t, p=p)
-    gp_cov = sp.cov(t, p=p)
+    gp_mean = sp.mean(t, p=p, i=i)
+    gp_cov = sp.cov(t, p=p, i=i)
 
     if normalized:
 
         # Assume the data is normalized to zero mean.
         # We need to scale our covariance accordingly
         gp_cov /= (1 + gp_mean) ** 2
-        R = tt.as_tensor_variable(flux.T)
+        R = tt.transpose(flux)
 
     else:
 
         # Assume we can measure the true baseline,
         # which is just the mean of the GP
-        R = tt.as_tensor_variable(flux.T) - tt.reshape(gp_mean, (-1, 1))
+        R = tt.transpose(flux) - tt.reshape(gp_mean, (-1, 1))
 
     # Observational error
     gp_cov += ferr ** 2 * tt.eye(K)
@@ -73,11 +83,17 @@ def get_log_prob(
 
     # Latitude jacobian
     if apply_jac:
-        jac = sp.log_jac()
+        log_prob = log_like + sp.log_jac()
     else:
-        jac = 0.0
+        log_prob = log_like
 
-    # Compile it into a function
-    log_prob = theano.function([r, a, b, c, n], log_like + jac)
+    # Free variables
+    theano_vars = [r, a, b, c, n]
+    if free_flux:
+        theano_vars = [flux] + theano_vars
+    if not marginalize_over_inclination:
+        theano_vars = theano_vars + [i]
 
+    # Compile & return
+    log_prob = theano.function(theano_vars, log_prob)
     return log_prob

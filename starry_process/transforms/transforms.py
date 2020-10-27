@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import beta as Beta
 from scipy.special import beta as EulerBeta
+from scipy.special import betaln as LogEulerBeta
 from scipy.integrate import quad, IntegrationWarning
 from scipy.interpolate import interp1d
 from tqdm import tqdm
@@ -311,6 +312,7 @@ class BetaTransform(Transform):
 
         # Normalization factor
         fac = 1.0 / EulerBeta(alpha, beta)
+        log_fac = -LogEulerBeta(alpha, beta)
 
         def integrand(f_of_x):
             return (
@@ -322,15 +324,18 @@ class BetaTransform(Transform):
 
         def integrand_reparam(y, alpha, beta, reverse=False, min_ln=-100):
             if y < min_ln:
-                beta_term = 1 - (beta - 1) * np.exp(y)
+                log_beta_term = np.log(1 - (beta - 1) * np.exp(y))
             else:
-                beta_term = (1 - np.exp(y)) ** (beta - 1)
+                log_beta_term = (beta - 1) * np.log(1 - np.exp(y))
             if reverse:
                 f_of_x = 1 - np.exp(y)
             else:
                 f_of_x = np.exp(y)
-            return (
-                fac * self._finv(f_of_x) ** n * np.exp(y * alpha) * beta_term
+            return np.exp(
+                log_fac
+                + n * np.log(self._finv(f_of_x))
+                + y * alpha
+                + log_beta_term
             )
 
         try:
@@ -396,7 +401,8 @@ class BetaTransform(Transform):
         alpha = np.exp(a * (a2 - a1) + a1)
         beta = np.exp(b * (b2 - b1) + b1)
         mu = self._get_moment(alpha, beta, 1)
-        sigma = np.sqrt(self._get_moment(alpha, beta, 2) - mu ** 2)
+        # NOTE: The abs prevents NaNs due to roundoff error
+        sigma = np.sqrt(np.abs(self._get_moment(alpha, beta, 2) - mu ** 2))
         return mu, sigma
 
     def _get_BiV(self, x1, x2):
@@ -433,17 +439,21 @@ class BetaTransform(Transform):
             alpha * beta / ((alpha + beta) ** 2 * (alpha + beta + 1))
         )
 
-        # Compute the mu and sigma dev
+        # Compute mu and sigma
         mu = np.empty_like(alpha)
         sigma = np.empty_like(alpha)
         for k in tqdm(range(len(alpha))):
             mu[k], sigma[k] = self.inverse_transform(self._a[k], self._b[k])
+        assert np.all(np.isfinite(mu)), "Invalid value encountered in `mu`."
+        assert np.all(
+            np.isfinite(sigma)
+        ), "Invalid value encountered in `sigma`."
 
         # Global max and min values for each
         self._mu_min, self._mu_max = (np.min(mu), np.max(mu))
         self._sigma_min, self._sigma_max = (np.min(sigma), np.max(sigma))
 
-        # The limits of sigma. dev. depend on the mu.
+        # The limits of sigma depend on mu.
         # Get the minimum (y1) and maximum (y2) sigma at each value of mu
         x = np.linspace(self._mu_min, self._mu_max, self._mom_grid_res // 3)
         y1 = np.zeros_like(x) * np.nan

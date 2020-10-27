@@ -1,16 +1,15 @@
 {
-    "name": "default",
+    "seed": 0,
     "generate": {
-        "seed": 0,
         "normalized": false,
         "nlon": 300,
         "ydeg": 30,
         "smoothing": 0.1,
-        "nlc": 200,
+        "nlc": 50,
         "npts": 1000,
         "tmax": 4.0,
         "period": 1.0,
-        "ferr": 1e-4,
+        "ferr": 1e-3,
         "nspots": {
             "mu": 20,
             "sigma": 0,
@@ -31,15 +30,22 @@
     },
     "sample": {
         "maxiter": 20000,
-        "maxiter_batch": 20000,
-        "use_stop": true,
         "ydeg": 15,
         "baseline_var": 1e-4,
-        "max_radius": 30,
-        "min_radius": 5,
-        "max_spots": 50,
-        "min_spots": 1,
-        "apply_jac": true
+        "rmax": 30,
+        "rmin": 5,
+        "amin": 0.5,
+        "amax": 1.0,
+        "bmin": 0.5,
+        "bmax": 1.0,
+        "cmin": 1e-3,
+        "cmax": 1.0,
+        "nmax": 50,
+        "nmin": 1,
+        "apply_jac": false,
+        "sampler": "NestedSampler",
+        "sampler_kwargs": {},
+        "run_nested_kwargs": {}
     },
     "plot": {
         "vmin": 0.73,
@@ -47,19 +53,29 @@
         "ndraws": 5,
         "res": 300,
         "nlat_samples": 1000,
-        "nlat_pts": 1000
+        "nlat_pts": 1000,
+        "ninc_samples": 10,
+        "ninc_pts": 100,
+        "ninc_plots": 5,
+        "use_corner": true,
+        "corner_label_size": 20
     },
     "optimize": {
-        "seed": 0,
         "niter": 500,
         "ntries": 10,
         "lr": 1e-2,
         "ydeg": 15,
         "baseline_var": 1e-4,
-        "max_radius": 30,
-        "min_radius": 5,
-        "max_spots": 50,
-        "min_spots": 1,
-        "apply_jac": true
+        "rmax": 30,
+        "rmin": 5,
+        "amin": 0.5,
+        "amax": 1.0,
+        "bmin": 0.5,
+        "bmax": 1.0,
+        "cmin": 1e-3,
+        "cmax": 1.0,
+        "nmax": 50,
+        "nmin": 1,
+        "apply_jac": false
     }
 }

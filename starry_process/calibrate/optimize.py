@@ -14,27 +14,33 @@ def optimize(data, **kwargs):
 
     # Get kwargs
     kwargs = update_with_defaults(**kwargs)
+    seed = kwargs["seed"]
     optim_kwargs = kwargs["optimize"]
     gen_kwargs = kwargs["generate"]
     normalized = gen_kwargs["normalized"]
     niter = optim_kwargs["niter"]
     ntries = optim_kwargs["ntries"]
-    seed = optim_kwargs["seed"]
     adam_kwargs = dict(lr=optim_kwargs["lr"])
-    min_radius = optim_kwargs["min_radius"]
-    max_radius = optim_kwargs["max_radius"]
-    min_spots = optim_kwargs["min_spots"]
-    max_spots = optim_kwargs["max_spots"]
+    rmin = optim_kwargs["rmin"]
+    rmax = optim_kwargs["rmax"]
+    amin = optim_kwargs["amin"]
+    amax = optim_kwargs["amax"]
+    bmin = optim_kwargs["bmin"]
+    bmax = optim_kwargs["bmax"]
+    cmin = optim_kwargs["cmin"]
+    cmax = optim_kwargs["cmax"]
+    nmin = optim_kwargs["nmin"]
+    nmax = optim_kwargs["nmax"]
     apply_jac = optim_kwargs["apply_jac"]
     ydeg = optim_kwargs["ydeg"]
     baseline_var = optim_kwargs["baseline_var"]
 
     def get_guesses():
-        r0 = min_radius + np.random.random() * (max_radius - min_radius)
-        a0 = np.random.random()
-        b0 = np.random.random()
-        c0 = np.random.random()
-        n0 = min_spots + np.random.random() * (max_spots - min_spots)
+        r0 = rmin + np.random.random() * (rmax - rmin)
+        a0 = amin + np.random.random() * (amax - amin)
+        b0 = bmin + np.random.random() * (bmax - bmin)
+        c0 = cmin + np.random.random() * (cmax - cmin)
+        n0 = nmin + np.random.random() * (nmax - nmin)
         return r0, a0, b0, c0, n0
 
     # Get the data
@@ -51,11 +57,11 @@ def optimize(data, **kwargs):
     with pm.Model() as model:
 
         # Vars
-        r = pm.Uniform("r", lower=min_radius, upper=max_radius, testval=r0)
-        a = pm.Uniform("a", lower=0, upper=1, testval=a0)
-        b = pm.Uniform("b", lower=0, upper=1, testval=b0)
-        c = pm.Uniform("c", lower=0, upper=1, testval=c0)
-        n = pm.Uniform("n", lower=min_spots, upper=max_spots, testval=n0)
+        r = pm.Uniform("r", lower=rmin, upper=rmax, testval=r0)
+        a = pm.Uniform("a", lower=amin, upper=amax, testval=a0)
+        b = pm.Uniform("b", lower=bmin, upper=bmax, testval=b0)
+        c = pm.Uniform("c", lower=cmin, upper=cmax, testval=c0)
+        n = pm.Uniform("n", lower=nmin, upper=nmax, testval=n0)
 
         # Compute the loss
         K = len(t)

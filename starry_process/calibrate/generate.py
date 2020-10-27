@@ -62,12 +62,12 @@ def generate(**kwargs):
 
     # Get kwargs
     kwargs = update_with_defaults(**kwargs)
+    seed = kwargs["seed"]
     gen_kwargs = kwargs["generate"]
     normalized = gen_kwargs["normalized"]
     nlon = gen_kwargs["nlon"]
     ydeg = gen_kwargs["ydeg"]
     smoothing = gen_kwargs["smoothing"]
-    seed = gen_kwargs["seed"]
     nlc = gen_kwargs["nlc"]
     npts = gen_kwargs["npts"]
     tmax = gen_kwargs["tmax"]

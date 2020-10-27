@@ -9,19 +9,24 @@ def sample(data, clobber=False, **kwargs):
 
     # Get kwargs
     kwargs = update_with_defaults(**kwargs)
-    name = kwargs["name"]
     gen_kwargs = kwargs["generate"]
     normalized = gen_kwargs["normalized"]
     period = gen_kwargs["period"]
     sample_kwargs = kwargs["sample"]
     ydeg = sample_kwargs["ydeg"]
-    max_radius = sample_kwargs["max_radius"]
-    min_radius = sample_kwargs["min_radius"]
-    max_spots = sample_kwargs["max_spots"]
-    min_spots = sample_kwargs["min_spots"]
-    maxiter = sample_kwargs["maxiter"]
-    maxiter_batch = sample_kwargs["maxiter_batch"]
-    use_stop = sample_kwargs["use_stop"]
+    rmin = sample_kwargs["rmin"]
+    rmax = sample_kwargs["rmax"]
+    amin = sample_kwargs["amin"]
+    amax = sample_kwargs["amax"]
+    bmin = sample_kwargs["bmin"]
+    bmax = sample_kwargs["bmax"]
+    cmin = sample_kwargs["cmin"]
+    cmax = sample_kwargs["cmax"]
+    nmin = sample_kwargs["nmin"]
+    nmax = sample_kwargs["nmax"]
+    sampler = sample_kwargs["sampler"]
+    sampler_kwargs = sample_kwargs["sampler_kwargs"]
+    run_nested_kwargs = sample_kwargs["run_nested_kwargs"]
     baseline_var = sample_kwargs["baseline_var"]
     apply_jac = sample_kwargs["apply_jac"]
 
@@ -38,28 +43,31 @@ def sample(data, clobber=False, **kwargs):
         baseline_var=baseline_var,
         apply_jac=apply_jac,
         normalized=normalized,
+        marginalize_over_inclination=True,
     )
 
     # Prior transform
     def ptform(u):
         x = np.zeros_like(u)
-        x[0] = min_radius + u[0] * (max_radius - min_radius)  # r
-        x[1] = u[1]  # a
-        x[2] = u[2]  # b
-        x[3] = u[3]  # c
-        x[4] = min_spots + u[4] * (max_spots - min_spots)  # n
+        x[0] = rmin + u[0] * (rmax - rmin)
+        x[1] = amin + u[1] * (amax - amin)
+        x[2] = bmin + u[2] * (bmax - bmin)
+        x[3] = cmin + u[3] * (cmax - cmin)
+        x[4] = nmin + u[4] * (nmax - nmin)
         return x
 
-    # Dynamic nested sampling
+    # Nested sampling
     ndim = 5
-    sampler = dynesty.DynamicNestedSampler(
-        lambda x: log_prob(*x), ptform, ndim
-    )
-    sampler.run_nested(
-        maxiter=maxiter,
-        wt_kwargs={"pfrac": 1.0},
-        use_stop=use_stop,
-        maxiter_batch=maxiter_batch,
-    )
+    if sampler == "NestedSampler":
+        sampler = dynesty.NestedSampler(
+            lambda x: log_prob(*x), ptform, ndim, **sampler_kwargs
+        )
+    elif sampler == "DynamicNestedSampler":
+        sampler = dynesty.DynamicNestedSampler(
+            lambda x: log_prob(*x), ptform, ndim, **sampler_kwargs
+        )
+    else:
+        raise ValueError("Invalid sampler.")
+    sampler.run_nested(**run_nested_kwargs)
     results = sampler.results
     return results
