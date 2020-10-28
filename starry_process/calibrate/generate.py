@@ -73,13 +73,19 @@ def generate(**kwargs):
     tmax = gen_kwargs["tmax"]
     period = gen_kwargs["period"]
     ferr = gen_kwargs["ferr"]
-    nspots = lambda: int(
-        gen_kwargs["nspots"]["mu"]
-        + gen_kwargs["nspots"]["sigma"] * np.random.randn()
+    nspots = lambda: max(
+        1,
+        int(
+            gen_kwargs["nspots"]["mu"]
+            + gen_kwargs["nspots"]["sigma"] * np.random.randn()
+        ),
     )
     radius = lambda: (
-        gen_kwargs["radius"]["mu"]
-        + gen_kwargs["radius"]["sigma"] * np.random.randn()
+        max(
+            1.0,
+            gen_kwargs["radius"]["mu"]
+            + gen_kwargs["radius"]["sigma"] * np.random.randn(),
+        )
     )
     longitude = lambda: np.random.uniform(-180, 180)
     latitude = lambda: (
