@@ -88,10 +88,17 @@ def generate(**kwargs):
         )
     )
     longitude = lambda: np.random.uniform(-180, 180)
-    latitude = lambda: (
-        (1 if np.random.random() < 0.5 else -1) * gen_kwargs["latitude"]["mu"]
-        + gen_kwargs["latitude"]["sigma"] * np.random.randn()
-    )
+    if np.isinf(gen_kwargs["latitude"]["sigma"]):
+        # Uniform
+        latitude = (
+            lambda: 180 / np.pi * np.arccos(2 * np.random.random() - 1) - 90
+        )
+    else:
+        latitude = lambda: (
+            (1 if np.random.random() < 0.5 else -1)
+            * gen_kwargs["latitude"]["mu"]
+            + gen_kwargs["latitude"]["sigma"] * np.random.randn()
+        )
     contrast = lambda: (
         gen_kwargs["contrast"]["mu"]
         + gen_kwargs["contrast"]["sigma"] * np.random.randn()

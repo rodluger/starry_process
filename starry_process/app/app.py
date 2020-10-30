@@ -26,8 +26,9 @@ from bokeh.plotting import figure, curdoc
 from bokeh.models.tickers import FixedTicker
 from bokeh.models.formatters import FuncTickFormatter
 from bokeh.models.mappers import LinearColorMapper
-from bokeh.palettes import OrRd6
+from bokeh.palettes import OrRd6, Category10
 from bokeh.server.server import Server
+from scipy.special import legendre as P
 
 
 # Parameter ranges & default values
@@ -78,6 +79,23 @@ params = {
 
 def fluxnorm(x, **kwargs):
     return 1e3 * ((1 + x) / np.median(1 + x, **kwargs) - 1)
+
+
+def spot_transform(ydeg, npts=1000, eps=1e-9, smoothing=0.075):
+    theta = np.linspace(0, np.pi, npts)
+    cost = np.cos(theta)
+    B = np.hstack(
+        [
+            np.sqrt(2 * l + 1) * P(l)(cost).reshape(-1, 1)
+            for l in range(ydeg + 1)
+        ]
+    )
+    A = np.linalg.solve(B.T @ B + eps * np.eye(ydeg + 1), B.T)
+    l = np.arange(ydeg + 1)
+    i = l * (l + 1)
+    S = np.exp(-0.5 * i * smoothing ** 2)
+    A = S[:, None] * A
+    return B @ A
 
 
 class Samples(object):
@@ -372,28 +390,34 @@ class Integral(object):
         params,
         gp_callback,
         limits=(0, 90),
-        func=None,
+        funcs=[],
         xlabel="",
         ylabel="",
         distribution=False,
+        npts=300,
     ):
         # Store
         self.params = params
         self.limits = limits
-        self.func = func
+        self.funcs = funcs
         self.gp_callback = gp_callback
         self.last_run = 0.0
         self.throttle_time = 0.0
         self.distribution = distribution
 
         # Arrays
-        if self.func is not None:
+        if len(self.funcs):
             xmin, xmax = self.limits
-            x = np.linspace(xmin, xmax, 300)
-            y = self.func(
-                x, *[self.params[p]["value"] for p in self.params.keys()]
+            xs = [np.linspace(xmin, xmax, npts) for f in self.funcs]
+            ys = [
+                f(x, *[self.params[p]["value"] for p in self.params.keys()])
+                for x, f in zip(xs, self.funcs)
+            ]
+            colors = Category10[10][: len(xs)]
+            lws = np.append([3], np.ones(10))[: len(xs)]
+            self.source = ColumnDataSource(
+                data=dict(xs=xs, ys=ys, colors=colors, lws=lws)
             )
-            self.source = ColumnDataSource(data=dict(x=x, y=y))
 
             # Plot them
             dx = (xmax - xmin) * 0.01
@@ -407,8 +431,13 @@ class Integral(object):
             )
             self.plot.title.align = "center"
             self.plot.title.text_font_size = "14pt"
-            self.plot.line(
-                "x", "y", source=self.source, line_width=3, line_alpha=0.6
+            self.plot.multi_line(
+                xs="xs",
+                ys="ys",
+                line_color="colors",
+                source=self.source,
+                line_width="lws",
+                line_alpha=0.6,
             )
             self.plot.xaxis.axis_label_text_font_style = "normal"
             self.plot.xaxis.axis_label_text_font_size = "12pt"
@@ -493,12 +522,12 @@ class Integral(object):
         try:
 
             # Update the plot
-            if self.func is not None:
+            if len(self.funcs):
 
-                self.source.data["y"] = self.func(
-                    self.source.data["x"],
-                    *[slider.value for slider in self.sliders],
-                )
+                self.source.data["ys"] = [
+                    f(x, *[slider.value for slider in self.sliders],)
+                    for x, f in zip(self.source.data["xs"], self.funcs)
+                ]
                 for slider in self.sliders:
                     slider.bar_color = "white"
                 self.plot.background_fill_color = "white"
@@ -568,11 +597,13 @@ class Application(object):
         pdf = lambda x, mu, sigma: sp.latitude._transform.pdf(
             x, *sp.latitude._transform.transform(mu, sigma)
         )
+        npts = 300
+        T = spot_transform(self.ydeg, npts)
         self.Latitude = Integral(
             params["latitude"],
             self.Samples.callback,
             limits=(-90, 90),
-            func=pdf,
+            funcs=[pdf],
             xlabel="latitude distribution",
             ylabel="probability",
             distribution=True,
@@ -581,11 +612,16 @@ class Application(object):
             params["size"],
             self.Samples.callback,
             limits=(-90, 90),
-            func=lambda x, r: 1
-            / (1 + np.exp(-300 * np.pi / 180 * (np.abs(x) - r)))
-            - 1,
+            funcs=[
+                lambda x, r: (
+                    1 / (1 + np.exp(-300 * np.pi / 180 * (np.abs(x) - r))) - 1
+                ),
+                lambda x, r: T
+                @ (1 / (1 + np.exp(-300 * np.pi / 180 * (np.abs(x) - r))) - 1),
+            ],
             xlabel="spot size",
             ylabel="spot profile",
+            npts=npts,
         )
         self.Contrast = Integral(params["contrast"], self.Samples.callback)
 

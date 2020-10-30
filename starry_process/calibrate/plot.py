@@ -229,10 +229,14 @@ def plot_latitude_pdf(results, **kwargs):
     # The true pdf
     draw_pdf = theano.function([_x, _a, _b], _draw_pdf(_x, _a, _b),)
     x = np.linspace(-89.9, 89.9, nlat_pts)
-    pdf_true = 0.5 * (
-        Normal.pdf(x, mu_true, sigma_true)
-        + Normal.pdf(x, -mu_true, sigma_true)
-    )
+    if np.isfinite(sigma_true):
+        pdf_true = 0.5 * (
+            Normal.pdf(x, mu_true, sigma_true)
+            + Normal.pdf(x, -mu_true, sigma_true)
+        )
+    else:
+        # Isotropic (special case)
+        pdf_true = 0.5 * np.cos(x * np.pi / 180) * np.pi / 180
 
     # Draw sample pdfs
     pdf = np.empty((nlat_samples, nlat_pts))
@@ -331,8 +335,12 @@ def plot_corner(results, transform_beta=False, **kwargs):
             samples[:, 2] = std
             labels[1] = r"$\mu$"
             labels[2] = r"$\sigma$"
-            truths[1] = gen_kwargs["latitude"]["mu"]
-            truths[2] = gen_kwargs["latitude"]["sigma"]
+            if np.isfinite(gen_kwargs["latitude"]["sigma"]):
+                truths[1] = gen_kwargs["latitude"]["mu"]
+                truths[2] = gen_kwargs["latitude"]["sigma"]
+            else:
+                truths[1] = np.nan
+                truths[2] = np.nan
             span[1] = (0, 90)
             span[2] = (0, 30)
 
