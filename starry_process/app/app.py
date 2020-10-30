@@ -733,11 +733,12 @@ class Application(object):
 
 
 def main():
-    if len(sys.argv) > 1:
-        if (sys.argv[1] == "-d") or (sys.argv[1] == "--debug"):
-            server = Server({"/": lambda doc: Application(doc, debug=True)})
-        else:
-            server = Server({"/": Application})
+    if len(sys.argv) > 1 and (
+        (sys.argv[1] == "-d") or (sys.argv[1] == "--debug")
+    ):
+        server = Server({"/": lambda doc: Application(doc, debug=True)})
+    else:
+        server = Server({"/": Application})
     server.start()
     print("Opening Bokeh application on http://localhost:5006/")
     server.io_loop.add_callback(server.show, "/")

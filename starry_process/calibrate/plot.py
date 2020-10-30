@@ -226,8 +226,10 @@ def plot_latitude_pdf(results, **kwargs):
     ax.set_xlabel("latitude")
     ax.set_ylabel("probability")
     # Constrain y lims?
-    # mx = np.max(pdf_true)
-    # ax.set_ylim(-0.1 * mx, 2.0 * mx)
+    mx1 = np.max(pdf_true)
+    mx2 = np.sort(pdf.flatten())[int(0.9 * len(pdf.flatten()))]
+    mx = max(2.0 * mx1, 1.2 * mx2)
+    ax.set_ylim(-0.1 * mx, mx)
     return fig
 
 
