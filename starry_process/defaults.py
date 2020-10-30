@@ -13,4 +13,7 @@ defaults = dict(
     eps2=1e-9,
     eps3=1e-8,
     covpts=300,
+    log_alpha_max=10,
+    log_beta_max=10,
+    sigma_max=45.0,
 )

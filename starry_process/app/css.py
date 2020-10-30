@@ -29,7 +29,7 @@ TEMPLATE = """
   </head>
   {% endblock %}
   {% block body %}
-  <body style="min-width: 700px; !important">
+  <body style="min-width: 1200px; !important">
     <div style="width:90%; height:90%; margin-left: auto; margin-right: auto;">
     {% block inner_body %}
       {% block contents %}
@@ -91,7 +91,7 @@ style = lambda: Div(
         overflow: hidden !important;
     }
     .samples{
-        margin-top: 50px !important;
+        margin-top: 10px !important;
     }
     .custom-slider .bk-input-group {
         padding-left: 30px !important;
@@ -104,13 +104,15 @@ style = lambda: Div(
         left: 35px;
         font-weight: 600;
     }
+    .bk.colorbar-slider {
+        top: 65px !important;
+    }
     .colorbar-slider {
-        margin-top: 25px !important;
-        padding-right: 180px !important;
+        margin-top: 35px !important;
     }
     .colorbar-slider .bk-input-group {
-        padding-left: 130px !important;
-        padding-right: 130px !important;
+        padding-left: 60px !important;
+        padding-right: 0px !important;
         margin-left: 30px !important;
         margin-right: 0px !important;
     }
@@ -122,21 +124,59 @@ style = lambda: Div(
         left: 35px;
         font-weight: 600;
     }
-
+    .hidden-slider {
+        visibility: hidden;
+    }
     .seed-button {
-        left: auto !important;
-        right: 0 !important;
-        position: absolute !important;
-        margin-right: 0px !important;
-        top: 25px !important;
+        position: relative !important;
+        margin-top: 30px !important;
+        display: inline-block !important;
+        left: 30px !important;
     }
 
     .continuous-button {
-        left: auto !important;
-        right: 100px !important;
-        position: absolute !important;
-        margin-right: 50px !important;
-        top: 25px !important;
+        position: relative !important;
+        margin-top: 30px !important;
+        display: inline-block !important;
+        left: 0px !important;
+    }
+
+    .reset-button {
+        position: relative !important;
+        margin-top: 30px !important;
+        display: inline-block !important;
+        left: 60px !important;
+    }
+
+    .bk.button-row {
+        position: relative !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        left: 0px !important;
+        top: 60px !important;
+    }
+
+    .bk .control-title {
+        position: relative !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    .bk .control-title h1 {
+        margin-left: 15px;
+        font-size: 14pt;
+        color: #444444;
+        margin-top: 5px;
+    }
+
+    .bk .control-description {
+        position: relative !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        top: 110px !important;
+        padding-left: 35px !important;
+        text-align: justify;
+        color: #444444;
     }
 
     /* Loading screen */

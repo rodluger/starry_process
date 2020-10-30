@@ -2,6 +2,7 @@ from .css import loader, style, TEMPLATE
 from .design import get_intensity_design_matrix, get_flux_design_matrix
 from .moll import get_latitude_lines, get_longitude_lines
 from starry_process import StarryProcess
+from starry_process.latitude import gauss2beta, beta2gauss
 import numpy as np
 from numpy.linalg import LinAlgError
 import theano
@@ -12,6 +13,7 @@ import time
 import bokeh
 from bokeh.layouts import column, row, grid
 from bokeh.models import (
+    Div,
     ColumnDataSource,
     Slider,
     ColorBar,
@@ -29,6 +31,7 @@ from bokeh.models.mappers import LinearColorMapper
 from bokeh.palettes import OrRd6, Category10
 from bokeh.server.server import Server
 from scipy.special import legendre as P
+from scipy.stats import norm as Normal
 
 
 # Parameter ranges & default values
@@ -43,7 +46,7 @@ params = {
         },
         "sigma": {
             "start": 1.0,
-            "stop": 30.0,
+            "stop": 45.0,
             "step": 0.01,
             "value": 5.0,
             "label": "σ",
@@ -131,7 +134,14 @@ class Samples(object):
             )
 
             def sample_ylm(r, mu_l, sigma_l, c, n):
-                a, b = self.gp.latitude._transform.transform(mu_l, sigma_l)
+                # Avoid issues at the boundaries
+                if mu_l == 0:
+                    mu_l = 1e-2
+                elif mu_l == 90:
+                    mu_l = 90 - 1e-2
+                a, b = gauss2beta(mu_l, sigma_l)
+                a = a[0]
+                b = b[0]
                 return function(r, a, b, c, n)
 
             self.sample_ylm = sample_ylm
@@ -222,28 +232,37 @@ class Samples(object):
             show_value=False,
             css_classes=["colorbar-slider"],
             direction="ltr",
-            title="intensity range",
+            title="cmap",
         )
         self.slider.on_change("value", self.slider_callback)
 
-        # Seed button
+        # Buttons
         self.seed_button = Button(
-            label="new randomizer seed",
+            label="re-seed",
             button_type="default",
             css_classes=["seed-button"],
             sizing_mode="fixed",
-            width=142,
+            width=85,
         )
         self.seed_button.on_click(self.seed_callback)
 
         self.continuous_button = Button(
-            label="continuous update",
+            label="continuous",
             button_type="default",
             css_classes=["continuous-button"],
             sizing_mode="fixed",
-            width=142,
+            width=85,
         )
         self.continuous_button.on_click(self.continuous_callback)
+
+        self.reset_button = Button(
+            label="reset",
+            button_type="default",
+            css_classes=["reset-button"],
+            sizing_mode="fixed",
+            width=85,
+        )
+        self.reset_button.on_click(self.reset_callback)
 
         # Light curve samples
         self.flux_plot = [None for i in range(self.nmaps)]
@@ -287,6 +306,7 @@ class Samples(object):
             self.flux_plot[i].yaxis.major_label_text_font_size = "8pt"
 
         # Legend
+        """
         for j, label in enumerate(["15", "30", "45", "60", "75", "90"]):
             self.flux_plot[-1].line(
                 [0, 0], [0, 0], legend_label=label, line_color=OrRd6[5 - j]
@@ -299,6 +319,7 @@ class Samples(object):
         self.flux_plot[-1].legend.spacing = 0
         self.flux_plot[-1].legend.label_height = 5
         self.flux_plot[-1].legend.glyph_height = 5
+        """
 
         # Full layout
         self.plots = row(
@@ -310,13 +331,7 @@ class Samples(object):
             sizing_mode="scale_both",
             css_classes=["samples"],
         )
-        self.layout = grid(
-            [
-                [self.slider],
-                [self.plots],
-                [self.continuous_button, self.seed_button],
-            ]
-        )
+        self.layout = grid([[self.plots],])
 
     def slider_callback(self, attr, old, new):
         self.color_mapper.low, self.color_mapper.high = self.slider.value
@@ -325,14 +340,28 @@ class Samples(object):
         self.gp.random.seed(np.random.randint(0, 999))
         self.callback(None, None, None)
 
+    def reset_callback(self, event):
+        self.Size.sliders[0].value = params["size"]["r"]["value"]
+        self.Latitude.sliders[0].value = params["latitude"]["mu"]["value"]
+        self.Latitude.sliders[1].value = params["latitude"]["sigma"]["value"]
+        self.Contrast.sliders[0].value = params["contrast"]["c"]["value"]
+        self.Contrast.sliders[1].value = params["contrast"]["n"]["value"]
+        self.Size.callback(None, None, None)
+        self.Latitude.callback(None, None, None)
+        self.gp.random.seed(0)
+        self.slider_callback(None, None, None)
+        if self.continuous_button.label == "discrete":
+            self.continuous_callback(None)
+        self.callback(None, None, None)
+
     def continuous_callback(self, event):
-        if self.continuous_button.label == "continuous update":
-            self.continuous_button.label = "discrete update"
+        if self.continuous_button.label == "continuous":
+            self.continuous_button.label = "discrete"
             self.Latitude.throttle_time = 0.20
             self.Size.throttle_time = 0.20
             self.Contrast.throttle_time = 0.20
         else:
-            self.continuous_button.label = "continuous update"
+            self.continuous_button.label = "continuous"
             self.Latitude.throttle_time = 0
             self.Size.throttle_time = 0
             self.Contrast.throttle_time = 0
@@ -455,13 +484,7 @@ class Integral(object):
             self.plot.toolbar.active_tap = None
         else:
 
-            # TODO
-            self.plot = self.plot = figure(
-                plot_width=400,
-                plot_height=600,
-                toolbar_location=None,
-                sizing_mode="stretch_both",
-            )
+            self.plot = None
 
         # Sliders
         self.sliders = []
@@ -482,6 +505,25 @@ class Integral(object):
             slider.on_change("value_throttled", self.callback)
             slider.on_change("value", self.callback_throttled)
             self.sliders.append(slider)
+
+        # HACK: Add a hidden slider to get the correct
+        # amount of padding below the graph
+        if len(self.params.keys()) < 2:
+            slider = Slider(
+                start=0,
+                end=1,
+                step=0.1,
+                value=0.5,
+                orientation="horizontal",
+                css_classes=["custom-slider", "hidden-slider"],
+                sizing_mode="stretch_width",
+                height=10,
+                show_value=False,
+                title="s",
+            )
+            self.hidden_sliders = [slider]
+        else:
+            self.hidden_sliders = []
 
         # Show mean and std. dev.?
         if self.distribution:
@@ -511,12 +553,31 @@ class Integral(object):
             )
 
         # Full layout
-        self.layout = grid(
-            [
-                [self.plot],
-                [column(*self.sliders, sizing_mode="stretch_width",)],
-            ]
-        )
+        if self.plot is not None:
+            self.layout = grid(
+                [
+                    [self.plot],
+                    [
+                        column(
+                            *self.sliders,
+                            *self.hidden_sliders,
+                            sizing_mode="stretch_width",
+                        )
+                    ],
+                ]
+            )
+        else:
+            self.layout = grid(
+                [
+                    [
+                        column(
+                            *self.sliders,
+                            *self.hidden_sliders,
+                            sizing_mode="stretch_width",
+                        )
+                    ],
+                ]
+            )
 
     def callback(self, attr, old, new):
         try:
@@ -594,8 +655,9 @@ class Application(object):
 
         # The integrals
         sp = StarryProcess()
-        pdf = lambda x, mu, sigma: sp.latitude._transform.pdf(
-            x, *sp.latitude._transform.transform(mu, sigma)
+        pdf = lambda x, mu, sigma: sp.latitude._pdf(x, *gauss2beta(mu, sigma))
+        pdf_gauss = lambda x, mu, sigma: 0.5 * (
+            Normal.pdf(x, -mu, sigma) + Normal.pdf(x, mu, sigma)
         )
         npts = 300
         T = spot_transform(self.ydeg, npts)
@@ -603,7 +665,7 @@ class Application(object):
             params["latitude"],
             self.Samples.callback,
             limits=(-90, 90),
-            funcs=[pdf],
+            funcs=[pdf, pdf_gauss],
             xlabel="latitude distribution",
             ylabel="probability",
             distribution=True,
@@ -613,14 +675,14 @@ class Application(object):
             self.Samples.callback,
             limits=(-90, 90),
             funcs=[
+                lambda x, r: T
+                @ (1 / (1 + np.exp(-300 * np.pi / 180 * (np.abs(x) - r))) - 1),
                 lambda x, r: (
                     1 / (1 + np.exp(-300 * np.pi / 180 * (np.abs(x) - r))) - 1
                 ),
-                lambda x, r: T
-                @ (1 / (1 + np.exp(-300 * np.pi / 180 * (np.abs(x) - r))) - 1),
             ],
-            xlabel="spot size",
-            ylabel="spot profile",
+            xlabel="spot profile",
+            ylabel="intensity",
             npts=npts,
         )
         self.Contrast = Integral(params["contrast"], self.Samples.callback)
@@ -630,6 +692,30 @@ class Application(object):
         self.Samples.Size = self.Size
         self.Samples.Contrast = self.Contrast
 
+        # Settings
+        description = """
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
+        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, 
+        quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo 
+        consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse 
+        cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat 
+        non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        """
+        ControlPanel = column(
+            Div(text="<h1>settings</h1>", css_classes=["control-title"],),
+            self.Contrast.layout,
+            self.Samples.slider,
+            row(
+                self.Samples.continuous_button,
+                self.Samples.seed_button,
+                self.Samples.reset_button,
+                sizing_mode="scale_both",
+                css_classes=["button-row"],
+            ),
+            Div(text=description, css_classes=["control-description"]),
+            sizing_mode="scale_both",
+        )
+
         # Full layout
         self.layout.children.pop(0)
         self.layout.children.append(
@@ -637,7 +723,7 @@ class Application(object):
                 row(
                     self.Latitude.layout,
                     self.Size.layout,
-                    self.Contrast.layout,
+                    ControlPanel,
                     sizing_mode="scale_both",
                 ),
                 self.Samples.layout,
@@ -647,7 +733,11 @@ class Application(object):
 
 
 def main():
-    server = Server({"/": Application})
+    if len(sys.argv) > 1:
+        if (sys.argv[1] == "-d") or (sys.argv[1] == "--debug"):
+            server = Server({"/": lambda doc: Application(doc, debug=True)})
+        else:
+            server = Server({"/": Application})
     server.start()
     print("Opening Bokeh application on http://localhost:5006/")
     server.io_loop.add_callback(server.show, "/")

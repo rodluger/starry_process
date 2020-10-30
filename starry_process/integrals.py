@@ -3,7 +3,6 @@ from theano import gof
 import theano.tensor as tt
 from theano.ifelse import ifelse
 from .defaults import defaults
-from .transforms import IdentityTransform
 import numpy as np
 
 
@@ -59,7 +58,6 @@ class MomentIntegral(object):
         ydeg=defaults["ydeg"],
         angle_unit=defaults["angle_unit"],
         child=NoChild(),
-        transform=None,
         driver=defaults["driver"],
         **kwargs
     ):
@@ -67,7 +65,6 @@ class MomentIntegral(object):
         self._driver = driver
         self._child = child
         self._nylm = (self._ydeg + 1) ** 2
-        self._transform = transform
         if angle_unit.startswith("deg"):
             self._angle_fac = np.pi / 180
         elif angle_unit.startswith("rad"):
@@ -84,22 +81,24 @@ class MomentIntegral(object):
         return self._second_moment(self._child.second_moment())
 
     def sample(self, nsamples=1):
-        if self._transform is None:
+        if not hasattr(self, "_sample"):
             raise NotImplementedError("Cannot sample from this distribution.")
         else:
-            return SampleOp(self._transform.sample, nsamples=nsamples)(
-                *self._params
-            )
+            return SampleOp(self._sample, nsamples=nsamples)(*self._params)
 
     def pdf(self, x):
-        if self._transform is None:
+        if not hasattr(self, "_pdf"):
             raise NotImplementedError("PDF undefined for this distribution.")
         else:
-            return PDFOp(self._transform.pdf)(x, *self._params)
+            return PDFOp(self._pdf)(x, *self._params)
 
     def log_jac(self):
-        if self._transform is not None:
-            return self._transform.log_jac(*self._params)
+        if not hasattr(self, "_log_jac"):
+            raise NotImplementedError(
+                "Jacobian undefined for this distribution."
+            )
+        else:
+            return self._log_jac()
 
     @property
     def _neig(self):

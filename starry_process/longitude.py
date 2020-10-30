@@ -1,6 +1,5 @@
 from .wigner import R
 from .integrals import WignerIntegral
-from .transforms import LongitudeTransform
 from .ops import RyOp, CheckBoundsOp
 import numpy as np
 from scipy.special import gamma
@@ -13,7 +12,6 @@ class LongitudeIntegral(WignerIntegral):
 
         """
         # Set up the transform
-        self._transform = LongitudeTransform()
         self._params = []
 
         # Set up the rotation operator
@@ -49,3 +47,33 @@ class LongitudeIntegral(WignerIntegral):
                         self._Q[n1, n2] = term[j1 + j2, i1 + i2]
                         n2 += 1
                 n1 += 1
+
+    def _pdf(self, lam):
+        """
+        Return the probability density function evaluated at a 
+        longitude `lam`.
+        
+        .. note:: 
+        
+            This function operates on and returns numeric values.
+            It is used internally in the `perform` step of a `PDFOp`.
+
+        """
+        return np.ones_like(lam) / 2 * np.pi * self._angle_fac
+
+    def _sample(self, nsamples=1):
+        """
+        Draw samples from the latitude distribution (in degrees).
+
+        .. note:: 
+        
+            This function operates on and returns numeric values.
+            It is used internally in the `perform` step of a `SampleOp`.
+        
+        """
+        return (
+            2
+            * np.pi
+            * (np.random.random(size=nsamples) - 0.5)
+            / self._angle_fac
+        )

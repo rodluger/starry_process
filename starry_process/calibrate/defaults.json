@@ -34,15 +34,15 @@
         "baseline_var": 1e-4,
         "rmax": 30,
         "rmin": 5,
-        "amin": 0.5,
+        "amin": 0.0,
         "amax": 1.0,
-        "bmin": 0.5,
+        "bmin": 0.0,
         "bmax": 1.0,
         "cmin": 1e-3,
         "cmax": 1.0,
         "nmax": 50,
         "nmin": 1,
-        "apply_jac": false,
+        "apply_jac": true,
         "sampler": "NestedSampler",
         "sampler_kwargs": {},
         "run_nested_kwargs": {}
@@ -76,6 +76,6 @@
         "cmax": 1.0,
         "nmax": 50,
         "nmin": 1,
-        "apply_jac": false
+        "apply_jac": true
     }
 }

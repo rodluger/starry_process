@@ -4,6 +4,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from starry_process import StarryProcess
+from starry_process.latitude import beta2gauss, gauss2beta
 import theano
 import theano.tensor as tt
 import numpy as np
@@ -62,39 +63,6 @@ def corner(*args, **kwargs):
                     axes[row, row].set_xlim(lo, hi)
 
     return figure
-
-
-def mode_and_std(alpha, beta):
-    alpha = np.atleast_1d(alpha)
-    beta = np.atleast_1d(beta)
-
-    # Compute the mode
-    term = (
-        4 * alpha ** 2
-        - 8 * alpha
-        - 6 * beta
-        + 4 * alpha * beta
-        + beta ** 2
-        + 5
-    )
-    mode = 2 * np.arctan(np.sqrt(2 * alpha + beta - 2 - np.sqrt(term)))
-
-    # Compute the curvature at the mode
-    # and convert it to a standard deviation
-    term = (
-        1
-        - alpha
-        + beta
-        + (beta - 1) * np.cos(mode)
-        + (alpha - 1) / np.cos(mode) ** 2
-    )
-    std = np.sin(mode) / np.sqrt(term)
-
-    # Invalid if alpha, beta < 1
-    mode[(alpha < 1) | (beta < 1)] = np.nan
-    std[(alpha < 1) | (beta < 1)] = np.nan
-
-    return mode * 180 / np.pi, std * 180 / np.pi
 
 
 def lat2y(lat):
@@ -257,8 +225,9 @@ def plot_latitude_pdf(results, **kwargs):
     ax.set_xticklabels(["{:d}$^\circ$".format(xt) for xt in xticks])
     ax.set_xlabel("latitude")
     ax.set_ylabel("probability")
-    mx = np.max(pdf_true)
-    ax.set_ylim(-0.1 * mx, 2.0 * mx)
+    # Constrain y lims?
+    # mx = np.max(pdf_true)
+    # ax.set_ylim(-0.1 * mx, 2.0 * mx)
     return fig
 
 
@@ -306,7 +275,7 @@ def plot_corner(results, transform_beta=False, **kwargs):
     # Get truths
     sp = StarryProcess()
     try:
-        a, b = sp.latitude._transform.transform(
+        a, b = gauss2beta(
             gen_kwargs["latitude"]["mu"], gen_kwargs["latitude"]["sigma"]
         )
     except:
@@ -329,10 +298,9 @@ def plot_corner(results, transform_beta=False, **kwargs):
             # Transform from `a, b` to `mode, std`
             a = samples[:, 1]
             b = samples[:, 2]
-            alpha, beta = sp.latitude._transform._ab_to_alphabeta(a, b)
-            mode, std = mode_and_std(alpha, beta)
-            samples[:, 1] = mode
-            samples[:, 2] = std
+            mu, sigma = beta2gauss(a, b)
+            samples[:, 1] = mu
+            samples[:, 2] = sigma
             labels[1] = r"$\mu$"
             labels[2] = r"$\sigma$"
             if np.isfinite(gen_kwargs["latitude"]["sigma"]):
@@ -369,8 +337,9 @@ def plot_corner(results, transform_beta=False, **kwargs):
     else:
 
         if transform_beta:
-            # TODO: issue a warning
-            pass
+            import warnings
+
+            warnings.warn("Must set `use_corner` to perform transforms.")
 
         fig, _ = dyplot.cornerplot(
             results,
