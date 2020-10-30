@@ -59,7 +59,7 @@ for v, hex_color in enumerate(Plasma100):
     plasma.append("rgba({:d}, {:d}, {:d}, 1) {:d}%".format(r, g, b, v))
 plasma = plasma[::3]
 plasma = ",\n    ".join(plasma)
-PLASMA = "background: linear-gradient(to right, \n{:s}\n);".format(plasma)
+PLASMA = "background: linear-gradient(to left, \n{:s}\n);".format(plasma)
 
 
 # Loading screen
