@@ -305,22 +305,6 @@ class Samples(object):
             self.flux_plot[i].yaxis.axis_label_text_font_size = "8pt"
             self.flux_plot[i].yaxis.major_label_text_font_size = "8pt"
 
-        # Legend
-        """
-        for j, label in enumerate(["15", "30", "45", "60", "75", "90"]):
-            self.flux_plot[-1].line(
-                [0, 0], [0, 0], legend_label=label, line_color=OrRd6[5 - j]
-            )
-        self.flux_plot[-1].legend.location = "bottom_right"
-        self.flux_plot[-1].legend.title = "inclination"
-        self.flux_plot[-1].legend.title_text_font_style = "bold"
-        self.flux_plot[-1].legend.title_text_font_size = "8pt"
-        self.flux_plot[-1].legend.label_text_font_size = "8pt"
-        self.flux_plot[-1].legend.spacing = 0
-        self.flux_plot[-1].legend.label_height = 5
-        self.flux_plot[-1].legend.glyph_height = 5
-        """
-
         # Full layout
         self.plots = row(
             *[
@@ -349,6 +333,7 @@ class Samples(object):
         self.Size.callback(None, None, None)
         self.Latitude.callback(None, None, None)
         self.gp.random.seed(0)
+        self.slider.value = (0.5, 1.2)
         self.slider_callback(None, None, None)
         if self.continuous_button.label == "discrete":
             self.continuous_callback(None)
@@ -418,11 +403,14 @@ class Integral(object):
         self,
         params,
         gp_callback,
-        limits=(0, 90),
+        limits=(-90, 90),
+        xticks=[-90, -60, -30, 0, 30, 60, 90],
         funcs=[],
+        labels=[],
         xlabel="",
         ylabel="",
         distribution=False,
+        legend_location="bottom_right",
         npts=300,
     ):
         # Store
@@ -470,6 +458,7 @@ class Integral(object):
             )
             self.plot.xaxis.axis_label_text_font_style = "normal"
             self.plot.xaxis.axis_label_text_font_size = "12pt"
+            self.plot.xaxis.ticker = FixedTicker(ticks=xticks)
             self.plot.yaxis[0].formatter = FuncTickFormatter(
                 code="return '  ';"
             )
@@ -482,6 +471,23 @@ class Integral(object):
             self.plot.toolbar.active_drag = None
             self.plot.toolbar.active_scroll = None
             self.plot.toolbar.active_tap = None
+
+            # Legend
+            for j, label in enumerate(labels):
+                self.plot.line(
+                    [0, 0],
+                    [0, 0],
+                    legend_label=label,
+                    line_color=Category10[10][j],
+                )
+            self.plot.legend.location = legend_location
+            self.plot.legend.title_text_font_style = "bold"
+            self.plot.legend.title_text_font_size = "8pt"
+            self.plot.legend.label_text_font_size = "8pt"
+            self.plot.legend.spacing = 0
+            self.plot.legend.label_height = 5
+            self.plot.legend.glyph_height = 15
+
         else:
 
             self.plot = None
@@ -664,16 +670,16 @@ class Application(object):
         self.Latitude = Integral(
             params["latitude"],
             self.Samples.callback,
-            limits=(-90, 90),
             funcs=[pdf, pdf_gauss],
+            labels=["pdf", "laplace"],
             xlabel="latitude distribution",
             ylabel="probability",
             distribution=True,
+            legend_location="top_left",
         )
         self.Size = Integral(
             params["size"],
             self.Samples.callback,
-            limits=(-90, 90),
             funcs=[
                 lambda x, r: T
                 @ (1 / (1 + np.exp(-300 * np.pi / 180 * (np.abs(x) - r))) - 1),
@@ -681,6 +687,7 @@ class Application(object):
                     1 / (1 + np.exp(-300 * np.pi / 180 * (np.abs(x) - r))) - 1
                 ),
             ],
+            labels=["ylm", "true"],
             xlabel="spot profile",
             ylabel="intensity",
             npts=npts,
@@ -694,13 +701,30 @@ class Application(object):
 
         # Settings
         description = """
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
-        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, 
-        quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo 
-        consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse 
-        cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat 
-        non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-        """
+        The sliders to the left and at the top control the hyperparameters of a
+        <a href="https://github.com/rodluger/starry_process" style="text-decoration: none; font-weight:600; color: #444444;">starry process</a>,
+        an interpretable gaussian process for stellar light curves. 
+        The hyperparameters describe the spot latitude distribution 
+        (<span style="font-style:italic;=">left</span>),
+        the spot radius 
+        (<span style="font-style:italic;=">center</span>), 
+        and the spot contrast 
+        (<span style="font-style:italic;=">above</span>). 
+        Below are five
+        samples from the process seen in a Mollweide projection on the stellar
+        surface, followed by the corresponding light curves viewed at inclinations
+        of 
+        <span style="font-weight:600; color:{};">15</span>, 
+        <span style="font-weight:600; color:{};">30</span>, 
+        <span style="font-weight:600; color:{};">45</span>, 
+        <span style="font-weight:600; color:{};">60</span>, 
+        <span style="font-weight:600; color:{};">75</span>, 
+        and
+        <span style="font-weight:600; color:{};">90</span>
+        degrees.
+        """.format(
+            *[OrRd6[5 - j] for j in range(6)]
+        )
         ControlPanel = column(
             Div(text="<h1>settings</h1>", css_classes=["control-title"],),
             self.Contrast.layout,

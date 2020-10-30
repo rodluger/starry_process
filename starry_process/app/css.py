@@ -116,7 +116,7 @@ style = lambda: Div(
         margin-left: 30px !important;
         margin-right: 0px !important;
     }
-    .colorbar-slider .bk-noUi-draggable {
+    .colorbar-slider .noUi-draggable {
         %s
     }
     .colorbar-slider .bk-slider-title {
@@ -177,6 +177,11 @@ style = lambda: Div(
         padding-left: 35px !important;
         text-align: justify;
         color: #444444;
+        left: 0px !important;
+    }
+
+    .bk .bk-slider-title {
+        top: 2px !important;
     }
 
     /* Loading screen */
