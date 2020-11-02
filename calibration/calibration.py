@@ -90,7 +90,7 @@ def run_batch(name, nodes=5, tasks=10, queue="cca", walltime=8, **kwargs):
     with open(taskfile, "w") as f:
         print(
             (
-                """#DISBATCH REPEAT {}; """
+                """#DISBATCH REPEAT {} start 0 """
                 """python -c "from starry_process.calibrate import run; """
                 """run(path='{}/$DISBATCH_REPEAT_INDEX', plot=False, seed=$DISBATCH_REPEAT_INDEX, **{})" """
                 """&> {}/$DISBATCH_REPEAT_INDEX/batch.log"""
