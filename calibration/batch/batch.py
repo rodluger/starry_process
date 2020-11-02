@@ -72,7 +72,6 @@ def submit(
     sbatch_args.append(slurmfile)
     print("Submitting the job...")
     print(" ".join(sbatch_args))
-    subprocess.call(["module", "load", "slurm"])
     subprocess.call(sbatch_args)
 
 
