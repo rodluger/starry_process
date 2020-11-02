@@ -58,7 +58,7 @@ def submit(
         "--partition=%s" % queue,
         "--array=0-{}".format(tasks),
         "-N{}".format(nodes),
-        "--cpus_per_task={}".format(cpus_per_task),
+        "-c={}".format(cpus_per_task),
         "--export=ALL,DIRNAME={}".format(__PATH__),
         "--output={}".format(os.path.join(__PATH__, "batch_%A_%a.log")),
         "--job-name=batch",
