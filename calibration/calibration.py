@@ -124,6 +124,6 @@ def run_batch(name, nodes=5, tasks=10, queue="cca", walltime=8, **kwargs):
 
 def clean():
     for file in glob.glob(os.path.join(HERE, "taskfile*")):
-        os.path.remove(file)
+        os.remove(file)
     if os.path.exists("run.sh"):
         os.remove("run.sh")
