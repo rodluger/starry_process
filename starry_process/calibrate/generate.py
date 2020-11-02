@@ -96,8 +96,14 @@ def generate(**kwargs):
     else:
         latitude = lambda: (
             (1 if np.random.random() < 0.5 else -1)
-            * gen_kwargs["latitude"]["mu"]
-            + gen_kwargs["latitude"]["sigma"] * np.random.randn()
+            * min(
+                90,
+                max(
+                    0,
+                    gen_kwargs["latitude"]["mu"]
+                    + gen_kwargs["latitude"]["sigma"] * np.random.randn(),
+                ),
+            )
         )
     contrast = lambda: (
         gen_kwargs["contrast"]["mu"]
