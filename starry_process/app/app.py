@@ -636,7 +636,11 @@ class Integral(object):
 
 
 class Application(object):
-    def __init__(self, doc, ydeg=15, npix=100, npts=300, debug=False):
+    def __init__(self, doc=None, ydeg=15, npix=100, npts=300, debug=False):
+
+        # Get current document
+        if doc is None:
+            doc = curdoc()
 
         self.ydeg = ydeg
         self.npix = npix
