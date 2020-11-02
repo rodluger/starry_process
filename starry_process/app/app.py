@@ -654,6 +654,7 @@ class Application(object):
         self.ydeg = ydeg
         self.npix = npix
         self.npts = npts
+        self.throttle_time = throttle_time
         self.debug = debug
 
         # Display the loader
