@@ -1,0 +1,3 @@
+rm -f taskfile*
+rm -f run.sh
+rm -f slurm*.*sh

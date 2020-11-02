@@ -45,7 +45,7 @@ def run_single(name, seed=0, queue="cca", walltime=8, **kwargs):
     sbatch_args = [
         "sbatch",
         "--partition={}".format(queue),
-        "-N1",
+        "-N 1",
         "--output={}".format(
             os.path.join(path, "{}".format(seed), "batch.log")
         ),
@@ -104,7 +104,7 @@ def run_batch(name, nodes=5, tasks=10, queue="cca", walltime=8, **kwargs):
     sbatch_args = [
         "sbatch",
         "--partition={}".format(queue),
-        "-N{}".format(nodes),
+        "-N {}".format(nodes),
         "--output={}".format(os.path.join(path, "batch.log")),
         "--job-name={}".format(name),
         "--time={}:00:00".format(walltime),
