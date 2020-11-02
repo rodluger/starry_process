@@ -1,6 +1,7 @@
 from starry_process.calibrate import run
 import os
 import subprocess
+import glob
 
 
 # Path to this directory
@@ -24,8 +25,8 @@ def run_single(name, seed=0, queue="cca", walltime=8, **kwargs):
     """
     # Output path
     path = os.path.abspath(name)
-    if not os.path.exists(path):
-        os.makedirs(path)
+    if not os.path.exists(os.path.join(path, "{}".format(seed))):
+        os.makedirs(os.path.join(path, "{}".format(seed)))
 
     # Slurm script
     slurmfile = os.path.join(HERE, "run.sh")
@@ -69,10 +70,11 @@ def run_batch(name, nodes=5, tasks=10, queue="cca", walltime=8, **kwargs):
     
 
     """
-    # Output path
+    # Output paths
     path = os.path.abspath(name)
-    if not os.path.exists(path):
-        os.makedirs(path)
+    for i in range(tasks):
+        if not os.path.exists(os.path.join(path, "{}".format(i))):
+            os.makedirs(os.path.join(path, "{}".format(i)))
 
     # Slurm script
     slurmfile = os.path.join(HERE, "run.sh")
@@ -118,3 +120,10 @@ def run_batch(name, nodes=5, tasks=10, queue="cca", walltime=8, **kwargs):
     print("Submitting the job...")
     print(" ".join(sbatch_args))
     subprocess.call(sbatch_args)
+
+
+def clean():
+    for file in glob.glob(os.path.join(HERE, "taskfile*")):
+        os.path.remove(file)
+    if os.path.exists("run.sh"):
+        os.remove("run.sh")
