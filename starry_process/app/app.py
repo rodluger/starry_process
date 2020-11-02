@@ -102,10 +102,11 @@ def spot_transform(ydeg, npts=1000, eps=1e-9, smoothing=0.075):
 
 
 class Samples(object):
-    def __init__(self, ydeg, npix, npts, debug=False):
+    def __init__(self, ydeg, npix, npts, throttle_time, debug=False):
         # Settings
         self.npix = npix
         self.npts = npts
+        self.throttle_time = throttle_time
         self.nmaps = 5
 
         # Design matrices
@@ -342,9 +343,9 @@ class Samples(object):
     def continuous_callback(self, event):
         if self.continuous_button.label == "continuous":
             self.continuous_button.label = "discrete"
-            self.Latitude.throttle_time = 0.20
-            self.Size.throttle_time = 0.20
-            self.Contrast.throttle_time = 0.20
+            self.Latitude.throttle_time = self.throttle_time
+            self.Size.throttle_time = self.throttle_time
+            self.Contrast.throttle_time = self.throttle_time
         else:
             self.continuous_button.label = "continuous"
             self.Latitude.throttle_time = 0
@@ -636,7 +637,15 @@ class Integral(object):
 
 
 class Application(object):
-    def __init__(self, doc=None, ydeg=15, npix=100, npts=300, debug=False):
+    def __init__(
+        self,
+        doc=None,
+        ydeg=15,
+        npix=100,
+        npts=300,
+        throttle_time=0.20,
+        debug=False,
+    ):
 
         # Get current document
         if doc is None:
@@ -660,7 +669,11 @@ class Application(object):
 
         # The GP samples
         self.Samples = Samples(
-            self.ydeg, self.npix, self.npts, debug=self.debug
+            self.ydeg,
+            self.npix,
+            self.npts,
+            self.throttle_time,
+            debug=self.debug,
         )
 
         # The integrals
