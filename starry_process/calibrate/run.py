@@ -11,7 +11,7 @@ def run(path=".", clobber=False, plot=True, **kwargs):
     # Save the kwargs
     if not os.path.exists(path):
         os.makedirs(path)
-    json.dumps(open(os.path.join(path, "kwargs.json"), "w"), kwargs)
+    json.dump(kwargs, open(os.path.join(path, "kwargs.json"), "w"))
 
     # Generate
     if clobber or not os.path.exists(os.path.join(path, "data.npz")):

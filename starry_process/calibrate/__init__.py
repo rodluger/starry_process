@@ -9,3 +9,4 @@ from .plot import (
 from .sample import sample
 from .log_prob import get_log_prob
 from .optimize import optimize
+from .run import run
