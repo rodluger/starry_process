@@ -2,6 +2,7 @@ from starry_process.calibrate import run
 import os
 import subprocess
 import glob
+import numpy as np
 
 
 # Path to this directory
@@ -78,12 +79,13 @@ def run_batch(name, nodes=5, tasks=10, queue="cca", walltime=8, **kwargs):
 
     # Slurm script
     slurmfile = os.path.join(HERE, "run.sh")
+    tasks_per_node = int(np.ceil(tasks / nodes))
     with open(slurmfile, "w") as f:
         print(
             """#!/bin/sh\n"""
             """cd {}\n"""
             """module load disBatch\n"""
-            """disBatch.py taskfile""".format(HERE),
+            """disBatch.py -t {} taskfile""".format(HERE, tasks_per_node),
             file=f,
         )
 

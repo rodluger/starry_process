@@ -1,3 +1,4 @@
 rm -f taskfile*
 rm -f run.sh
 rm -f slurm*.*sh
+rm -rf __pycache__
