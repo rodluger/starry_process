@@ -644,6 +644,7 @@ class Application(object):
         npix=100,
         npts=300,
         throttle_time=0.20,
+        load_timeout=1.0,
         debug=False,
     ):
 
@@ -664,7 +665,7 @@ class Application(object):
         doc.template = TEMPLATE
 
         # Set up the starry process
-        doc.add_timeout_callback(self.run, 1000)
+        doc.add_timeout_callback(self.run, int(1000 * load_timeout))
 
     def run(self):
 
