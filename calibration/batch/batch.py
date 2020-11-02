@@ -5,7 +5,7 @@ from dynesty import utils as dyfunc
 import os
 import subprocess
 
-__PATH__ = os.path.dirname(os.path.abspath(__FILE__))
+__PATH__ = os.path.dirname(os.path.abspath(__file__))
 
 
 # Global settings
@@ -74,3 +74,7 @@ def submit(
     print(" ".join(sbatch_args))
     subprocess.call(["module", "load", "slurm"])
     subprocess.call(sbatch_args)
+
+
+if __name__ == "__main__":
+    submit()
