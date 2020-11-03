@@ -10,7 +10,6 @@ import os
 import starry_process
 from starry_process.defaults import defaults
 import sys
-import packaging
 
 # Add the CWD to the path
 sys.path.insert(1, os.path.dirname(os.path.abspath(__file__)))
@@ -33,7 +32,7 @@ for obj in starry_process.StarryProcess.__dict__.keys():
 project = "starry_process"
 copyright = "2020, Rodrigo Luger"
 author = "Rodrigo Luger"
-version = packaging.version.parse(starry_process.__version__).base_version
+version = starry_process.__version__
 release = version
 
 
