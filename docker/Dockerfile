@@ -13,7 +13,7 @@ RUN conda clean -ay
 RUN python -m pip install git+https://github.com/rodluger/starry_process.git@${SP_BRANCH}
 
 RUN git clone --branch $SP_BRANCH https://github.com/rodluger/starry_process.git /starry_process
-RUN mv /starry_process/app /. && rm -rf /starry_process
+RUN mv /starry_process/starry_process/app /. && rm -rf /starry_process
 
 EXPOSE 5006
 

@@ -623,7 +623,7 @@ class Application(object):
         npts=300,
         nmaps=5,
         throttle_time=0.40,
-        load_timeout=0.5,
+        load_timeout=1.0,
     ):
         self.ydeg = ydeg
         self.npix = npix
@@ -763,6 +763,6 @@ app = Application(
     npts=os.getenv("NPTS", 300),
     nmaps=os.getenv("NMAPS", 5),
     throttle_time=os.getenv("THROTTLE_TIMEOUT", 0.40),
-    load_timeout=os.getenv("LOAD_TIMEOUT", 0.5),
+    load_timeout=os.getenv("LOAD_TIMEOUT", 1.0),
 )
 
