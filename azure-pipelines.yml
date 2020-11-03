@@ -45,12 +45,7 @@ jobs:
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
       make -C docs html
-      cd docs/_build
-      mkdir gh-pages
-      cd gh-pages
-      git clone -b gh-pages --single-branch https://github.com/rodluger/starry_process.git .
-      rm -rf .git
-      mv ../html/* .
+      cd docs/_build/html
       git init
       touch .nojekyll
       git add .nojekyll
