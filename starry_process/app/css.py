@@ -1,9 +1,9 @@
 from bokeh.models import Div
-from bokeh.palettes import Plasma256
+from bokeh.palettes import Plasma256, OrRd6
 import numpy as np
 import os
 
-__all__ = ["plasma", "svg_mu", "svg_nu", "loader", "style"]
+__all__ = ["plasma", "svg_mu", "svg_nu", "loader", "description", "style"]
 
 # jinja template
 TEMPLATE = """
@@ -70,14 +70,44 @@ loader = lambda: Div(
         <div class="dot1"></div>
         <div class="dot2"></div>
         <div class="loader-message">
-            &nbsp;Compiling...
-            <div style="font-size: 8pt; font-weight: 100; width: 160px; margin-top: 10px;">
-                This may take up to 60 orbits.
+            &nbsp;starry process
+            <div style="font-size: 10pt; font-weight: 100; margin-top: 10px;">
+                sit tight while the page renders...
             </div>
         </div>
     </div>
 </div>
 """
+)
+
+
+# Description textbox
+description = """
+The sliders to the left and at the top control the hyperparameters of a
+<a href="https://github.com/rodluger/starry_process" 
+style="text-decoration: none; font-weight:600; color: #444444;">
+starry process</a>,
+an interpretable gaussian process for stellar light curves. 
+The hyperparameters describe the spot latitude distribution 
+(<span style="font-style:italic;=">left</span>),
+the spot radius 
+(<span style="font-style:italic;=">center</span>), 
+and the spot contrast 
+(<span style="font-style:italic;=">above</span>). 
+Below are five
+samples from the process seen in a Mollweide projection on the stellar
+surface, followed by the corresponding light curves viewed at 
+inclinations of 
+<span style="font-weight:600; color:{};">15</span>, 
+<span style="font-weight:600; color:{};">30</span>, 
+<span style="font-weight:600; color:{};">45</span>, 
+<span style="font-weight:600; color:{};">60</span>, 
+<span style="font-weight:600; color:{};">75</span>, 
+and
+<span style="font-weight:600; color:{};">90</span>
+degrees.
+""".format(
+    *[OrRd6[5 - j] for j in range(6)]
 )
 
 
@@ -204,22 +234,21 @@ style = lambda: Div(
         font-weight: 600;
         color: #999;
         margin: 100px auto;
-        position: absolute;
-        left: -40px;
+        position: relative;
     }
     .spinner {
         margin: 100px auto;
-        width: 80px;
-        height: 80px;
+        width: 320px;
+        height: 320px;
         position: relative;
         text-align: center;
     }
     .dot1 {
-        width: 100%%;
-        height: 100%%;
+        width: 25%%;
+        height: 25%%;
         display: inline-block;
         position: absolute;
-        right: 0px;
+        left: 120px;
         top: 0;
         background-color: #999;
         border-radius: 100%%;
@@ -230,10 +259,10 @@ style = lambda: Div(
         position: absolute;
         background-color: #666;
         border-radius: 100%%;
-        width: 40%%;
-        height: 40%%;
+        width: 10%%;
+        height: 10%%;
         top: 60px;
-        left: -40px;
+        left: 80px;
         z-index: 2;
         -webkit-animation: sk-orbit 0.75s infinite linear;
         animation: sk-orbit 0.75s infinite linear;

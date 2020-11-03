@@ -1,4 +1,4 @@
-from .css import loader, style, TEMPLATE
+from .css import loader, description, style, TEMPLATE
 from .design import get_intensity_design_matrix, get_flux_design_matrix
 from .moll import get_latitude_lines, get_longitude_lines
 from starry_process import StarryProcess
@@ -102,52 +102,32 @@ def spot_transform(ydeg, npts=1000, eps=1e-9, smoothing=0.075):
 
 
 class Samples(object):
-    def __init__(self, ydeg, npix, npts, throttle_time, debug=False):
+    def __init__(
+        self, ydeg, npix, npts, nmaps, throttle_time, gp, sample_function
+    ):
         # Settings
         self.npix = npix
         self.npts = npts
         self.throttle_time = throttle_time
-        self.nmaps = 5
+        self.nmaps = nmaps
+        self.gp = gp
 
         # Design matrices
         self.A_I = get_intensity_design_matrix(ydeg, npix)
         self.A_F = get_flux_design_matrix(ydeg, npts)
 
-        # Compile the GP
-        r = tt.dscalar()
-        a = tt.dscalar()
-        b = tt.dscalar()
-        c = tt.dscalar()
-        n = tt.dscalar()
-        self.gp = StarryProcess(ydeg=ydeg, r=r, a=a, b=b, c=c, n=n)
-        self.gp.random.seed(238)
+        def sample_ylm(r, mu_l, sigma_l, c, n):
+            # Avoid issues at the boundaries
+            if mu_l == 0:
+                mu_l = 1e-2
+            elif mu_l == 90:
+                mu_l = 90 - 1e-2
+            a, b = gauss2beta(mu_l, sigma_l)
+            a = a[0]
+            b = b[0]
+            return sample_function(r, a, b, c, n)
 
-        print("Compiling...")
-        if debug:
-            self.sample_ylm = lambda *args: [
-                np.random.randn(self.nmaps, (ydeg + 1) ** 2)
-            ]
-        else:
-            function = theano.function(
-                [r, a, b, c, n,],
-                [self.gp.sample_ylm(self.nmaps)],
-                no_default_updates=True,
-            )
-
-            def sample_ylm(r, mu_l, sigma_l, c, n):
-                # Avoid issues at the boundaries
-                if mu_l == 0:
-                    mu_l = 1e-2
-                elif mu_l == 90:
-                    mu_l = 90 - 1e-2
-                a, b = gauss2beta(mu_l, sigma_l)
-                a = a[0]
-                b = b[0]
-                return function(r, a, b, c, n)
-
-            self.sample_ylm = sample_ylm
-
-        print("Done!")
+        self.sample_ylm = sample_ylm
 
         # Draw three samples from the default distr
         self.ylm = self.sample_ylm(
@@ -639,24 +619,42 @@ class Integral(object):
 class Application(object):
     def __init__(
         self,
-        doc=None,
         ydeg=15,
         npix=100,
         npts=300,
+        nmaps=5,
         throttle_time=0.20,
-        load_timeout=1.0,
-        debug=False,
+        load_timeout=0.5,
     ):
+        # Ingest
+        self.ydeg = ydeg
+        self.npix = npix
+        self.npts = npts
+        self.nmaps = nmaps
+        self.throttle_time = throttle_time
+        self.load_timeout = load_timeout
+
+        # Compile the GP
+        print("Compiling. This may take up to one minute...")
+        r = tt.dscalar()
+        a = tt.dscalar()
+        b = tt.dscalar()
+        c = tt.dscalar()
+        n = tt.dscalar()
+        self.gp = StarryProcess(ydeg=self.ydeg, r=r, a=a, b=b, c=c, n=n)
+        self.gp.random.seed(238)
+        self.sample_function = theano.function(
+            [r, a, b, c, n,],
+            [self.gp.sample_ylm(self.nmaps)],
+            no_default_updates=True,
+        )
+        print("Done!")
+
+    def run(self, doc=None):
 
         # Get current document
         if doc is None:
             doc = curdoc()
-
-        self.ydeg = ydeg
-        self.npix = npix
-        self.npts = npts
-        self.throttle_time = throttle_time
-        self.debug = debug
 
         # Display the loader
         self.layout = column(loader(), style(), sizing_mode="scale_both")
@@ -665,17 +663,19 @@ class Application(object):
         doc.template = TEMPLATE
 
         # Set up the starry process
-        doc.add_timeout_callback(self.run, int(1000 * load_timeout))
+        doc.add_timeout_callback(self._run, int(1000 * self.load_timeout))
 
-    def run(self):
+    def _run(self):
 
         # The GP samples
         self.Samples = Samples(
             self.ydeg,
             self.npix,
             self.npts,
+            self.nmaps,
             self.throttle_time,
-            debug=self.debug,
+            self.gp,
+            self.sample_function,
         )
 
         # The integrals
@@ -719,33 +719,6 @@ class Application(object):
         self.Samples.Contrast = self.Contrast
 
         # Settings
-        description = """
-        The sliders to the left and at the top control the hyperparameters of a
-        <a href="https://github.com/rodluger/starry_process" 
-        style="text-decoration: none; font-weight:600; color: #444444;">
-        starry process</a>,
-        an interpretable gaussian process for stellar light curves. 
-        The hyperparameters describe the spot latitude distribution 
-        (<span style="font-style:italic;=">left</span>),
-        the spot radius 
-        (<span style="font-style:italic;=">center</span>), 
-        and the spot contrast 
-        (<span style="font-style:italic;=">above</span>). 
-        Below are five
-        samples from the process seen in a Mollweide projection on the stellar
-        surface, followed by the corresponding light curves viewed at 
-        inclinations of 
-        <span style="font-weight:600; color:{};">15</span>, 
-        <span style="font-weight:600; color:{};">30</span>, 
-        <span style="font-weight:600; color:{};">45</span>, 
-        <span style="font-weight:600; color:{};">60</span>, 
-        <span style="font-weight:600; color:{};">75</span>, 
-        and
-        <span style="font-weight:600; color:{};">90</span>
-        degrees.
-        """.format(
-            *[OrRd6[5 - j] for j in range(6)]
-        )
         ControlPanel = column(
             Div(text="<h1>settings</h1>", css_classes=["control-title"],),
             self.Contrast.layout,
@@ -778,12 +751,8 @@ class Application(object):
 
 
 def main():
-    if len(sys.argv) > 1 and (
-        (sys.argv[1] == "-d") or (sys.argv[1] == "--debug")
-    ):
-        server = Server({"/": lambda doc: Application(doc, debug=True)})
-    else:
-        server = Server({"/": lambda doc: Application(doc)})
+    app = Application()
+    server = Server({"/": lambda doc: app.run(doc)})
     server.start()
     print("Opening Bokeh application on http://localhost:5006/")
     server.io_loop.add_callback(server.show, "/")
