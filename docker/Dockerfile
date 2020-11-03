@@ -2,10 +2,10 @@ FROM continuumio/miniconda3
 
 ENV BK_VERSION=2.2.1
 ENV PY_VERSION=3.7.4
-ENV SP_COMMIT=aa50317dd747949d00139f1cc5849d7f39412aff
+ENV SP_COMMIT=master
 ENV THROTTLE=0.40
 ENV YDEG=15
-ENV LOAD_TIMEOUT=2
+ENV LOAD_TIMEOUT=1
 
 RUN apt-get update && apt-get -y install git bash libblas-dev g++
 

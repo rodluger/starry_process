@@ -22,14 +22,69 @@ class StarryProcess(object):
         b=defaults["b"],
         c=defaults["c"],
         n=defaults["n"],
-        marginalize_over_inclination=False,
+        normalized=defaults["normalized"],
+        marginalize_over_inclination=defaults["marginalize_over_inclination"],
         covpts=defaults["covpts"],
         **kwargs,
     ):
+        """
+        An interpretable Gaussian process for stellar light curves.
+
+        Args:
+            r (scalar, optional): The mean star spot radius in degrees.
+                Default is %%defaults["r"]%%. Care should be taken when
+                modeling very small spots, as the spherical
+                harmonic expansion can typically only model features
+                with radius on the order of ``180 / ydeg`` or larger.
+                For the default spherical harmonic degree, the minimum
+                radius is about 10 degrees. Values below this will
+                typically lead to poor approximations, although the
+                process will in general still be valid and numerically
+                stable.
+            a (scalar, optional): Shape parameter of the spot latitude
+                distribution. This is equal to the log of the ``alpha``
+                parameter characterizing the Beta distribution in the
+                cosine of the latitude, scaled to the range ``[0, 1]``.
+                Default is %%defaults["a"]%%.
+            b (scalar, optional): Shape parameter of the spot latitude
+                distribution. This is equal to the log of the ``beta``
+                parameter characterizing the Beta distribution in the
+                cosine of the latitude, scaled to the range ``[0, 1]``.
+                Default is %%defaults["b"]%%.
+            c (scalar, optional): The mean spot contrast as a fraction of
+                the photospheric intensity. Default is %%defaults["c"]%%.
+            n (scalar, optional): The total number of spots. Note that since a
+                ``StarryProcess`` does not model spots as discrete features,
+                this parameter will not generally have the expected behavior
+                when sampling from the prior. In other words, it is unlikely
+                that a draw with ``n=10`` will have ten distinct spots when
+                visualizing the corresponding stellar surface, nor will it
+                necessarily have more spots than a draw with (say) ``n=5``.
+                However, this parameter *does* behave correctly in an
+                inference setting: the posterior over ``n`` when doing 
+                inference on an ensemble of light curves is meaningful and
+                should have a mean (on average) equal to the true number of
+                spots (assuming all other model assumptions are valid).
+                Default is %%defaults["n"]%%.
+            normalized (bool, optional): Whether or not the flux observations 
+                (passed in calls to ``log_likelihood`` and 
+                ``sample_ylm_conditional``) are normalized. Usually, the
+                true baseline in stellar photometry is unknown, as it
+                requires knowledge of how bright the star would be in the
+                absence of star spots. If the baseline is unknown
+                (which is almost certainly the case), set this keyword
+                to ``True`` and make sure observations are mean- (or median-)
+                normalized. Setting this to ``False`` is not recommended for
+                usage on real data. Default is %%defaults["normalized"]%%.
+            marginalize_over_inclination (bool, optional)
+        """
         # Spherical harmonic degree of the process
         self._ydeg = kwargs.get("ydeg", defaults["ydeg"])
         assert self._ydeg > 5, "Degree of map must be > 5."
         self._nylm = (self._ydeg + 1) ** 2
+
+        # Is the flux normalized?
+        self._normalized = normalized
 
         # Initialize the Ylm integral ops
         self.size = SizeIntegral(r, **kwargs)
@@ -85,14 +140,20 @@ class StarryProcess(object):
         data_cov,
         i=defaults["i"],
         p=defaults["p"],
-        baseline_mean=0.0,
-        baseline_var=0.0,
+        baseline_mean=defaults["baseline_mean"],
+        baseline_var=defaults["baseline_var"],
         nsamples=1,
     ):
         # TODO
         if self._marginalize_over_inclination:
             raise NotImplementedError(
                 "Not yet implemented when marginalizing over inclination."
+            )
+
+        # TODO
+        if self._normalized:
+            raise NotImplementedError(
+                "Not yet implemented when the flux is normalized."
             )
 
         # Get the full data covariance
@@ -132,10 +193,18 @@ class StarryProcess(object):
         return tt.transpose(ymu[:, None] + tt.dot(cho_ycov, u))
 
     def mean(self, t, i=defaults["i"], p=defaults["p"]):
-        return self.flux.mean(t, i, p)
+        if self._normalized:
+            return tt.zeros_like(cast(t, vectorize=True))
+        else:
+            return self.flux.mean(t, i, p)
 
     def cov(self, t, i=defaults["i"], p=defaults["p"]):
-        return self.flux.cov(t, i, p)
+        if self._normalized:
+            cov = self.flux.cov(t, i, p)
+            mean = self.flux.mean(t, i, p)
+            return cov / (1 + mean) ** 2
+        else:
+            return self.flux.cov(t, i, p)
 
     def sample(self, t, i=defaults["i"], p=defaults["p"], nsamples=1):
         if self._marginalize_over_inclination:
@@ -196,17 +265,51 @@ class StarryProcess(object):
         data_cov,
         i=defaults["i"],
         p=defaults["p"],
-        baseline_mean=0.0,
-        baseline_var=0.0,
-        **kwargs,
+        baseline_mean=defaults["baseline_mean"],
+        baseline_var=defaults["baseline_var"],
     ):
         """
         Compute the log marginal likelihood of a light curve.
 
         Args:
-            t (array): The time array.
-            flux (array): The array of observed flux values.
-            data_cov (scalar/vector/matrix): The data covariance matrix.
+            t (vector): The time array in arbitrary units.
+            flux (vector): The array of observed flux values in arbitrary 
+                units. In general, the flux should be either mean- or
+                median-normalized with zero baseline. If the raw photometry
+                is measured in ``counts``, users should compute the ``flux``
+                from
+
+                    ```
+                    flux = counts / np.median(counts) - 1
+                    ```
+
+                If the baseline is something else (such as unity), users
+                may alternatively set the ``baseline_mean`` parameter to
+                reflect that.
+                Note that if the ``normalized`` keyword passed to this class
+                is ``False`` (not recommended for real data), then the flux
+                should instead be normalized to the true baseline (i.e., the
+                counts one would measure if the star had no spots). 
+            data_cov (scalar, vector, or matrix): The data covariance 
+                matrix. This may be a scalar equal to the (homoscedastic) 
+                variance of the data, a vector equal to the variance of each 
+                observation, or a matrix equal to the full covariance of the 
+                dataset.
+            i (scalar, optional): The inclination of the star in degrees.
+                Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
+                is set, this argument is ignored.
+            p (scalar, optional): The rotational period of the star in the same
+                units as ``t``. Default is %%defaults["p"]%%.
+            baseline_mean (scalar or vector, optional): The flux baseline to
+                subtract when computing the GP likelihood. Default is 
+                %%defaults["baseline_mean"]%%.
+            baseline_var (scalar or matrix): The variance (square of the
+                uncertainty) on the true value of the baseline. This is added
+                to every element of the GP covariance matrix in order to
+                marginalize over the baseline uncertainty. This may also be a
+                matrix specifying the covariance due to additional correlated
+                noise unrelated to star spot variability. Default is
+                %%defaults["baseline_var"]%%.
 
         Returns:
             The log marginal likelihood of the `flux` vector conditioned on

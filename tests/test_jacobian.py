@@ -1,4 +1,5 @@
 from starry_process import StarryProcess
+from starry_process.latitude import beta2gauss
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -9,6 +10,7 @@ import theano.tensor as tt
 from tqdm import tqdm
 from corner import corner
 from scipy.stats import gaussian_kde
+from scipy.stats import median_abs_deviation as mad
 
 
 def test_jacobian(plot=False):
@@ -29,16 +31,21 @@ def test_jacobian(plot=False):
 
         # Likelihood w/ no data: just the prior!
         sp = StarryProcess(a=a, b=b)
-        m1, m2 = 15, 75
-        s1, s2 = 10, 30
-        xmin = -89
-        xmax = 89
+        m1, m2 = 0, 80
+        s1, s2 = 0, 45
+        xmin = -90
+        xmax = 90
         pm.Potential("jacobian", sp.log_jac())
 
         # Sample
+        # NOTE: Sampling straight from this prior is really tough because
+        # it has really high curvature in some places. Typically
+        # about half of the samples end in divergences! (This is much less of
+        # an issue when we have data.) Despite these issues, the test still
+        # works: the posterior density in `mu` and `sigma` is quite uniform.
         trace = pm.sample(
-            tune=500,
-            draws=5000,
+            tune=1000,
+            draws=25000,
             chains=4,
             step=xo.get_dense_nuts_step(target_accept=0.9),
         )
@@ -46,11 +53,8 @@ def test_jacobian(plot=False):
         # Transform samples to `mu`, `sigma`
         samples = np.array(pm.trace_to_dataframe(trace))
         a, b = samples.T
-        tr_samples = np.zeros_like(samples)
-        for k in tqdm(range(len(samples))):
-            tr_samples[k] = sp.latitude._transform.inverse_transform(
-                a[k], b[k]
-            )
+        mu, sigma = beta2gauss(a, b)
+        tr_samples = np.transpose([mu, sigma])
 
         if plot:
             corner(tr_samples, plot_density=False, plot_contours=False)
@@ -70,7 +74,9 @@ def test_jacobian(plot=False):
         X, Y = np.mgrid[m1:m2:100j, s1:s2:100j]
         positions = np.vstack([X.ravel(), Y.ravel()])
         density = np.reshape(kernel(positions).T, X.shape).T
-        assert np.std(density) / np.mean(density) < 0.1
+        std = 1.4826 * mad(density.flatten())
+        mean = np.mean(density.flatten())
+        assert std / mean < 0.1
 
 
 if __name__ == "__main__":

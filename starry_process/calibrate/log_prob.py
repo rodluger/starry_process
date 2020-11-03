@@ -40,6 +40,7 @@ def get_log_prob(
         b=b,
         c=c,
         n=n,
+        normalized=normalized,
         marginalize_over_inclination=marginalize_over_inclination,
         covpts=len(t) - 1,
     )
@@ -52,18 +53,8 @@ def get_log_prob(
     gp_mean = sp.mean(t, p=p, i=i)
     gp_cov = sp.cov(t, p=p, i=i)
 
-    if normalized:
-
-        # Assume the data is normalized to zero mean.
-        # We need to scale our covariance accordingly
-        gp_cov /= (1 + gp_mean) ** 2
-        R = tt.transpose(flux)
-
-    else:
-
-        # Assume we can measure the true baseline,
-        # which is just the mean of the GP
-        R = tt.transpose(flux) - tt.reshape(gp_mean, (-1, 1))
+    # Residual matrix
+    R = tt.transpose(flux) - tt.reshape(gp_mean, (-1, 1))
 
     # Observational error
     gp_cov += ferr ** 2 * tt.eye(K)

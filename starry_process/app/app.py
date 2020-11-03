@@ -721,7 +721,9 @@ class Application(object):
         # Settings
         description = """
         The sliders to the left and at the top control the hyperparameters of a
-        <a href="https://github.com/rodluger/starry_process" style="text-decoration: none; font-weight:600; color: #444444;">starry process</a>,
+        <a href="https://github.com/rodluger/starry_process" 
+        style="text-decoration: none; font-weight:600; color: #444444;">
+        starry process</a>,
         an interpretable gaussian process for stellar light curves. 
         The hyperparameters describe the spot latitude distribution 
         (<span style="font-style:italic;=">left</span>),
@@ -731,8 +733,8 @@ class Application(object):
         (<span style="font-style:italic;=">above</span>). 
         Below are five
         samples from the process seen in a Mollweide projection on the stellar
-        surface, followed by the corresponding light curves viewed at inclinations
-        of 
+        surface, followed by the corresponding light curves viewed at 
+        inclinations of 
         <span style="font-weight:600; color:{};">15</span>, 
         <span style="font-weight:600; color:{};">30</span>, 
         <span style="font-weight:600; color:{};">45</span>, 
@@ -781,7 +783,7 @@ def main():
     ):
         server = Server({"/": lambda doc: Application(doc, debug=True)})
     else:
-        server = Server({"/": Application})
+        server = Server({"/": lambda doc: Application(doc)})
     server.start()
     print("Opening Bokeh application on http://localhost:5006/")
     server.io_loop.add_callback(server.show, "/")

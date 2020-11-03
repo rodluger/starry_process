@@ -30,7 +30,8 @@ def test_latitude(
     E = eigE @ eigE.T
 
     # Get the first moment by numerical integration
-    alpha, beta = I._transform._ab_to_alphabeta(a, b)
+    alpha = np.exp(a * I._log_alpha_max)
+    beta = np.exp(np.log(0.5) + b * (I._log_beta_max - np.log(0.5)))
     e_num = np.zeros(N)
     print("Computing first moment numerically...")
     for n in tqdm(range(N)):

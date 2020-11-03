@@ -56,7 +56,6 @@ class MomentIntegral(object):
         self,
         *params,
         ydeg=defaults["ydeg"],
-        angle_unit=defaults["angle_unit"],
         child=NoChild(),
         driver=defaults["driver"],
         **kwargs
@@ -65,12 +64,7 @@ class MomentIntegral(object):
         self._driver = driver
         self._child = child
         self._nylm = (self._ydeg + 1) ** 2
-        if angle_unit.startswith("deg"):
-            self._angle_fac = np.pi / 180
-        elif angle_unit.startswith("rad"):
-            self._angle_fac = 1.0
-        else:
-            raise ValueError("Invalid `angle_unit`.")
+        self._angle_fac = np.pi / 180
         self._ingest(*params, **kwargs)
         self._compute()
 

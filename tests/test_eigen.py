@@ -33,7 +33,6 @@ def test_eigh_grad():
         )
 
 
-@pytest.mark.xfail
 def test_sqrt_grad_low_rank():
     # NOTE: For ydeg > 2 the *numerical* gradient gets
     # very unstable, so I'm not sure how to test this!

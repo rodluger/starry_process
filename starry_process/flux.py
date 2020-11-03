@@ -29,10 +29,9 @@ class FluxIntegral:
     def __init__(
         self,
         child=None,
-        marginalize_over_inclination=False,
+        marginalize_over_inclination=defaults["marginalize_over_inclination"],
         covpts=defaults["covpts"],
         ydeg=defaults["ydeg"],
-        angle_unit=defaults["angle_unit"],
         clobber=False,
         **kwargs
     ):
@@ -45,12 +44,7 @@ class FluxIntegral:
         self._cov_ylm = self._child.cov()
         self._ydeg = ydeg
         self._nylm = (self._ydeg + 1) ** 2
-        if angle_unit.startswith("deg"):
-            self._angle_fac = np.pi / 180
-        elif angle_unit.startswith("rad"):
-            self._angle_fac = 1.0
-        else:
-            raise ValueError("Invalid `angle_unit`.")
+        self._angle_fac = np.pi / 180
 
         # Set up the ops
         self._special_tensordotRz = special_tensordotRzOp(ydeg, **kwargs)

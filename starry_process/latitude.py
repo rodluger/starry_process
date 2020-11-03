@@ -13,7 +13,6 @@ def gauss2beta(
     sigma,
     log_alpha_max=defaults["log_alpha_max"],
     log_beta_max=defaults["log_beta_max"],
-    angle_unit=defaults["angle_unit"],
 ):
     """
     Return the shape parameters `a` and `b` of the latitude Beta distribution
@@ -25,12 +24,7 @@ def gauss2beta(
         (not tensors).
 
     """
-    if angle_unit.startswith("deg"):
-        angle_fac = np.pi / 180
-    elif angle_unit.startswith("rad"):
-        angle_fac = 1.0
-    else:
-        raise ValueError("Invalid `angle_unit`.")
+    angle_fac = np.pi / 180
     m = np.atleast_1d(mu) * angle_fac
     v = (np.atleast_1d(sigma) * angle_fac) ** 2
     c1 = np.cos(m)
@@ -49,7 +43,6 @@ def beta2gauss(
     b,
     log_alpha_max=defaults["log_alpha_max"],
     log_beta_max=defaults["log_beta_max"],
-    angle_unit=defaults["angle_unit"],
 ):
     """
     Return the mode `mu` and standard deviation `sigma` of Laplace's
@@ -62,12 +55,7 @@ def beta2gauss(
         (not tensors).
 
     """
-    if angle_unit.startswith("deg"):
-        angle_fac = np.pi / 180
-    elif angle_unit.startswith("rad"):
-        angle_fac = 1.0
-    else:
-        raise ValueError("Invalid `angle_unit`.")
+    angle_fac = np.pi / 180
     alpha = np.atleast_1d(np.exp(a * log_alpha_max))
     beta = np.atleast_1d(
         np.exp(np.log(0.5) + b * (log_beta_max - np.log(0.5)))
@@ -102,8 +90,11 @@ class LatitudeIntegral(WignerIntegral):
 
         """
         # Ingest
-        self._a = CheckBoundsOp(name="a", lower=0, upper=1, inclusive=False)(a)
-        self._b = CheckBoundsOp(name="b", lower=0, upper=1, inclusive=False)(b)
+        abmin = kwargs.get("abmin", defaults["abmin"])
+        self._a = CheckBoundsOp(name="a", lower=0, upper=1)(a)
+        self._a = ifelse(tt.lt(self._a, abmin), abmin, self._a)
+        self._b = CheckBoundsOp(name="b", lower=0, upper=1)(b)
+        self._b = ifelse(tt.lt(self._b, abmin), abmin, self._b)
         self._params = [self._a, self._b]
 
         # Transform to the shape parameters of the Beta distribution.
@@ -199,7 +190,8 @@ class LatitudeIntegral(WignerIntegral):
         alpha = np.exp(a * self._log_alpha_max)
         beta = np.exp(np.log(0.5) + b * (self._log_beta_max - np.log(0.5)))
         x = Beta.rvs(alpha, beta, size=nsamples)
-        return np.arccos(x) / self._angle_fac
+        sgn = 2 * (np.random.randint(0, 2, nsamples) - 0.5)
+        return sgn * np.arccos(x) / self._angle_fac
 
     def _log_jac(self):
         """

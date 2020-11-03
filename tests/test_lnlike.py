@@ -13,7 +13,7 @@ from tqdm import tqdm
 from itertools import product
 
 
-def get_functions(npts=100, marginalize_over_inclination=False):
+def get_functions(marginalize_over_inclination=False):
     def _lnlike(
         r, a, b, c, n, i, p, t, flux, data_cov,
     ):
@@ -25,7 +25,7 @@ def get_functions(npts=100, marginalize_over_inclination=False):
             n=n,
             marginalize_over_inclination=marginalize_over_inclination,
         )
-        return gp.log_likelihood(t, flux, data_cov, p=p, i=i, npts=npts)
+        return gp.log_likelihood(t, flux, data_cov, p=p, i=i)
 
     def _sample(
         r, a, b, c, n, i, p, t,
@@ -39,7 +39,7 @@ def get_functions(npts=100, marginalize_over_inclination=False):
             marginalize_over_inclination=marginalize_over_inclination,
         )
         gp.random.seed(42)
-        return tt.reshape(gp.sample(t, p=p, i=i, npts=npts), (-1,))
+        return tt.reshape(gp.sample(t, p=p, i=i), (-1,))
 
     # Likelihood func
     inputs = [tt.dscalar() for n in range(7)]

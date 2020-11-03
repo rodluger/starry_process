@@ -27,7 +27,9 @@ def test_profile(gradient, profile, ydeg=15, npts=1000):
     data_cov = tt.dscalar()
 
     # Compute the mean and covariance
-    gp = StarryProcess(r=r, a=a, b=b, c=c, n=n)
+    gp = StarryProcess(
+        r=r, a=a, b=b, c=c, n=n, marginalize_over_inclination=False
+    )
 
     # Compile the function
     if gradient:

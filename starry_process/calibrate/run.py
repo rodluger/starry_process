@@ -1,5 +1,6 @@
 from starry_process import calibrate
 from starry_process.latitude import beta2gauss
+from dynesty import utils as dyfunc
 import pickle
 import numpy as np
 import os

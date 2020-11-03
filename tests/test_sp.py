@@ -12,7 +12,6 @@ from theano.configparser import change_flags
 import theano.tensor as tt
 import pytest
 import starry
-import matplotlib.pyplot as plt
 
 
 def test_moments_by_sampling(rtol=1e-3, ftol=3e-2):
