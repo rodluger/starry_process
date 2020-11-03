@@ -42,7 +42,7 @@ def test_inclination(nsamples=10000, plot=False, rtol=1e-4, ftol=0.25):
     t = np.linspace(0, 1, 1000)
 
     # Compute the analytic moments
-    sp = StarryProcess(marginalize_over_inclination=True)
+    sp = StarryProcess(normalized=False, marginalize_over_inclination=True)
     mean = sp.mean(t).eval()
     cov = sp.cov(t).eval()
 

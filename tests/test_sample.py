@@ -6,7 +6,7 @@ import starry
 def test_sample_conditional():
 
     # Sample the flux from the prior
-    sp = StarryProcess(marginalize_over_inclination=False)
+    sp = StarryProcess(normalized=False, marginalize_over_inclination=False)
     t = np.linspace(0, 2, 300)
     flux = sp.sample(t, p=1.0, i=60.0).eval().reshape(-1)
 

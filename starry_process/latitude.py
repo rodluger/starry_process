@@ -8,6 +8,9 @@ from scipy.stats import beta as Beta
 import numpy as np
 
 
+__all__ = ["gauss2beta", "beta2gauss", "LatitudeIntegral"]
+
+
 def gauss2beta(
     mu,
     sigma,
@@ -17,6 +20,22 @@ def gauss2beta(
     """
     Return the shape parameters `a` and `b` of the latitude Beta distribution
     closest to the Gaussian with mean `mu` and standard deviation `sigma`.
+
+    Args:
+        mu (ndarray): The mean latitude in degrees.
+        sigma (ndarray): The latitude standard deviation in degrees.
+        log_alpha_max (float, optional): The maximum value of ``log(alpha)``. 
+            Default is %%defaults["log_alpha_max"].
+        log_beta_max (float, optional): The maximum value of ``log(beta)``. 
+            Default is %%defaults["log_alpha_max"].
+
+    The shape parameters `a` and `b` are related to the shape parameters of
+    the Beta distribution in cosine latitude via the transformations
+
+        ```
+        alpha = exp(a * log_alpha_max)
+        beta = exp(log(0.5) + b * (log_beta_max - log(0.5)))
+        ```
 
     .. note:: 
         
@@ -48,6 +67,22 @@ def beta2gauss(
     Return the mode `mu` and standard deviation `sigma` of Laplace's
     (Gaussian) approximation to the PDF of the latitude Beta distribution 
     with shape parameters `a` and `b`.
+
+    Args:
+        a (ndarray): Shape parameter.
+        b (ndarray): Shape parameter.
+        log_alpha_max (float, optional): The maximum value of ``log(alpha)``. 
+            Default is %%defaults["log_alpha_max"].
+        log_beta_max (float, optional): The maximum value of ``log(beta)``. 
+            Default is %%defaults["log_alpha_max"].
+
+    The shape parameters `a` and `b` are related to the shape parameters of
+    the Beta distribution in cosine latitude via the transformations
+
+        ```
+        alpha = exp(a * log_alpha_max)
+        beta = exp(log(0.5) + b * (log_beta_max - log(0.5)))
+        ```
 
     .. note:: 
         

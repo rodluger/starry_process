@@ -10,7 +10,9 @@ def test_design(ydeg=15, i=defaults["i"], p=defaults["p"]):
 
     # Get the SP design matrix
     t = np.linspace(-1, 1, 50)
-    F = FluxIntegral(DummyChild(ydeg), ydeg=ydeg)
+    F = FluxIntegral(
+        DummyChild(ydeg), ydeg=ydeg, marginalize_over_inclination=False
+    )
     A = F._design_matrix(t, i, p).eval()
 
     # Compare to the starry design matrix

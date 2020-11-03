@@ -7,9 +7,19 @@ from scipy.special import legendre as P
 
 class Spot:
     def __init__(
-        self, ydeg=15, npts=1000, eps=1e-9, smoothing=0.075, sfac=300, **kwargs
+        self,
+        ydeg=15,
+        spts=1000,
+        eps4=1e-9,
+        smoothing=0.075,
+        sfac=300,
+        **kwargs
     ):
-        theta = np.linspace(0, np.pi, npts)
+        """
+        TODO: Expose some of these kwargs to the user?
+
+        """
+        theta = np.linspace(0, np.pi, spts)
         cost = np.cos(theta)
         B = np.hstack(
             [
@@ -17,7 +27,7 @@ class Spot:
                 for l in range(ydeg + 1)
             ]
         )
-        A = np.linalg.solve(B.T @ B + eps * np.eye(ydeg + 1), B.T)
+        A = np.linalg.solve(B.T @ B + eps4 * np.eye(ydeg + 1), B.T)
         l = np.arange(ydeg + 1)
         i = l * (l + 1)
         S = np.exp(-0.5 * i * smoothing ** 2)

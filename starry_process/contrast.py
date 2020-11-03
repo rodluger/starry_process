@@ -28,7 +28,7 @@ class ContrastIntegral:
         eps1 = kwargs.pop("eps1", defaults["eps1"])
         eps2 = kwargs.pop("eps2", defaults["eps2"])
         lam = np.ones(self._nylm) * eps1
-        lam[self._ydeg ** 2 :] = eps2
+        lam[15 ** 2 :] = eps2
         lam = tt.diag(lam)
         self._cov += lam
 
