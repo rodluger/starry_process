@@ -17,4 +17,4 @@ RUN mv /starry_process/starry_process/app /. && rm -rf /starry_process
 
 EXPOSE 5006
 
-CMD bokeh serve --allow-websocket-origin="*" app
+CMD bokeh serve app

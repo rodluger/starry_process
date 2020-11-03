@@ -59,17 +59,17 @@ jobs:
       git push -q -f https://$GITHUB_USER:$GITHUB_API_KEY@github.com/rodluger/starry_process gh-pages >/dev/null 2>&1
     displayName: 'Build the docs'
 
-- script: |
-    . $CONDA/etc/profile.d/conda.sh
-    conda activate starry_process
-    py.test -v -s tests --junitxml=junit/test-results.xml
-  displayName: 'Run the tests'
+  - script: |
+      . $CONDA/etc/profile.d/conda.sh
+      conda activate starry_process
+      py.test -v -s tests --junitxml=junit/test-results.xml
+    displayName: 'Run the tests'
 
-- task: PublishTestResults@2
-  condition: succeededOrFailed()
-  inputs:
-    testResultsFiles: '**/test-*.xml'
-    testRunTitle: 'Publish test results'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results'
 
   - script: |
       . $CONDA/etc/profile.d/conda.sh
