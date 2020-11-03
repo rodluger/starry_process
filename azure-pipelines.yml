@@ -45,6 +45,7 @@ jobs:
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
       make -C docs html
+      cd docs/_build
       mkdir gh-pages
       cd gh-pages
       git clone -b gh-pages --single-branch https://github.com/rodluger/starry_process.git .
@@ -56,7 +57,7 @@ jobs:
       git add -f *
       git -c user.name='rodluger' -c user.email='rodluger@gmail.com' \
         commit -m "rebuild gh-pages"
-      git push -q -f https://$GITHUB_USER:$GITHUB_API_KEY@github.com/rodluger/starry_process gh-pages >/dev/null 2>&1
+      git push -f https://$GITHUB_USER:$GITHUB_API_KEY@github.com/rodluger/starry_process gh-pages
     displayName: 'Build the docs'
 
   - script: |
