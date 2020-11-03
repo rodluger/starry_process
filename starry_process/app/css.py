@@ -117,8 +117,7 @@ style = lambda: Div(
 <style>
     html, body {
         margin: 0 !important; 
-        height: 100%% !important; 
-        overflow: hidden !important;
+        height: 100%% !important;
     }
     .samples{
         margin-top: 10px !important;

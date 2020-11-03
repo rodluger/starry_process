@@ -348,7 +348,8 @@ class StarryProcess(object):
 
             .. math::
 
-                p(a, b \\big| data) \\sim p(data \\big| a, b) \\times  p(a, b)
+                p\\big(a, b \\big| data\\big) \\sim 
+                p\\big(data \\big| a, b\\big) \\times  p(a, b)
 
         However, this is a rather awkward parametrization, since it's hard to
         visualize how exactly ``a`` and ``b`` (or ``alpha`` and ``beta``) 
@@ -361,16 +362,16 @@ class StarryProcess(object):
         
             .. math::
 
-                p(a, b) = p(mu, sigma) \\times J
+                p(a, b) = p(\\mu, \\sigma) \\times J
 
         where
 
             .. math::
 
-                J = \\big| \\frac{\\partial{\\mu}}{\\partial{a}} \\times 
+                J = \\bigg| \\frac{\\partial{\\mu}}{\\partial{a}} \\times 
                            \\frac{\\partial{\\sigma}}{\\partial{b}} -
                            \\frac{\\partial{\\mu}}{\\partial{b}} \\times 
-                           \\frac{\\partial{\\sigma}}{\\partial{a}} \\big|
+                           \\frac{\\partial{\\sigma}}{\\partial{a}} \\bigg|
 
         is the absolute value of the determinant of the Jacobian matrix.
 
@@ -404,9 +405,9 @@ class StarryProcess(object):
                 is measured in ``counts``, users should compute the ``flux``
                 from
 
-                    ```
-                    flux = counts / np.median(counts) - 1
-                    ```
+                    .. code-block:: python
+                    
+                        flux = counts / np.median(counts) - 1
 
                 If the baseline is something else (such as unity), users
                 may alternatively set the ``baseline_mean`` parameter to
