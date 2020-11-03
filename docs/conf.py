@@ -9,7 +9,6 @@
 import os
 import starry_process
 from starry_process.defaults import defaults
-from ipywidgets.embed import DEFAULT_EMBED_REQUIREJS_URL
 import sys
 import packaging
 
