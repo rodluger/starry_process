@@ -98,7 +98,7 @@ class StarryProcess(object):
                 above the default value is not recommended, as it can lead
                 to numerical instabilities.
 
-        The following under-the-hood parameters are also accepted:
+        The following under-the-hood keyword arguments are also accepted:
 
         Parameters:
             log_alpha_max (float, optional): The maximum value of 
@@ -114,8 +114,10 @@ class StarryProcess(object):
             compile_args (list, optional): Additional arguments to be passed to
                 the C compiler when compiling the ops for this class. Each
                 entry in the list should be a tuple of ``(name, value)`` pairs.
-                For possible options, see the macros under "USER CONSTANTS"
-                in the header file ``starry_process/ops/include/constants.h``.
+                For possible options, see the macros under ``USER CONSTANTS``
+                in the header file
+                `starry_process/ops/include/constants.h 
+                <https://github.com/rodluger/starry_process/blob/master/starry_process/ops/include/constants.h>`_.
             eps1 (float, optional): A small number added to the diagonal of the
                 spherical harmonic covariance matrix for stability.
                 Default is %%defaults["eps1"]%%.
@@ -339,34 +341,43 @@ class StarryProcess(object):
         The log of the absolute value of the determinant of the Jacobian matrix.
 
         The spot latitude is Beta-distributed with shape parameters
-        `a` and `b`, equal to the log of the traditional `alpha` 
-        and `beta` parameters of the Beta distribution, normalized and scaled
-        to the range `[0, 1]`. From Bayes' theorem, the joint posterior in 
+        ``a`` and ``b``, equal to the log of the traditional ``alpha`` 
+        and ``beta`` parameters of the Beta distribution, normalized and scaled
+        to the range ``[0, 1]``. From Bayes' theorem, the joint posterior in 
         these two quantities is
 
-            p(a, b | data) ~ p(data | a, b) * p(a, b)
+            .. math::
+
+                p(a, b \\big| data) \\sim p(data \\big| a, b) \\times  p(a, b)
 
         However, this is a rather awkward parametrization, since it's hard to
-        visualize how exactly `a` and `b` (or `alpha` and `beta`) 
-        determine quantities we actually care about, such as the mean `mu` and 
-        standard deviation `sigma` of the distribution. This parameterization 
-        is especially clumsy when it comes to specifying the prior `p(a, b)`, 
+        visualize how exactly ``a`` and ``b`` (or ``alpha`` and ``beta``) 
+        determine quantities we actually care about, such as the mean ``mu`` and 
+        standard deviation ``sigma`` of the distribution. This parameterization 
+        is especially clumsy when it comes to specifying the prior ``p(a, b)``, 
         since any prior on these quantities will imply a very different prior 
-        on `mu` and `sigma`. In most cases, we probably want to place a prior 
-        on `mu` and `sigma` directly. We can do this by noting that
+        on ``mu`` and ``sigma``. In most cases, we probably want to place a prior 
+        on ``mu`` and ``sigma`` directly. We can do this by noting that
+        
+            .. math::
 
-            p(a, b) = p(mu, sigma) * J
+                p(a, b) = p(mu, sigma) \\times J
 
         where
 
-            J = | dmu / da * dsigma / db - dmu / db * dsigma / da |
+            .. math::
+
+                J = \\big| \\frac{\\partial{\\mu}}{\\partial{a}} \\times 
+                           \\frac{\\partial{\\sigma}}{\\partial{b}} -
+                           \\frac{\\partial{\\mu}}{\\partial{b}} \\times 
+                           \\frac{\\partial{\\sigma}}{\\partial{a}} \\big|
 
         is the absolute value of the determinant of the Jacobian matrix.
 
-        Thus, to enforce a uniform prior on `mu` and `sigma`, sample
-        in `a` and `b` with a uniform prior in the range `[0, 1]`
-        and multiply the PDF by `J`. Since we're in log space, you'll want 
-        to add `log J` (the value returned by this function) to the
+        Thus, to enforce a uniform prior on ``mu`` and ``sigma``, sample
+        in ``a`` and ``b`` with a uniform prior in the range ``[0, 1]``
+        and multiply the PDF by ``J``. Since we're in log space, you'll want 
+        to add ``log J`` (the value returned by this function) to the
         log likelihood.
 
         """

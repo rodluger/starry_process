@@ -30,7 +30,9 @@ jobs:
       theano-cache purge
       pip install -U pip
       pip install -U setuptools
-      conda install -y -q -c conda-forge tectonic
+      conda install -y -q -c conda-forge tectonic pandoc
+      pip install -U sphinx
+
     displayName: 'Install dependencies'
   
   - script: |
@@ -38,19 +40,37 @@ jobs:
       conda activate starry_process
       pip install -e ".[app,tests]"
     displayName: 'Install the package'
-  
+
   - script: |
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
-      py.test -v -s tests --junitxml=junit/test-results.xml
-    displayName: 'Run the tests'
-  
-  - task: PublishTestResults@2
-    condition: succeededOrFailed()
-    inputs:
-      testResultsFiles: '**/test-*.xml'
-      testRunTitle: 'Publish test results'
-  
+      make -C docs html
+      mkdir gh-pages
+      cd gh-pages
+      git clone -b gh-pages --single-branch https://github.com/rodluger/starry_process.git .
+      rm -rf .git
+      mv ../html/* .
+      git init
+      touch .nojekyll
+      git add .nojekyll
+      git add -f *
+      git -c user.name='rodluger' -c user.email='rodluger@gmail.com' \
+        commit -m "rebuild gh-pages"
+      git push -q -f https://$GITHUB_USER:$GITHUB_API_KEY@github.com/rodluger/starry_process gh-pages >/dev/null 2>&1
+    displayName: 'Build the docs'
+
+- script: |
+    . $CONDA/etc/profile.d/conda.sh
+    conda activate starry_process
+    py.test -v -s tests --junitxml=junit/test-results.xml
+  displayName: 'Run the tests'
+
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFiles: '**/test-*.xml'
+    testRunTitle: 'Publish test results'
+
   - script: |
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
@@ -67,7 +87,7 @@ jobs:
       git add -f tex/ms.pdf
       git add -f tex/figures/*.pdf
       git -c user.name='azure' -c user.email='azure' commit -m "building the paper"
-      git push -q -f https://$GITHUB_USER:$GITHUB_API_KEY@github.com/rodluger/starry_process $(Build.SourceBranchName)-pdf 
+      git push -q -f https://$GITHUB_USER:$GITHUB_API_KEY@github.com/rodluger/starry_process $(Build.SourceBranchName)-pdf >/dev/null 2>&1
     displayName: 'Upload the paper'
     env:
       GITHUB_API_KEY: $(GITHUB_API_KEY)
