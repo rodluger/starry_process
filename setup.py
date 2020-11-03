@@ -43,7 +43,9 @@ setup(
         ],
     },
     entry_points={
-        "console_scripts": ["starry-process=starry_process.app:main [app]"]
+        "console_scripts": [
+            "starry-process=starry_process.app:entry_point [app]"
+        ]
     },
     setup_requires=["setuptools_scm"],
     include_package_data=True,

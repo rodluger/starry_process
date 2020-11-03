@@ -29,7 +29,6 @@ from bokeh.models.tickers import FixedTicker
 from bokeh.models.formatters import FuncTickFormatter
 from bokeh.models.mappers import LinearColorMapper
 from bokeh.palettes import OrRd6, Category10
-from bokeh.server.server import Server
 from scipy.special import legendre as P
 from scipy.stats import norm as Normal
 
@@ -623,16 +622,18 @@ class Application(object):
         npix=100,
         npts=300,
         nmaps=5,
-        throttle_time=0.20,
+        throttle_time=0.40,
         load_timeout=0.5,
     ):
-        # Ingest
         self.ydeg = ydeg
         self.npix = npix
         self.npts = npts
         self.nmaps = nmaps
         self.throttle_time = throttle_time
         self.load_timeout = load_timeout
+        self._compiled = False
+
+    def compile(self):
 
         # Compile the GP
         print("Compiling. This may take up to one minute...")
@@ -648,11 +649,12 @@ class Application(object):
             [self.gp.sample_ylm(self.nmaps)],
             no_default_updates=True,
         )
+        self._compiled = True
         print("Done!")
 
     def run(self, doc=None):
 
-        # Get current document
+        # Get current document if needed
         if doc is None:
             doc = curdoc()
 
@@ -666,6 +668,10 @@ class Application(object):
         doc.add_timeout_callback(self._run, int(1000 * self.load_timeout))
 
     def _run(self):
+
+        # Compile if needed
+        if not self._compiled:
+            self.compile()
 
         # The GP samples
         self.Samples = Samples(
@@ -750,10 +756,13 @@ class Application(object):
         )
 
 
-def main():
-    app = Application()
-    server = Server({"/": lambda doc: app.run(doc)})
-    server.start()
-    print("Opening Bokeh application on http://localhost:5006/")
-    server.io_loop.add_callback(server.show, "/")
-    server.io_loop.start()
+# Instantiate the base app
+app = Application(
+    ydeg=os.getenv("YDEG", 15),
+    npix=os.getenv("NPIX", 100),
+    npts=os.getenv("NPTS", 300),
+    nmaps=os.getenv("NMAPS", 5),
+    throttle_time=os.getenv("THROTTLE_TIMEOUT", 0.40),
+    load_timeout=os.getenv("LOAD_TIMEOUT", 0.5),
+)
+
