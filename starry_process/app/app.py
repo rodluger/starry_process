@@ -105,6 +105,7 @@ class Samples(object):
         self, ydeg, npix, npts, nmaps, throttle_time, gp, sample_function
     ):
         # Settings
+        self.ydeg = ydeg
         self.npix = npix
         self.npts = npts
         self.throttle_time = throttle_time
@@ -285,6 +286,67 @@ class Samples(object):
             self.flux_plot[i].yaxis.axis_label_text_font_size = "8pt"
             self.flux_plot[i].yaxis.major_label_text_font_size = "8pt"
 
+        # Javascript callback to update light curves & images
+        self.A_F_source = ColumnDataSource(data=dict(A_F=self.A_F))
+        self.A_I_source = ColumnDataSource(data=dict(A_I=self.A_I))
+        self.ylm_source = ColumnDataSource(data=dict(ylm=self.ylm))
+        callback = CustomJS(
+            args=dict(
+                A_F_source=self.A_F_source,
+                A_I_source=self.A_I_source,
+                ylm_source=self.ylm_source,
+                flux_source=self.flux_source,
+                moll_source=self.moll_source,
+            ),
+            code="""
+            var A_F = A_F_source.data['A_F'];
+            var A_I = A_I_source.data['A_I'];
+            var ylm = ylm_source.data['ylm'];
+            var i, j, k, l, m, n;
+            for (n = 0; n < {nmax}; n++) {{
+                
+                // Update the light curves
+                var flux = flux_source[n].data['ys'];
+                for (l = 0; l < {lmax}; l++) {{
+                    for (m = 0; m < {mmax}; m++) {{
+                        flux[l][m] = 0.0;
+                        for (k = 0; k < {kmax}; k++) {{
+                            flux[l][m] += A_F[{kmax} * ({mmax} * l + m) + k] * ylm[{kmax} * n + k];
+                        }}
+                    }}
+                    // Normalize
+                    var mean = flux[l].reduce((previous, current) => current += previous) / {mmax};
+                    for (m = 0; m < {mmax}; m++) {{
+                        flux[l][m] = 1e3 * ((1 + flux[l][m]) / (1 + mean) - 1)
+                    }}
+                }}
+                flux_source[n].change.emit();
+
+                // Update the images
+                var image = moll_source[n].data['image'][0];
+                for (i = 0; i < {imax}; i++) {{
+                    for (j = 0; j < {jmax}; j++) {{
+                        image[{jmax} * i + j] = 1.0;
+                        for (k = 0; k < {kmax}; k++) {{
+                            image[{jmax} * i + j] += A_I[{kmax} * ({jmax} * i + j) + k] * ylm[{kmax} * n + k];
+                        }}
+                    }}
+                }}
+                moll_source[n].change.emit();
+
+            }}
+            """.format(
+                imax=self.npix,
+                jmax=2 * self.npix,
+                kmax=(self.ydeg + 1) ** 2,
+                nmax=self.nmaps,
+                lmax=self.A_F.shape[0],
+                mmax=self.npts,
+            ),
+        )
+        self.js_dummy = self.flux_plot[0].circle(x=0, y=0, size=1, alpha=0)
+        self.js_dummy.glyph.js_on_change("size", callback)
+
         # Full layout
         self.plots = row(
             *[
@@ -343,20 +405,12 @@ class Samples(object):
                 self.Contrast.sliders[1].value,
             )[0]
 
-            # Compute the images & plot the light curves
-            for i in range(len(self.moll_source)):
-                self.moll_source[i].data["image"] = [
-                    1.0
-                    + (self.A_I @ self.ylm[i]).reshape(
-                        self.npix, 2 * self.npix
-                    )
-                ]
+            # HACK: Trigger the JS callback by modifying
+            # a property of the `js_dummy` glyph
+            self.ylm_source.data["ylm"] = self.ylm
+            self.js_dummy.glyph.size = 3 - self.js_dummy.glyph.size
 
-                self.flux_source[i].data["ys"] = [
-                    fluxnorm(self.A_F[j] @ self.ylm[i])
-                    for j in range(len(self.A_F))
-                ]
-
+            # If everything worked, ensure the sliders are active
             for slider in (
                 self.Size.sliders
                 + self.Latitude.sliders
@@ -758,11 +812,11 @@ class Application(object):
 
 # Instantiate the base app
 app = Application(
-    ydeg=os.getenv("YDEG", 15),
-    npix=os.getenv("NPIX", 100),
-    npts=os.getenv("NPTS", 300),
-    nmaps=os.getenv("NMAPS", 5),
-    throttle_time=os.getenv("THROTTLE_TIMEOUT", 0.40),
-    load_timeout=os.getenv("LOAD_TIMEOUT", 1.0),
+    ydeg=int(os.getenv("YDEG", 15)),
+    npix=int(os.getenv("NPIX", 100)),
+    npts=int(os.getenv("NPTS", 300)),
+    nmaps=int(os.getenv("NMAPS", 5)),
+    throttle_time=float(os.getenv("THROTTLE_TIME", 0.15)),
+    load_timeout=float(os.getenv("LOAD_TIMEOUT", 1.0)),
 )
 
