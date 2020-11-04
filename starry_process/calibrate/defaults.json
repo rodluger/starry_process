@@ -1,7 +1,7 @@
 {
     "seed": 0,
     "generate": {
-        "normalized": false,
+        "normalized": true,
         "nlon": 300,
         "ydeg": 30,
         "smoothing": 0.1,

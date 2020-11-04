@@ -1,3 +1,4 @@
+from .defaults import update_with_defaults
 from starry_process import calibrate
 from starry_process.latitude import beta2gauss
 from dynesty import utils as dyfunc
@@ -12,7 +13,10 @@ def run(path=".", clobber=False, plot=True, **kwargs):
     # Save the kwargs
     if not os.path.exists(path):
         os.makedirs(path)
-    json.dump(kwargs, open(os.path.join(path, "kwargs.json"), "w"))
+    json.dump(
+        update_with_defaults(**kwargs),
+        open(os.path.join(path, "kwargs.json"), "w"),
+    )
 
     # Generate
     if clobber or not os.path.exists(os.path.join(path, "data.npz")):
