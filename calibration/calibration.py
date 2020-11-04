@@ -218,7 +218,7 @@ def plot_batch(name, bins=10, alpha=0.25, nsig=4):
     )
 
     # Now let's plot all of the posteriors on a corner plot
-    files = glob.glob("*/results.pkl")
+    files = glob.glob(os.path.join(path, "*", "results.pkl"))
     samples = [None for k in range(len(files))]
     ranges = [None for k in range(len(files))]
     for k in tqdm(range(len(files))):
