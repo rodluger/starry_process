@@ -75,7 +75,7 @@ def run_single(name, seed=0, queue="cca", walltime=8, **kwargs):
     subprocess.call(sbatch_args)
 
 
-def run_batch(name, nodes=5, tasks=10, queue="cca", walltime=8, **kwargs):
+def run_batch(name, nodes=20, tasks=100, queue="cca", walltime=30, **kwargs):
     """
     
 
