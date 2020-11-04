@@ -1,5 +1,6 @@
 from starry_process.calibrate import run
 from starry_process.calibrate.defaults import update_with_defaults
+from starry_process.latitude import beta2gauss
 import os
 import subprocess
 import glob
@@ -7,6 +8,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from corner import corner
 import json
+from tqdm.auto import tqdm
+from matplotlib import colors
+import pickle
+from dynesty import utils as dyfunc
 
 
 # Path to this directory
@@ -128,7 +133,7 @@ def run_batch(name, nodes=5, tasks=10, queue="cca", walltime=8, **kwargs):
     subprocess.call(sbatch_args)
 
 
-def plot_batch(name, bins=10):
+def plot_batch(name, bins=10, alpha=0.25, nsig=4):
     """
 
     """
@@ -199,14 +204,108 @@ def plot_batch(name, bins=10):
         ax[0, n].set_yticks([])
         ax[1, n].set_yticks([])
 
+    # Tweak appearance
     ax[0, -1].axis("off")
     ax[0, -1].plot(0, 0, "C0", ls="--", label="mean")
     ax[0, -1].plot(0, 0, "C1", ls="-", label="truth")
     ax[0, -1].legend(loc="center left")
-
     ax[1, -1].axis("off")
     ax[1, -1].plot(0, 0, "C0", ls="-", lw=2, label="measured")
     ax[1, -1].plot(0, 0, "C1", ls="-", lw=2, label=r"$\mathcal{N}(0, 1)$")
     ax[1, -1].legend(loc="center left")
+    fig.savefig(
+        os.path.join(path, "calibration_bias.pdf"), bbox_inches="tight"
+    )
 
-    fig.savefig(os.path.join(path, "calibration.pdf"), bbox_inches="tight")
+    # Now let's plot all of the posteriors on a corner plot
+    files = glob.glob("*/results.pkl")
+    samples = [None for k in range(len(files))]
+    ranges = [None for k in range(len(files))]
+    for k in tqdm(range(len(files))):
+
+        # Get the samples
+        with open(files[k], "rb") as f:
+            results = pickle.load(f)
+        samples[k] = np.array(results.samples)
+        samples[k][:, 1], samples[k][:, 2] = beta2gauss(
+            samples[k][:, 1], samples[k][:, 2]
+        )
+        try:
+            weights = np.exp(results["logwt"] - results["logz"][-1])
+        except:
+            weights = results["weights"]
+        samples[k] = dyfunc.resample_equal(samples[k], weights)
+
+        # Get the 4-sigma ranges
+        mu = np.mean(samples[k], axis=0)
+        std = np.std(samples[k], axis=0)
+        ranges[k] = np.array([mu - nsig * std, mu + nsig * std]).T
+
+    # Set plot limits to the maximum of the ranges
+    ranges = np.array(ranges)
+    ranges = np.array(
+        [np.min(ranges[:, :, 0], axis=0), np.max(ranges[:, :, 1], axis=0)]
+    ).T
+
+    # Go!
+    color = lambda i, alpha: "{}{}".format(
+        colors.to_hex("C{}".format(i)),
+        ("0" + hex(int(alpha * 256)).split("0x")[-1])[-2:],
+    )
+    fig = None
+    for k in tqdm(range(len(mean))):
+
+        # Plot the 2d hist
+        fig = corner(
+            samples[k],
+            fig=fig,
+            labels=labels,
+            plot_datapoints=False,
+            plot_density=False,
+            fill_contours=True,
+            no_fill_contours=True,
+            color=color(k, alpha),
+            contourf_kwargs=dict(),
+            contour_kwargs=dict(alpha=0),
+            bins=20,
+            hist_bin_factor=5,
+            smooth=2.0,
+            hist_kwargs=dict(alpha=0),
+            levels=(1.0 - np.exp(-0.5 * np.array([1.0]) ** 2)),
+            range=ranges,
+        )
+
+        # Plot the 1d hist
+        if k == len(mean) - 1:
+            truths_ = truths
+        else:
+            truths_ = None
+        fig = corner(
+            samples[k],
+            fig=fig,
+            labels=labels,
+            plot_datapoints=False,
+            plot_density=False,
+            plot_contours=False,
+            fill_contours=False,
+            no_fill_contours=True,
+            color=color(k, alpha),
+            bins=500,
+            smooth1d=10.0,
+            hist_kwargs=dict(alpha=0.5 * alpha),
+            range=ranges,
+            truths=truths_,
+            truth_color="k",
+        )
+
+    # Fix the axis limits
+    for k in range(5):
+        ax = fig.axes[6 * k]
+        ymax = np.max([line._y.max() for line in ax.lines])
+        ax.set_ylim(0, 1.1 * ymax)
+
+    # We're done
+    fig.savefig(
+        os.path.join(path, "calibration_corner.pdf"), bbox_inches="tight"
+    )
+
