@@ -1,5 +1,6 @@
 from starry_process.calibrate import run
 from starry_process.calibrate.defaults import update_with_defaults
+from starry_process.calibrate.log_prob import get_log_prob
 from starry_process.latitude import beta2gauss
 import os
 import subprocess
@@ -309,3 +310,128 @@ def plot_batch(name, bins=10, alpha=0.25, nsig=4):
         os.path.join(path, "calibration_corner.pdf"), bbox_inches="tight"
     )
 
+
+def process_batch_inclinations(name, nodes=20, queue="cca", walltime=5):
+    """
+    
+    """
+    # Output paths
+    path = os.path.abspath(name)
+    results_files = glob.glob(os.path.join(path, "*", "results.pkl"))
+    tasks = len(results_files)
+
+    # Slurm script
+    slurmfile = os.path.join(HERE, "run.sh")
+    tasks_per_node = int(np.ceil(tasks / nodes))
+    with open(slurmfile, "w") as f:
+        print(
+            """#!/bin/sh\n"""
+            """cd {}\n"""
+            """module load disBatch\n"""
+            """disBatch.py -t {} taskfile""".format(HERE, tasks_per_node),
+            file=f,
+        )
+
+    # Script to run each task in disBatch
+    taskfile = os.path.join(HERE, "taskfile")
+    with open(taskfile, "w") as f:
+        print(
+            (
+                """#DISBATCH REPEAT {} start 0 """
+                """cd {}; """
+                """python -c "from calibration import process_inclinations; """
+                """process_inclinations(path='{}/$DISBATCH_REPEAT_INDEX')" """
+                """&> {}/$DISBATCH_REPEAT_INDEX/batch_inc.log"""
+            ).format(tasks, HERE, path, path),
+            file=f,
+        )
+
+    # Slurm args
+    sbatch_args = [
+        "sbatch",
+        "--partition={}".format(queue),
+        "-N {}".format(nodes),
+        "--output={}".format(os.path.join(path, "batch_inc.log")),
+        "--job-name={}".format(name),
+        "--time={}:00:00".format(walltime),
+        "--exclusive",
+    ]
+    if EMAIL is not None:
+        sbatch_args.extend(
+            ["--mail-user={}".format(EMAIL), "--mail-type=END,FAIL"]
+        )
+
+    # Submit!
+    sbatch_args.append(slurmfile)
+    print("Submitting the job...")
+    print(" ".join(sbatch_args))
+    subprocess.call(sbatch_args)
+
+
+def process_inclinations(path):
+    """
+
+    """
+
+    # Get kwargs
+    with open(os.path.join(path, "kwargs.json"), "r") as f:
+        kwargs = json.load(f)
+    kwargs = update_with_defaults(**kwargs)
+    sample_kwargs = kwargs["sample"]
+    gen_kwargs = kwargs["generate"]
+    plot_kwargs = kwargs["plot"]
+    ninc_pts = plot_kwargs["ninc_pts"]
+    ninc_samples = plot_kwargs["ninc_samples"]
+    ydeg = sample_kwargs["ydeg"]
+    baseline_var = sample_kwargs["baseline_var"]
+    apply_jac = sample_kwargs["apply_jac"]
+    normalized = gen_kwargs["normalized"]
+
+    # Get the data
+    with open(os.path.join(path, "results.pkl"), "rb") as f:
+        results = pickle.load(f)
+    data = np.load(os.path.join(path, "data.npz"))
+    t = data["t"]
+    ferr = data["ferr"]
+    period = data["period"]
+    flux = data["flux"]
+    nlc = len(flux)
+
+    # Array of inclinations & log prob for each light curve
+    inc = np.linspace(0, 90, ninc_pts)
+    lp = np.empty((nlc, ninc_samples, ninc_pts))
+
+    # Compile the likelihood function for a given inclination
+    log_prob = get_log_prob(
+        t,
+        flux=None,
+        ferr=ferr,
+        p=period,
+        ydeg=ydeg,
+        baseline_var=baseline_var,
+        apply_jac=apply_jac,
+        normalized=normalized,
+        marginalize_over_inclination=False,
+    )
+
+    # Resample posterior samples to equal weight
+    samples = np.array(results.samples)
+    try:
+        weights = np.exp(results["logwt"] - results["logz"][-1])
+    except:
+        weights = results["weights"]
+    samples = dyfunc.resample_equal(samples, weights)
+
+    # Compute the posteriors
+    for n in tqdm(range(nlc)):
+        for j in range(ninc_samples):
+            idx = np.random.randint(len(samples))
+            lp[n, j] = np.array(
+                [
+                    log_prob(flux[n].reshape(1, -1), *samples[idx], i)
+                    for i in inc
+                ]
+            )
+
+    # Save
+    np.savez(os.path.join(path, "inclinations.npz"), inc=inc, lp=lp)

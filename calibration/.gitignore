@@ -2,3 +2,5 @@
 *.npz
 *.pdf
 *.log
+run.sh
+taskfile
