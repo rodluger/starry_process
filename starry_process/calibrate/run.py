@@ -8,7 +8,7 @@ import os
 import json
 
 
-def run(path=".", clobber=False, plot=True, **kwargs):
+def run(path=".", clobber=False, plot=True, plot_inclination=False, **kwargs):
 
     # Save the kwargs
     if not os.path.exists(path):
@@ -63,5 +63,8 @@ def run(path=".", clobber=False, plot=True, **kwargs):
             os.path.join(path, "corner_transformed.pdf"), bbox_inches="tight"
         )
 
-        fig = calibrate.plot_inclination_pdf(data, results, **kwargs)
-        fig.savefig(os.path.join(path, "inclination.pdf"), bbox_inches="tight")
+        if plot_inclination:
+            fig = calibrate.plot_inclination_pdf(data, results, **kwargs)
+            fig.savefig(
+                os.path.join(path, "inclination.pdf"), bbox_inches="tight"
+            )

@@ -4,7 +4,7 @@ build:
 	docker build --tag rodluger/starry_process .
 
 run:
-	YDEG=12 NOSMOOTH=1 NOLOADER=1 docker run --rm -p 5006:5006 -it rodluger/starry_process
+	docker run --rm -p 5006:5006 -it --env YDEG=12 --env NOSMOOTH=1 --env NOLOADER=1 rodluger/starry_process
 
 push:
 	docker push rodluger/starry_process
