@@ -22,6 +22,7 @@ starry_process/starry_process_version.py
 metadata.json
 tex/figures/static/scratch/
 scratch/
+*latexindent*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
