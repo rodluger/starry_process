@@ -21,6 +21,7 @@ from bokeh.models import (
     RangeSlider,
     CustomJS,
     Button,
+    Toggle,
     Span,
     HoverTool,
 )
@@ -28,7 +29,7 @@ from bokeh.plotting import figure, curdoc
 from bokeh.models.tickers import FixedTicker
 from bokeh.models.formatters import FuncTickFormatter
 from bokeh.models.mappers import LinearColorMapper
-from bokeh.palettes import OrRd6, Category10
+from bokeh.palettes import Plasma6, Category10
 from scipy.special import legendre as P
 from scipy.stats import norm as Normal
 
@@ -102,13 +103,22 @@ def spot_transform(ydeg, npts=1000, eps=1e-9, smoothing=0.075):
 
 class Samples(object):
     def __init__(
-        self, ydeg, npix, npts, nmaps, throttle_time, gp, sample_function
+        self,
+        ydeg,
+        npix,
+        npts,
+        nmaps,
+        throttle_time,
+        nosmooth,
+        gp,
+        sample_function,
     ):
         # Settings
         self.ydeg = ydeg
         self.npix = npix
         self.npts = npts
         self.throttle_time = throttle_time
+        self.nosmooth = nosmooth
         self.nmaps = nmaps
         self.gp = gp
 
@@ -223,25 +233,40 @@ class Samples(object):
             button_type="default",
             css_classes=["seed-button"],
             sizing_mode="fixed",
-            width=85,
+            height=30,
+            width=75,
         )
         self.seed_button.on_click(self.seed_callback)
 
-        self.continuous_button = Button(
-            label="continuous",
+        self.smooth_button = Toggle(
+            label="smooth",
             button_type="default",
-            css_classes=["continuous-button"],
+            css_classes=["smooth-button"],
             sizing_mode="fixed",
-            width=85,
+            height=30,
+            width=75,
+            active=False,
         )
-        self.continuous_button.on_click(self.continuous_callback)
+        self.smooth_button.disabled = bool(self.nosmooth)
+        self.smooth_button.on_click(self.smooth_callback)
+
+        self.auto_button = Toggle(
+            label="auto",
+            button_type="default",
+            css_classes=["auto-button"],
+            sizing_mode="fixed",
+            height=30,
+            width=75,
+            active=False,
+        )
 
         self.reset_button = Button(
             label="reset",
             button_type="default",
             css_classes=["reset-button"],
             sizing_mode="fixed",
-            width=85,
+            height=30,
+            width=75,
         )
         self.reset_button.on_click(self.reset_callback)
 
@@ -252,7 +277,7 @@ class Samples(object):
                 data=dict(
                     xs=[np.linspace(0, 2, npts) for j in range(6)],
                     ys=[fluxnorm(self.A_F[j] @ self.ylm[i]) for j in range(6)],
-                    color=[OrRd6[5 - j] for j in range(6)],
+                    color=[Plasma6[5 - j] for j in range(6)],
                     inc=[15, 30, 45, 60, 75, 90],
                 )
             )
@@ -264,6 +289,7 @@ class Samples(object):
                 x_range=(0, 2),
                 y_range=None,
                 min_border_left=50,
+                plot_height=400,
             )
             if i == 0:
                 self.flux_plot[i].yaxis.axis_label = "flux [ppt]"
@@ -363,8 +389,10 @@ class Samples(object):
         self.color_mapper.low, self.color_mapper.high = self.slider.value
 
     def seed_callback(self, event):
-        self.gp.random.seed(np.random.randint(0, 999))
+        self.gp.random.seed(np.random.randint(0, 99999))
+        tmp = self.auto_button.active
         self.callback(None, None, None)
+        self.auto_button.active = tmp
 
     def reset_callback(self, event):
         self.Size.sliders[0].value = params["size"]["r"]["value"]
@@ -377,24 +405,26 @@ class Samples(object):
         self.gp.random.seed(0)
         self.slider.value = (0.5, 1.2)
         self.slider_callback(None, None, None)
-        if self.continuous_button.label == "discrete":
-            self.continuous_callback(None)
+        self.smooth_button.active = False
+        self.smooth_callback(None)
+        self.auto_button.active = False
         self.callback(None, None, None)
 
-    def continuous_callback(self, event):
-        if self.continuous_button.label == "continuous":
-            self.continuous_button.label = "discrete"
+    def smooth_callback(self, event):
+        if self.smooth_button.active:
             self.Latitude.throttle_time = self.throttle_time
             self.Size.throttle_time = self.throttle_time
             self.Contrast.throttle_time = self.throttle_time
         else:
-            self.continuous_button.label = "continuous"
             self.Latitude.throttle_time = 0
             self.Size.throttle_time = 0
             self.Contrast.throttle_time = 0
 
     def callback(self, attr, old, new):
         try:
+
+            if self.auto_button.active:
+                self.gp.random.seed(np.random.randint(0, 99999))
 
             # Draw the samples
             self.ylm = self.sample_ylm(
@@ -678,6 +708,8 @@ class Application(object):
         nmaps=5,
         throttle_time=0.40,
         load_timeout=1.0,
+        nosmooth=False,
+        noloader=False,
     ):
         self.ydeg = ydeg
         self.npix = npix
@@ -685,6 +717,8 @@ class Application(object):
         self.nmaps = nmaps
         self.throttle_time = throttle_time
         self.load_timeout = load_timeout
+        self.nosmooth = nosmooth
+        self.noloader = noloader
         self._compiled = False
 
     def compile(self):
@@ -711,15 +745,18 @@ class Application(object):
         # Get current document if needed
         if doc is None:
             doc = curdoc()
-
-        # Display the loader
-        self.layout = column(loader(), style(), sizing_mode="scale_both")
-        doc.add_root(self.layout)
         doc.title = "starry process"
         doc.template = TEMPLATE
 
-        # Set up the starry process
-        doc.add_timeout_callback(self._run, int(1000 * self.load_timeout))
+        # Show the loading spinner?
+        if self.noloader:
+            self.layout = column(Div(), style(), sizing_mode="scale_both")
+            doc.add_root(self.layout)
+            self._run()
+        else:
+            self.layout = column(loader(), style(), sizing_mode="scale_both")
+            doc.add_root(self.layout)
+            doc.add_timeout_callback(self._run, int(1000 * self.load_timeout))
 
     def _run(self):
 
@@ -734,6 +771,7 @@ class Application(object):
             self.npts,
             self.nmaps,
             self.throttle_time,
+            self.nosmooth,
             self.gp,
             self.sample_function,
         )
@@ -784,7 +822,8 @@ class Application(object):
             self.Contrast.layout,
             self.Samples.slider,
             row(
-                self.Samples.continuous_button,
+                self.Samples.smooth_button,
+                self.Samples.auto_button,
                 self.Samples.seed_button,
                 self.Samples.reset_button,
                 sizing_mode="scale_both",
@@ -816,6 +855,8 @@ app = Application(
     npix=int(os.getenv("NPIX", 100)),
     npts=int(os.getenv("NPTS", 300)),
     nmaps=int(os.getenv("NMAPS", 5)),
+    nosmooth=int(os.getenv("NOSMOOTH", 0)),
+    noloader=int(os.getenv("NOLOADER", 0)),
     throttle_time=float(os.getenv("THROTTLE_TIME", 0.15)),
     load_timeout=float(os.getenv("LOAD_TIMEOUT", 1.0)),
 )

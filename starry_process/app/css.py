@@ -1,5 +1,5 @@
 from bokeh.models import Div
-from bokeh.palettes import Plasma256, OrRd6
+from bokeh.palettes import Plasma256, Plasma6
 import numpy as np
 import os
 
@@ -29,7 +29,7 @@ TEMPLATE = """
   </head>
   {% endblock %}
   {% block body %}
-  <body style="min-width: 1200px; !important">
+  <body style="min-width: 1400px; !important">
     <div style="width:90%; height:90%; margin-left: auto; margin-right: auto;">
     {% block inner_body %}
       {% block contents %}
@@ -107,7 +107,7 @@ and
 <span style="font-weight:600; color:{};">90</span>
 degrees.
 """.format(
-    *[OrRd6[5 - j] for j in range(6)]
+    *[Plasma6[5 - j] for j in range(6)]
 )
 
 
@@ -156,25 +156,33 @@ style = lambda: Div(
     .hidden-slider {
         visibility: hidden;
     }
+
+    .smooth-button {
+        position: relative !important;
+        margin-top: 30px !important;
+        display: inline-block !important;
+        left: 20px !important;
+    }
+
+    .auto-button {
+        position: relative !important;
+        margin-top: 30px !important;
+        display: inline-block !important;
+        left: 32px !important;
+    }
+
     .seed-button {
         position: relative !important;
         margin-top: 30px !important;
         display: inline-block !important;
-        left: 30px !important;
-    }
-
-    .continuous-button {
-        position: relative !important;
-        margin-top: 30px !important;
-        display: inline-block !important;
-        left: 0px !important;
+        left: 44px !important;
     }
 
     .reset-button {
         position: relative !important;
         margin-top: 30px !important;
         display: inline-block !important;
-        left: 60px !important;
+        left: 56px !important;
     }
 
     .bk.button-row {

@@ -311,7 +311,9 @@ def plot_batch(name, bins=10, alpha=0.25, nsig=4):
     )
 
 
-def process_batch_inclinations(name, nodes=20, queue="cca", walltime=5):
+def process_batch_inclinations(
+    name, nodes=20, queue="cca", walltime=24, clobber=False
+):
     """
     
     """
@@ -340,9 +342,9 @@ def process_batch_inclinations(name, nodes=20, queue="cca", walltime=5):
                 """#DISBATCH REPEAT {} start 0 """
                 """cd {}; """
                 """python -c "from calibration import process_inclinations; """
-                """process_inclinations(path='{}/$DISBATCH_REPEAT_INDEX')" """
+                """process_inclinations(path='{}/$DISBATCH_REPEAT_INDEX', clobber={})" """
                 """&> {}/$DISBATCH_REPEAT_INDEX/batch_inc.log"""
-            ).format(tasks, HERE, path, path),
+            ).format(tasks, HERE, path, clobber, path),
             file=f,
         )
 
@@ -368,10 +370,13 @@ def process_batch_inclinations(name, nodes=20, queue="cca", walltime=5):
     subprocess.call(sbatch_args)
 
 
-def process_inclinations(path):
+def process_inclinations(path, clobber=False):
     """
 
     """
+    # Check if we already did this
+    if os.path.exists(os.path.join(path, "inclinations.npz")) and not clobber:
+        return
 
     # Get kwargs
     with open(os.path.join(path, "kwargs.json"), "r") as f:
