@@ -28,7 +28,8 @@ CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache")
 class FluxIntegral:
     def __init__(
         self,
-        child=None,
+        mean_ylm,
+        cov_ylm,
         marginalize_over_inclination=defaults["marginalize_over_inclination"],
         covpts=defaults["covpts"],
         ydeg=defaults["ydeg"],
@@ -36,12 +37,10 @@ class FluxIntegral:
         **kwargs
     ):
         # General
-        assert child is not None
-        self._child = child
         self._marginalize_over_inclination = marginalize_over_inclination
         self._covpts = covpts
-        self._mean_ylm = self._child.mean()
-        self._cov_ylm = self._child.cov()
+        self._mean_ylm = mean_ylm
+        self._cov_ylm = cov_ylm
         self._ydeg = ydeg
         self._nylm = (self._ydeg + 1) ** 2
         self._angle_fac = np.pi / 180

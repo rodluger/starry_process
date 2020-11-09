@@ -18,24 +18,25 @@ def gauss2beta(
     log_beta_max=defaults["log_beta_max"],
 ):
     """
-    Return the shape parameters `a` and `b` of the latitude Beta distribution
-    closest to the Gaussian with mean `mu` and standard deviation `sigma`.
+    Return the shape parameters ``a`` and ``b`` of the latitude Beta distribution
+    closest to the Gaussian with mean ``mu`` and standard deviation ``sigma``.
 
     Args:
-        mu (ndarray): The mean latitude in degrees.
-        sigma (ndarray): The latitude standard deviation in degrees.
+        mu (float or ndarray): The mean latitude in degrees.
+        sigma (float or ndarray): The latitude standard deviation in degrees.
         log_alpha_max (float, optional): The maximum value of ``log(alpha)``. 
-            Default is %%defaults["log_alpha_max"].
+            Default is %%defaults["log_alpha_max"]%%.
         log_beta_max (float, optional): The maximum value of ``log(beta)``. 
-            Default is %%defaults["log_alpha_max"].
+            Default is %%defaults["log_alpha_max"]%%.
 
-    The shape parameters `a` and `b` are related to the shape parameters of
+    The shape parameters ``a`` and ``b`` are related to the shape parameters of
     the Beta distribution in cosine latitude via the transformations
 
-        ```
-        alpha = exp(a * log_alpha_max)
-        beta = exp(log(0.5) + b * (log_beta_max - log(0.5)))
-        ```
+        .. code-block::python 
+        
+            alpha = exp(a * log_alpha_max)
+            beta = exp(log(0.5) + b * (log_beta_max - log(0.5)))
+
 
     .. note:: 
         
@@ -43,6 +44,12 @@ def gauss2beta(
         (not tensors).
 
     """
+    is_vector = hasattr(mu, "__len__")
+    if is_vector:
+        assert hasattr(sigma, "__len__")
+        assert len(mu) == len(sigma)
+    else:
+        assert not hasattr(sigma, "__len__")
     angle_fac = np.pi / 180
     m = np.atleast_1d(mu) * angle_fac
     v = (np.atleast_1d(sigma) * angle_fac) ** 2
@@ -54,7 +61,10 @@ def gauss2beta(
     beta = (c1 + 2 * v * (3 + c2) - c3) * term
     a = np.log(alpha) / log_alpha_max
     b = (np.log(beta) - np.log(0.5)) / (log_beta_max - np.log(0.5))
-    return a, b
+    if is_vector:
+        return a, b
+    else:
+        return a[0], b[0]
 
 
 def beta2gauss(
@@ -64,25 +74,25 @@ def beta2gauss(
     log_beta_max=defaults["log_beta_max"],
 ):
     """
-    Return the mode `mu` and standard deviation `sigma` of Laplace's
+    Return the mode ``mu`` and standard deviation ``sigma`` of Laplace's
     (Gaussian) approximation to the PDF of the latitude Beta distribution 
-    with shape parameters `a` and `b`.
+    with shape parameters ``a`` and ``b``.
 
     Args:
-        a (ndarray): Shape parameter.
-        b (ndarray): Shape parameter.
+        a (float or ndarray): Shape parameter.
+        b (float or ndarray): Shape parameter.
         log_alpha_max (float, optional): The maximum value of ``log(alpha)``. 
-            Default is %%defaults["log_alpha_max"].
+            Default is %%defaults["log_alpha_max"]%%.
         log_beta_max (float, optional): The maximum value of ``log(beta)``. 
-            Default is %%defaults["log_alpha_max"].
+            Default is %%defaults["log_alpha_max"]%%.
 
-    The shape parameters `a` and `b` are related to the shape parameters of
+    The shape parameters ``a`` and ``b`` are related to the shape parameters of
     the Beta distribution in cosine latitude via the transformations
 
-        ```
-        alpha = exp(a * log_alpha_max)
-        beta = exp(log(0.5) + b * (log_beta_max - log(0.5)))
-        ```
+        .. code-block::python 
+        
+            alpha = exp(a * log_alpha_max)
+            beta = exp(log(0.5) + b * (log_beta_max - log(0.5)))
 
     .. note:: 
         
@@ -90,6 +100,12 @@ def beta2gauss(
         (not tensors).
 
     """
+    is_vector = hasattr(a, "__len__")
+    if is_vector:
+        assert hasattr(b, "__len__")
+        assert len(a) == len(b)
+    else:
+        assert not hasattr(b, "__len__")
     angle_fac = np.pi / 180
     alpha = np.atleast_1d(np.exp(a * log_alpha_max))
     beta = np.atleast_1d(
@@ -114,7 +130,10 @@ def beta2gauss(
     sigma = np.sin(mu) / np.sqrt(term)
     mu[(alpha <= 1) | (beta <= 0.5)] = np.nan
     sigma[(alpha <= 1) | (beta <= 0.5)] = np.nan
-    return mu / angle_fac, sigma / angle_fac
+    if is_vector:
+        return mu / angle_fac, sigma / angle_fac
+    else:
+        return mu[0] / angle_fac, sigma[0] / angle_fac
 
 
 class LatitudeIntegral(WignerIntegral):

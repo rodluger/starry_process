@@ -22,7 +22,6 @@ class StarryProcess(object):
         b=defaults["b"],
         c=defaults["c"],
         n=defaults["n"],
-        normalized=defaults["normalized"],
         marginalize_over_inclination=defaults["marginalize_over_inclination"],
         covpts=defaults["covpts"],
         **kwargs,
@@ -66,16 +65,6 @@ class StarryProcess(object):
                 should have a mean (on average) equal to the true number of
                 spots (assuming all other model assumptions are valid).
                 Default is %%defaults["n"]%%.
-            normalized (bool, optional): Whether or not the flux observations 
-                (passed in calls to ``log_likelihood`` and 
-                ``sample_ylm_conditional``) are normalized. Usually, the
-                true baseline in stellar photometry is unknown, as it
-                requires knowledge of how bright the star would be in the
-                absence of star spots. If the baseline is unknown
-                (which is almost certainly the case), set this keyword
-                to ``True`` and make sure observations are mean- (or median-)
-                normalized. Setting this to ``False`` is not recommended for
-                usage on real data. Default is %%defaults["normalized"]%%.
             marginalize_over_inclination (bool, optional): Whether or not to
                 marginalize over the inclination under the assumption of an
                 isotropic prior. Recommended if there are no constraints on
@@ -91,16 +80,28 @@ class StarryProcess(object):
                 to obtain the covariance matrix. Increasing this number will
                 improve the accuracy of the computation at the expense of
                 greater runtime. Default is %%defaults["covpts"]%%.
+
+        The following under-the-hood keyword arguments are also accepted,
+        although changing them is not recommended unless you really understand
+        what you are doing:
+
+        Parameters:
             ydeg (int, optional): The spherical harmonic  degree of the 
                 process. Default is %%defaults["ydeg"]%%. Decreasing this
                 value will speed up computations but decrease the ability
                 to model small features on the surface. Increasing this
                 above the default value is not recommended, as it can lead
                 to numerical instabilities.
-
-        The following under-the-hood keyword arguments are also accepted:
-
-        Parameters:
+            normalized (bool, optional): Whether or not the flux observations 
+                (passed in calls to ``log_likelihood`` and 
+                ``sample_ylm_conditional``) are normalized. Usually, the
+                true baseline in stellar photometry is unknown, as it
+                requires knowledge of how bright the star would be in the
+                absence of star spots. If the baseline is unknown
+                (which is almost certainly the case), set this keyword
+                to ``True`` and make sure observations are mean- (or median-)
+                normalized. Setting this to ``False`` is not recommended for
+                usage on real data. Default is %%defaults["normalized"]%%.
             log_alpha_max (float, optional): The maximum value of 
                 ``log(alpha)``. Default is %%defaults["log_alpha_max"]%%.
             log_beta_max (float, optional): The maximum value of ``log(beta)``. 
@@ -134,19 +135,23 @@ class StarryProcess(object):
         self._ydeg = kwargs.get("ydeg", defaults["ydeg"])
         assert self._ydeg > 5, "Degree of map must be > 5."
         self._nylm = (self._ydeg + 1) ** 2
+        self._covpts = covpts
+        self._kwargs = kwargs
 
         # Is the flux normalized?
-        self._normalized = normalized
+        self._normalized = kwargs.get("normalized", defaults["normalized"])
 
         # Initialize the Ylm integral ops
-        self.size = SizeIntegral(r, **kwargs)
-        self.latitude = LatitudeIntegral(a, b, child=self.size, **kwargs)
-        self.longitude = LongitudeIntegral(child=self.latitude, **kwargs)
-        self.contrast = ContrastIntegral(c, n, child=self.longitude, **kwargs)
+        self._size = SizeIntegral(r, **kwargs)
+        self._latitude = LatitudeIntegral(a, b, child=self._size, **kwargs)
+        self._longitude = LongitudeIntegral(child=self._latitude, **kwargs)
+        self._contrast = ContrastIntegral(
+            c, n, child=self._longitude, **kwargs
+        )
 
         # Mean and covariance of the Ylm process
-        self._mean_ylm = self.contrast.mean()
-        self._cov_ylm = self.contrast.cov()
+        self._mean_ylm = self._contrast.mean()
+        self._cov_ylm = self._contrast.cov()
         self._cho_cov_ylm = cho_factor(self._cov_ylm)
         self._LInv = cho_solve(
             self._cho_cov_ylm, tt.eye((self._ydeg + 1) ** 2)
@@ -155,17 +160,60 @@ class StarryProcess(object):
 
         # Initialize the flux integral op
         self._marginalize_over_inclination = marginalize_over_inclination
-        self.flux = FluxIntegral(
-            child=self.contrast,
-            marginalize_over_inclination=marginalize_over_inclination,
-            covpts=covpts,
-            **kwargs,
+        self._flux = FluxIntegral(
+            self._mean_ylm,
+            self._cov_ylm,
+            marginalize_over_inclination=self._marginalize_over_inclination,
+            covpts=self._covpts,
+            **self._kwargs,
         )
 
         # Seed the randomizer
         self.random = tt.shared_randomstreams.RandomStreams(
             kwargs.get("seed", 0)
         )
+
+    @property
+    def size(self):
+        return self._size
+
+    @property
+    def latitude(self):
+        """
+        The latitude distribution integral.
+
+        This integral is used internally to compute the mean and covariance
+        of the Gaussian process, but some of its methods may be of interest
+        to the user:
+
+        .. autofunction:: starry_process.latitude.pdf
+        .. autofunction:: starry_process.latitude.sample
+
+        """
+        return self._latitude
+
+    @property
+    def longitude(self):
+        """
+        The longitude distribution integral.
+
+        This integral is used internally to compute the mean and covariance
+        of the Gaussian process, but some of its methods may be of interest
+        to the user:
+
+        .. autofunction:: starry_process.longitude.pdf
+        .. autofunction:: starry_process.longitude.sample
+
+        """
+        return self._longitude
+
+    @property
+    def contrast(self):
+        return self._contrast
+
+    @property
+    def flux(self):
+        return self._flux
 
     @property
     def mean_ylm(self):
@@ -290,7 +338,7 @@ class StarryProcess(object):
         C += baseline_var
 
         # Compute C^-1 . A
-        A = self.flux._design_matrix(t, i, p)
+        A = self._flux._design_matrix(t, i, p)
         cho_C = cho_factor(C)
         CInvA = cho_solve(cho_C, A)
 
@@ -312,15 +360,15 @@ class StarryProcess(object):
         if self._normalized:
             return tt.zeros_like(cast(t, vectorize=True))
         else:
-            return self.flux.mean(t, i, p)
+            return self._flux.mean(t, i, p)
 
     def cov(self, t, i=defaults["i"], p=defaults["p"]):
         if self._normalized:
-            cov = self.flux.cov(t, i, p)
-            mean = self.flux.mean(t, i, p)
+            cov = self._flux.cov(t, i, p)
+            mean = self._flux.mean(t, i, p)
             return cov / (1 + mean) ** 2
         else:
-            return self.flux.cov(t, i, p)
+            return self._flux.cov(t, i, p)
 
     def sample(self, t, i=defaults["i"], p=defaults["p"], nsamples=1):
         if self._marginalize_over_inclination:
@@ -333,7 +381,7 @@ class StarryProcess(object):
         else:
             ylm = self.sample_ylm(nsamples=nsamples)
             return tt.transpose(
-                tt.dot(self.flux._design_matrix(t, i, p), tt.transpose(ylm))
+                tt.dot(self._flux._design_matrix(t, i, p), tt.transpose(ylm))
             )
 
     def log_jac(self):
@@ -382,7 +430,7 @@ class StarryProcess(object):
         log likelihood.
 
         """
-        return self.latitude.log_jac()
+        return self._latitude.log_jac()
 
     def log_likelihood(
         self,
@@ -478,3 +526,53 @@ class StarryProcess(object):
 
         # NANs --> -inf
         return ifelse(tt.isnan(lnlike[0, 0]), -np.inf, lnlike[0, 0])
+
+    def __add__(self, other):
+        return StarryProcessSum(self, other)
+
+    def __radd__(self, other):
+        if other == 0:
+            return self
+        else:
+            return self.__add__(other)
+
+
+class StarryProcessSum(StarryProcess):
+    def __init__(self, first, second):
+        # Verify props
+        assert first._ydeg == second._ydeg, "Mismatch in `ydeg`."
+        assert (
+            first._normalized == second._normalized
+        ), "Mismatch in `normalized`."
+        assert (
+            first._marginalize_over_inclination
+            == second._marginalize_over_inclination
+        ), "Mismatch in `marginalize_over_inclination`."
+        assert first._covpts == second._covpts, "Mismatch in `covpts`."
+        self._ydeg = first._ydeg
+        self._nylm = first._nylm
+        self._normalized = first._normalized
+        self._marginalize_over_inclination = (
+            first._marginalize_over_inclination
+        )
+        self._covpts = first._covpts
+        self._kwargs = first._kwargs
+        self.random = first.random
+
+        # Sum the random variables
+        self._mean_ylm = first._mean_ylm + second._mean_ylm
+        self._cov_ylm = first._cov_ylm + second._cov_ylm
+        self._cho_cov_ylm = cho_factor(self._cov_ylm)
+        self._LInv = cho_solve(
+            self._cho_cov_ylm, tt.eye((self._ydeg + 1) ** 2)
+        )
+        self._LInvmu = cho_solve(self._cho_cov_ylm, self._mean_ylm)
+
+        # Initialize the flux integral op
+        self._flux = FluxIntegral(
+            self._mean_ylm,
+            self._cov_ylm,
+            marginalize_over_inclination=self._marginalize_over_inclination,
+            covpts=self._covpts,
+            **self._kwargs,
+        )

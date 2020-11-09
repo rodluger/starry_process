@@ -6,26 +6,9 @@
 
 # -- Path setup --------------------------------------------------------------
 
-import os
 import starry_process
-from starry_process.defaults import defaults
-import sys
+import hacks
 
-# Add the CWD to the path
-sys.path.insert(1, os.path.dirname(os.path.abspath(__file__)))
-
-
-# HACK: Populate the default values in the docstrings
-for obj in starry_process.StarryProcess.__dict__.keys():
-    obj = getattr(starry_process.StarryProcess, obj)
-    if hasattr(obj, "__doc__"):
-        try:
-            for key, value in defaults.items():
-                obj.__doc__ = obj.__doc__.replace(
-                    '%%defaults["{}"]%%'.format(key), "``{}``".format(value)
-                )
-        except:
-            pass
 
 # -- Project information -----------------------------------------------------
 
