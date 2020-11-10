@@ -133,8 +133,6 @@ class Samples(object):
             elif mu_l == 90:
                 mu_l = 90 - 1e-2
             a, b = gauss2beta(mu_l, sigma_l)
-            a = a[0]
-            b = b[0]
             return sample_function(r, a, b, c, n)
 
         self.sample_ylm = sample_ylm
