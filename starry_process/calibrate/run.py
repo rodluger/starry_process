@@ -8,7 +8,18 @@ import os
 import json
 
 
-def run(path=".", clobber=False, plot=True, plot_inclination=False, **kwargs):
+def run(
+    path=".",
+    clobber=False,
+    plot_all=False,
+    plot_data=True,
+    plot_latitude_pdf=True,
+    plot_trace=False,
+    plot_corner=False,
+    plot_corner_transformed=True,
+    plot_inclination=False,
+    **kwargs
+):
 
     # Save the kwargs
     if not os.path.exists(path):
@@ -26,7 +37,7 @@ def run(path=".", clobber=False, plot=True, plot_inclination=False, **kwargs):
         data = np.load(os.path.join(path, "data.npz"))
 
     # Plot the data
-    if plot:
+    if plot_all or plot_data:
         fig = calibrate.plot_data(data, **kwargs)
         fig.savefig(os.path.join(path, "data.pdf"), bbox_inches="tight")
 
@@ -48,23 +59,24 @@ def run(path=".", clobber=False, plot=True, plot_inclination=False, **kwargs):
     np.savez(os.path.join(path, "mean_and_cov.npz"), mean=mean, cov=cov)
 
     # Plot the results
-    if plot:
+    if plot_all or plot_latitude_pdf:
         fig = calibrate.plot_latitude_pdf(results, **kwargs)
         fig.savefig(os.path.join(path, "latitude.pdf"), bbox_inches="tight")
 
+    if plot_all or plot_trace:
         fig = calibrate.plot_trace(results, **kwargs)
         fig.savefig(os.path.join(path, "trace.pdf"), bbox_inches="tight")
 
+    if plot_all or plot_corner:
         fig = calibrate.plot_corner(results, transform_beta=False, **kwargs)
         fig.savefig(os.path.join(path, "corner.pdf"), bbox_inches="tight")
 
+    if plot_all or plot_corner_transformed:
         fig = calibrate.plot_corner(results, transform_beta=True, **kwargs)
         fig.savefig(
             os.path.join(path, "corner_transformed.pdf"), bbox_inches="tight"
         )
 
-        if plot_inclination:
-            fig = calibrate.plot_inclination_pdf(data, results, **kwargs)
-            fig.savefig(
-                os.path.join(path, "inclination.pdf"), bbox_inches="tight"
-            )
+    if plot_all or plot_inclination:
+        fig = calibrate.plot_inclination_pdf(data, results, **kwargs)
+        fig.savefig(os.path.join(path, "inclination.pdf"), bbox_inches="tight")

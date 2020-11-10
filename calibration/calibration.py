@@ -31,55 +31,115 @@ except:
     EMAIL = None
 
 
-def run_single(name, seed=0, queue="cca", walltime=8, **kwargs):
+def _compute_inclination_pdf(path, clobber=False):
     """
-    
-    """
-    # Output path
-    path = os.path.abspath(name)
-    if not os.path.exists(os.path.join(path, "{}".format(seed))):
-        os.makedirs(os.path.join(path, "{}".format(seed)))
 
-    # Slurm script
-    slurmfile = os.path.join(HERE, "run.sh")
-    with open(slurmfile, "w") as f:
-        print(
-            (
-                """#!/bin/sh\n"""
-                """python -c "from starry_process.calibrate import run; """
-                """run(path='{}/{}', plot=False, seed={}, **{})" """
-                """&> {}/{}/single.log"""
-            ).format(path, seed, seed, kwargs, path, seed),
-            file=f,
+    """
+    # Check if we already did this
+    if clobber or not os.path.exists(os.path.join(path, "inclinations.npz")):
+
+        # Get kwargs
+        with open(os.path.join(path, "kwargs.json"), "r") as f:
+            kwargs = json.load(f)
+        kwargs = update_with_defaults(**kwargs)
+        sample_kwargs = kwargs["sample"]
+        gen_kwargs = kwargs["generate"]
+        plot_kwargs = kwargs["plot"]
+        ninc_pts = plot_kwargs["ninc_pts"]
+        ninc_samples = plot_kwargs["ninc_samples"]
+        ydeg = sample_kwargs["ydeg"]
+        baseline_var = sample_kwargs["baseline_var"]
+        apply_jac = sample_kwargs["apply_jac"]
+        normalized = gen_kwargs["normalized"]
+
+        # Get the data
+        with open(os.path.join(path, "results.pkl"), "rb") as f:
+            results = pickle.load(f)
+        data = np.load(os.path.join(path, "data.npz"))
+        t = data["t"]
+        ferr = data["ferr"]
+        period = data["period"]
+        flux = data["flux"]
+        nlc = len(flux)
+
+        # Array of inclinations & log prob for each light curve
+        inc = np.linspace(0, 90, ninc_pts)
+        lp = np.empty((nlc, ninc_samples, ninc_pts))
+
+        # Compile the likelihood function for a given inclination
+        log_prob = get_log_prob(
+            t,
+            flux=None,
+            ferr=ferr,
+            p=period,
+            ydeg=ydeg,
+            baseline_var=baseline_var,
+            apply_jac=apply_jac,
+            normalized=normalized,
+            marginalize_over_inclination=False,
         )
 
-    # Slurm args
-    sbatch_args = [
-        "sbatch",
-        "--partition={}".format(queue),
-        "-N 1",
-        "--output={}".format(
-            os.path.join(path, "{}".format(seed), "batch.log")
-        ),
-        "--job-name={}".format(name),
-        "--time={}:00:00".format(walltime),
-        "--exclusive",
-    ]
-    if EMAIL is not None:
-        sbatch_args.extend(
-            ["--mail-user={}".format(EMAIL), "--mail-type=END,FAIL"]
-        )
+        # Resample posterior samples to equal weight
+        samples = np.array(results.samples)
+        try:
+            weights = np.exp(results["logwt"] - results["logz"][-1])
+        except:
+            weights = results["weights"]
+        samples = dyfunc.resample_equal(samples, weights)
 
-    # Submit!
-    sbatch_args.append(slurmfile)
-    print("Submitting the job...")
-    print(" ".join(sbatch_args))
-    subprocess.call(sbatch_args)
+        # Compute the posteriors
+        for n in tqdm(range(nlc)):
+            for j in range(ninc_samples):
+                idx = np.random.randint(len(samples))
+                lp[n, j] = np.array(
+                    [
+                        log_prob(flux[n].reshape(1, -1), *samples[idx], i)
+                        for i in inc
+                    ]
+                )
+
+        # Save
+        np.savez(os.path.join(path, "inclinations.npz"), inc=inc, lp=lp)
+
+    else:
+
+        data = np.load(os.path.join(path, "data.npz"))
+        results = np.load(os.path.join(path, "inclinations.npz"))
+        inc = results["inc"]
+        lp = results["lp"]
+
+    # Plot
+    fig, ax = plt.subplots(5, 10, figsize=(20, 10), sharex=True, sharey=True)
+    ax = ax.flatten()
+    for n in range(lp.shape[0]):
+        for j in range(lp.shape[1]):
+            ax[n].plot(
+                inc, np.exp(lp[n, j] - lp[n, j].max()), "C0-", lw=1, alpha=0.25
+            )
+        ax[n].axvline(data["incs"][n], color="C1")
+        ax[n].margins(0.1, 0.1)
+        if n == 40:
+            ax[n].spines["top"].set_visible(False)
+            ax[n].spines["right"].set_visible(False)
+            ax[n].set_xlabel("inclination", fontsize=10)
+            ax[n].set_ylabel("probability", fontsize=10)
+            ax[n].set_xticks([0, 30, 60, 90])
+            ax[n].set_yticks([])
+        else:
+            ax[n].axis("off")
+
+    fig.savefig(os.path.join(path, "inclinations.pdf"), bbox_inches="tight")
 
 
 def run_batch(name, nodes=20, tasks=100, queue="cca", walltime=30, **kwargs):
     """
-    
+    Do inference on synthetic datasets.
+
+    This generates `ntasks` datasets (each containing many light curves)
+    and runs the full inference problem on each one on the SLURM cluster.
+    This is useful for calibrating the model: we use this to show that our
+    posterior estimates are unbiased and capture the true variance
+    correctly.
 
     """
     # Output paths
@@ -107,7 +167,7 @@ def run_batch(name, nodes=20, tasks=100, queue="cca", walltime=30, **kwargs):
             (
                 """#DISBATCH REPEAT {} start 0 """
                 """python -c "from starry_process.calibrate import run; """
-                """run(path='{}/$DISBATCH_REPEAT_INDEX', plot=False, seed=$DISBATCH_REPEAT_INDEX, **{})" """
+                """run(path='{}/$DISBATCH_REPEAT_INDEX', seed=$DISBATCH_REPEAT_INDEX, **{})" """
                 """&> {}/$DISBATCH_REPEAT_INDEX/batch.log"""
             ).format(tasks, path, kwargs, path),
             file=f,
@@ -135,8 +195,69 @@ def run_batch(name, nodes=20, tasks=100, queue="cca", walltime=30, **kwargs):
     subprocess.call(sbatch_args)
 
 
+def process_batch(name, nodes=20, queue="cca", walltime=24, clobber=False):
+    """
+    After running a batch, go back and draw samples from the inclination
+    PDF for each light curve in each dataset. This is fairly computationally
+    expensive, so we also run this on the cluster.
+
+    """
+    # Output paths
+    path = os.path.abspath(name)
+    results_files = glob.glob(os.path.join(path, "*", "results.pkl"))
+    tasks = len(results_files)
+
+    # Slurm script
+    slurmfile = os.path.join(HERE, "run.sh")
+    tasks_per_node = int(np.ceil(tasks / nodes))
+    with open(slurmfile, "w") as f:
+        print(
+            """#!/bin/sh\n"""
+            """cd {}\n"""
+            """module load disBatch\n"""
+            """disBatch.py -t {} taskfile""".format(HERE, tasks_per_node),
+            file=f,
+        )
+
+    # Script to run each task in disBatch
+    taskfile = os.path.join(HERE, "taskfile")
+    with open(taskfile, "w") as f:
+        print(
+            (
+                """#DISBATCH REPEAT {} start 0 """
+                """cd {}; """
+                """python -c "from calibration import _compute_inclination_pdf; """
+                """_compute_inclination_pdf(path='{}/$DISBATCH_REPEAT_INDEX', clobber={})" """
+                """&> {}/$DISBATCH_REPEAT_INDEX/batch_inc.log"""
+            ).format(tasks, HERE, path, clobber, path),
+            file=f,
+        )
+
+    # Slurm args
+    sbatch_args = [
+        "sbatch",
+        "--partition={}".format(queue),
+        "-N {}".format(nodes),
+        "--output={}".format(os.path.join(path, "batch_inc.log")),
+        "--job-name={}".format(name),
+        "--time={}:00:00".format(walltime),
+        "--exclusive",
+    ]
+    if EMAIL is not None:
+        sbatch_args.extend(
+            ["--mail-user={}".format(EMAIL), "--mail-type=END,FAIL"]
+        )
+
+    # Submit!
+    sbatch_args.append(slurmfile)
+    print("Submitting the job...")
+    print(" ".join(sbatch_args))
+    subprocess.call(sbatch_args)
+
+
 def plot_batch(name, bins=10, alpha=0.25, nsig=4):
     """
+    Plot the results of a batch run.
 
     """
     # Get the posterior means and covariances
@@ -311,204 +432,49 @@ def plot_batch(name, bins=10, alpha=0.25, nsig=4):
         os.path.join(path, "calibration_corner.pdf"), bbox_inches="tight"
     )
 
-
-def process_batch_inclinations(
-    name, nodes=20, queue="cca", walltime=24, clobber=False
-):
-    """
-    
-    """
-    # Output paths
-    path = os.path.abspath(name)
-    results_files = glob.glob(os.path.join(path, "*", "results.pkl"))
-    tasks = len(results_files)
-
-    # Slurm script
-    slurmfile = os.path.join(HERE, "run.sh")
-    tasks_per_node = int(np.ceil(tasks / nodes))
-    with open(slurmfile, "w") as f:
-        print(
-            """#!/bin/sh\n"""
-            """cd {}\n"""
-            """module load disBatch\n"""
-            """disBatch.py -t {} taskfile""".format(HERE, tasks_per_node),
-            file=f,
-        )
-
-    # Script to run each task in disBatch
-    taskfile = os.path.join(HERE, "taskfile")
-    with open(taskfile, "w") as f:
-        print(
-            (
-                """#DISBATCH REPEAT {} start 0 """
-                """cd {}; """
-                """python -c "from calibration import process_inclinations; """
-                """process_inclinations(path='{}/$DISBATCH_REPEAT_INDEX', clobber={})" """
-                """&> {}/$DISBATCH_REPEAT_INDEX/batch_inc.log"""
-            ).format(tasks, HERE, path, clobber, path),
-            file=f,
-        )
-
-    # Slurm args
-    sbatch_args = [
-        "sbatch",
-        "--partition={}".format(queue),
-        "-N {}".format(nodes),
-        "--output={}".format(os.path.join(path, "batch_inc.log")),
-        "--job-name={}".format(name),
-        "--time={}:00:00".format(walltime),
-        "--exclusive",
-    ]
-    if EMAIL is not None:
-        sbatch_args.extend(
-            ["--mail-user={}".format(EMAIL), "--mail-type=END,FAIL"]
-        )
-
-    # Submit!
-    sbatch_args.append(slurmfile)
-    print("Submitting the job...")
-    print(" ".join(sbatch_args))
-    subprocess.call(sbatch_args)
-
-
-def process_inclinations(path, clobber=False):
-    """
-
-    """
-    # Check if we already did this
-    if clobber or not os.path.exists(os.path.join(path, "inclinations.npz")):
-
-        # Get kwargs
-        with open(os.path.join(path, "kwargs.json"), "r") as f:
-            kwargs = json.load(f)
-        kwargs = update_with_defaults(**kwargs)
-        sample_kwargs = kwargs["sample"]
-        gen_kwargs = kwargs["generate"]
-        plot_kwargs = kwargs["plot"]
-        ninc_pts = plot_kwargs["ninc_pts"]
-        ninc_samples = plot_kwargs["ninc_samples"]
-        ydeg = sample_kwargs["ydeg"]
-        baseline_var = sample_kwargs["baseline_var"]
-        apply_jac = sample_kwargs["apply_jac"]
-        normalized = gen_kwargs["normalized"]
-
-        # Get the data
-        with open(os.path.join(path, "results.pkl"), "rb") as f:
-            results = pickle.load(f)
-        data = np.load(os.path.join(path, "data.npz"))
-        t = data["t"]
-        ferr = data["ferr"]
-        period = data["period"]
-        flux = data["flux"]
-        nlc = len(flux)
-
-        # Array of inclinations & log prob for each light curve
-        inc = np.linspace(0, 90, ninc_pts)
-        lp = np.empty((nlc, ninc_samples, ninc_pts))
-
-        # Compile the likelihood function for a given inclination
-        log_prob = get_log_prob(
-            t,
-            flux=None,
-            ferr=ferr,
-            p=period,
-            ydeg=ydeg,
-            baseline_var=baseline_var,
-            apply_jac=apply_jac,
-            normalized=normalized,
-            marginalize_over_inclination=False,
-        )
-
-        # Resample posterior samples to equal weight
-        samples = np.array(results.samples)
-        try:
-            weights = np.exp(results["logwt"] - results["logz"][-1])
-        except:
-            weights = results["weights"]
-        samples = dyfunc.resample_equal(samples, weights)
-
-        # Compute the posteriors
-        for n in tqdm(range(nlc)):
-            for j in range(ninc_samples):
-                idx = np.random.randint(len(samples))
-                lp[n, j] = np.array(
-                    [
-                        log_prob(flux[n].reshape(1, -1), *samples[idx], i)
-                        for i in inc
-                    ]
-                )
-
-        # Save
-        np.savez(os.path.join(path, "inclinations.npz"), inc=inc, lp=lp)
-
-    else:
-
-        data = np.load(os.path.join(path, "data.npz"))
-        results = np.load(os.path.join(path, "inclinations.npz"))
-        inc = results["inc"]
-        lp = results["lp"]
-
-    # Plot
-    fig, ax = plt.subplots(5, 10, figsize=(20, 10), sharex=True, sharey=True)
-    ax = ax.flatten()
-    for n in range(lp.shape[0]):
-        for j in range(lp.shape[1]):
-            ax[n].plot(
-                inc, np.exp(lp[n, j] - lp[n, j].max()), "C0-", lw=1, alpha=0.25
-            )
-        ax[n].axvline(data["incs"][n], color="C1")
-        ax[n].margins(0.1, 0.1)
-        if n == 40:
-            ax[n].spines["top"].set_visible(False)
-            ax[n].spines["right"].set_visible(False)
-            ax[n].set_xlabel("inclination", fontsize=10)
-            ax[n].set_ylabel("probability", fontsize=10)
-            ax[n].set_xticks([0, 30, 60, 90])
-            ax[n].set_yticks([])
-        else:
-            ax[n].axis("off")
-
-    fig.savefig(os.path.join(path, "inclinations.pdf"), bbox_inches="tight")
-
-
-def plot_inclination_summary(name):
-    """
-
-    """
-    # Get the posterior means and covariances
-    path = os.path.abspath(name)
+    # Get the inclination posterior means and covariances (if present)
     inc_files = glob.glob(os.path.join(path, "*", "inclinations.npz"))
-    data_files = [file.replace("inclinations", "data") for file in inc_files]
-    x = np.linspace(-90, 90, 1000)
-    deltas = []
-    for k in tqdm(range(len(inc_files))):
-        data = np.load(data_files[k])
-        results = np.load(inc_files[k])
-        truths = data["incs"]
-        inc = results["inc"]
-        lp = results["lp"]
-        nlc = len(truths)
-        nsamples = lp.shape[1]
-        for n in range(nlc):
-            for j in range(nsamples):
-                pdf = np.exp(lp[n, j] - np.max(lp[n, j]))
-                pdf /= np.trapz(pdf)
-                mean = np.trapz(inc * pdf)
-                var = np.trapz(inc ** 2 * pdf) - mean ** 2
-                deltas.append((mean - truths[n]) / np.sqrt(var))
+    if len(inc_files):
 
-    fig, ax = plt.subplots(1, figsize=(6, 3))
-    ax.hist(deltas, bins=50, range=(-5, 5), density=True, label="measured")
-    ax.hist(
-        Normal.rvs(size=len(deltas)),
-        bins=50,
-        range=(-5, 5),
-        histtype="step",
-        color="C1",
-        density=True,
-        label=r"$\mathcal{N}(0, 1)$",
-    )
-    ax.legend(loc="top right")
-    ax.set_xlabel("posterior error")
-    ax.set_yticks([])
-    fig.savefig(os.path.join(path, "inclinations.pdf"), bbox_inches="tight")
+        data_files = [
+            file.replace("inclinations", "data") for file in inc_files
+        ]
+        x = np.linspace(-90, 90, 1000)
+        deltas = []
+
+        # Compute the "posterior error" histogram
+        for k in tqdm(range(len(inc_files))):
+            data = np.load(data_files[k])
+            results = np.load(inc_files[k])
+            truths = data["incs"]
+            inc = results["inc"]
+            lp = results["lp"]
+            nlc = len(truths)
+            nsamples = lp.shape[1]
+            for n in range(nlc):
+                for j in range(nsamples):
+                    pdf = np.exp(lp[n, j] - np.max(lp[n, j]))
+                    pdf /= np.trapz(pdf)
+                    mean = np.trapz(inc * pdf)
+                    var = np.trapz(inc ** 2 * pdf) - mean ** 2
+                    deltas.append((mean - truths[n]) / np.sqrt(var))
+
+        # Plot it
+        fig, ax = plt.subplots(1, figsize=(6, 3))
+        ax.hist(deltas, bins=50, range=(-5, 5), density=True, label="measured")
+        ax.hist(
+            Normal.rvs(size=len(deltas)),
+            bins=50,
+            range=(-5, 5),
+            histtype="step",
+            color="C1",
+            density=True,
+            label=r"$\mathcal{N}(0, 1)$",
+        )
+        ax.legend(loc="top right")
+        ax.set_xlabel("posterior error")
+        ax.set_yticks([])
+        fig.savefig(
+            os.path.join(path, "inclinations.pdf"), bbox_inches="tight"
+        )
+
