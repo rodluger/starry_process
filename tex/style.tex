@@ -3,6 +3,7 @@
 \usepackage{unicode-math}
 \usepackage{xifthen}
 \usepackage{stackengine}
+\usepackage{tabstackengine}
 \usepackage{array}
 \usepackage{upgreek}
 \usepackage[bbgreekl]{mathbbol}
@@ -10,8 +11,6 @@
 
 % Misc. macros
 \newcommand{\LMAX}{15\xspace}
-\newcommand{\HWHMMAX}{75\xspace}
-\newcommand{\HWHMMIN}{15\xspace}
 
 % Integrals
 \newcommand{\dd}{\ensuremath{\text{d}}}
@@ -19,6 +18,7 @@
 % Special functions
 \newcommand{\sgn}{{\text{sgn}}}
 \newcommand{\atantwo}{{\text{arctan2}}}
+\newcommand{\imag}{{\ensuremath{\mathbb{i}}}}
 
 % Cartesian unit vectors
 \newcommand{\xhat}{\ensuremath{\pmb{\hat{x}}}\xspace}
@@ -28,3 +28,10 @@
 % Other
 \DeclarePairedDelimiter\ceil{\lceil}{\rceil}
 \DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+% Inverse diagonal dots
+\makeatletter
+\def\Ddots{\mathinner{\mkern1mu\raise\p@
+\vbox{\kern7\p@\hbox{.}}\mkern2mu
+\raise4\p@\hbox{.}\mkern2mu\raise7\p@\hbox{.}\mkern1mu}}
+\makeatother

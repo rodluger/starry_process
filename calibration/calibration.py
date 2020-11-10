@@ -13,6 +13,7 @@ from tqdm.auto import tqdm
 from matplotlib import colors
 import pickle
 from dynesty import utils as dyfunc
+from scipy.stats import norm as Normal
 
 
 # Path to this directory
@@ -467,4 +468,47 @@ def process_inclinations(path, clobber=False):
         else:
             ax[n].axis("off")
 
+    fig.savefig(os.path.join(path, "inclinations.pdf"), bbox_inches="tight")
+
+
+def plot_inclination_summary(name):
+    """
+
+    """
+    # Get the posterior means and covariances
+    path = os.path.abspath(name)
+    inc_files = glob.glob(os.path.join(path, "*", "inclinations.npz"))
+    data_files = [file.replace("inclinations", "data") for file in inc_files]
+    x = np.linspace(-90, 90, 1000)
+    deltas = []
+    for k in tqdm(range(len(inc_files))):
+        data = np.load(data_files[k])
+        results = np.load(inc_files[k])
+        truths = data["incs"]
+        inc = results["inc"]
+        lp = results["lp"]
+        nlc = len(truths)
+        nsamples = lp.shape[1]
+        for n in range(nlc):
+            for j in range(nsamples):
+                pdf = np.exp(lp[n, j] - np.max(lp[n, j]))
+                pdf /= np.trapz(pdf)
+                mean = np.trapz(inc * pdf)
+                var = np.trapz(inc ** 2 * pdf) - mean ** 2
+                deltas.append((mean - truths[n]) / np.sqrt(var))
+
+    fig, ax = plt.subplots(1, figsize=(6, 3))
+    ax.hist(deltas, bins=50, range=(-5, 5), density=True, label="measured")
+    ax.hist(
+        Normal.rvs(size=len(deltas)),
+        bins=50,
+        range=(-5, 5),
+        histtype="step",
+        color="C1",
+        density=True,
+        label=r"$\mathcal{N}(0, 1)$",
+    )
+    ax.legend(loc="top right")
+    ax.set_xlabel("posterior error")
+    ax.set_yticks([])
     fig.savefig(os.path.join(path, "inclinations.pdf"), bbox_inches="tight")

@@ -246,19 +246,19 @@ and (\ref{eq:exp_yy}) as
     \label{eq:exp_y_sep}
     \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta} \Big]
      & =
-    \mathbf{e_4}(\pmb{\theta})
+    \mathbf{e}_c
     \\[1em]
     \label{eq:exp_yy_sep}
     \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta} \Big]
      & =
-    \mathbf{E_4}(\pmb{\theta})
+    \mathbf{E}_c
 \end{align}
 %
 where we define the first moment integrals
 %
 \begin{align}
     \label{eq:e1}
-    \mathbf{e_1}(\pmb{\theta}_r)
+    \mathbf{e}_r
      & \equiv
     \int
     \mathbf{s}(r) \,
@@ -268,31 +268,31 @@ where we define the first moment integrals
     \\[1em]
     %
     \label{eq:e2}
-    \mathbf{e_2}(\pmb{\theta}_\phi, \mathbf{e_1})
+    \mathbf{e}_\phi
      & \equiv
     \int
     \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{e_1} \,
+    \mathbf{e}_r \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
     %
     \\[1em]
     %
     \label{eq:e3}
-    \mathbf{e_3}(\pmb{\theta}_\lambda, \mathbf{e_2})
+    \mathbf{e}_\lambda
      & \equiv
     \int
     \mathbf{R}_{\hat{\mathbf{y}}}(\lambda) \,
-    \mathbf{e_2} \,
+    \mathbf{e}_\phi \,
     p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
     \mathrm{d}\lambda
     \\[1em]
     \label{eq:e4}
-    \mathbf{e_4}(\pmb{\theta}_c, \mathbf{e_3})
+    \mathbf{e}_c
      & \equiv
     \int
     c \,
-    \mathbf{e_3} \,
+    \mathbf{e}_\lambda \,
     p(c \, \big| \, \pmb{\theta}_{c}) \,
     \mathrm{d}c
     %
@@ -302,7 +302,7 @@ and the second moment integrals
 %
 \begin{align}
     \label{eq:E1}
-    \mathbf{E_1}(\pmb{\theta}_r)
+    \mathbf{E}_r
      & \equiv
     \int
     \mathbf{s}(r) \, \mathbf{s}^\top(r) \,
@@ -312,12 +312,12 @@ and the second moment integrals
     \\[1em]
     %
     \label{eq:E2}
-    \mathbf{E_2}(\pmb{\theta}_\phi, \mathbf{E_1})
+    \mathbf{E}_\phi
      & \equiv
     \int
     \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{E_1} \,
-    \mathbf{E_1}^\top \,
+    \mathbf{E}_r \,
+    \mathbf{E}_r^\top \,
     \mathbf{R}_{\hat{\mathbf{x}}}^\top(\phi) \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi})
     \mathrm{d}\phi
@@ -325,24 +325,24 @@ and the second moment integrals
     \\[1em]
     %
     \label{eq:E3}
-    \mathbf{E_3}(\pmb{\theta}_\lambda, \mathbf{E_2})
+    \mathbf{E}_\lambda
      & \equiv
     \int
     \mathbf{R}_{\hat{\mathbf{y}}}(\lambda) \,
-    \mathbf{E_2} \,
-    \mathbf{E_2}^\top \,
+    \mathbf{E}_\phi \,
+    \mathbf{E}_\phi^\top \,
     \mathbf{R}_{\hat{\mathbf{y}}}^\top(\lambda) \,
     p(\lambda \, \big| \, \pmb{\theta}_{\lambda})
     \mathrm{d}\phi
     \\[1em]
     %
     \label{eq:E4}
-    \mathbf{E_4}(\pmb{\theta}_c, \mathbf{E_3})
+    \mathbf{E}_c
      & \equiv
     \int
     c^2 \,
-    \mathbf{E_3} \,
-    \mathbf{E_3}^\top \,
+    \mathbf{E}_\lambda \,
+    \mathbf{E}_\lambda^\top \,
     p(c \, \big| \, \pmb{\theta}_c)
     \mathrm{d}c
     %
@@ -353,7 +353,367 @@ We devote the next four sections to the computation of these eight
 integrals.
 
 
+\section{The Size and Contrast Integrals}
+\label{sec:size-contrast}
 
+\section{The Latitude and Longitude Integrals}
+\label{sec:lat-lon}
+%
+Our goal in this section is to compute the integrals...
+
+%
+The Wigner rotation matrix for real spherical harmonics up to degree $l_{\mathrm{max}}$
+may be written as the block-diagonal matrix
+%
+\begin{align}
+    \setstackgap{L}{1.25\baselineskip}
+    \fixTABwidth{T}
+    \mathbf{R} =
+    \parenMatrixstack{
+    \quad\quad \, \mathbf{R}^0 \, \quad\quad
+     &              &              &        &                               \\
+     & \mathbf{R}^1 &              &        &                               \\
+     &              & \mathbf{R}^2 &        &                               \\
+     &              &              & \ddots &                               \\
+     &              &              &        & \mathbf{R}^{l_{\mathrm{max}}}
+    }\quad,
+\end{align}
+%
+where
+%
+\begin{align}
+    \mathbf{R}^l = {\mathbf{U}^l}^{-1} \mathbf{D}^l \mathbf{U}^l
+\end{align}
+%
+is the Wigner rotation matrix for a single spherical harmonic degree,
+%
+\begin{align}
+    \label{eq:U}
+    \setstackgap{L}{1.25\baselineskip}
+    \fixTABwidth{T}
+    \mathbf{U}^l =
+    \frac{1}{\sqrt{2}}
+    \parenMatrixstack{
+        \quad\quad\, \ddots \, \quad\quad\quad\quad
+           &       &        &       &          &    &   &    & \Ddots \\
+           & \imag &        &       &          &    &   & 1  &        \\
+           &       & \imag  &       &          &    & 1 &    &        \\
+           &       &        & \imag &          & 1  &   &    &        \\
+           &       &        &       & \sqrt{2} &    &   &    &        \\
+           &       &        & \imag &          & -1 &   &    &        \\
+           &       & -\imag &       &          &    & 1 &    &        \\
+           & \imag &        &       &          &    &   & -1 &        \\
+    \Ddots &       &        &       &          &    &   &    & \ddots
+    }
+\end{align}
+%
+describes the transformation from complex to real spherical harmonics,
+and $\mathbf{D}$ is the Wigner matrix for complex spherical harmonics,
+whose terms are given by the expression
+%
+\begin{align}
+    D_{m,m'}^l(\alpha, \beta, \gamma) = \mathrm{e}^{-\imag m' \alpha}
+    d_{m,m'}^l(\beta) \mathrm{e}^{-\imag m \gamma}
+\end{align}
+%
+where $\alpha$, $\beta$, and $\gamma$ are the Euler angles describing
+the rotation in the
+$\hat{\mathbf{z}}{-}\hat{\mathbf{y}}{-}\hat{\mathbf{z}}$ convention
+and $\imag$ is the imaginary unit. The terms of the $d$-matrix
+depend on powers of $\sin\left(\nicefrac{\beta}{2}\right)$
+and $\cos\left(\nicefrac{\beta}{2}\right)$
+\citep[c.f. Equation C15 in][]{Luger2019}, but it is convenient to use
+the half-angle formula to express these terms instead as
+%
+\begin{align}
+    d_{m,m'}^l(\beta) =
+    \sum\limits_i c_{m,m',i}^{l}
+    \mathrm{sgn}(\sin\beta)^{i}
+    (1 - \cos\beta)^{\frac{2l - i}{2}}
+    (1 + \cos\beta)^\frac{i}{2}
+\end{align}
+%
+where
+%
+\begin{align}
+    c_{m,m',i}^{l} & =
+    \resizebox{.75\hsize}{!}{$
+            \begin{cases}
+                \dfrac{
+                \left(-1\right)^{\frac{2l + 3m + m' - i}{2}}
+                \sqrt{\left(l - m\right)!
+                    \left(l + m\right)!
+                    \left(l - m'\right)!
+                    \left(l + m'\right)!}
+                }{
+                2^l
+                \left(\frac{i - m - m'}{2}\right)!
+                \left(\frac{i + m + m'}{2}\right)!
+                \left(\frac{2l - i - m + m'}{2}\right)!
+                \left(\frac{2l - i + m - m'}{2}\right)!
+                }
+                %
+                 & m - m' - i \,\, \mathrm{even}
+                %
+                \\[0.5em]
+                0
+                %
+                 & m - m' - i \,\, \mathrm{odd}
+            \end{cases}
+        $}
+\end{align}
+%
+Rotation by
+an angle $\phi$ about the $\hat{\mathbf{x}}$ axis may be accomplished by choosing
+Euler angles
+%
+\begin{align}
+    \alpha & = \frac{\pi}{2} \nonumber \\
+    \beta  & = \phi \nonumber          \\
+    \gamma & = -\frac{\pi}{2}
+    \quad,
+\end{align}
+%
+which makes it clear that all terms in
+$\mathbf{R}_{\hat{\mathbf{x}}}(\phi)$ are equal to (weighted) sums of powers
+of $(1 \pm \cos\phi)$.
+%
+Since our goal is to compute integrals of these terms multiplied by
+a probability density function, it is convenient to model
+$\cos\phi$ as a Beta-distributed variable. As we will see, this
+choice will allow us to
+analytically compute the first two moments of the distribution of
+$\phi$ conditioned on $\pmb{\theta}_\phi$.
+
+%
+The Beta distribution in $\cos\phi$ has hyperparameters
+%
+\begin{align}
+    \pmb{\theta}_\phi = \left(
+    \alpha \, \, \, \,
+    \beta \right)^\top
+\end{align}
+%
+and PDF given by
+%
+\begin{align}
+    \label{eq:cosphi-pdf}
+    p \big(\cos\phi \, \big| \, \pmb{\theta}_\phi \big)
+     & =
+    \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+    (\cos\phi)^{\alpha - 1}
+    (1 - \cos\phi)^{\beta - 1}
+    \quad,
+\end{align}
+%
+where $\Gamma$ is the Gamma function. The implied distribution for $\phi$
+may be computed by a straightforward change of variable:
+%
+\begin{align}
+    \label{eq:phi-pdf}
+    p \big(\phi \, \big| \, \pmb{\theta}_\phi \big)
+     & =
+    \dfrac{\Gamma(\alpha + \beta)}{2\Gamma(\alpha)\Gamma(\beta)}
+    \big|
+    \sin\phi
+    \big|
+    (\cos\phi)^{\alpha - 1}
+    (1 - \cos\phi)^{\beta - 1}
+    \quad,
+\end{align}
+%
+for $\phi \in \left[ -\frac{\pi}{2}, \frac{\pi}{2} \right]$.
+
+Since the Wigner matrices are block diagonal, we may evaluate the moments of the
+distribution one spherical harmonic degree at a time. To that end, let us
+write
+%
+\begin{align}
+    \mathbf{e}_\phi
+     & \equiv
+    \int
+    \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
+    \mathbf{e}_r \,
+    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\phi
+    \nonumber
+    \\
+    %
+     & =
+    %
+    \left(
+    \mathbf{e}_\phi^0
+    \,\,\,
+    \mathbf{e}_\phi^1
+    \,\,\,
+    \mathbf{e}_\phi^2
+    \,\,\,
+    \cdots
+    \,\,\,
+    \mathbf{e}_\phi^{l_{\mathrm{max}}}
+    \right)^\top
+    \quad,
+\end{align}
+%
+where
+%
+\begin{align}
+    \mathbf{e}_\phi^l
+     & =
+    \int
+    \mathbf{R}^l_{\hat{\mathbf{x}}}(\phi) \,
+    \mathbf{e}^l_r \,
+    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\phi
+    \nonumber \\
+    %
+     & =
+    %
+    {\mathbf{U}^l}^{-1}
+    \pmb{\rho}^l
+    \,
+    \mathbf{U}^l
+    \quad,
+\end{align}
+%
+where we define
+%
+\begin{align}
+    \pmb{\rho}^l
+     & \equiv
+    \int
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi) \,
+    \mathbf{e}^l_r \,
+    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\phi
+    \,
+\end{align}
+%
+with
+%
+\begin{align}
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi)
+     & =
+    \mathbf{D}^l\left(\frac{\pi}{2}, \phi, -\frac{\pi}{2}\right)
+    \quad.
+\end{align}
+%
+We may write the terms of $\pmb{\rho}^l$ as
+%
+\begin{align}
+    \rho^l_m
+     & =
+    \int
+    \sum\limits_{m'}
+    {D^l_{\hat{\mathbf{x}}}}_{m,m'}(\phi) \,
+    {e^l_r}_{m'} \,
+    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\phi
+    %
+    \nonumber \\[0.5em]
+    %
+     & =
+    \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+    \sum\limits_{m'}
+    {e^l_r}_{m'}
+    \mathrm{e}^{\frac{\imag \pi}{2}(m - m')}
+    \sum\limits_i c_{m,m',i}^{l}
+    \,
+    q^l_i(\pmb{\theta}_{\phi})
+    \quad,
+\end{align}
+%
+where
+%
+\begin{align}
+    q^l_i(\pmb{\theta}_{\phi})
+     & =
+    \frac{1}{2}
+    \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}
+    %
+    \mathrm{sgn}(\sin\phi)^{i}
+    \big| \sin\phi \big|
+    (\cos\phi)^{\alpha - 1}
+    (1 - \cos\phi)^{l + \beta - \frac{i}{2} - 1}
+    (1 + \cos\phi)^\frac{i}{2}
+    %
+    \,
+    \mathrm{d}\phi
+    \nonumber \\[0.5em]
+    %
+     & =
+    % %
+    % \begin{cases}
+    %     \displaystyle\int_{0}^{\frac{\pi}{2}}
+    %     %
+    %     (\cos\phi)^{\alpha - 1}
+    %     (1 - \cos\phi)^{l + \beta - \frac{i}{2} - 1}
+    %     (1 + \cos\phi)^\frac{i}{2}
+    %     %
+    %     \,
+    %     \sin\phi
+    %     \,
+    %     \mathrm{d}\phi
+    %     %
+    %     & i \,\, \mathrm{even}
+    %     %
+    %     \\
+    %     %
+    %     0
+    %     %
+    %     & i \,\, \mathrm{odd}
+    % \end{cases}
+    % \nonumber \\[0.5em]
+    % & =
+    % %
+    \begin{cases}
+        \displaystyle\int_{0}^{1}
+        %
+        x^{\alpha - 1}
+        (1 - x)^{l + \beta - \frac{i}{2} - 1 }
+        (1 + x)^\frac{i}{2}
+        %
+        \,
+        \mathrm{d}x
+        %
+         & i \,\, \mathrm{even}
+        %
+        \\
+        %
+        0
+        %
+         & i \,\, \mathrm{odd} \quad,
+    \end{cases}
+\end{align}
+%
+and in the last line we made use of the transformation $x = \cos\phi$.
+%
+The integral in the expression above has a closed-form solution in terms
+of the hypergeometric function $_2F_1$:
+%
+\begin{align}
+    %
+    q^l_i(\pmb{\theta}_{\phi})
+     & =
+    \begin{cases}
+        \dfrac{\Gamma(\alpha)\Gamma(l + \beta - \frac{i}{2})}{\Gamma(l + \alpha + \beta - \frac{i}{2})}
+        \,
+        _2F_1\Big(
+        -\frac{i}{2},
+        \alpha;
+        l + \alpha + \beta - \frac{i}{2};
+        -1
+        \Big)
+        %
+         & i \,\, \mathrm{even}
+        %
+        \\
+        %
+        0
+        %
+         & i \,\, \mathrm{odd} \quad.
+    \end{cases}
+\end{align}
 
 \bibliography{bib}
 \end{document}
