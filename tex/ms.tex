@@ -465,16 +465,24 @@ where
 %
 Rotation by
 an angle $\phi$ about the $\hat{\mathbf{x}}$ axis may be accomplished by choosing
-Euler angles
+Euler angles $\alpha = \nicefrac{\pi}{2}$, $\beta = \phi$, and
+$\gamma = -\nicefrac{\pi}{2}$, such that
 %
 \begin{align}
-    \alpha & = \frac{\pi}{2} \nonumber \\
-    \beta  & = \phi \nonumber          \\
-    \gamma & = -\frac{\pi}{2}
-    \quad,
+    \mathbf{R}^l_{\hat{\mathbf{x}}}(\phi)
+     & =
+    {\mathbf{U}^l}^{-1} \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi) \mathbf{U}^l
 \end{align}
 %
-which makes it clear that all terms in
+with
+\begin{align}
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi)
+     & =
+    \mathbf{D}^l\left(\frac{\pi}{2}, \phi, -\frac{\pi}{2}\right)
+    \quad.
+\end{align}
+%
+From the expressions above, it is clear that all terms in
 $\mathbf{R}_{\hat{\mathbf{x}}}(\phi)$ are equal to (weighted) sums of powers
 of $(1 \pm \cos\phi)$.
 %
@@ -571,8 +579,6 @@ where
     %
     {\mathbf{U}^l}^{-1}
     \pmb{\rho}^l
-    \,
-    \mathbf{U}^l
     \quad,
 \end{align}
 %
@@ -583,18 +589,19 @@ where we define
      & \equiv
     \int
     \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{e}^l_r \,
+    \bar{\mathbf{e}}^l_r \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
     \,
 \end{align}
 %
-with
+and
 %
 \begin{align}
-    \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi)
-     & =
-    \mathbf{D}^l\left(\frac{\pi}{2}, \phi, -\frac{\pi}{2}\right)
+    \bar{\mathbf{e}}^l_r
+     & \equiv
+    \mathbf{U}^l
+    \mathbf{e}^l_r
     \quad.
 \end{align}
 %
@@ -606,7 +613,7 @@ We may write the terms of $\pmb{\rho}^l$ as
     \int
     \sum\limits_{m'}
     {D^l_{\hat{\mathbf{x}}}}_{m,m'}(\phi) \,
-    {e^l_r}_{m'} \,
+    {\bar{e}^l}{{}_r}_{m'} \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
     %
@@ -615,7 +622,7 @@ We may write the terms of $\pmb{\rho}^l$ as
      & =
     \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
     \sum\limits_{m'}
-    {e^l_r}_{m'}
+    {\bar{e}^l}{{}_r}_{m'}
     \mathrm{e}^{\frac{\imag \pi}{2}(m - m')}
     \sum\limits_i c_{m,m',i}^{l}
     \,
