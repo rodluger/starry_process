@@ -131,7 +131,15 @@ def _compute_inclination_pdf(path, clobber=False):
     fig.savefig(os.path.join(path, "inclinations.pdf"), bbox_inches="tight")
 
 
-def run_batch(name, nodes=20, tasks=100, queue="cca", walltime=30, **kwargs):
+def run_batch(
+    name,
+    nodes=20,
+    tasks=100,
+    queue="cca",
+    walltime=30,
+    clobber=False,
+    **kwargs
+):
     """
     Do inference on synthetic datasets.
 
@@ -167,9 +175,9 @@ def run_batch(name, nodes=20, tasks=100, queue="cca", walltime=30, **kwargs):
             (
                 """#DISBATCH REPEAT {} start 0 """
                 """python -c "from starry_process.calibrate import run; """
-                """run(path='{}/$DISBATCH_REPEAT_INDEX', seed=$DISBATCH_REPEAT_INDEX, **{})" """
+                """run(path='{}/$DISBATCH_REPEAT_INDEX', seed=$DISBATCH_REPEAT_INDEX, clobber={}, **{})" """
                 """&> {}/$DISBATCH_REPEAT_INDEX/batch.log"""
-            ).format(tasks, path, kwargs, path),
+            ).format(tasks, path, clobber, kwargs, path),
             file=f,
         )
 

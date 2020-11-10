@@ -20,14 +20,17 @@ def run(
     plot_inclination=False,
     **kwargs
 ):
-
-    # Save the kwargs
     if not os.path.exists(path):
         os.makedirs(path)
-    json.dump(
-        update_with_defaults(**kwargs),
-        open(os.path.join(path, "kwargs.json"), "w"),
-    )
+
+    # Save the kwargs
+    if clobber or not os.path.exists(os.path.join(path, "kwargs.json")):
+        json.dump(
+            update_with_defaults(**kwargs),
+            open(os.path.join(path, "kwargs.json"), "w"),
+        )
+    else:
+        kwargs = json.load(open(os.path.join(path, "kwargs.json"), "r"))
 
     # Generate
     if clobber or not os.path.exists(os.path.join(path, "data.npz")):
