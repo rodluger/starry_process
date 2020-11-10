@@ -361,6 +361,7 @@ integrals.
 %
 Our goal in this section is to compute the integrals...
 
+\subsection{Rotation matrices}
 %
 The Wigner rotation matrix for real spherical harmonics up to degree $l_{\mathrm{max}}$
 may be written as the block-diagonal matrix
@@ -425,17 +426,17 @@ and $\cos\left(\nicefrac{\beta}{2}\right)$
 \citep[c.f. Equation C15 in][]{Luger2019}, but it is convenient to use
 the half-angle formula to express these terms instead as
 %
-\begin{align}
+\begin{proof}{test_dlmmp}
     d_{m,m'}^l(\beta) =
-    \sum\limits_i c_{m,m',i}^{l}
+    \sum\limits_{i=0}^{2l} c_{m,m',i}^{l}
     \mathrm{sgn}(\sin\beta)^{i}
     (1 - \cos\beta)^{\frac{2l - i}{2}}
     (1 + \cos\beta)^\frac{i}{2}
-\end{align}
+\end{proof}
 %
 where
 %
-\begin{align}
+\begin{proof}{test_dlmmp}
     c_{m,m',i}^{l} & =
     \resizebox{.75\hsize}{!}{$
             \begin{cases}
@@ -461,10 +462,14 @@ where
                  & m - m' - i \,\, \mathrm{odd}
             \end{cases}
         $}
-\end{align}
+\end{proof}
 %
-Rotation by
-an angle $\phi$ about the $\hat{\mathbf{x}}$ axis may be accomplished by choosing
+
+\subsection{Latitude}
+%
+The latitude integrals (Equations~\ref{eq:e2} and \ref{eq:E2}) involve
+rotations about $\hat{\mathbf{x}}$, which
+may be accomplished by choosing
 Euler angles $\alpha = \nicefrac{\pi}{2}$, $\beta = \phi$, and
 $\gamma = -\nicefrac{\pi}{2}$, such that
 %
@@ -517,10 +522,10 @@ and PDF given by
 where $\Gamma$ is the Gamma function. The implied distribution for $\phi$
 may be computed by a straightforward change of variable:
 %
-\begin{align}
+\begin{proof}{test_beta_transform}
     \label{eq:phi-pdf}
     p \big(\phi \, \big| \, \pmb{\theta}_\phi \big)
-     & =
+    & =
     \dfrac{\Gamma(\alpha + \beta)}{2\Gamma(\alpha)\Gamma(\beta)}
     \big|
     \sin\phi
@@ -528,7 +533,7 @@ may be computed by a straightforward change of variable:
     (\cos\phi)^{\alpha - 1}
     (1 - \cos\phi)^{\beta - 1}
     \quad,
-\end{align}
+\end{proof}
 %
 for $\phi \in \left[ -\frac{\pi}{2}, \frac{\pi}{2} \right]$.
 
@@ -536,9 +541,9 @@ Since the Wigner matrices are block diagonal, we may evaluate the moments of the
 distribution one spherical harmonic degree at a time. To that end, let us
 write
 %
-\begin{align}
+\begin{proof}{test_ephi}
     \mathbf{e}_\phi
-     & \equiv
+    & \equiv
     \int
     \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
     \mathbf{e}_r \,
@@ -547,7 +552,7 @@ write
     \nonumber
     \\
     %
-     & =
+    & =
     %
     \left(
     \mathbf{e}_\phi^0
@@ -561,13 +566,42 @@ write
     \mathbf{e}_\phi^{l_{\mathrm{max}}}
     \right)^\top
     \quad,
-\end{align}
+\end{proof}
+%
+and
+%
+\begin{proof}{}
+    \mathbf{E}_\phi
+    & \equiv
+    \int
+    \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
+    \mathbf{E}_r \,
+    \mathbf{E}_r^\top \,
+    \mathbf{R}_{\hat{\mathbf{x}}}^\top(\phi) \,
+    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\phi
+    \nonumber
+    \\
+    %
+    & =
+    %
+    \setstackgap{L}{1.25\baselineskip}
+    \fixTABwidth{T}
+    \parenMatrixstack{
+    \mathbf{E}_\phi^{0,0} & \mathbf{E}_\phi^{0,1} & \mathbf{E}_\phi^{0,2} & \cdots & \mathbf{E}_\phi^{0,l_{\mathrm{max}}} \\
+    \mathbf{E}_\phi^{1,0} & \mathbf{E}_\phi^{1,1} & \mathbf{E}_\phi^{1,2} & \cdots & \mathbf{E}_\phi^{1,l_{\mathrm{max}}} \\
+    \mathbf{E}_\phi^{2,0} & \mathbf{E}_\phi^{2,1} & \mathbf{E}_\phi^{2,2} & \cdots & \mathbf{E}_\phi^{2,l_{\mathrm{max}}} \\
+    \vdots & \vdots & \vdots & \ddots & \vdots \\
+    \mathbf{E}_\phi^{l_{\mathrm{max}},0} & \mathbf{E}_\phi^{l_{\mathrm{max}},1} & \mathbf{E}_\phi^{l_{\mathrm{max}},2} & \cdots & \mathbf{E}_\phi^{l_{\mathrm{max}},l_{\mathrm{max}}}
+    }
+    \quad,
+\end{proof}
 %
 where
 %
-\begin{align}
+\begin{proof}{test_ephi}
     \mathbf{e}_\phi^l
-     & =
+    & =
     \int
     \mathbf{R}^l_{\hat{\mathbf{x}}}(\phi) \,
     \mathbf{e}^l_r \,
@@ -575,14 +609,33 @@ where
     \mathrm{d}\phi
     \nonumber \\
     %
-     & =
+    & =
     %
     {\mathbf{U}^l}^{-1}
     \pmb{\rho}^l
     \quad,
-\end{align}
+\end{proof}
 %
-where we define
+and
+%
+\begin{proof}{}
+    \mathbf{E}_\phi^{l,l'}
+    & =
+    \int
+    \mathbf{R}^l_{\hat{\mathbf{x}}}(\phi) \,
+    \mathbf{e}^l_r \,
+    {\mathbf{R}^{l'}_{\hat{\mathbf{x}}}}^\top(\phi) \,
+    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\phi
+    \nonumber \\
+    %
+    & =
+    %
+    \cdots
+\end{proof}
+%
+\xxx{work in progress...}
+In the expressions above, we define the vectors
 %
 \begin{align}
     \pmb{\rho}^l
@@ -632,9 +685,9 @@ We may write the terms of $\pmb{\rho}^l$ as
 %
 where
 %
-\begin{align}
+\begin{proof}{test_qli}
     q^l_i(\pmb{\theta}_{\phi})
-     & =
+    & =
     \frac{1}{2}
     \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}
     %
@@ -648,31 +701,8 @@ where
     \mathrm{d}\phi
     \nonumber \\[0.5em]
     %
-     & =
-    % %
-    % \begin{cases}
-    %     \displaystyle\int_{0}^{\frac{\pi}{2}}
-    %     %
-    %     (\cos\phi)^{\alpha - 1}
-    %     (1 - \cos\phi)^{l + \beta - \frac{i}{2} - 1}
-    %     (1 + \cos\phi)^\frac{i}{2}
-    %     %
-    %     \,
-    %     \sin\phi
-    %     \,
-    %     \mathrm{d}\phi
-    %     %
-    %     & i \,\, \mathrm{even}
-    %     %
-    %     \\
-    %     %
-    %     0
-    %     %
-    %     & i \,\, \mathrm{odd}
-    % \end{cases}
-    % \nonumber \\[0.5em]
-    % & =
-    % %
+    & =
+    %
     \begin{cases}
         \displaystyle\int_{0}^{1}
         %
@@ -691,36 +721,45 @@ where
         %
          & i \,\, \mathrm{odd} \quad,
     \end{cases}
-\end{align}
+\end{proof}
 %
 and in the last line we made use of the transformation $x = \cos\phi$.
 %
 The integral in the expression above has a closed-form solution in terms
 of the hypergeometric function $_2F_1$:
 %
-\begin{align}
+\begin{proof}{test_qli}
     %
+    \label{eq:qli}
     q^l_i(\pmb{\theta}_{\phi})
-     & =
-    \begin{cases}
-        \dfrac{\Gamma(\alpha)\Gamma(l + \beta - \frac{i}{2})}{\Gamma(l + \alpha + \beta - \frac{i}{2})}
-        \,
-        _2F_1\Big(
-        -\frac{i}{2},
-        \alpha;
-        l + \alpha + \beta - \frac{i}{2};
-        -1
-        \Big)
-        %
-         & i \,\, \mathrm{even}
-        %
-        \\
-        %
-        0
-        %
-         & i \,\, \mathrm{odd} \quad.
-    \end{cases}
-\end{align}
+    & =
+    \resizebox{.75\hsize}{!}{$
+            \begin{cases}
+                \dfrac{\Gamma(\alpha)\Gamma(l + \beta - \frac{i}{2})}{\Gamma(l + \alpha + \beta - \frac{i}{2})}
+                \,
+                _2F_1\Big(
+                -\frac{i}{2},
+                \alpha;
+                l + \alpha + \beta - \frac{i}{2};
+                -1
+                \Big)
+                %
+                 & i \,\, \mathrm{even}
+                %
+                \\
+                %
+                0
+                %
+                 & i \,\, \mathrm{odd} \quad.
+            \end{cases}
+        $}
+\end{proof}
+%
+In order to compute the integral $\mathbf{e}_\phi$
+(Equation~\ref{eq:e2}) we must evaluate Equation~(\ref{eq:qli})
+for all $0 \leq l \leq l_{\mathrm{max}}$, $0 \leq i \leq 2l$,
+which can be done efficiently via upward recursion relations for both
+the gamma function and the hypergeometric function.
 
 \bibliography{bib}
 \end{document}
