@@ -9,6 +9,7 @@ from .ops import (
 from .wigner import R
 from .defaults import defaults
 from .math import cast
+from .cache import cache
 from scipy.special import gamma, hyp2f1
 import numpy as np
 import theano
@@ -19,10 +20,6 @@ import os
 
 
 __all__ = ["FluxIntegral"]
-
-
-# Get cache path
-CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache")
 
 
 class FluxIntegral:
@@ -69,10 +66,6 @@ class FluxIntegral:
 
         # Stability hacks
         self._eps = kwargs.pop("eps3", defaults["eps3"])
-
-    @property
-    def _cache_file(self):
-        return os.path.join(CACHE_PATH, "flux_{}.npz".format(self._ydeg))
 
     def _check_params(self, i, p):
         # Period
@@ -134,64 +127,64 @@ class FluxIntegral:
             1 + 0.5 * i, -0.5 * j, 2 + 0.5 * i, 0.5
         )
 
-    def _precompute(self, clobber=False):
+    @cache("_ydeg")
+    def _precompute_inclination_integrals(self, clobber=False):
         """
         Pre-compute the inclination marginalization integrals.
+
+        """
+        # The flux integral operator
+        rTA1 = rTA1Op(self._ydeg)().eval()
+
+        # The marginalization integral
+        G = np.array(
+            [
+                [self._G(i, j) for i in range(4 * self._ydeg + 1)]
+                for j in range(4 * self._ydeg + 1)
+            ]
+        )
+
+        # First moment integral
+        t = [None for l in range(self._ydeg + 1)]
+        for l in range(self._ydeg + 1):
+            m = np.arange(-l, l + 1)
+            i = slice(l ** 2, (l + 1) ** 2)
+            t[l] = rTA1[i] @ self._R[l] @ G[l - m, l + m]
+
+        # Second moment integral
+        T = np.zeros((self._nylm, self._nylm))
+        for i in tqdm(
+            range(self._nylm), desc="Computing inclination integrals"
+        ):
+            l1 = int(np.floor(np.sqrt(i)))
+            k = np.arange(l1 ** 2, (l1 + 1) ** 2)
+            k0 = np.arange(2 * l1 + 1).reshape(-1, 1)
+            for p in range(self._nylm):
+                l2 = int(np.floor(np.sqrt(p)))
+                j = np.arange(l2 ** 2, (l2 + 1) ** 2)
+                j0 = np.arange(2 * l2 + 1).reshape(1, -1)
+                Wik = rTA1[i] * self._R[l1][i - l1 ** 2, k - l1 ** 2]
+                Wjp = rTA1[j] @ self._R[l2][j - l2 ** 2, p - l2 ** 2]
+                M = G[k0 + j0, 2 * l1 - k0 + 2 * l2 - j0]
+                T[k, p] += Wik @ M @ Wjp
+
+        # Return a cacheable dict
+        return dict(
+            rTA1=rTA1,
+            T=T,
+            **{"t{:d}".format(l): t[l] for l in range(self._ydeg + 1)},
+        )
+
+    def _precompute(self, clobber=False):
+        """
+        Pre-compute some vectors and matrices.
         
         """
-
-        if clobber or not os.path.exists(self._cache_file):
-
-            print("Pre-computing the inclination integrals...")
-
-            # The flux integral operator
-            self._rTA1 = rTA1Op(self._ydeg)().eval()
-
-            # The marginalization integral
-            G = np.array(
-                [
-                    [self._G(i, j) for i in range(4 * self._ydeg + 1)]
-                    for j in range(4 * self._ydeg + 1)
-                ]
-            )
-
-            # First moment integral
-            self._t = [None for l in range(self._ydeg + 1)]
-            for l in range(self._ydeg + 1):
-                m = np.arange(-l, l + 1)
-                i = slice(l ** 2, (l + 1) ** 2)
-                self._t[l] = self._rTA1[i] @ self._R[l] @ G[l - m, l + m]
-
-            # Second moment integral
-            self._T = np.zeros((self._nylm, self._nylm))
-            for i in tqdm(range(self._nylm)):
-                l1 = int(np.floor(np.sqrt(i)))
-                k = np.arange(l1 ** 2, (l1 + 1) ** 2)
-                k0 = np.arange(2 * l1 + 1).reshape(-1, 1)
-                for p in range(self._nylm):
-                    l2 = int(np.floor(np.sqrt(p)))
-                    j = np.arange(l2 ** 2, (l2 + 1) ** 2)
-                    j0 = np.arange(2 * l2 + 1).reshape(1, -1)
-                    Wik = self._rTA1[i] * self._R[l1][i - l1 ** 2, k - l1 ** 2]
-                    Wjp = self._rTA1[j] @ self._R[l2][j - l2 ** 2, p - l2 ** 2]
-                    M = G[k0 + j0, 2 * l1 - k0 + 2 * l2 - j0]
-                    self._T[k, p] += Wik @ M @ Wjp
-
-            # Save
-            tkwargs = {
-                "t{:d}".format(l): self._t[l] for l in range(self._ydeg + 1)
-            }
-            np.savez(self._cache_file, rTA1=self._rTA1, T=self._T, **tkwargs)
-
-            print("Done.")
-
-        else:
-
-            # Load from cache
-            data = np.load(self._cache_file)
-            self._rTA1 = data["rTA1"]
-            self._T = data["T"]
-            self._t = [data["t{:d}".format(l)] for l in range(self._ydeg + 1)]
+        # Compute or load from cache
+        integrals = self._precompute_inclination_integrals(clobber=clobber)
+        self._rTA1 = integrals["rTA1"]
+        self._T = integrals["T"]
+        self._t = [integrals["t{:d}".format(l)] for l in range(self._ydeg + 1)]
 
         # If we're marginalizing over inclination, pre-compute the
         # radial kernel on a fine grid. We'll interpolate over it

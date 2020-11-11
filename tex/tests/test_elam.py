@@ -59,70 +59,73 @@ def clmmpi(l, m, mu, i):
         return 0.0
 
 
-def qli(l, i, alpha, beta):
+def qli(l, i):
     if i % 2 == 0:
-        return B(alpha, l + beta - i / 2) * hyp2f1(
-            -i / 2, alpha, l + alpha + beta - i / 2, -1
+        return (
+            2 ** l
+            / np.pi
+            * Gamma(0.5 * (1 + i))
+            * Gamma(l + 0.5 * (1 - i))
+            / Gamma(l + 1)
         )
     else:
         return 0.0
 
 
-def rholm(l, m, alpha, beta, elr):
+def plm(l, m, elphi):
     term1 = 0
     for mu in range(-l, l + 1):
         term2 = 0
         for i in range(2 * l + 1):
-            term2 += clmmpi(l, m, mu, i) * qli(l, i, alpha, beta)
-        term1 += elr[l + mu] * np.exp(1j * np.pi / 2 * (m - mu)) * term2
-    return term1 / B(alpha, beta)
+            term2 += clmmpi(l, m, mu, i) * qli(l, i)
+        term1 += elphi[l + mu] * term2
+    return term1
 
 
-def rhol(l, alpha, beta, elr):
-    rho = np.zeros(2 * l + 1, dtype="complex128")
+def pl(l, elphi):
+    p = np.zeros(2 * l + 1, dtype="complex128")
     for m in range(-l, l + 1):
-        rho[l + m] = rholm(l, m, alpha, beta, elr)
-    return rho
+        p[l + m] = plm(l, m, elphi)
+    return p
 
 
-def elphi(l, alpha, beta, elr):
+def ellam(l, elphi):
     U = Ul(l)
-    return np.linalg.inv(U) @ rhol(l, alpha, beta, U @ elr)
+    return np.linalg.inv(U) @ pl(l, U @ elphi)
 
 
-def ephi(alpha, beta, er):
-    lmax = int(np.sqrt(len(er)) - 1)
+def elam(ephi):
+    lmax = int(np.sqrt(len(ephi)) - 1)
     e = []
     for l in range(lmax + 1):
-        e.extend(elphi(l, alpha, beta, er[l ** 2 : (l + 1) ** 2]))
+        e.extend(ellam(l, ephi[l ** 2 : (l + 1) ** 2]))
     e = np.array(e)
     assert np.max(np.abs(e.imag)) < 1e-15
     return e.real
 
 
-def ephi_numerical(alpha, beta, er):
+def elam_numerical(ephi):
 
-    lmax = int(np.sqrt(len(er)) - 1)
+    lmax = int(np.sqrt(len(ephi)) - 1)
     N = (lmax + 1) ** 2
     e = np.zeros(N)
 
     for n in range(N):
 
-        def func(phi):
-            Rl = R(lmax, 0.5 * np.pi, phi, -0.5 * np.pi)
+        def func(lam):
+            Rl = R(lmax, 0, lam, 0)
             Rs = np.zeros(N)
             for l in range(lmax + 1):
                 i = slice(l ** 2, (l + 1) ** 2)
-                Rs[i] = Rl[l] @ er[i]
-            jac = 0.5 * np.abs(np.sin(phi))
-            return Rs[n] * jac * Beta.pdf(np.cos(phi), alpha, beta)
+                Rs[i] = Rl[l] @ ephi[i]
+            return Rs[n] / (2 * np.pi)
 
-        e[n] = quad(func, -np.pi / 2, np.pi / 2)[0]
+        e[n] = quad(func, -np.pi, np.pi)[0]
 
     return e
 
 
-def test_ephi(lmax=5, alpha=2.0, beta=5.0):
+def test_elam(lmax=5):
     np.random.seed(0)
-    er = np.random.randn((lmax + 1) ** 2)
-    assert np.allclose(ephi(alpha, beta, er), ephi_numerical(alpha, beta, er))
+    ephi = np.random.randn((lmax + 1) ** 2)
+    assert np.allclose(elam(ephi), elam_numerical(ephi))

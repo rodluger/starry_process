@@ -34,7 +34,12 @@ def get_intensity_design_matrix(ydeg, npix=100, clobber=False):
         map = starry.Map(ydeg, lazy=False)
         A_I = np.pi * map.intensity_design_matrix(lat=lat, lon=lon)
         A_I = np.array(A_I, dtype="float32")
-        np.savez_compressed(file, A_I=A_I)
+
+        try:
+            np.savez_compressed(file, A_I=A_I)
+        except:
+            # fail silently; we might not have write permissions
+            pass
 
     # Else load from disk
     else:
@@ -43,7 +48,7 @@ def get_intensity_design_matrix(ydeg, npix=100, clobber=False):
 
             A_I = np.load(file)["A_I"]
 
-        except IOError:
+        except:
 
             return get_intensity_design_matrix(ydeg, npix=npix, clobber=True)
 
@@ -69,7 +74,12 @@ def get_flux_design_matrix(ydeg, npts=300):
             map.inc = inc
             theta = np.linspace(0, 360, npts) * 2
             A_F[i] = map.design_matrix(theta=theta)
-        np.savez(file, A_F=A_F)
+
+        try:
+            np.savez(file, A_F=A_F)
+        except:
+            # fail silently; we might not have write permissions
+            pass
 
     # Else load from disk
     else:

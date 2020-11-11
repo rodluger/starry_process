@@ -468,7 +468,7 @@ where
 \subsection{Latitude}
 %
 The latitude integrals (Equations~\ref{eq:e2} and \ref{eq:E2}) involve
-rotations about $\hat{\mathbf{x}}$, which
+rotations by an angle $\phi$ about $\hat{\mathbf{x}}$, which
 may be accomplished by choosing
 Euler angles $\alpha = \nicefrac{\pi}{2}$, $\beta = \phi$, and
 $\gamma = -\nicefrac{\pi}{2}$, such that
@@ -592,8 +592,8 @@ where
 and we define
 %
 \begin{align}
-    \label{eq:pl}
-    \mathbf{p}^l
+    \label{eq:plphi}
+    \mathbf{p}^l_\phi
      & \equiv
     \int
     \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi) \,
@@ -608,11 +608,11 @@ and we define
     \quad.
 \end{align}
 %
-The integral $\mathbf{p}^l$ defined above has a closed-form solution.
-To show this, we write the terms of $\mathbf{p}^l$ as
+The integral $\mathbf{p}^l_\phi$ defined above has a closed-form solution.
+To show this, we write the terms of $\mathbf{p}^l_\phi$ as
 %
 \begin{align}
-    p^l_m
+    {p^l_\phi}_m
      & =
     \int
     \sum\limits_{\mu=-l}^l
@@ -630,14 +630,14 @@ To show this, we write the terms of $\mathbf{p}^l$ as
     \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu)}
     \sum\limits_{i=0}^{2l} c_{m,\mu,i}^{l}
     \,
-    q^l_i(\pmb{\theta}_{\phi})
+    {q^l_\phi}_i(\pmb{\theta}_{\phi})
     \quad,
 \end{align}
 %
 where
 %
 \begin{proof}{test_qli}
-    q^l_i(\pmb{\theta}_{\phi})
+    {q^l_\phi}_i(\pmb{\theta}_{\phi})
     & \equiv
     \frac{1}{2}
     \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}
@@ -679,10 +679,10 @@ and in the last line we made use of the transformation $x = \cos\phi$.
 The integral in the expression above has a closed-form solution in terms
 of the hypergeometric function $_2F_1$:
 %
-\begin{proof}{test_qli}
+\begin{proof}{test_qlphii}
     %
-    \label{eq:qli}
-    q^l_i(\pmb{\theta}_{\phi})
+    \label{eq:qlphii}
+    {q^l_\phi}_i(\pmb{\theta}_{\phi})
     & =
     \resizebox{.75\hsize}{!}{$
             \begin{cases}
@@ -707,7 +707,7 @@ of the hypergeometric function $_2F_1$:
 \end{proof}
 %
 In order to compute the integral $\mathbf{e}_\phi$
-(Equation~\ref{eq:e2}) we must evaluate Equation~(\ref{eq:qli})
+(Equation~\ref{eq:e2}) we must evaluate Equation~(\ref{eq:qlphii})
 for all $0 \leq l \leq l_{\mathrm{max}}$, $0 \leq i \leq 2l$,
 which can be done efficiently via upward recursion relations for both
 the gamma function and the hypergeometric function.
@@ -760,15 +760,15 @@ where
     & =
     %
     {\mathbf{U}^l}^{-1}
-    \mathbf{P}^l
+    \mathbf{P}^l_\phi
     {{\mathbf{U}^l}^{-1}}^\top
 \end{proof}
 %
 and we define
 %
 \begin{align}
-    \label{eq:Pl}
-    \mathbf{P}^l
+    \label{eq:Plphi}
+    \mathbf{P}^l_\phi
      & \equiv
     \int
     \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi) \,
@@ -786,11 +786,11 @@ and we define
     \quad.
 \end{align}
 %
-As before, we may express the solution to the integral $\mathbf{P}^l$ in
-closed form. Let us write the terms of $\mathbf{P}^l$ as
+As before, we may express the solution to the integral $\mathbf{P}^l_\phi$ in
+closed form. Let us write the terms of $\mathbf{P}^l_\phi$ as
 %
 \begin{align}
-    P^l_{m,m'}
+    {P^l_\phi}_{m,m'}
      & =
     \int
     \sum\limits_{\mu=-l}^l
@@ -815,7 +815,7 @@ closed form. Let us write the terms of $\mathbf{P}^l$ as
         c_{m,\mu,i}^{l}
         c_{\nu,m',j}^{l}
         \,
-        Q^l_{i,j}(\pmb{\theta}_{\phi})
+        {Q^l_\phi}_{i,j}(\pmb{\theta}_{\phi})
     $}
     \quad,
 \end{align}
@@ -823,7 +823,7 @@ closed form. Let us write the terms of $\mathbf{P}^l$ as
 where, similarly to before,
 %
 \begin{proof}{}
-    Q^l_{i,j}(\pmb{\theta}_{\phi})
+    {Q^l_\phi}_{i,j}(\pmb{\theta}_{\phi})
     & \equiv
     \frac{1}{2}
     \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}
@@ -864,8 +864,8 @@ We may again express this integral in closed form:
 %
 \begin{proof}{}
     %
-    \label{eq:Qlij}
-    Q^l_{i,j}(\pmb{\theta}_{\phi})
+    \label{eq:Qlphiij}
+    {Q^l_\phi}_{i,j}(\pmb{\theta}_{\phi})
     & =
     \resizebox{.75\hsize}{!}{$
             \begin{cases}
@@ -891,6 +891,179 @@ We may again express this integral in closed form:
 %
 As before, this integral may be evaluated recursively to efficiently compute all
 of the terms in $\mathbf{E}_\phi$.
+
+\subsection{Longitude}
+%
+The longitude integrals (Equations~\ref{eq:e3} and \ref{eq:E3}) involve
+rotations by an angle $\lambda$ about $\hat{\mathbf{y}}$, which
+may be accomplished by choosing
+Euler angles $\alpha = 0$, $\beta = \lambda$, and
+$\gamma = 0$, such that
+%
+\begin{align}
+    \mathbf{R}^l_{\hat{\mathbf{y}}}(\lambda)
+     & =
+    {\mathbf{U}^l}^{-1} \mathbf{D}^l_{\hat{\mathbf{y}}}(\lambda) \mathbf{U}^l
+\end{align}
+%
+with
+\begin{align}
+    \mathbf{D}^l_{\hat{\mathbf{y}}}(\lambda)
+     & =
+    \mathbf{D}^l\left(0, \lambda, 0\right)
+    \quad.
+\end{align}
+%
+Since we expect the longitudinal distribution of features on the surfaces
+of stars to be (on average) isotropic, we will place a uniform prior on
+$\lambda \in [-\pi, \pi)$:
+%
+\begin{align}
+    p(\lambda \big| \pmb{\theta}_\lambda)
+     & =
+    \begin{cases}
+        \frac{1}{2\pi} & -\pi \leq \lambda < \pi
+        \\
+        0              & \mathrm{otherwise} \quad.
+    \end{cases}
+\end{align}
+%
+We therefore have no hyperparameters
+controlling the longitudinal distribution, i.e.,
+%
+\begin{align}
+    \pmb{\theta}_\lambda = \left( \,\,\, \right)
+    \quad.
+\end{align}
+%
+
+\subsubsection{First moment}
+%
+As before, we will solve for the terms of the moment integrals one
+spherical harmonic degree at a time:
+%
+\begin{proof}{test_elam}
+    \mathbf{e}_\lambda
+    & \equiv
+    \int
+    \mathbf{R}_{\hat{\mathbf{y}}}(\lambda) \,
+    \mathbf{e}_\phi \,
+    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\lambda
+    \nonumber
+    \\
+    %
+    & =
+    %
+    \left(
+    \mathbf{e}_\lambda^0
+    \,\,\,
+    \mathbf{e}_\lambda^1
+    \,\,\,
+    \mathbf{e}_\lambda^2
+    \,\,\,
+    \cdots
+    \,\,\,
+    \mathbf{e}_\lambda^{l_{\mathrm{max}}}
+    \right)^\top
+    \quad,
+\end{proof}
+%
+where
+%
+\begin{proof}{test_elam}
+    \mathbf{e}_\lambda^l
+    & =
+    \int
+    \mathbf{R}^l_{\hat{\mathbf{y}}}(\lambda) \,
+    \mathbf{e}^l_\phi \,
+    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\lambda
+    \nonumber \\
+    %
+    & =
+    %
+    {\mathbf{U}^l}^{-1}
+    \mathbf{p}^l_\lambda
+    \quad,
+\end{proof}
+%
+and we define
+%
+\begin{align}
+    \label{eq:pllam}
+    \mathbf{p}^l_\lambda
+     & \equiv
+    \int
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(\lambda) \,
+    \bar{\mathbf{e}}^l_\phi \,
+    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\lambda
+    \\
+    \bar{\mathbf{e}}^l_\phi
+     & \equiv
+    \mathbf{U}^l
+    \mathbf{e}^l_\phi
+    \quad.
+\end{align}
+%
+The integral $\mathbf{p}^l_\lambda$ defined above has a closed-form solution.
+To show this, we write the terms of $\mathbf{p}^l_\lambda$ as
+%
+\begin{align}
+    {p^l_\lambda}_m
+     & =
+    \int
+    \sum\limits_{\mu=-l}^l
+    {D^l_{\hat{\mathbf{y}}}}_{m,\mu}(\lambda) \,
+    {\bar{e}^l}{{}_\phi}_{\mu} \,
+    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\lambda
+    %
+    \nonumber \\[0.5em]
+    %
+     & =
+    \sum\limits_{\mu=-l}^l
+    {\bar{e}^l}{{}_\phi}_{\mu}
+    \sum\limits_{i=0}^{2l} c_{m,\mu,i}^{l}
+    \,
+    {q^l_\lambda}_i
+    \quad,
+\end{align}
+%
+where
+%
+\begin{proof}{test_qllam}
+    {q^l_\lambda}_i
+    & \equiv
+    \frac{1}{2\pi}
+    \int_{-\pi}^{\pi}
+    %
+    \mathrm{sgn}(\sin\lambda)^{i}
+    (1 - \cos\lambda)^{l - \frac{i}{2}}
+    (1 + \cos\lambda)^\frac{i}{2}
+    %
+    \,
+    \mathrm{d}\lambda
+    \nonumber \\[0.5em]
+    %
+    & =
+    %
+    \begin{cases}
+        \dfrac{2^l \Gamma \left(\frac{1+i}{2}\right)
+            \Gamma \left(l+\frac{1-i}{2}\right)}{\pi  \Gamma (l+1)}
+        %
+         & i \,\, \mathrm{even}
+        %
+        \\
+        %
+        0
+        %
+         & i \,\, \mathrm{odd} \quad,
+    \end{cases}
+\end{proof}
+%
+whose terms may easily be computed by upward recursion.
 
 \bibliography{bib}
 \end{document}

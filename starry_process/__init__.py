@@ -24,6 +24,7 @@ from . import (
     longitude,
     wigner,
     defaults,
+    cache,
 )
 from .sp import StarryProcess
 from .latitude import gauss2beta, beta2gauss
