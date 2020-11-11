@@ -29,9 +29,9 @@ def test_sample(tol=5):
     )
 
     # Get the 3 lowest local minima
-    grad = np.gradient(Ilat)
+    grad = np.gradient(I)
     idx = (grad[1:] > 0) & (grad[:-1] < 0)
-    k = np.argsort(Ilat[:-1][idx])[:3]
+    k = np.argsort(I[:-1][idx])[:3]
     min_lats = np.sort(lat[:-1][idx][k])
 
     # Now check that these are about (-45, 0, 45)

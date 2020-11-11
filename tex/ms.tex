@@ -353,13 +353,20 @@ We devote the next four sections to the computation of these eight
 integrals.
 
 
-\section{The Size and Contrast Integrals}
-\label{sec:size-contrast}
+\section{The Size Integral}
+\label{sec:size}
+%
+\xxx{Coming soon.}
 
 \section{The Latitude and Longitude Integrals}
 \label{sec:lat-lon}
 %
-Our goal in this section is to compute the integrals...
+Our goal in this section is to compute the first and second moments
+of the latitude ($\mathbf{e}_\phi$, $\mathbf{E}_\phi$)
+and longitude ($\mathbf{e}_\lambda$, $\mathbf{E}_\lambda$) distributions
+(Equations \ref{eq:e2}, \ref{eq:e3}, \ref{eq:E2}, and \ref{eq:E3},
+respectively). These involve integrals over the terms in the Wigner
+rotation matrix for spherical harmonics, which we discuss below.
 
 \subsection{Rotation matrices}
 %
@@ -1064,6 +1071,149 @@ where
 \end{proof}
 %
 whose terms may easily be computed by upward recursion.
+
+\subsubsection{Second moment}
+%
+We write the second moment integral as
+%
+\begin{proof}{}
+    \mathbf{E}_\lambda
+    & \equiv
+    \int
+    \mathbf{R}_{\hat{\mathbf{y}}}(\lambda) \,
+    \mathbf{E}_\phi \,
+    \mathbf{E}_\phi^\top \,
+    \mathbf{R}_{\hat{\mathbf{y}}}^\top(\lambda) \,
+    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\lambda
+    \nonumber
+    \\
+    %
+    & =
+    %
+    \setstackgap{L}{1.25\baselineskip}
+    \fixTABwidth{T}
+    \parenMatrixstack{
+    \mathbf{E}_\lambda^{0,0} & \mathbf{E}_\lambda^{0,1} & \mathbf{E}_\lambda^{0,2} & \cdots & \mathbf{E}_\lambda^{0,l_{\mathrm{max}}} \\
+    \mathbf{E}_\lambda^{1,0} & \mathbf{E}_\lambda^{1,1} & \mathbf{E}_\lambda^{1,2} & \cdots & \mathbf{E}_\lambda^{1,l_{\mathrm{max}}} \\
+    \mathbf{E}_\lambda^{2,0} & \mathbf{E}_\lambda^{2,1} & \mathbf{E}_\lambda^{2,2} & \cdots & \mathbf{E}_\lambda^{2,l_{\mathrm{max}}} \\
+    \vdots & \vdots & \vdots & \ddots & \vdots \\
+    \mathbf{E}_\lambda^{l_{\mathrm{max}},0} & \mathbf{E}_\lambda^{l_{\mathrm{max}},1} & \mathbf{E}_\lambda^{l_{\mathrm{max}},2} & \cdots & \mathbf{E}_\lambda^{l_{\mathrm{max}},l_{\mathrm{max}}}
+    }
+    \quad,
+\end{proof}
+%
+where
+%
+\begin{proof}{}
+    \mathbf{E}_\lambda^{l,l'}
+    & =
+    \int
+    \mathbf{R}^l_{\hat{\mathbf{y}}}(\lambda) \,
+    \mathbf{E}^l_\phi \,
+    {\mathbf{E}^l_\phi}^\top \,
+    {\mathbf{R}^{l'}_{\hat{\mathbf{y}}}}^\top(\lambda) \,
+    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\lambda
+    \nonumber \\
+    %
+    & =
+    %
+    {\mathbf{U}^l}^{-1}
+    \mathbf{P}^l_\lambda
+    {{\mathbf{U}^l}^{-1}}^\top
+\end{proof}
+%
+and we define
+%
+\begin{align}
+    \label{eq:Pllam}
+    \mathbf{P}^l_\lambda
+     & \equiv
+    \int
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(\lambda) \,
+    \bar{\mathbf{E}}^l_\phi \,
+    {\mathbf{D}^l_{\hat{\mathbf{x}}}}^\top(\lambda) \,
+    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\lambda
+    \\
+    \bar{\mathbf{E}}^l_\phi
+     & \equiv
+    \mathbf{U}^l
+    \mathbf{E}^l_\phi
+    {\mathbf{E}^l_\phi}^\top
+    {\mathbf{U}^l}^\top
+    \quad.
+\end{align}
+%
+We then express the terms of $\mathbf{P}^l_\lambda$ as
+%
+\begin{align}
+    {P^l_\lambda}_{m,m'}
+     & =
+    \int
+    \sum\limits_{\mu=-l}^l
+    \sum\limits_{\nu=-l}^l
+    {D^l_{\hat{\mathbf{x}}}}_{m,\mu}(\lambda) \,
+    {\bar{E}^l}{{}_\phi}_{\mu,\nu} \,
+    {D^l_{\hat{\mathbf{x}}}}_{\nu,m'}(\lambda) \,
+    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\lambda
+    %
+    \nonumber \\[0.5em]
+    %
+     & =
+    \sum\limits_{\mu=-l}^l
+    \sum\limits_{\nu=-l}^l
+    {\bar{E}^l}{{}_\phi}_{\mu,\nu}
+    \sum\limits_{i=0}^{2l}
+    \sum\limits_{j=0}^{2l}
+    c_{m,\mu,i}^{l}
+    c_{\nu,m',j}^{l}
+    \,
+    {Q^l_\lambda}_{i,j}
+    \quad,
+\end{align}
+%
+where
+%
+\begin{proof}{}
+    {Q^l_\lambda}_{i,j}
+    & \equiv
+    \frac{1}{2\pi}
+    \int_{-\pi}^{\pi}
+    %
+    \mathrm{sgn}(\sin\lambda)^{i+j}
+    (1 - \cos\lambda)^{2l - \frac{i+j}{2}}
+    (1 + \cos\lambda)^\frac{i+j}{2}
+    %
+    \,
+    \mathrm{d}\lambda
+    \nonumber \\[0.5em]
+    %
+    & =
+    %
+    \begin{cases}
+        \dfrac{2^{2l} \Gamma \left(\frac{1+i+j}{2}\right)
+            \Gamma \left(2l+\frac{1-i-j}{2}\right)}{\pi  \Gamma (2l+1)}
+        %
+         & i+j \,\, \mathrm{even}
+        %
+        \\
+        %
+        0
+        %
+         & i+j \,\, \mathrm{odd} \quad,
+    \end{cases}
+\end{proof}
+%
+whose terms may again be computed by upward recursion.
+
+
+\section{The Contrast Integral}
+\label{sec:contrast}
+%
+\xxx{Coming soon.}
 
 \bibliography{bib}
 \end{document}
