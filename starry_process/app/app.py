@@ -775,7 +775,7 @@ class Application(object):
         )
 
         # The integrals
-        sp = StarryProcess()
+        sp = StarryProcess(ydeg=self.ydeg)
         pdf = lambda x, mu, sigma: sp.latitude._pdf(x, *gauss2beta(mu, sigma))
         pdf_gauss = lambda x, mu, sigma: 0.5 * (
             Normal.pdf(x, -mu, sigma) + Normal.pdf(x, mu, sigma)

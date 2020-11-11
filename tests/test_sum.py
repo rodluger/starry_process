@@ -21,7 +21,7 @@ def test_sample(tol=5):
     map[:, :] = y
     lat = np.linspace(-90, 90, 300)
     lon = np.linspace(-180, 180, 600)
-    lat_, lon_ = np.meshgrid(lat0, lon0)
+    lat_, lon_ = np.meshgrid(lat, lon)
     lat_ = lat_.flatten()
     lon_ = lon_.flatten()
     I = np.mean(
@@ -32,7 +32,7 @@ def test_sample(tol=5):
     grad = np.gradient(Ilat)
     idx = (grad[1:] > 0) & (grad[:-1] < 0)
     k = np.argsort(Ilat[:-1][idx])[:3]
-    min_lats = np.sort(lat0[:-1][idx][k])
+    min_lats = np.sort(lat[:-1][idx][k])
 
     # Now check that these are about (-45, 0, 45)
     assert np.abs(min_lats[0] - (-45)) < tol
