@@ -42,11 +42,12 @@
 % Add code, proof, and animation hyperlinks
 \definecolor{linkcolor}{rgb}{0.1216,0.4667,0.7059}
 \definecolor{testpasscolor}{rgb}{0.13333333,0.5254902,0.22745098}
+\definecolor{testmissingcolor}{rgb}{1.0,0.88,0.30}
 \definecolor{testfailcolor}{rgb}{0.79607843,0.14117647,0.19215686}
 \newcommand{\codeicon}{{\color{linkcolor}\faFileCodeO}}
-\newcommand{\prooficon}{{\color{linkcolor}\faPencilSquareO}}
-\newcommand{\testpassicon}{{\color{testpasscolor}\faCheckCircle}}
-\newcommand{\testfailicon}{{\color{testfailcolor}\faTimesCircle}}
+\newcommand{\testmissingicon}{{\color{testmissingcolor}\faQuestion}}
+\newcommand{\testpassicon}{{\color{testpasscolor}\faCheck}}
+\newcommand{\testfailicon}{{\color{testfailcolor}\faTimes}}
 \input{gitlinks}
 
 % Define a proof environment for open source equation proofs
@@ -54,7 +55,7 @@
 \newcommand{\currentlabel}{None}
 \newenvironment{proof}[1]{%
   \ifstrempty{#1}{%
-    \renewtagform{eqtag}[]{\raisebox{-0.1em}{{\color{red}\faPencilSquareO}}\,(}{)}%
+    \renewtagform{eqtag}[]{\raisebox{-0.1em}{{\testmissingicon}}\,(}{)}%
   }{%
     \renewtagform{eqtag}[]{\prooflink{#1}\,(}{)}%
   }%

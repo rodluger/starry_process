@@ -537,9 +537,11 @@ may be computed by a straightforward change of variable:
 %
 for $\phi \in \left[ -\frac{\pi}{2}, \frac{\pi}{2} \right]$.
 
+\subsubsection{First moment}
+%
 Since the Wigner matrices are block diagonal, we may evaluate the moments of the
 distribution one spherical harmonic degree at a time. To that end, let us
-write
+write the first moment integral as
 %
 \begin{proof}{test_ephi}
     \mathbf{e}_\phi
@@ -568,35 +570,6 @@ write
     \quad,
 \end{proof}
 %
-and
-%
-\begin{proof}{}
-    \mathbf{E}_\phi
-    & \equiv
-    \int
-    \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{E}_r \,
-    \mathbf{E}_r^\top \,
-    \mathbf{R}_{\hat{\mathbf{x}}}^\top(\phi) \,
-    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
-    \mathrm{d}\phi
-    \nonumber
-    \\
-    %
-    & =
-    %
-    \setstackgap{L}{1.25\baselineskip}
-    \fixTABwidth{T}
-    \parenMatrixstack{
-    \mathbf{E}_\phi^{0,0} & \mathbf{E}_\phi^{0,1} & \mathbf{E}_\phi^{0,2} & \cdots & \mathbf{E}_\phi^{0,l_{\mathrm{max}}} \\
-    \mathbf{E}_\phi^{1,0} & \mathbf{E}_\phi^{1,1} & \mathbf{E}_\phi^{1,2} & \cdots & \mathbf{E}_\phi^{1,l_{\mathrm{max}}} \\
-    \mathbf{E}_\phi^{2,0} & \mathbf{E}_\phi^{2,1} & \mathbf{E}_\phi^{2,2} & \cdots & \mathbf{E}_\phi^{2,l_{\mathrm{max}}} \\
-    \vdots & \vdots & \vdots & \ddots & \vdots \\
-    \mathbf{E}_\phi^{l_{\mathrm{max}},0} & \mathbf{E}_\phi^{l_{\mathrm{max}},1} & \mathbf{E}_\phi^{l_{\mathrm{max}},2} & \cdots & \mathbf{E}_\phi^{l_{\mathrm{max}},l_{\mathrm{max}}}
-    }
-    \quad,
-\end{proof}
-%
 where
 %
 \begin{proof}{test_ephi}
@@ -612,45 +585,22 @@ where
     & =
     %
     {\mathbf{U}^l}^{-1}
-    \pmb{\rho}^l
+    \mathbf{p}^l
     \quad,
 \end{proof}
 %
-and
-%
-\begin{proof}{}
-    \mathbf{E}_\phi^{l,l'}
-    & =
-    \int
-    \mathbf{R}^l_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{e}^l_r \,
-    {\mathbf{R}^{l'}_{\hat{\mathbf{x}}}}^\top(\phi) \,
-    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
-    \mathrm{d}\phi
-    \nonumber \\
-    %
-    & =
-    %
-    \cdots
-\end{proof}
-%
-\xxx{work in progress...}
-In the expressions above, we define the vectors
+and we define
 %
 \begin{align}
-    \pmb{\rho}^l
+    \label{eq:pl}
+    \mathbf{p}^l
      & \equiv
     \int
     \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi) \,
     \bar{\mathbf{e}}^l_r \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
-    \,
-\end{align}
-%
-and
-%
-\begin{align}
+    \\
     \bar{\mathbf{e}}^l_r
      & \equiv
     \mathbf{U}^l
@@ -658,15 +608,16 @@ and
     \quad.
 \end{align}
 %
-We may write the terms of $\pmb{\rho}^l$ as
+The integral $\mathbf{p}^l$ defined above has a closed-form solution.
+To show this, we write the terms of $\mathbf{p}^l$ as
 %
 \begin{align}
-    \rho^l_m
+    p^l_m
      & =
     \int
-    \sum\limits_{m'}
-    {D^l_{\hat{\mathbf{x}}}}_{m,m'}(\phi) \,
-    {\bar{e}^l}{{}_r}_{m'} \,
+    \sum\limits_{\mu=-l}^l
+    {D^l_{\hat{\mathbf{x}}}}_{m,\mu}(\phi) \,
+    {\bar{e}^l}{{}_r}_{\mu} \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
     %
@@ -674,10 +625,10 @@ We may write the terms of $\pmb{\rho}^l$ as
     %
      & =
     \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
-    \sum\limits_{m'}
-    {\bar{e}^l}{{}_r}_{m'}
-    \mathrm{e}^{\frac{\imag \pi}{2}(m - m')}
-    \sum\limits_i c_{m,m',i}^{l}
+    \sum\limits_{\mu=-l}^l
+    {\bar{e}^l}{{}_r}_{\mu}
+    \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu)}
+    \sum\limits_{i=0}^{2l} c_{m,\mu,i}^{l}
     \,
     q^l_i(\pmb{\theta}_{\phi})
     \quad,
@@ -687,7 +638,7 @@ where
 %
 \begin{proof}{test_qli}
     q^l_i(\pmb{\theta}_{\phi})
-    & =
+    & \equiv
     \frac{1}{2}
     \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}
     %
@@ -760,6 +711,186 @@ In order to compute the integral $\mathbf{e}_\phi$
 for all $0 \leq l \leq l_{\mathrm{max}}$, $0 \leq i \leq 2l$,
 which can be done efficiently via upward recursion relations for both
 the gamma function and the hypergeometric function.
+
+\subsubsection{Second moment}
+%
+Similarly as before, let us write the second moment integral as
+%
+\begin{proof}{}
+    \mathbf{E}_\phi
+    & \equiv
+    \int
+    \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
+    \mathbf{E}_r \,
+    \mathbf{E}_r^\top \,
+    \mathbf{R}_{\hat{\mathbf{x}}}^\top(\phi) \,
+    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\phi
+    \nonumber
+    \\
+    %
+    & =
+    %
+    \setstackgap{L}{1.25\baselineskip}
+    \fixTABwidth{T}
+    \parenMatrixstack{
+    \mathbf{E}_\phi^{0,0} & \mathbf{E}_\phi^{0,1} & \mathbf{E}_\phi^{0,2} & \cdots & \mathbf{E}_\phi^{0,l_{\mathrm{max}}} \\
+    \mathbf{E}_\phi^{1,0} & \mathbf{E}_\phi^{1,1} & \mathbf{E}_\phi^{1,2} & \cdots & \mathbf{E}_\phi^{1,l_{\mathrm{max}}} \\
+    \mathbf{E}_\phi^{2,0} & \mathbf{E}_\phi^{2,1} & \mathbf{E}_\phi^{2,2} & \cdots & \mathbf{E}_\phi^{2,l_{\mathrm{max}}} \\
+    \vdots & \vdots & \vdots & \ddots & \vdots \\
+    \mathbf{E}_\phi^{l_{\mathrm{max}},0} & \mathbf{E}_\phi^{l_{\mathrm{max}},1} & \mathbf{E}_\phi^{l_{\mathrm{max}},2} & \cdots & \mathbf{E}_\phi^{l_{\mathrm{max}},l_{\mathrm{max}}}
+    }
+    \quad,
+\end{proof}
+%
+where
+%
+\begin{proof}{}
+    \mathbf{E}_\phi^{l,l'}
+    & =
+    \int
+    \mathbf{R}^l_{\hat{\mathbf{x}}}(\phi) \,
+    \mathbf{E}^l_r \,
+    {\mathbf{E}^l_r}^\top \,
+    {\mathbf{R}^{l'}_{\hat{\mathbf{x}}}}^\top(\phi) \,
+    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\phi
+    \nonumber \\
+    %
+    & =
+    %
+    {\mathbf{U}^l}^{-1}
+    \mathbf{P}^l
+    {{\mathbf{U}^l}^{-1}}^\top
+\end{proof}
+%
+and we define
+%
+\begin{align}
+    \label{eq:Pl}
+    \mathbf{P}^l
+     & \equiv
+    \int
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi) \,
+    \bar{\mathbf{E}}^l_r \,
+    {\mathbf{D}^l_{\hat{\mathbf{x}}}}^\top(\phi) \,
+    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\phi
+    \\
+    \bar{\mathbf{E}}^l_r
+     & \equiv
+    \mathbf{U}^l
+    \mathbf{E}^l_r
+    {\mathbf{E}^l_r}^\top
+    {\mathbf{U}^l}^\top
+    \quad.
+\end{align}
+%
+As before, we may express the solution to the integral $\mathbf{P}^l$ in
+closed form. Let us write the terms of $\mathbf{P}^l$ as
+%
+\begin{align}
+    P^l_{m,m'}
+     & =
+    \int
+    \sum\limits_{\mu=-l}^l
+    \sum\limits_{\nu=-l}^l
+    {D^l_{\hat{\mathbf{x}}}}_{m,\mu}(\phi) \,
+    {\bar{E}^l}{{}_r}_{\mu,\nu} \,
+    {D^l_{\hat{\mathbf{x}}}}_{\nu,m'}(\phi) \,
+    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\phi
+    %
+    \nonumber \\[0.5em]
+    %
+     & =
+    \resizebox{.75\hsize}{!}{$
+        \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+        \sum\limits_{\mu=-l}^l
+        \sum\limits_{\nu=-l}^l
+        {\bar{E}^l}{{}_r}_{\mu,\nu}
+        \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu + \nu - m')}
+        \sum\limits_{i=0}^{2l}
+        \sum\limits_{j=0}^{2l}
+        c_{m,\mu,i}^{l}
+        c_{\nu,m',j}^{l}
+        \,
+        Q^l_{i,j}(\pmb{\theta}_{\phi})
+    $}
+    \quad,
+\end{align}
+%
+where, similarly to before,
+%
+\begin{proof}{}
+    Q^l_{i,j}(\pmb{\theta}_{\phi})
+    & \equiv
+    \frac{1}{2}
+    \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}
+    %
+    \mathrm{sgn}(\sin\phi)^{i+j}
+    \big| \sin\phi \big|
+    (\cos\phi)^{\alpha - 1}
+    (1 - \cos\phi)^{2l + \beta - \frac{i+j}{2} - 1}
+    (1 + \cos\phi)^\frac{i+j}{2}
+    %
+    \,
+    \mathrm{d}\phi
+    \nonumber \\[0.5em]
+    %
+    & =
+    %
+    \begin{cases}
+        \displaystyle\int_{0}^{1}
+        %
+        x^{\alpha - 1}
+        (1 - x)^{2l + \beta - \frac{i+j}{2} - 1 }
+        (1 + x)^\frac{i+j}{2}
+        %
+        \,
+        \mathrm{d}x
+        %
+         & i+j \,\, \mathrm{even}
+        %
+        \\
+        %
+        0
+        %
+         & i+j \,\, \mathrm{odd} \quad.
+    \end{cases}
+\end{proof}
+%
+We may again express this integral in closed form:
+%
+\begin{proof}{}
+    %
+    \label{eq:Qlij}
+    Q^l_{i,j}(\pmb{\theta}_{\phi})
+    & =
+    \resizebox{.75\hsize}{!}{$
+            \begin{cases}
+                \dfrac{\Gamma(\alpha)\Gamma(2l + \beta - \frac{i+j}{2})}{\Gamma(2l + \alpha + \beta - \frac{i+j}{2})}
+                \,
+                _2F_1\Big(
+                -\frac{i+j}{2},
+                \alpha;
+                2l + \alpha + \beta - \frac{i+j}{2};
+                -1
+                \Big)
+                %
+                 & i+j \,\, \mathrm{even}
+                %
+                \\
+                %
+                0
+                %
+                 & i+j \,\, \mathrm{odd} \quad.
+            \end{cases}
+        $}
+\end{proof}
+%
+As before, this integral may be evaluated recursively to efficiently compute all
+of the terms in $\mathbf{E}_\phi$.
 
 \bibliography{bib}
 \end{document}
