@@ -32,6 +32,7 @@ jobs:
       pip install -U setuptools
       conda install -y -q -c conda-forge tectonic pandoc
       pip install -U sphinx
+      pip install -U dynesty
 
     displayName: 'Install dependencies'
   

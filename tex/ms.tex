@@ -381,26 +381,25 @@ a suitable spherical harmonic expansion $\mathbf{s}(r)$ of the spot profile
 and a suitable probability distribution function for the spot radius,
 $p(r \, \big| \, \pmb{\theta}_{r})$.
 
-\xxx{...}
-
 \subsection{Spot profile}
 %
-Let the brightness $b$ an angle $\vartheta$ away from the
+We model the brightness $b$ an angle $\vartheta$ away from the
 center of a spot of negative unit intensity and radius $r$ be
 %
 \begin{align}
-    b(\vartheta; r) & = \frac{1}{1 + \exp\left(\dfrac{r-\vartheta}{s}\right)} - 1
+    b(r; \vartheta) & = \frac{1}{1 + \exp\left(\dfrac{r-\vartheta}{s}\right)} - 1
 \end{align}
 %
 for some (constant) shape parameter $s$. In the limit $s \rightarrow 0$, $b$ approaches an
-inverted top-hat function with half-width equal to $r$. For $s > 0$, each half
-of $b$ is a sigmoid with half-width at half-minimum equal to $r$. For definiteness,
-in our implementation of the algorithm we choose $s = 0.0033 \, \mathrm{rad}$,
-which is small compared to features of interest
-but not too small as to create numerical issues when computing
-model gradients.
+inverted top-hat function with half-width equal to $r$,
+corresponding to a circular spot of uniform intensity. For $s > 0$, each half
+of $b$ is a sigmoid with half-width at half-minimum equal to $r$.
+In our implementation of the algorithm we choose $s = 0.2^\circ$,
+which is small compared to features of interest but not too small as to
+create numerical issues when computing model gradients (which would be
+undefined at the spot boundary if the spot profile were truly an inverted top-hat).
 
-Our goal is to expand the function above in spherical harmonics. To that end,
+Our goal now is to expand the function above in spherical harmonics. To that end,
 we note that in a frame where the spot is centered on $\hat{\mathbf{z}}$
 (i.e., at polar angle $\vartheta = 0$), the brightness profile is azimuthally
 symmetric, so the only nonzero coefficients in the spherical harmonic
@@ -419,15 +418,15 @@ We wish to model the brightness evaluated at each $\vartheta_k$
 as a weighted combination of Legendre polynomials,
 %
 \begin{align}
-    \mathbf{b}(\pmb{\vartheta}; r) = \mathbf{B}(\pmb{\vartheta}) \, \tilde{\mathbf{s}}(r)
+    \mathbf{b}(r) = \mathbf{B} \, \tilde{\mathbf{s}}(r)
 \end{align}
 %
 %
-where $\mathbf{B}(\pmb{\vartheta})$ is a design matrix whose columns are
+where $\mathbf{B}$ is a design matrix whose columns are
 the weighted Legendre polynomials,
 %
 \begin{align}
-    B_{k,l}(\vartheta_k) & = \sqrt{2l + 1} \, P_l\left( \cos \vartheta_k \right)
+    B_{k,l} & = \sqrt{2l + 1} \, P_l\left( \cos \vartheta_k \right)
     \quad,
 \end{align}
 %
@@ -437,24 +436,25 @@ the spot, $\mathbf{s}(r)$, by
 %
 \begin{align}
     s_{l,m}(r) = \tilde{s}_l(r) \delta_{m,0}
-    \quad.
+    \quad,
 \end{align}
 %
+where $\delta$ is the Kronecker delta function.
 To find the coefficients $\tilde{\mathbf{s}}(r)$, we solve the (linear) inverse problem,
 %
 \begin{align}
-    \tilde{\mathbf{s}}(r) & = \mathbf{B}^+(\pmb{\vartheta}) \, \mathbf{b}(\pmb{\vartheta}; r)
+    \tilde{\mathbf{s}}(r) & = \mathbf{B}^+ \, \mathbf{b}(r)
 \end{align}
 %
 %
 where
 %
 \begin{align}
-    \mathbf{B}^+(\pmb{\vartheta}) & = \mathbf{S} \Big(\mathbf{B}^\top(\pmb{\vartheta}) \mathbf{B}(\pmb{\vartheta}) +
-    \epsilon \mathbf{I}\Big)^{-1} \mathbf{B}^\top(\pmb{\vartheta})
+    \mathbf{B}^+ & = \mathbf{S} \Big(\mathbf{B}^\top \mathbf{B} +
+    \epsilon \mathbf{I}\Big)^{-1} \mathbf{B}^\top
 \end{align}
 %
-is the smoothed pseudo-inverse of $\mathbf{B}(\pmb{\vartheta})$ with small regularization
+is the smoothed pseudo-inverse of $\mathbf{B}$ with small regularization
 parameter $\epsilon$, $\mathbf{I}$ is the identity matrix, and
 $\mathbf{S}$ is a diagonal smoothing matrix with coefficients
 %
@@ -464,13 +464,12 @@ $\mathbf{S}$ is a diagonal smoothing matrix with coefficients
 %
 for smoothing strength $\sigma$. For $\epsilon \rightarrow 0$ and
 $\sigma \rightarrow \infty$,
-$\mathbf{B}^+(\pmb{\vartheta})$ is the exact pseudo-inverse of
-$\mathbf{B}(\pmb{\vartheta})$. However,
+$\mathbf{B}^+$ is the exact pseudo-inverse of
+$\mathbf{B}$. However,
 $\epsilon > 0$ is chosen for improved numerical stability and
 $\sigma > 0$ is chosen to mitigate the effect of ringing in the solution.
 In practice, we obtain good results with $\epsilon \approx 10^{-9}$
 and $\sigma \approx 15$.
-
 
 \begin{figure}[t!]
     \begin{centering}
@@ -479,12 +478,187 @@ and $\sigma \approx 15$.
             Intensity profiles for spots with different
             radii $r$ computed at spherical harmonic
             degree $l_{\mathrm{max}} = \LMAX$.
+            For $r \gtrsim 10^\circ$, the spherical harmonic expansion
+            captures the spot shape and intensity reasonably well,
+            albeit with some ringing due to the truncated expansion.
             \label{fig:spot_profile}
         }
     \end{centering}
 \end{figure}
 
+Figure~\ref{fig:spot_profile} shows the intensity profile for spots of
+different radii expanded to spherical harmonic degree $l_{\mathrm{max}} = \LMAX$,
+computed from
+%
+\begin{align}
+    \mathbf{b'}(r) & = \mathbf{B}
+    \mathbf{B}^+ \, \mathbf{b}(r) \quad.
+\end{align}
+%
+The average intensity
+within the spots is close to $-1$ and the half-widths at half-minimum are
+equal to the spot radii, as expected.
+The effect of ringing due to the truncated spherical harmonic expansion is
+evident, although it is strongly suppressed compared to an expansion
+without the smoothing term (i.e., $\sigma = \infty$). However, for
+$r \lesssim 10^\circ$, an expansion to $l_{\mathrm{max}} = \LMAX$ is
+insufficient to correctly model the spot, as can be seen from the
+$r = 5^\circ$ profile (dashed curve). Expansions to higher spherical harmonic
+degree allow one to model spots with radii smaller than $10^\circ$, although
+at increased computational cost and potential numerical stability issues;
+we discuss this point at length in \S\ref{sec:tiny-spots}.
 
+
+\subsection{Probability density function}
+%
+For simplicity, we will adopt a uniform probability distribution for the
+spot radius, characterized by a mean radius $r_0$ and a half-width $\Delta$:
+%
+\begin{align}
+    p(r \, \big| \, \pmb{\theta}_{r})
+    &=
+    \begin{cases}
+        \frac{1}{2\Delta} & r_0 - \Delta \leq r \leq r_0 + \Delta
+        \\
+        0 & \mathrm{otherwise}
+        \quad,
+    \end{cases}
+\end{align}
+%
+where the hyperparameters of the distribution are
+%
+\begin{align}
+    \pmb{\theta}_r = \left(
+    r_0 \, \, \, \,
+    \Delta \right)^\top
+    \quad.
+\end{align}
+%
+As we argue in the text, in practice it is often difficult to constrain the 
+moments of the radius distribution above the first (the mean). It is 
+therefore useful to also consider the limiting case of the radius distribution
+as $\Delta \rightarrow 0$, in which case the PDF becomes
+%
+\begin{align}
+    p(r \, \big| \, \pmb{\theta}_{r}, \Delta = 0)
+    &=
+    \delta(r - r_0)
+    \quad,
+\end{align}
+%
+where $\delta$ is the delta function.
+%
+
+\subsection{First moment}
+%
+The first moment of the radius distribution is (Equation~\ref{eq:e1})
+%
+\begin{align}
+    \mathbf{e}_r
+     & \equiv
+    \int
+    \mathbf{s}(r) \,
+    p(r \, \big| \, \pmb{\theta}_{r}) \,
+    \mathrm{d}r
+    \nonumber \\
+    &=
+    \frac{1}{2\Delta}
+    \int_{r_0 - \Delta}^{r_0 + \Delta}
+    \mathbf{s}(r) \,
+    \mathrm{d}r
+    \quad.
+\end{align}
+%
+Using the equations from the previous section, its components may be written
+%
+\begin{align}
+    {e_r}_{l,m}
+    &=
+    \frac{\delta_{m,0}}{2\Delta}
+    \int_{r_0 - \Delta}^{r_0 + \Delta}
+    \tilde{s}_{l,m}(r) \,
+    \mathrm{d}r
+    \nonumber \\
+    &=
+    \frac{\delta_{m,0}}{2\Delta}
+    \sum_{k=0}^{K-1} B^+_{l,m,k}
+    \int_{r_0 - \Delta}^{r_0 + \Delta}
+    b_{k}(r)
+    \mathrm{d}r
+    \nonumber \\
+    &=
+    \frac{\delta_{m,0} s}{2\Delta}
+    \sum_{k=0}^{K-1} B^+_{l,m,k}
+    \ln 
+    \left(
+        \frac{
+            1+\exp\left(\frac{r -\Delta -\vartheta_k}{s}\right)
+        }
+        {
+            1+\exp\left(\frac{r + \Delta -\vartheta_k}{s}\right)
+        }
+    \right)
+    \quad.
+\end{align}
+%
+In the limit $\Delta \rightarrow 0$,
+%
+\begin{align}
+    \lim_{\Delta \rightarrow 0}
+    \mathbf{e}_r
+    &=
+    \mathbf{B}^+ \mathbf{b}(r)
+    \quad.
+\end{align}
+%
+
+\subsection{Second moment}
+%
+The second moment of the radius distribution is (Equation~\ref{eq:E1})
+%
+\begin{align}
+    \mathbf{E}_r
+     & \equiv
+    \int
+    \mathbf{s}(r) \,
+    \mathbf{s}^\top(r) \,
+    p(r \, \big| \, \pmb{\theta}_{r}) \,
+    \mathrm{d}r
+    \nonumber \\
+    &=
+    \frac{1}{2\Delta}
+    \int_{r_0 - \Delta}^{r_0 + \Delta}
+    \mathbf{s}(r) \,
+    \mathbf{s}^\top(r) \,
+    \mathrm{d}r
+    \quad.
+\end{align}
+%
+As before, its components may be written
+%
+%
+\begin{align}
+    {E_r}_{l,m,l',m'}
+    &=
+    \frac{\delta_{m,0}\delta_{m',0}}{2\Delta}
+    \int_{r_0 - \Delta}^{r_0 + \Delta}
+    \tilde{s}_{l,m}(r) \,
+    \tilde{s}_{l',m'}(r) \,
+    \mathrm{d}r
+    \nonumber \\
+    &=
+    \frac{\delta_{m,0}\delta_{m',0}}{2\Delta}
+    \sum_{k=0}^{K-1} B^+_{l,m,k}
+    \sum_{k'=0}^{K-1} B^+_{l',m',k'}
+    \int_{r_0 - \Delta}^{r_0 + \Delta}
+    b_{k}(r)
+    b_{k'}(r)
+    \mathrm{d}r
+    \nonumber \\
+    &= 
+    \cdots
+\end{align}
+\xxx{...}
 
 \section{The Latitude and Longitude Integrals}
 \label{sec:lat-lon}
