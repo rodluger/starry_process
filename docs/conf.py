@@ -7,6 +7,12 @@
 # -- Path setup --------------------------------------------------------------
 
 import starry_process
+import sys
+import os
+
+
+# HACKS
+sys.path.insert(1, os.path.dirname(os.path.abspath(__file__)))
 import hacks
 
 
