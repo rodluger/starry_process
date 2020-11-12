@@ -8,22 +8,28 @@ RM_TMP      = $(foreach d, ${TEX_FILES}, rm -rf $(foreach suff, ${TMP_SUFFS}, ${
 CHECK_RERUN = grep Rerun ms.log
 FIGURES     = $(patsubst %.py,%.pdf,$(sort $(wildcard figures/*.py)))
 TESTS       = $(patsubst %.py,%.tex,$(sort $(wildcard tests/test_*.py)))
-TECTONIC    = $(shell command -v tectonic >/dev/null && echo true || echo false )
 
-default: ms.pdf
+default: tectonic
 
-ms.pdf: ms.tex bib.bib $(FIGURES) $(TESTS)
+tectonic: ms.tex bib.bib $(FIGURES) $(TESTS)
+
 	# Generate links to current git commit
 	python gen_links.py
-	# Compile the paper with either tectonic or pdflatex
-	if [ "${TECTONIC}" = "true" ]; then\
-		tectonic ms.tex --print --keep-logs;\
-	else\
-		${LATEX} ms.tex;\
-		( ${CHECK_RERUN} && ${LATEX} ms.tex ) || echo "Done.";\
-		( ${CHECK_RERUN} && ${LATEX} ms.tex ) || echo "Done.";\
-		( ${CHECK_RERUN} && ${LATEX} ms.tex ) || echo "Done.";\
-	fi
+
+	# Compile the paper
+	tectonic ms.tex --print --keep-logs
+
+
+pdflatex: ms.tex bib.bib $(FIGURES) $(TESTS)
+
+	# Generate links to current git commit
+	python gen_links.py
+
+	# Compile the paper
+	${LATEX} ms.tex
+	( ${CHECK_RERUN} && ${LATEX} ms.tex ) || echo "Done."
+	( ${CHECK_RERUN} && ${LATEX} ms.tex ) || echo "Done."
+	( ${CHECK_RERUN} && ${LATEX} ms.tex ) || echo "Done."
 
 # Remove temporaries and output
 clean:
@@ -38,3 +44,10 @@ figures/%.pdf: figures/%.py
 # Run all tests
 tests/test_%.tex: tests/test_%.py
 	cd $(<D); python run.py $(<F) 2>&1
+
+foo:
+	if [ "${TECTONIC}" = "true" ]; then\
+		echo true;\
+	else\
+		echo false;\
+	fi

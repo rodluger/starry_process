@@ -46,13 +46,21 @@
 \label{sec:intro}
 \xxx{Talk about starry, gps, etc.}
 
+\appendix
+
 \section{Spherical Harmonics}
 \label{sec:ylm}
 %
-\xxx{Introduce the spherical harmonics.}
-
-The real spherical harmonics are indexed by their degree $l \in [0, \infty]$
-and order $m \in [-l, l]$. It is convenient to collect the spherical harmonic coefficients of
+The spherical harmonics $Y_{l,m}$ are a complete set of orthogonal functions on the
+surface of the sphere and, as such, are a convenient basis in which to construct
+our gaussian process. As in \citet{Luger2019}, here we describe the intensity
+on the surface of a star as an expansion in the real spherical harmonics, which is
+fully specified by a set of spherical harmonic coefficients
+$\{ y_{l,m}\}$, where $l \in [0, l_{\mathrm{max}}]$ is known as
+the degree and
+$m \in [-l, l]$ is known as the order, with $l_{\mathrm{max}}$ equal to the highest
+degree in the expansion.
+It is often convenient to collect the spherical harmonic coefficients of
 a given expansion into a vector $\mathbf{y}$ indexed by a single
 integer $n$, where
 %
@@ -72,8 +80,32 @@ and, conversely,
         \quad.
     \end{split}
 \end{align}
+%
+\citet{Luger2019} derived the expression for the total disk-integrated
+flux $\mathbf{f}$ (i.e., the light curve)
+one would observe from a star rotating about a fixed axis
+if the stellar surface intensity is well described by the spherical harmonic
+coefficient vector $\mathbf{y}$:
+%
+\begin{align}
+    \label{eq:fAy}
+    \mathbf{f} = \pmb{\mathcal{A}} \, \mathbf{y}
+    \quad,
+\end{align}
+%
+where $\pmb{\mathcal{A}} = \pmb{\mathcal{A}}(t, i, P)$ is the \starry
+design matrix, a purely linear operator that transforms from the spherical
+harmonic basis to the flux basis; it is implicitly
+a function of the time $t$, the stellar inclination $i$, and the stellar
+rotation period $P$. For reference, the rows of $\pmb{\mathcal{A}}$ are given by
+Equation~(18) in \citet{Luger2019}.
 
-\section{Gaussian Process}
+An in-depth treatment of the spherical harmonics is beyond the scope of this
+paper. For more information, including closed-form expressions for $Y_{l,m}$
+and details on their usage in modeling stellar surfaces, the reader is
+encouraged to consult \citet{Luger2019}.
+
+\section{A Gaussian Process for Star Spots}
 \label{sec:gp}
 %
 
@@ -85,7 +117,7 @@ and, conversely,
 Let
 $\mathbf{f} = \left( f_0 \, f_1 \, \cdots \,  f_K \right)^\top$
 denote a vector of $K$ flux measurements at times
-$\left( t_0 \,  t_1 \,  \cdots \, t_K \right)^\top$.
+$\mathbf{t} = \left( t_0 \,  t_1 \,  \cdots \, t_K \right)^\top$.
 Conditioned on certain physical properties of the star, $\pmb{\theta}$,
 we wish to compute the mean $\pmb{\mu}(\pmb{\theta})$ and
 covariance $\pmb{\Sigma}(\pmb{\theta})$
@@ -106,29 +138,16 @@ $\mathbf{f}\,\mathbf{f}^\top$, respectively:
     \quad.
 \end{align}
 %
-In \citet{Luger2019} we showed that $\mathbf{f}$ may be computed from a
-linear operation on the vector of spherical harmonic coefficients
-describing the surface, $\mathbf{y}$:
-%
-\begin{align}
-    \label{eq:fAy}
-    \mathbf{f} = \mathbf{A} \, \mathbf{y}
-    \quad,
-\end{align}
-%
-where $\mathbf{A}$ is the \starry design matrix, which is implicitly
-a function of $\pmb{\theta}$ (as it depends on the stellar inclination
-and rotation period, for example).
-%
-Given Equation~(\ref{eq:fAy}),
+Given the linear relationship between flux and spherical harmonic
+coefficients (Equation~\ref{eq:fAy}),
 we may write the mean and covariance of our flux GP as
 %
 \begin{align}
     \pmb{\mu}(\pmb{\theta})
-     & = \mathbf{A}(\pmb{\theta}) \, \pmb{\mu}_{\mathbf{y}}(\pmb{\theta})
+     & = \pmb{\mathcal{A}}(\pmb{\theta}) \, \pmb{\mu}_{\mathbf{y}}(\pmb{\theta})
     \\
     \pmb{\Sigma}(\pmb{\theta})
-     & = \mathbf{A}(\pmb{\theta}) \, \pmb{\Sigma}_{\mathbf{y}} \, \mathbf{A}^\top(\pmb{\theta})
+     & = \pmb{\mathcal{A}}(\pmb{\theta}) \, \pmb{\Sigma}_{\mathbf{y}} \, \pmb{\mathcal{A}}^\top(\pmb{\theta})
     \quad,
 \end{align}
 %
@@ -349,14 +368,123 @@ and the second moment integrals
     \quad.
 \end{align}
 %
-We devote the next four sections to the computation of these eight
+We devote the next several sections to the computation of these eight
 integrals.
 
 
 \section{The Size Integral}
 \label{sec:size}
 %
-\xxx{Coming soon.}
+Our goal in this section is to compute the first and second moments
+of the size distribution ($\mathbf{e}_\phi$, $\mathbf{E}_\phi$) under
+a suitable spherical harmonic expansion $\mathbf{s}(r)$ of the spot profile
+and a suitable probability distribution function for the spot radius,
+$p(r \, \big| \, \pmb{\theta}_{r})$.
+
+\xxx{...}
+
+\subsection{Spot profile}
+%
+Let the brightness $b$ an angle $\vartheta$ away from the
+center of a spot of negative unit intensity and radius $r$ be
+%
+\begin{align}
+    b(\vartheta; r) & = \frac{1}{1 + \exp\left(\dfrac{r-\vartheta}{s}\right)} - 1
+\end{align}
+%
+for some (constant) shape parameter $s$. In the limit $s \rightarrow 0$, $b$ approaches an
+inverted top-hat function with half-width equal to $r$. For $s > 0$, each half
+of $b$ is a sigmoid with half-width at half-minimum equal to $r$. For definiteness,
+in our implementation of the algorithm we choose $s = 0.0033 \, \mathrm{rad}$,
+which is small compared to features of interest
+but not too small as to create numerical issues when computing
+model gradients.
+
+Our goal is to expand the function above in spherical harmonics. To that end,
+we note that in a frame where the spot is centered on $\hat{\mathbf{z}}$
+(i.e., at polar angle $\vartheta = 0$), the brightness profile is azimuthally
+symmetric, so the only nonzero coefficients in the spherical harmonic
+expansion are those with order $m = 0$. The corresponding spherical harmonics are
+simply proportional to the Legendre polynomials in $\cos\vartheta$, so our task is
+simplified to finding the Legendre polynomial expansion of $b$.
+Define a vector $\pmb{\vartheta}$ of $K$ equally-spaced points
+between $0$ and $\pi$, with coefficients given by
+%
+\begin{align}
+    \vartheta_k = \frac{k\pi}{K-1}
+    \quad.
+\end{align}
+%
+We wish to model the brightness evaluated at each $\vartheta_k$
+as a weighted combination of Legendre polynomials,
+%
+\begin{align}
+    \mathbf{b}(\pmb{\vartheta}; r) = \mathbf{B}(\pmb{\vartheta}) \, \tilde{\mathbf{s}}(r)
+\end{align}
+%
+%
+where $\mathbf{B}(\pmb{\vartheta})$ is a design matrix whose columns are
+the weighted Legendre polynomials,
+%
+\begin{align}
+    B_{k,l}(\vartheta_k) & = \sqrt{2l + 1} \, P_l\left( \cos \vartheta_k \right)
+    \quad,
+\end{align}
+%
+and $\tilde{\mathbf{s}}(r)$ are the coefficients of the expansion.
+These are related to the full vector of spherical harmonic coefficients describing
+the spot, $\mathbf{s}(r)$, by
+%
+\begin{align}
+    s_{l,m}(r) = \tilde{s}_l(r) \delta_{m,0}
+    \quad.
+\end{align}
+%
+To find the coefficients $\tilde{\mathbf{s}}(r)$, we solve the (linear) inverse problem,
+%
+\begin{align}
+    \tilde{\mathbf{s}}(r) & = \mathbf{B}^+(\pmb{\vartheta}) \, \mathbf{b}(\pmb{\vartheta}; r)
+\end{align}
+%
+%
+where
+%
+\begin{align}
+    \mathbf{B}^+(\pmb{\vartheta}) & = \mathbf{S} \Big(\mathbf{B}^\top(\pmb{\vartheta}) \mathbf{B}(\pmb{\vartheta}) +
+    \epsilon \mathbf{I}\Big)^{-1} \mathbf{B}^\top(\pmb{\vartheta})
+\end{align}
+%
+is the smoothed pseudo-inverse of $\mathbf{B}(\pmb{\vartheta})$ with small regularization
+parameter $\epsilon$, $\mathbf{I}$ is the identity matrix, and
+$\mathbf{S}$ is a diagonal smoothing matrix with coefficients
+%
+\begin{align}
+    S_{k,l} = \exp\left[-\frac{l(l + 1)}{2\sigma^2}\right] \delta_{k,l}
+\end{align}
+%
+for smoothing strength $\sigma$. For $\epsilon \rightarrow 0$ and
+$\sigma \rightarrow \infty$,
+$\mathbf{B}^+(\pmb{\vartheta})$ is the exact pseudo-inverse of
+$\mathbf{B}(\pmb{\vartheta})$. However,
+$\epsilon > 0$ is chosen for improved numerical stability and
+$\sigma > 0$ is chosen to mitigate the effect of ringing in the solution.
+In practice, we obtain good results with $\epsilon \approx 10^{-9}$
+and $\sigma \approx 15$.
+
+
+\begin{figure}[t!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/spot_profile.pdf}
+        \oscaption{spot_profile}{%
+            Intensity profiles for spots with different
+            radii $r$ computed at spherical harmonic
+            degree $l_{\mathrm{max}} = \LMAX$.
+            \label{fig:spot_profile}
+        }
+    \end{centering}
+\end{figure}
+
+
 
 \section{The Latitude and Longitude Integrals}
 \label{sec:lat-lon}

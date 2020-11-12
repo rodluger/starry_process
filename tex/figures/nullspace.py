@@ -84,4 +84,4 @@ ax[1, 0].set_yticklabels([r"{:d}$^\circ$".format(tick) for tick in yticks])
 ax[1, 0].set_ylabel("inclination")
 ax[1, 0].set_xlabel("spherical harmonic degree")
 
-fig.savefig("nullspace.pdf", bbox_inches="tight", dpi=300)
+fig.savefig(__file__.replace("py", "pdf"), bbox_inches="tight")
