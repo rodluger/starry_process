@@ -23,8 +23,8 @@ metadata.json
 tex/figures/static/scratch/
 scratch/
 *latexindent*
-ms.aux
-ms.bbl
+*.aux
+*.bbl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

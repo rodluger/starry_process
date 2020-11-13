@@ -1,0 +1,117 @@
+\documentclass[modern]{aastex62}
+
+% Load the corTeX style definitions
+\input{cortex}
+
+% Load custom style
+\input{style}
+
+\usepackage{etoolbox}
+\makeatletter % we need to patch \env@cases that has @ in its name
+\patchcmd{\env@cases}{\quad}{\qquad\qquad}{}{}
+\makeatother
+
+\usepackage{enumitem}
+
+% Begin!
+\begin{document}
+
+% Title
+\title{%
+    \textbf{
+        Expectation of normalized variable
+    }
+}
+
+\author{Rodrigo Luger}
+
+\section{The problem}
+
+Suppose I have a process with mean $\pmb{\mu}$ and covariance
+$\pmb{\Sigma}$ that generates a variable
+$\mathbf{y} = \left( y_0 \,\, \cdots \,\, y_{K-1} \right)^\top$:
+%
+\begin{align}
+    \mathbf{y} \sim \mathcal{N}\left( \pmb{\mu}, \pmb{\Sigma} \right)
+    \quad.
+\end{align}
+%
+Now suppose
+I don't have access to $\mathbf{y}$; instead, I can only observe the \emph{normalized}
+values of $\mathbf{y}$:
+%
+\begin{align}
+    \mathbf{y}_{\mathrm{obs}}
+     & = \frac{\mathbf{y}}{\big<\mathbf{y}\big>}
+    \nonumber                                                      \\[0.5em]
+     & = \frac{\mathbf{y}}{\frac{1}{K}\sum\limits_{k=0}^{K-1} y_k}
+    \quad.
+\end{align}
+%
+What are the mean and covariance of $\mathbf{y}_{\mathrm{obs}}$?
+
+\section{The solution}
+
+The mean is easy, I think: it should be
+%
+\begin{align}
+    \pmb{\mu}_{\mathrm{obs}}
+     & =
+    \mathrm{E}\big[ \mathbf{y}_{\mathrm{obs}} \big]
+    \nonumber \\[0.5em]
+     & =
+    \mathbf{1}
+    \quad,
+\end{align}
+%
+since the mean value of $\mathbf{y}_{\mathrm{obs}}$ for any realization
+of the noise process is always unity. Now, the covariance is
+%
+\begin{align}
+    \pmb{\Sigma}_{\mathrm{obs}}
+     & =
+    \mathrm{E}\big[ \mathbf{y}_{\mathrm{obs}} \mathbf{y}_{\mathrm{obs}}^\top \big]
+    - \pmb{\mu}_{\mathrm{obs}} \pmb{\mu}_{\mathrm{obs}}^\top
+    \nonumber \\[0.5em]
+     & =
+    \mathrm{E}\left[ \frac{\mathbf{y}\mathbf{y}^\top}{\big<\mathbf{y}\big>^2} \right]
+    - \mathbf{1}
+    \quad.
+\end{align}
+%
+How do I compute that? I know that
+%
+\begin{align}
+    \mathrm{E}\big[ \mathbf{y} \mathbf{y}^\top \big] = \pmb{\Sigma} + \pmb{\mu}\pmb{\mu}^\top
+\end{align}
+%
+and I \emph{think} that
+%
+\begin{align}
+    \mathrm{E}\big[ \big<\mathbf{y}\big>^2 \big] \stackrel{?}{=} \frac{\pmb{\mu}^\top\pmb{\mu}}{K}
+\end{align}
+%
+so can I just do
+%
+\begin{align}
+    \pmb{\Sigma}_{\mathrm{obs}}
+     & =
+    \mathrm{E}\left[ \frac{\mathbf{y}\mathbf{y}^\top}{\big<\mathbf{y}\big>^2} \right]
+    - \mathbf{1}
+    \nonumber          \\[0.5em]
+     & \stackrel{?}{=}
+    \frac{ \mathrm{E}\left[\mathbf{y}\mathbf{y}^\top \right]}
+    { \mathrm{E}\left[\big<\mathbf{y}\big>^2 \right]}
+    - \mathbf{1}
+    \nonumber          \\[0.5em]
+     & \stackrel{?}{=}
+    K
+    \frac{ \pmb{\Sigma} }
+    { \pmb{\mu}^\top\pmb{\mu} }
+    +
+    \left(K\frac{ \pmb{\mu}\pmb{\mu}^\top }{\pmb{\mu}^\top\pmb{\mu}}
+    - \mathbf{1}
+    \right)
+\end{align}
+?
+\end{document}

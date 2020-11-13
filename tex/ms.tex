@@ -194,15 +194,15 @@ As we are specifically interested in modeling the effect of star spots
 on stellar light curves, we let
 %
 \begin{align}
-    \mathbf{x} = 
-    \left( 
-        c_0 \,\, \cdots \,\, c_{N-1} \,\, 
-        ,
-        \lambda_0 \,\, \cdots \,\, \lambda_{N-1} \,\, 
-        ,
-        \phi_0 \,\, \cdots \,\, \phi_{N-1} \,\, 
-        ,
-        r_0 \,\, \cdots \,\, r_{N-1} \,\, 
+    \mathbf{x} =
+    \left(
+    c_0 \,\, \cdots \,\, c_{N-1} \,\,
+    ,
+    \lambda_0 \,\, \cdots \,\, \lambda_{N-1} \,\,
+    ,
+    \phi_0 \,\, \cdots \,\, \phi_{N-1} \,\,
+    ,
+    r_0 \,\, \cdots \,\, r_{N-1} \,\,
     \right)^\top
 \end{align}
 %
@@ -349,7 +349,6 @@ and the second moment integrals
     \int
     \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
     \mathbf{E}_r \,
-    \mathbf{E}_r^\top \,
     \mathbf{R}_{\hat{\mathbf{x}}}^\top(\phi) \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi})
     \mathrm{d}\phi
@@ -362,7 +361,6 @@ and the second moment integrals
     \int
     \mathbf{R}_{\hat{\mathbf{y}}}(\lambda) \,
     \mathbf{E}_\phi \,
-    \mathbf{E}_\phi^\top \,
     \mathbf{R}_{\hat{\mathbf{y}}}^\top(\lambda) \,
     p(\lambda \, \big| \, \pmb{\theta}_{\lambda})
     \mathrm{d}\phi
@@ -374,14 +372,13 @@ and the second moment integrals
     \int
     c^2 \,
     \mathbf{E}_\lambda \,
-    \mathbf{E}_\lambda^\top \,
     p(c \, \big| \, \pmb{\theta}_c)
     \mathrm{d}c
     %
     \quad,
 \end{align}
 %
-In Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), we used the fact 
+In Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), we used the fact
 that both the mean and the variance of the sum of $N$
 independent, identically-distributed random variables are equal to $N$
 times the individual mean and the variance, respectively.
@@ -537,11 +534,11 @@ spot radius, characterized by a mean radius $r_0$ and a half-width $\Delta$:
 %
 \begin{align}
     p(r \, \big| \, \pmb{\theta}_{r})
-    &=
+     & =
     \begin{cases}
         \frac{1}{2\Delta} & r_0 - \Delta \leq r \leq r_0 + \Delta
         \\
-        0 & \mathrm{otherwise}
+        0                 & \mathrm{otherwise}
         \quad,
     \end{cases}
 \end{align}
@@ -555,14 +552,14 @@ where the hyperparameters of the distribution are
     \quad.
 \end{align}
 %
-As we argue in the text, in practice it is often difficult to constrain the 
-moments of the radius distribution above the first (the mean). It is 
+As we argue in the text, in practice it is often difficult to constrain the
+moments of the radius distribution above the first (the mean). It is
 therefore useful to also consider the limiting case of the radius distribution
 as $\Delta \rightarrow 0$, in which case the PDF becomes
 %
 \begin{align}
     p(r \, \big| \, \pmb{\theta}_{r}, \Delta = 0)
-    &=
+     & =
     \delta(r - r_0)
     \quad,
 \end{align}
@@ -582,7 +579,7 @@ The first moment of the radius distribution is (Equation~\ref{eq:e1})
     p(r \, \big| \, \pmb{\theta}_{r}) \,
     \mathrm{d}r
     \nonumber \\
-    &=
+     & =
     \frac{1}{2\Delta}
     \int_{r_0 - \Delta}^{r_0 + \Delta}
     \mathbf{s}(r) \,
@@ -594,30 +591,30 @@ Using the equations from the previous section, its components may be written
 %
 \begin{align}
     (e_r)^l_m
-    &=
+     & =
     \frac{\delta_{m,0}}{2\Delta}
     \int_{r_0 - \Delta}^{r_0 + \Delta}
     \tilde{s}_{l}(r) \,
     \mathrm{d}r
     \nonumber \\
-    &=
+     & =
     \frac{\delta_{m,0}}{2\Delta}
     \sum_{k=0}^{K-1} B^+_{l,k}
     \int_{r_0 - \Delta}^{r_0 + \Delta}
     b_{k}(r)
     \mathrm{d}r
     \nonumber \\
-    &=
+     & =
     \frac{\delta_{m,0} s}{2\Delta}
     \sum_{k=0}^{K-1} B^+_{l,k}
-    \ln 
+    \ln
     \left(
-        \frac{
-            1+\exp\left(\frac{r -\Delta -\vartheta_k}{s}\right)
-        }
-        {
-            1+\exp\left(\frac{r + \Delta -\vartheta_k}{s}\right)
-        }
+    \frac{
+        1+\exp\left(\frac{r -\Delta -\vartheta_k}{s}\right)
+    }
+    {
+        1+\exp\left(\frac{r + \Delta -\vartheta_k}{s}\right)
+    }
     \right)
     \quad.
 \end{align}
@@ -627,7 +624,7 @@ In the limit $\Delta \rightarrow 0$,
 \begin{align}
     \lim_{\Delta \rightarrow 0}
     \mathbf{e}_r
-    &=
+     & =
     \mathbf{B}^+ \mathbf{b}(r)
     \quad.
 \end{align}
@@ -646,7 +643,7 @@ The second moment of the radius distribution is (Equation~\ref{eq:E1})
     p(r \, \big| \, \pmb{\theta}_{r}) \,
     \mathrm{d}r
     \nonumber \\
-    &=
+     & =
     \frac{1}{2\Delta}
     \int_{r_0 - \Delta}^{r_0 + \Delta}
     \mathbf{s}(r) \,
@@ -660,14 +657,14 @@ As before, its components may be written
 %
 \begin{align}
     (E_r)^{l,l'}_{m,m'}
-    &=
+     & =
     \frac{\delta_{m,0}\delta_{m',0}}{2\Delta}
     \int_{r_0 - \Delta}^{r_0 + \Delta}
     \tilde{s}^l_{m}(r) \,
     \tilde{s}^{l'}_{m'}(r) \,
     \mathrm{d}r
     \nonumber \\
-    &=
+     & =
     \frac{\delta_{m,0}\delta_{m',0}}{2\Delta}
     \sum_{k=0}^{K-1} B^+_{l,k}
     \sum_{k'=0}^{K-1} B^+_{l',k'}
@@ -676,7 +673,7 @@ As before, its components may be written
     b_{k'}(r)
     \mathrm{d}r
     \nonumber \\
-    &= 
+     & =
     \frac{\delta_{m,0}\delta_{m',0}s}{2\Delta}
     \sum_{k=0}^{K-1} B^+_{l,k}
     \sum_{k'=0}^{K-1} B^+_{l',k'}
@@ -688,27 +685,27 @@ where
 %
 \begin{align}
     C_{k,k'}(r)
-    &\equiv
+     & \equiv
     \frac{
         \exp\left(\frac{\vartheta_{k} - \vartheta_{k'}}{s}\right)
-        \ln 
+        \ln
         \left(
-            \frac{
-                1+\exp\left(\frac{r -\Delta -\vartheta_{k}}{s}\right)
-            }
-            {
-                1+\exp\left(\frac{r + \Delta -\vartheta_{k}}{s}\right)
-            }
+        \frac{
+            1+\exp\left(\frac{r -\Delta -\vartheta_{k}}{s}\right)
+        }
+        {
+            1+\exp\left(\frac{r + \Delta -\vartheta_{k}}{s}\right)
+        }
         \right)
         -
-        \ln 
+        \ln
         \left(
-            \frac{
-                1+\exp\left(\frac{r -\Delta -\vartheta_{k'}}{s}\right)
-            }
-            {
-                1+\exp\left(\frac{r + \Delta -\vartheta_{k'}}{s}\right)
-            }
+        \frac{
+            1+\exp\left(\frac{r -\Delta -\vartheta_{k'}}{s}\right)
+        }
+        {
+            1+\exp\left(\frac{r + \Delta -\vartheta_{k'}}{s}\right)
+        }
         \right)
     }{
         1
@@ -723,7 +720,7 @@ In the limit $\Delta \rightarrow 0$,
 \begin{align}
     \lim_{\Delta \rightarrow 0}
     \mathbf{E}_r
-    &=
+     & =
     \mathbf{B}^+ \mathbf{b}(r) \mathbf{b}^\top(r) {\mathbf{B}^+}^\top
     \quad.
 \end{align}
@@ -1100,7 +1097,6 @@ Similarly as before, let us write the second moment integral as
     \int
     \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
     \mathbf{E}_r \,
-    \mathbf{E}_r^\top \,
     \mathbf{R}_{\hat{\mathbf{x}}}^\top(\phi) \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
@@ -1129,7 +1125,6 @@ where
     \int
     \mathbf{R}^l_{\hat{\mathbf{x}}}(\phi) \,
     \mathbf{E}^l_r \,
-    {\mathbf{E}^l_r}^\top \,
     {\mathbf{R}^{l'}_{\hat{\mathbf{x}}}}^\top(\phi) \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
@@ -1159,7 +1154,6 @@ and we define
      & \equiv
     \mathbf{U}^l
     \mathbf{E}^l_r
-    {\mathbf{E}^l_r}^\top
     {\mathbf{U}^l}^\top
     \quad.
 \end{align}
@@ -1453,7 +1447,6 @@ We write the second moment integral as
     \int
     \mathbf{R}_{\hat{\mathbf{y}}}(\lambda) \,
     \mathbf{E}_\phi \,
-    \mathbf{E}_\phi^\top \,
     \mathbf{R}_{\hat{\mathbf{y}}}^\top(\lambda) \,
     p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
     \mathrm{d}\lambda
@@ -1482,7 +1475,6 @@ where
     \int
     \mathbf{R}^l_{\hat{\mathbf{y}}}(\lambda) \,
     \mathbf{E}^l_\phi \,
-    {\mathbf{E}^l_\phi}^\top \,
     {\mathbf{R}^{l'}_{\hat{\mathbf{y}}}}^\top(\lambda) \,
     p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
     \mathrm{d}\lambda
@@ -1512,7 +1504,6 @@ and we define
      & \equiv
     \mathbf{U}^l
     \mathbf{E}^l_\phi
-    {\mathbf{E}^l_\phi}^\top
     {\mathbf{U}^l}^\top
     \quad.
 \end{align}
@@ -1584,7 +1575,68 @@ whose terms may again be computed by upward recursion.
 \section{The Contrast Integral}
 \label{sec:contrast}
 %
-\xxx{Coming soon.}
-
+The final integrals we must take in our computation of
+$\pmb{\mu}_{\mathbf{y}}(\pmb{\theta})$
+amd $\pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta})$ are the integrals over
+the spot contrast distribution, $\mathbf{e}_c$ and $\mathbf{E}_c$.
+These are by far the easiest, since the spot contrast is a scalar
+multiplier of the spherical harmonic coefficient vector, so we can
+pull the terms $\mathbf{e}_\lambda$ and $\mathbf{E}_\lambda$ out
+of the
+integrals in Equations (\ref{eq:e4}) and (\ref{eq:E4}) to write
+%
+\begin{align}
+    \mathbf{e}_c
+     & \equiv
+    \mathbf{e}_\lambda \,
+    \int
+    c \,
+    p(c \, \big| \, \pmb{\theta}_{c}) \,
+    \mathrm{d}c
+    \\
+    \mathbf{E}_c
+     & \equiv
+    \mathbf{E}_\lambda \,
+    \int
+    c^2 \,
+    p(c \, \big| \, \pmb{\theta}_c)
+    \mathrm{d}c
+    \quad.
+\end{align}
+%
+These integrals may be computed analytically for any choice of
+probability density function $p(c \, \big| \, \pmb{\theta}_c)$
+with closed-form moments.
+%
+However, in practice, it is quite difficult to constrain the
+spot contrast from light curves, let alone higher moments of its
+distribution; this is due largely to the fact that the contrast $c$
+is extremely degenerate with the total number of spots $N$
+(see \S\ref{sec:cN-degeneracy}).
+%
+In our imeplementation of the algorithm,
+we therefore choose the simplest possible probability distribution,
+a delta function:
+%
+\begin{align}
+    p(c \, \big| \, \pmb{\theta}_{c}) = \delta(c - c_0)
+\end{align}
+%
+characterized by a single parameter, the contrast of the spots:
+%
+\begin{align}
+    \pmb{\theta}_c = \left( c_0 \right)^\top
+    \quad.
+\end{align}
+%
+The moment integrals are then trivial to evaluate:
+%
+\begin{align}
+    \mathbf{e}_c & = c \, \mathbf{e}_\lambda
+    \\
+    \mathbf{E}_c & = c^2 \mathbf{E}_\lambda
+    \quad.
+\end{align}
+%
 \bibliography{bib}
 \end{document}
