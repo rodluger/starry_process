@@ -93,11 +93,12 @@ coefficient vector $\mathbf{y}$:
     \quad,
 \end{align}
 %
-where $\pmb{\mathcal{A}} = \pmb{\mathcal{A}}(t, i, P)$ is the \starry
+where $\pmb{\mathcal{A}}$ is the \starry
 design matrix, a purely linear operator that transforms from the spherical
 harmonic basis to the flux basis; it is implicitly
-a function of the time $t$, the stellar inclination $i$, and the stellar
-rotation period $P$. For reference, the rows of $\pmb{\mathcal{A}}$ are given by
+a function of the stellar inclination $i$, the stellar
+rotation period $P$, the stellar limb darkening coefficients, etc.
+For reference, the rows of $\pmb{\mathcal{A}}$ are given by
 Equation~(18) in \citet{Luger2019}.
 
 An in-depth treatment of the spherical harmonics is beyond the scope of this
@@ -118,9 +119,13 @@ Let
 $\mathbf{f} = \left( f_0 \, f_1 \, \cdots \,  f_K \right)^\top$
 denote a vector of $K$ flux measurements at times
 $\mathbf{t} = \left( t_0 \,  t_1 \,  \cdots \, t_K \right)^\top$.
-Conditioned on certain physical properties of the star, $\pmb{\theta}$,
-we wish to compute the mean $\pmb{\mu}(\pmb{\theta})$ and
-covariance $\pmb{\Sigma}(\pmb{\theta})$
+Conditioned on certain physical properties of the
+star
+(such as its inclination, rotation period, etc.), $\pmb{\theta}_\star$,
+and on certain properties of the  star spots
+(such as their sizes, positions, etc.), $\pmb{\theta}_\bullet$,
+we wish to compute the mean $\pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$ and
+covariance $\pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$
 of $\mathbf{f}$, which together fully specify our GP in flux.
 %
 As with any random variable, the mean and covariance may be computed from
@@ -129,12 +134,12 @@ $\mathbf{f}\,\mathbf{f}^\top$, respectively:
 %
 \begin{align}
     \label{eq:mean}
-    \pmb{\mu}(\pmb{\theta})
-     & = \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \pmb{\theta} \Big]
+    \pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
+     & = \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \pmb{\theta}_\star, \pmb{\theta}_\bullet \Big]
     \\
     \label{eq:cov}
-    \pmb{\Sigma}(\pmb{\theta})
-     & = \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \pmb{\theta} \Big] - \pmb{\mu}(\pmb{\theta}) \pmb{\mu}^\top(\pmb{\theta})
+    \pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
+     & = \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \pmb{\theta}_\star, \pmb{\theta}_\bullet \Big] - \pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet) \pmb{\mu}^\top(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
     \quad.
 \end{align}
 %
@@ -143,11 +148,11 @@ coefficients (Equation~\ref{eq:fAy}),
 we may write the mean and covariance of our flux GP as
 %
 \begin{align}
-    \pmb{\mu}(\pmb{\theta})
-     & = \pmb{\mathcal{A}}(\pmb{\theta}) \, \pmb{\mu}_{\mathbf{y}}(\pmb{\theta})
+    \pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
+     & = \pmb{\mathcal{A}}(\pmb{\theta}_\star) \, \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet)
     \\
-    \pmb{\Sigma}(\pmb{\theta})
-     & = \pmb{\mathcal{A}}(\pmb{\theta}) \, \pmb{\Sigma}_{\mathbf{y}} \, \pmb{\mathcal{A}}^\top(\pmb{\theta})
+    \pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
+     & = \pmb{\mathcal{A}}(\pmb{\theta}_\star) \, \pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta}_\bullet) \, \pmb{\mathcal{A}}^\top(\pmb{\theta_\star})
     \quad,
 \end{align}
 %
@@ -155,12 +160,12 @@ where
 %
 \begin{align}
     \label{eq:mean_y}
-    \pmb{\mu}_{\mathbf{y}}(\pmb{\theta})
-     & = \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta} \Big]
+    \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet)
+     & = \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
     \\
     \label{eq:cov_y}
-    \pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta})
-     & = \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta} \Big] - \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}) \pmb{\mu}_{\mathbf{y}}^\top(\pmb{\theta})
+    \pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta}_\bullet)
+     & = \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] - \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet) \pmb{\mu}_{\mathbf{y}}^\top(\pmb{\theta}_\bullet)
 \end{align}
 %
 are the mean and covariance of the GP in the spherical harmonics basis.
@@ -170,24 +175,24 @@ are given by the integrals
 %
 \begin{align}
     \label{eq:exp_y}
-    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta} \Big]
+    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
      & =
-    \int \mathbf{y}(\mathbf{x} ) \, p(\mathbf{x} \, \big| \, \pmb{\theta})\mathrm{d}\mathbf{x}
+    \int \mathbf{y}(\mathbf{x} ) \, p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)\mathrm{d}\mathbf{x}
     \\
     \label{eq:exp_yy}
-    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta} \Big]
+    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
      & =
-    \int \mathbf{y}(\mathbf{x} ) \mathbf{y}^\top(\mathbf{x} ) \, p(\mathbf{x} \, \big| \, \pmb{\theta})\mathrm{d}\mathbf{x}
+    \int \mathbf{y}(\mathbf{x} ) \mathbf{y}^\top(\mathbf{x} ) \, p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)\mathrm{d}\mathbf{x}
     \quad,
 \end{align}
 %
 where $\mathbf{x}$ is a random vector-valued variable corresponding to a particular
 distribution of features on the surface  (i.e., the size and location of star spots)
-and $p(\mathbf{x} \, \big| \, \pmb{\theta})$ is its probability density
+and $p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$ is its probability density
 function (PDF).
 
 In the sections that follow we will show that for suitable choices of $\mathbf{y}(\mathbf{x})$
-and $p(\mathbf{x} \, \big| \, \pmb{\theta})$, the integrals in the expressions
+and $p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$, the integrals in the expressions
 above have closed form solutions that may be evaluated quickly.
 %
 As we are specifically interested in modeling the effect of star spots
@@ -242,14 +247,14 @@ corresponding representation in terms of spherical harmonics.
 Note, importantly, that we are not interested in any specific value of
 $\mathbf{y}$; rather, we would like to know its expectation value under
 the probability distribution governing the different spot properties $\mathbf{x}$,
-i.e., $p(\mathbf{x} \, \big| \, \pmb{\theta})$.
+i.e., $p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$.
 %
-For simplicity, we assume that $p(\mathbf{x} \, \big| \, \pmb{\theta})$
+For simplicity, we assume that $p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$
 is separable in each of the four spot properties, and that all of the spots
 are drawn from the same distribution:
 %
 \begin{align}
-    p(\mathbf{x} \, \big| \, \pmb{\theta})
+    p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)
     =
     \prod_{n=0}^{N-1}
     p(c_n \, \big| \, \pmb{\theta}_{c}) \,
@@ -262,7 +267,7 @@ are drawn from the same distribution:
 where
 %
 \begin{align}
-    \pmb{\theta} = \left(
+    \pmb{\theta}_\bullet = \left(
     \pmb{\theta}_{c} \, \,
     \pmb{\theta}_{\lambda} \, \,
     \pmb{\theta}_{\phi} \, \,
@@ -276,12 +281,12 @@ and (\ref{eq:exp_yy}) as
 %
 \begin{align}
     \label{eq:exp_y_sep}
-    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta} \Big]
+    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
      & =
     N \mathbf{e}_c
     \\[1em]
     \label{eq:exp_yy_sep}
-    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta} \Big]
+    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
      & =
     N \mathbf{E}_c
 \end{align}
@@ -383,11 +388,12 @@ that both the mean and the variance of the sum of $N$
 independent, identically-distributed random variables are equal to $N$
 times the individual mean and the variance, respectively.
 
-We devote the next several sections to the computation of these eight
+We devote the next section to the computation of these eight
 integrals.
 
-
-\section{The Size Integral}
+\section{The Expectation Integrals}
+\label{sec:integrals}
+\subsection{The Size Integral}
 \label{sec:size}
 %
 Our goal in this section is to compute the first and second moments
@@ -396,7 +402,7 @@ a suitable spherical harmonic expansion $\mathbf{s}(r)$ of the spot profile
 and a suitable probability distribution function for the spot radius,
 $p(r \, \big| \, \pmb{\theta}_{r})$.
 
-\subsection{Spot profile}
+\subsubsection{Spot profile}
 %
 We model the brightness $b$ an angle $\vartheta$ away from the
 center of a spot of negative unit intensity and radius $r$ be
@@ -527,7 +533,7 @@ at increased computational cost and potential numerical stability issues;
 we discuss this point at length in \S\ref{sec:tiny-spots}.
 
 
-\subsection{Probability density function}
+\subsubsection{Probability density function}
 %
 For simplicity, we will adopt a uniform probability distribution for the
 spot radius, characterized by a mean radius $r_0$ and a half-width $\Delta$:
@@ -567,7 +573,7 @@ as $\Delta \rightarrow 0$, in which case the PDF becomes
 where $\delta$ is the delta function.
 %
 
-\subsection{First moment}
+\subsubsection{First moment}
 %
 The first moment of the radius distribution is (Equation~\ref{eq:e1})
 %
@@ -630,7 +636,7 @@ In the limit $\Delta \rightarrow 0$,
 \end{align}
 %
 
-\subsection{Second moment}
+\subsubsection{Second moment}
 %
 The second moment of the radius distribution is (Equation~\ref{eq:E1})
 %
@@ -726,7 +732,7 @@ In the limit $\Delta \rightarrow 0$,
 \end{align}
 %
 
-\section{The Latitude and Longitude Integrals}
+\subsection{The Latitude and Longitude Integrals}
 \label{sec:lat-lon}
 %
 Our goal in this section is to compute the first and second moments
@@ -736,7 +742,7 @@ and longitude ($\mathbf{e}_\lambda$, $\mathbf{E}_\lambda$) distributions
 respectively). These involve integrals over the terms in the Wigner
 rotation matrix for spherical harmonics, which we discuss below.
 
-\subsection{Rotation matrices}
+\subsubsection{Rotation matrices}
 %
 The Wigner rotation matrix for real spherical harmonics up to degree $l_{\mathrm{max}}$
 may be written as the block-diagonal matrix
@@ -840,7 +846,7 @@ where
 \end{proof}
 %
 
-\subsection{Latitude}
+\subsubsection{Probability density function for the latitude}
 %
 The latitude integrals (Equations~\ref{eq:e2} and \ref{eq:E2}) involve
 rotations by an angle $\phi$ about $\hat{\mathbf{x}}$, which
@@ -912,7 +918,7 @@ may be computed by a straightforward change of variable:
 %
 for $\phi \in \left[ -\frac{\pi}{2}, \frac{\pi}{2} \right]$.
 
-\subsubsection{First moment}
+\subsubsection{First moment of the latitude}
 %
 Since the Wigner matrices are block diagonal, we may evaluate the moments of the
 distribution one spherical harmonic degree at a time. To that end, let us
@@ -1087,7 +1093,7 @@ for all $0 \leq l \leq l_{\mathrm{max}}$, $0 \leq i \leq 2l$,
 which can be done efficiently via upward recursion relations for both
 the gamma function and the hypergeometric function.
 
-\subsubsection{Second moment}
+\subsubsection{Second moment of the latitude}
 %
 Similarly as before, let us write the second moment integral as
 %
@@ -1264,7 +1270,7 @@ We may again express this integral in closed form:
 As before, this integral may be evaluated recursively to efficiently compute all
 of the terms in $\mathbf{E}_\phi$.
 
-\subsection{Longitude}
+\subsubsection{Probability density function for the longitude}
 %
 The longitude integrals (Equations~\ref{eq:e3} and \ref{eq:E3}) involve
 rotations by an angle $\lambda$ about $\hat{\mathbf{y}}$, which
@@ -1309,7 +1315,7 @@ controlling the longitudinal distribution, i.e.,
 \end{align}
 %
 
-\subsubsection{First moment}
+\subsubsection{First moment of the longitude}
 %
 As before, we will solve for the terms of the moment integrals one
 spherical harmonic degree at a time:
@@ -1437,7 +1443,7 @@ where
 %
 whose terms may easily be computed by upward recursion.
 
-\subsubsection{Second moment}
+\subsubsection{Second moment of the longitude}
 %
 We write the second moment integral as
 %
@@ -1572,7 +1578,7 @@ where
 whose terms may again be computed by upward recursion.
 
 
-\section{The Contrast Integral}
+\subsection{The Contrast Integral}
 \label{sec:contrast}
 %
 The final integrals we must take in our computation of
@@ -1638,5 +1644,36 @@ The moment integrals are then trivial to evaluate:
     \quad.
 \end{align}
 %
+
+
+
+\section{Marginalizing over inclination}
+\xxx{Coming soon.}
+\begin{align}
+    \pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
+     & = \pmb{\mathcal{A}}(\pmb{\theta}_\star) \, \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet)
+    \\
+    \pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
+     & = \pmb{\mathcal{A}}(\pmb{\theta}_\star) \, \pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta}_\bullet) \, \pmb{\mathcal{A}}^\top(\pmb{\theta_\star})
+    \quad,
+\end{align}
+%
+\begin{align}
+    \pmb{\mu}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
+     & =
+    \int
+    \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
+    \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet)
+    p(i) \, \mathrm{d}i
+    \\
+    \pmb{\Sigma}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
+     & =
+    \int
+    \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
+    \pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta}_\bullet) \, \pmb{\mathcal{A}}^\top(i, \pmb{\theta_\star})
+    p(i) \, \mathrm{d}i
+    \quad,
+\end{align}
+
 \bibliography{bib}
 \end{document}
