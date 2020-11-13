@@ -194,7 +194,16 @@ As we are specifically interested in modeling the effect of star spots
 on stellar light curves, we let
 %
 \begin{align}
-    \mathbf{x} = \left( c \,\, \lambda \,\, \phi \,\, r \right)^\top
+    \mathbf{x} = 
+    \left( 
+        c_0 \,\, \cdots \,\, c_{N-1} \,\, 
+        ,
+        \lambda_0 \,\, \cdots \,\, \lambda_{N-1} \,\, 
+        ,
+        \phi_0 \,\, \cdots \,\, \phi_{N-1} \,\, 
+        ,
+        r_0 \,\, \cdots \,\, r_{N-1} \,\, 
+    \right)^\top
 \end{align}
 %
 and
@@ -202,31 +211,32 @@ and
 \begin{align}
     \label{eq:RRs}
     \mathbf{y}(\mathbf{x}) =
-    c
+    \sum_{n=0}^{N-1}
+    c_n
     \,
-    \mathbf{R}_{\hat{\mathbf{y}}}(\lambda)
+    \mathbf{R}_{\hat{\mathbf{y}}}(\lambda_n)
     \,
-    \mathbf{R}_{\hat{\mathbf{x}}}(\phi)
+    \mathbf{R}_{\hat{\mathbf{x}}}(\phi_n)
     \,
-    \mathbf{s}(r)
+    \mathbf{s}(r_n)
     \quad,
 \end{align}
 %
-where $c$ is the contrast of a spot,
-$\lambda$ is its longitude, $\phi$ is its latitude,
-and $r$ is its radius.
-The vector function $\mathbf{s}(r)$
+where $c_n$ is the contrast of the $n^\mathrm{th}$ spot,
+$\lambda_n$ is its longitude, $\phi_n$ is its latitude,
+$r_n$ is its radius, and $N$ is the total number of spots.
+The vector function $\mathbf{s}(r_n)$
 returns the spherical harmonic expansion of a negative unit brightness
-circular spot at $\lambda = \phi = 0$,
-$\mathbf{R}_{\hat{\mathbf{x}}}(\phi)$ is the Wigner matrix that rotates the
+circular spot of radius $r_n$ at $\lambda = \phi = 0$,
+$\mathbf{R}_{\hat{\mathbf{x}}}(\phi_n)$ is the Wigner matrix that rotates the
 expansion about $\hat{\mathbf{x}}$ such that the spot is centered at a
-latitude $\phi$, and $\mathbf{R}_{\hat{\mathbf{y}}}(\lambda)$ is the Wigner
+latitude $\phi_n$, and $\mathbf{R}_{\hat{\mathbf{y}}}(\lambda_n)$ is the Wigner
 matrix that then rotates the
 expansion about $\hat{\mathbf{y}}$ such that the spot is centered at a
-longitude $\lambda$; these three functions are detailed in the sections below.
+longitude $\lambda_n$; these three functions are detailed in the sections below.
 %
 Equation~(\ref{eq:RRs}) thus provides a way of converting a random variable
-$\mathbf{x}$ describing the size, brightness, and position of a spot to the
+$\mathbf{x}$ describing the size, brightness, and position of spots to the
 corresponding representation in terms of spherical harmonics.
 %
 Note, importantly, that we are not interested in any specific value of
@@ -235,15 +245,17 @@ the probability distribution governing the different spot properties $\mathbf{x}
 i.e., $p(\mathbf{x} \, \big| \, \pmb{\theta})$.
 %
 For simplicity, we assume that $p(\mathbf{x} \, \big| \, \pmb{\theta})$
-is separable in each of the four spot properties:
+is separable in each of the four spot properties, and that all of the spots
+are drawn from the same distribution:
 %
 \begin{align}
     p(\mathbf{x} \, \big| \, \pmb{\theta})
     =
-    p(c \, \big| \, \pmb{\theta}_{c}) \,
-    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
-    p(\phi \, \big| \, \pmb{\theta}_{\phi})\,
-    p(r \, \big| \, \pmb{\theta}_{r})
+    \prod_{n=0}^{N-1}
+    p(c_n \, \big| \, \pmb{\theta}_{c}) \,
+    p(\lambda_n \, \big| \, \pmb{\theta}_{\lambda}) \,
+    p(\phi_n \, \big| \, \pmb{\theta}_{\phi})\,
+    p(r_n \, \big| \, \pmb{\theta}_{r})
     \quad,
 \end{align}
 %
@@ -255,8 +267,9 @@ where
     \pmb{\theta}_{\lambda} \, \,
     \pmb{\theta}_{\phi} \, \,
     \pmb{\theta}_{r} \right)^\top
-    \quad.
 \end{align}
+%
+is the vector of yet-to-be-specified hyperparameters describing the process.
 %
 This allows us to rewrite the expectation integrals (\ref{eq:exp_y})
 and (\ref{eq:exp_yy}) as
@@ -265,12 +278,12 @@ and (\ref{eq:exp_yy}) as
     \label{eq:exp_y_sep}
     \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta} \Big]
      & =
-    \mathbf{e}_c
+    N \mathbf{e}_c
     \\[1em]
     \label{eq:exp_yy_sep}
     \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta} \Big]
      & =
-    \mathbf{E}_c
+    N \mathbf{E}_c
 \end{align}
 %
 where we define the first moment integrals
@@ -365,9 +378,14 @@ and the second moment integrals
     p(c \, \big| \, \pmb{\theta}_c)
     \mathrm{d}c
     %
-    \quad.
+    \quad,
 \end{align}
 %
+In Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), we used the fact 
+that both the mean and the variance of the sum of $N$
+independent, identically-distributed random variables are equal to $N$
+times the individual mean and the variance, respectively.
+
 We devote the next several sections to the computation of these eight
 integrals.
 
@@ -387,6 +405,7 @@ We model the brightness $b$ an angle $\vartheta$ away from the
 center of a spot of negative unit intensity and radius $r$ be
 %
 \begin{align}
+    \label{eq:brvartheta}
     b(r; \vartheta) & = \frac{1}{1 + \exp\left(\dfrac{r-\vartheta}{s}\right)} - 1
 \end{align}
 %
@@ -418,11 +437,13 @@ We wish to model the brightness evaluated at each $\vartheta_k$
 as a weighted combination of Legendre polynomials,
 %
 \begin{align}
-    \mathbf{b}(r) = \mathbf{B} \, \tilde{\mathbf{s}}(r)
+    \mathbf{B} \, \tilde{\mathbf{s}}(r) = \mathbf{b}(r)
 \end{align}
 %
 %
-where $\mathbf{B}$ is a design matrix whose columns are
+where $\mathbf{b}(r)$ is computed by evaluating Equation~(\ref{eq:brvartheta})
+at each of the $\vartheta_k$,
+$\mathbf{B}$ is a design matrix whose columns are
 the weighted Legendre polynomials,
 %
 \begin{align}
@@ -435,7 +456,7 @@ These are related to the full vector of spherical harmonic coefficients describi
 the spot, $\mathbf{s}(r)$, by
 %
 \begin{align}
-    s_{l,m}(r) = \tilde{s}_l(r) \delta_{m,0}
+    s^l_m(r) = \tilde{s}_l(r) \delta_{m,0}
     \quad,
 \end{align}
 %
@@ -487,13 +508,13 @@ and $\sigma \approx 15$.
 \end{figure}
 
 Figure~\ref{fig:spot_profile} shows the intensity profile for spots of
-different radii expanded to spherical harmonic degree $l_{\mathrm{max}} = \LMAX$,
-computed from
-%
-\begin{align}
-    \mathbf{b'}(r) & = \mathbf{B}
-    \mathbf{B}^+ \, \mathbf{b}(r) \quad.
-\end{align}
+different radii expanded to spherical harmonic degree $l_{\mathrm{max}} = \LMAX$.
+% computed from
+% %
+% \begin{align}
+%     \mathbf{b'}(r) & = \mathbf{B}
+%     \mathbf{B}^+ \, \mathbf{b}(r) \quad.
+% \end{align}
 %
 The average intensity
 within the spots is close to $-1$ and the half-widths at half-minimum are
@@ -572,23 +593,23 @@ The first moment of the radius distribution is (Equation~\ref{eq:e1})
 Using the equations from the previous section, its components may be written
 %
 \begin{align}
-    {e_r}_{l,m}
+    (e_r)^l_m
     &=
     \frac{\delta_{m,0}}{2\Delta}
     \int_{r_0 - \Delta}^{r_0 + \Delta}
-    \tilde{s}_{l,m}(r) \,
+    \tilde{s}_{l}(r) \,
     \mathrm{d}r
     \nonumber \\
     &=
     \frac{\delta_{m,0}}{2\Delta}
-    \sum_{k=0}^{K-1} B^+_{l,m,k}
+    \sum_{k=0}^{K-1} B^+_{l,k}
     \int_{r_0 - \Delta}^{r_0 + \Delta}
     b_{k}(r)
     \mathrm{d}r
     \nonumber \\
     &=
     \frac{\delta_{m,0} s}{2\Delta}
-    \sum_{k=0}^{K-1} B^+_{l,m,k}
+    \sum_{k=0}^{K-1} B^+_{l,k}
     \ln 
     \left(
         \frac{
@@ -638,27 +659,75 @@ As before, its components may be written
 %
 %
 \begin{align}
-    {E_r}_{l,m,l',m'}
+    (E_r)^{l,l'}_{m,m'}
     &=
     \frac{\delta_{m,0}\delta_{m',0}}{2\Delta}
     \int_{r_0 - \Delta}^{r_0 + \Delta}
-    \tilde{s}_{l,m}(r) \,
-    \tilde{s}_{l',m'}(r) \,
+    \tilde{s}^l_{m}(r) \,
+    \tilde{s}^{l'}_{m'}(r) \,
     \mathrm{d}r
     \nonumber \\
     &=
     \frac{\delta_{m,0}\delta_{m',0}}{2\Delta}
-    \sum_{k=0}^{K-1} B^+_{l,m,k}
-    \sum_{k'=0}^{K-1} B^+_{l',m',k'}
+    \sum_{k=0}^{K-1} B^+_{l,k}
+    \sum_{k'=0}^{K-1} B^+_{l',k'}
     \int_{r_0 - \Delta}^{r_0 + \Delta}
     b_{k}(r)
     b_{k'}(r)
     \mathrm{d}r
     \nonumber \\
     &= 
-    \cdots
+    \frac{\delta_{m,0}\delta_{m',0}s}{2\Delta}
+    \sum_{k=0}^{K-1} B^+_{l,k}
+    \sum_{k'=0}^{K-1} B^+_{l',k'}
+    C_{k,k'}(r)
+    \quad,
 \end{align}
-\xxx{...}
+%
+where
+%
+\begin{align}
+    C_{k,k'}(r)
+    &\equiv
+    \frac{
+        \exp\left(\frac{\vartheta_{k} - \vartheta_{k'}}{s}\right)
+        \ln 
+        \left(
+            \frac{
+                1+\exp\left(\frac{r -\Delta -\vartheta_{k}}{s}\right)
+            }
+            {
+                1+\exp\left(\frac{r + \Delta -\vartheta_{k}}{s}\right)
+            }
+        \right)
+        -
+        \ln 
+        \left(
+            \frac{
+                1+\exp\left(\frac{r -\Delta -\vartheta_{k'}}{s}\right)
+            }
+            {
+                1+\exp\left(\frac{r + \Delta -\vartheta_{k'}}{s}\right)
+            }
+        \right)
+    }{
+        1
+        -
+        \exp\left(\frac{\vartheta_{k} - \vartheta_{k'}}{s}\right)
+    }
+    \quad.
+\end{align}
+%
+In the limit $\Delta \rightarrow 0$,
+%
+\begin{align}
+    \lim_{\Delta \rightarrow 0}
+    \mathbf{E}_r
+    &=
+    \mathbf{B}^+ \mathbf{b}(r) \mathbf{b}^\top(r) {\mathbf{B}^+}^\top
+    \quad.
+\end{align}
+%
 
 \section{The Latitude and Longitude Integrals}
 \label{sec:lat-lon}

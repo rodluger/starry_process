@@ -3,6 +3,7 @@
 TEX_FILES   = ms
 TMP_SUFFS   = pdf aux bbl blg log dvi ps eps out ent
 LATEX       = pdflatex -interaction=nonstopmode -halt-on-error
+BIBTEX      = bibtex
 SUFF        = pdf
 RM_TMP      = $(foreach d, ${TEX_FILES}, rm -rf $(foreach suff, ${TMP_SUFFS}, ${d}.${suff})) msNotes.bib
 CHECK_RERUN = grep Rerun ms.log
@@ -27,8 +28,8 @@ pdflatex: ms.tex bib.bib $(FIGURES) $(TESTS)
 
 	# Compile the paper
 	${LATEX} ms.tex
-	( ${CHECK_RERUN} && ${LATEX} ms.tex ) || echo "Done."
-	( ${CHECK_RERUN} && ${LATEX} ms.tex ) || echo "Done."
+	${BIBTEX} ms.aux
+	${LATEX} ms.tex
 	( ${CHECK_RERUN} && ${LATEX} ms.tex ) || echo "Done."
 
 # Remove temporaries and output

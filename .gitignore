@@ -24,6 +24,7 @@ tex/figures/static/scratch/
 scratch/
 *latexindent*
 ms.aux
+ms.bbl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
