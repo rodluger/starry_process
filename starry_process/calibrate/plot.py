@@ -2,6 +2,7 @@ from .defaults import update_with_defaults
 from .log_prob import get_log_prob
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib import colors
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from starry_process import StarryProcess
 from starry_process.latitude import beta2gauss, gauss2beta
@@ -13,9 +14,17 @@ import dynesty.plotting as dyplot
 from dynesty import utils as dyfunc
 from corner import corner as _corner
 from tqdm.auto import tqdm
+import glob
+import os
+import json
+import pickle
 
 
 def corner(*args, **kwargs):
+    """
+    Override `corner.corner` by making some appearance tweaks.
+
+    """
     # Get the usual corner plot
     figure = _corner(*args, **kwargs)
 
@@ -29,13 +38,17 @@ def corner(*args, **kwargs):
             tick.label.set_fontsize(10)
         formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
         ax.yaxis.set_major_formatter(formatter)
-        ax.set_ylabel(ax.get_ylabel(), fontsize=kwargs["corner_label_size"])
+        ax.set_ylabel(
+            ax.get_ylabel(), fontsize=kwargs.get("corner_label_size", 12)
+        )
     for ax in axes[-1, :]:
         for tick in ax.xaxis.get_major_ticks():
             tick.label.set_fontsize(10)
         formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
         ax.xaxis.set_major_formatter(formatter)
-        ax.set_xlabel(ax.get_xlabel(), fontsize=kwargs["corner_label_size"])
+        ax.set_xlabel(
+            ax.get_xlabel(), fontsize=kwargs.get("corner_label_size", 12)
+        )
 
     # Pad the axes to always include the truths
     truths = kwargs.get("truths", None)
@@ -82,7 +95,10 @@ def lat2y(lat):
 
 
 def plot_data(data, **kwargs):
+    """
+    Plot a synthetic dataset.
 
+    """
     # Get kwargs
     kwargs = update_with_defaults(**kwargs)
     plot_kwargs = kwargs["plot"]
@@ -171,6 +187,10 @@ def plot_data(data, **kwargs):
 
 
 def plot_latitude_pdf(results, **kwargs):
+    """
+    Plot posterior draws from the latitude hyperdistribution.
+
+    """
     # Get kwargs
     kwargs = update_with_defaults(**kwargs)
     plot_kwargs = kwargs["plot"]
@@ -234,10 +254,14 @@ def plot_latitude_pdf(results, **kwargs):
 
 
 def plot_trace(results, **kwargs):
+    """
+    Plot the nested sampling trace.
+
+    """
     # Get kwargs
     kwargs = update_with_defaults(**kwargs)
     gen_kwargs = kwargs["generate"]
-    labels = ["r", "a", "b", "c", "n"]
+    labels = ["r", "a", "b", "c", "n", "bm", "bv"]
 
     # Get truths
     try:
@@ -253,26 +277,46 @@ def plot_trace(results, **kwargs):
         b,
         gen_kwargs["contrast"]["mu"],
         gen_kwargs["nspots"]["mu"],
+        np.nan,
+        np.nan,
     ]
-    fig, _ = dyplot.traceplot(results, truths=truths, labels=labels)
+    ndim = results.samples.shape[-1]
+    fig, _ = dyplot.traceplot(
+        results, truths=truths[:ndim], labels=labels[:ndim]
+    )
     return fig
 
 
-def plot_corner(results, transform_beta=False, **kwargs):
+def plot_corner(
+    results, include_baseline=True, transform_beta=False, **kwargs
+):
+    """
+    Plot the posterior corner plot.
+
+    """
     # Get kwargs
     kwargs = update_with_defaults(**kwargs)
     gen_kwargs = kwargs["generate"]
     sample_kwargs = kwargs["sample"]
     plot_kwargs = kwargs["plot"]
-    use_corner = plot_kwargs["use_corner"]
     span = [
         (sample_kwargs["rmin"], sample_kwargs["rmax"]),
         (sample_kwargs["amin"], sample_kwargs["amax"]),
         (sample_kwargs["bmin"], sample_kwargs["bmax"]),
         (sample_kwargs["cmin"], sample_kwargs["cmax"]),
         (sample_kwargs["nmin"], sample_kwargs["nmax"]),
+        0.995,
+        0.995,
     ]
-    labels = [r"$r$", r"$a$", r"$b$", r"$c$", r"$n$"]
+    labels = [
+        r"$r$",
+        r"$a$",
+        r"$b$",
+        r"$c$",
+        r"$n$",
+        r"$\mu_b$",
+        r"$\ln\sigma^2_b$",
+    ]
 
     # Get truths
     sp = StarryProcess()
@@ -289,131 +333,321 @@ def plot_corner(results, transform_beta=False, **kwargs):
         b,
         gen_kwargs["contrast"]["mu"],
         gen_kwargs["nspots"]["mu"],
+        np.nan,
+        np.nan,
     ]
 
-    if use_corner:
-
-        samples = np.array(results.samples)
-
-        if transform_beta:
-
-            # Transform from `a, b` to `mode, std`
-            a = samples[:, 1]
-            b = samples[:, 2]
-            mu, sigma = beta2gauss(a, b)
-            samples[:, 1] = mu
-            samples[:, 2] = sigma
-            labels[1] = r"$\mu$"
-            labels[2] = r"$\sigma$"
-            if np.isfinite(gen_kwargs["latitude"]["sigma"]):
-                truths[1] = gen_kwargs["latitude"]["mu"]
-                truths[2] = gen_kwargs["latitude"]["sigma"]
-            else:
-                truths[1] = np.nan
-                truths[2] = np.nan
-            span[1] = (0, 90)
-            span[2] = (0, 30)
-
-        # Get sample weights
-        try:
-            weights = np.exp(results["logwt"] - results["logz"][-1])
-        except:
-            weights = results["weights"]
-
-        fig = corner(
-            samples,
-            plot_datapoints=False,
-            plot_density=False,
-            truths=truths,
-            labels=labels,
-            range=span,
-            fill_contours=True,
-            weights=weights,
-            smooth=2.0,
-            smooth1d=2.0,
-            bins=100,
-            hist_kwargs=dict(lw=1),
-            **plot_kwargs
-        )
-
-    else:
-
-        if transform_beta:
-            import warnings
-
-            warnings.warn("Must set `use_corner` to perform transforms.")
-
-        fig, _ = dyplot.cornerplot(
-            results,
-            truths=truths,
-            labels=labels,
-            span=span,
-            truth_color="#4682b4",
-        )
-
-    return fig
-
-
-def plot_inclination_pdf(data, results, **kwargs):
-
-    # Get kwargs
-    kwargs = update_with_defaults(**kwargs)
-    sample_kwargs = kwargs["sample"]
-    gen_kwargs = kwargs["generate"]
-    plot_kwargs = kwargs["plot"]
-    ninc_pts = plot_kwargs["ninc_pts"]
-    ninc_samples = plot_kwargs["ninc_samples"]
-    ninc_plots = plot_kwargs["ninc_plots"]
-    ydeg = sample_kwargs["ydeg"]
-    baseline_var = sample_kwargs["baseline_var"]
-    apply_jac = sample_kwargs["apply_jac"]
-    normalized = gen_kwargs["normalized"]
-
-    # Get the data
-    t = data["t"]
-    flux = data["flux"]
-    ferr = data["ferr"]
-    period = data["period"]
-
-    # Resample posterior samples to equal weight
     samples = np.array(results.samples)
+    ndim = samples.shape[-1]
+    if not include_baseline:
+        ndim -= 2
+
+    if transform_beta:
+
+        # Transform from `a, b` to `mode, std`
+        a = samples[:, 1]
+        b = samples[:, 2]
+        mu, sigma = beta2gauss(a, b)
+        samples[:, 1] = mu
+        samples[:, 2] = sigma
+        labels[1] = r"$\mu$"
+        labels[2] = r"$\sigma$"
+        if np.isfinite(gen_kwargs["latitude"]["sigma"]):
+            truths[1] = gen_kwargs["latitude"]["mu"]
+            truths[2] = gen_kwargs["latitude"]["sigma"]
+        else:
+            truths[1] = np.nan
+            truths[2] = np.nan
+        span[1] = (0, 90)
+        span[2] = (0, 30)
+
+    # Get sample weights
     try:
         weights = np.exp(results["logwt"] - results["logz"][-1])
     except:
         weights = results["weights"]
-    samples = dyfunc.resample_equal(samples, weights)
 
-    # Get the likelihood function for a given inclination
-    log_prob = get_log_prob(
-        t,
-        flux=None,
-        ferr=ferr,
-        p=period,
-        ydeg=ydeg,
-        baseline_var=baseline_var,
-        apply_jac=apply_jac,
-        normalized=normalized,
-        marginalize_over_inclination=False,
+    fig = corner(
+        samples[:, :ndim],
+        plot_datapoints=False,
+        plot_density=False,
+        truths=truths[:ndim],
+        labels=labels[:ndim],
+        range=span[:ndim],
+        fill_contours=True,
+        weights=weights,
+        smooth=2.0,
+        smooth1d=2.0,
+        bins=100,
+        hist_kwargs=dict(lw=1),
+        **plot_kwargs
     )
 
-    # Array of inclinations
-    inc = np.linspace(0, 90, ninc_pts)
-
-    # Compute the inclination pdf for various posterior samples
-    fig, ax = plt.subplots(1, ninc_plots, figsize=(3 * ninc_plots, 2))
-    for n in tqdm(range(ninc_plots)):
-        for j in tqdm(range(ninc_samples)):
-            idx = np.random.randint(len(samples))
-            ll = np.array(
-                [
-                    log_prob(flux[n].reshape(1, -1), *samples[idx], i)
-                    for i in inc
-                ]
-            )
-            ax[n].plot(inc, np.exp(ll - ll.max()), "C0-", lw=1, alpha=0.25)
-        ax[n].axvline(data["incs"][n], color="C1")
-        ax[n].set_yticks([])
-        ax[n].set_xlim(0, 90)
-        ax[n].set_xticks([0, 30, 60, 90])
-        ax[n].set_xlabel("inclination {}".format(n + 1))
     return fig
+
+
+def plot_inclination_pdf(data, inc_results, **kwargs):
+    # Get the arrays
+    inc = inc_results["inc"]
+    lp = inc_results["lp"]
+
+    # Plot
+    nlc = lp.shape[0]
+    if nlc > 10:
+        nrows = int(np.ceil(nlc / 10))
+    else:
+        nrows = 1
+    fig, ax = plt.subplots(
+        nrows,
+        min(nlc, 10),
+        figsize=(min(nlc, 10) + 2, nrows),
+        sharex=True,
+        sharey=True,
+    )
+    ax = ax.flatten()
+    for n in range(lp.shape[0]):
+        for j in range(lp.shape[1]):
+            ax[n].plot(
+                inc, np.exp(lp[n, j] - lp[n, j].max()), "C0-", lw=1, alpha=0.25
+            )
+        ax[n].axvline(data["incs"][n], color="C1")
+        ax[n].margins(0.1, 0.1)
+        if n == 40:
+            ax[n].spines["top"].set_visible(False)
+            ax[n].spines["right"].set_visible(False)
+            ax[n].set_xlabel("inclination", fontsize=10)
+            ax[n].set_ylabel("probability", fontsize=10)
+            ax[n].set_xticks([0, 30, 60, 90])
+            ax[n].set_yticks([])
+        else:
+            ax[n].axis("off")
+    return fig
+
+
+def plot_batch(path):
+    """
+    Plot the results of a batch run.
+
+    """
+    # Get the posterior means and covariances (w/o baseline mean and var)
+    files = glob.glob(os.path.join(path, "*", "mean_and_cov.npz"))
+    mean = np.empty((len(files), 5))
+    cov = np.empty((len(files), 5, 5))
+    for k, file in enumerate(files):
+        data = np.load(file)
+        mean[k] = data["mean"][:5]
+        cov[k] = data["cov"][:5, :5]
+
+    # Get the true values
+    kwargs = update_with_defaults(
+        **json.load(
+            open(files[0].replace("mean_and_cov.npz", "kwargs.json"), "r")
+        )
+    )
+    truths = [
+        kwargs["generate"]["radius"]["mu"],
+        kwargs["generate"]["latitude"]["mu"],
+        kwargs["generate"]["latitude"]["sigma"],
+        kwargs["generate"]["contrast"]["mu"],
+        kwargs["generate"]["nspots"]["mu"],
+    ]
+    labels = [r"$r$", r"$\mu$", r"$\sigma$", r"$c$", r"$n$"]
+
+    # Misc plotting kwargs
+    batch_bins = kwargs["plot"]["batch_bins"]
+    batch_alpha = kwargs["plot"]["batch_alpha"]
+    batch_nsig = kwargs["plot"]["batch_nsig"]
+
+    # Plot the distribution of posterior means & variances
+    fig, ax = plt.subplots(
+        2,
+        len(truths) + 1,
+        figsize=(16, 6),
+        gridspec_kw=dict(width_ratios=[1, 1, 1, 1, 1, 0.01]),
+    )
+    fig.subplots_adjust(hspace=0.4)
+    for n in range(len(truths)):
+
+        # Distribution of means
+        ax[0, n].hist(
+            mean[:, n], histtype="step", bins=batch_bins, lw=2, density=True
+        )
+        ax[0, n].axvline(np.mean(mean[:, n]), color="C0", ls="--")
+        ax[0, n].axvline(truths[n], color="C1")
+
+        # Distribution of errors (should be ~ std normal)
+        deltas = (mean[:, n] - truths[n]) / np.sqrt(cov[:, n, n])
+        ax[1, n].hist(
+            deltas,
+            density=True,
+            histtype="step",
+            range=(-4, 4),
+            bins=batch_bins,
+            lw=2,
+        )
+        ax[1, n].hist(
+            np.random.randn(10000),
+            density=True,
+            range=(-4, 4),
+            bins=batch_bins,
+            histtype="step",
+            lw=2,
+        )
+
+        ax[0, n].set_title(labels[n], fontsize=16)
+        ax[0, n].set_xlabel("posterior mean")
+        ax[1, n].set_xlabel("posterior error")
+        ax[0, n].set_yticks([])
+        ax[1, n].set_yticks([])
+
+    # Tweak appearance
+    ax[0, -1].axis("off")
+    ax[0, -1].plot(0, 0, "C0", ls="--", label="mean")
+    ax[0, -1].plot(0, 0, "C1", ls="-", label="truth")
+    ax[0, -1].legend(loc="center left")
+    ax[1, -1].axis("off")
+    ax[1, -1].plot(0, 0, "C0", ls="-", lw=2, label="measured")
+    ax[1, -1].plot(0, 0, "C1", ls="-", lw=2, label=r"$\mathcal{N}(0, 1)$")
+    ax[1, -1].legend(loc="center left")
+    fig.savefig(
+        os.path.join(path, "calibration_bias.pdf"), bbox_inches="tight"
+    )
+    plt.close()
+
+    # Now let's plot all of the posteriors on a corner plot
+    files = glob.glob(os.path.join(path, "*", "results.pkl"))
+    samples = [None for k in range(len(files))]
+    ranges = [None for k in range(len(files))]
+    for k in tqdm(range(len(files))):
+
+        # Get the samples (w/o baseline mean and var)
+        with open(files[k], "rb") as f:
+            results = pickle.load(f)
+        samples[k] = np.array(results.samples)[:, :5]
+        samples[k][:, 1], samples[k][:, 2] = beta2gauss(
+            samples[k][:, 1], samples[k][:, 2]
+        )
+        try:
+            weights = np.exp(results["logwt"] - results["logz"][-1])
+        except:
+            weights = results["weights"]
+        samples[k] = dyfunc.resample_equal(samples[k], weights)
+
+        # Get the 4-sigma ranges
+        mu = np.mean(samples[k], axis=0)
+        std = np.std(samples[k], axis=0)
+        ranges[k] = np.array([mu - batch_nsig * std, mu + batch_nsig * std]).T
+
+    # Set plot limits to the maximum of the ranges
+    ranges = np.array(ranges)
+    ranges = np.array(
+        [np.min(ranges[:, :, 0], axis=0), np.max(ranges[:, :, 1], axis=0)]
+    ).T
+
+    # Go!
+    color = lambda i, alpha: "{}{}".format(
+        colors.to_hex("C{}".format(i)),
+        ("0" + hex(int(alpha * 256)).split("0x")[-1])[-2:],
+    )
+    fig = None
+    for k in tqdm(range(len(mean))):
+
+        # Plot the 2d hist
+        fig = corner(
+            samples[k],
+            fig=fig,
+            labels=labels,
+            plot_datapoints=False,
+            plot_density=False,
+            fill_contours=True,
+            no_fill_contours=True,
+            color=color(k, batch_alpha),
+            contourf_kwargs=dict(),
+            contour_kwargs=dict(alpha=0),
+            bins=20,
+            hist_bin_factor=5,
+            smooth=2.0,
+            hist_kwargs=dict(alpha=0),
+            levels=(1.0 - np.exp(-0.5 * np.array([1.0]) ** 2)),
+            range=ranges,
+        )
+
+        # Plot the 1d hist
+        if k == len(mean) - 1:
+            truths_ = truths
+        else:
+            truths_ = None
+        fig = corner(
+            samples[k][:, :5],
+            fig=fig,
+            labels=labels,
+            plot_datapoints=False,
+            plot_density=False,
+            plot_contours=False,
+            fill_contours=False,
+            no_fill_contours=True,
+            color=color(k, batch_alpha),
+            bins=500,
+            smooth1d=10.0,
+            hist_kwargs=dict(alpha=0.5 * batch_alpha),
+            range=ranges,
+            truths=truths_,
+            truth_color="k",
+        )
+
+    # Fix the axis limits
+    for k in range(5):
+        ax = fig.axes[6 * k]
+        ymax = np.max([line._y.max() for line in ax.lines])
+        ax.set_ylim(0, 1.1 * ymax)
+
+    # We're done
+    fig.savefig(
+        os.path.join(path, "calibration_corner.pdf"), bbox_inches="tight"
+    )
+
+    # Get the inclination posterior means and covariances (if present)
+    inc_files = glob.glob(os.path.join(path, "*", "inclinations.npz"))
+    if len(inc_files):
+
+        data_files = [
+            file.replace("inclinations", "data") for file in inc_files
+        ]
+        x = np.linspace(-90, 90, 1000)
+        deltas = []
+
+        # Compute the "posterior error" histogram
+        for k in tqdm(range(len(inc_files))):
+            data = np.load(data_files[k])
+            results = np.load(inc_files[k])
+            truths = data["incs"]
+            inc = results["inc"]
+            lp = results["lp"]
+            nlc = len(truths)
+            nsamples = lp.shape[1]
+            for n in range(nlc):
+                for j in range(nsamples):
+                    pdf = np.exp(lp[n, j] - np.max(lp[n, j]))
+                    pdf /= np.trapz(pdf)
+                    mean = np.trapz(inc * pdf)
+                    var = np.trapz(inc ** 2 * pdf) - mean ** 2
+                    deltas.append((mean - truths[n]) / np.sqrt(var))
+
+        # Plot it
+        fig, ax = plt.subplots(1, figsize=(6, 3))
+        ax.hist(deltas, bins=50, range=(-5, 5), density=True, label="measured")
+        ax.hist(
+            Normal.rvs(size=len(deltas)),
+            bins=50,
+            range=(-5, 5),
+            histtype="step",
+            color="C1",
+            density=True,
+            label=r"$\mathcal{N}(0, 1)$",
+        )
+        ax.legend(loc="upper right")
+        ax.set_xlabel("posterior error")
+        ax.set_yticks([])
+        fig.savefig(
+            os.path.join(path, "inclinations.pdf"), bbox_inches="tight"
+        )

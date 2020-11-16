@@ -6,9 +6,13 @@ DEFAULTS = os.path.join(PATH, "defaults.json")
 
 
 def update_with_defaults(**kwargs):
-    # Update kwargs with defaults (if values are missing)
-    # This is quite ugly & hacky. Supports up to two levels
-    # of nested dictionaries.
+    """
+    Update kwargs with defaults (if values are missing).
+
+    This is quite ugly & hacky. Supports up to two levels
+    of nested dictionaries.
+    
+    """
     with open(DEFAULTS, "r") as f:
         defaults = json.load(f)
         for key0, value0 in defaults.items():

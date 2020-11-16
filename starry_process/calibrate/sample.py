@@ -24,10 +24,13 @@ def sample(data, clobber=False, **kwargs):
     cmax = sample_kwargs["cmax"]
     nmin = sample_kwargs["nmin"]
     nmax = sample_kwargs["nmax"]
+    bmmin = sample_kwargs["bmmin"]
+    bmmax = sample_kwargs["bmmax"]
+    bvmin = sample_kwargs["bvmin"]
+    bvmax = sample_kwargs["bvmax"]
     sampler = sample_kwargs["sampler"]
     sampler_kwargs = sample_kwargs["sampler_kwargs"]
     run_nested_kwargs = sample_kwargs["run_nested_kwargs"]
-    baseline_var = sample_kwargs["baseline_var"]
     apply_jac = sample_kwargs["apply_jac"]
 
     # Get the log prob function for the dataset
@@ -40,7 +43,8 @@ def sample(data, clobber=False, **kwargs):
         ferr,
         period,
         ydeg=ydeg,
-        baseline_var=baseline_var,
+        baseline_var=None,
+        baseline_mean=None,
         apply_jac=apply_jac,
         normalized=normalized,
         marginalize_over_inclination=True,
@@ -54,10 +58,12 @@ def sample(data, clobber=False, **kwargs):
         x[2] = bmin + u[2] * (bmax - bmin)
         x[3] = cmin + u[3] * (cmax - cmin)
         x[4] = nmin + u[4] * (nmax - nmin)
+        x[5] = bmmin + u[5] * (bmmax - bmmin)
+        x[6] = bvmin + u[6] * (bvmax - bvmin)
         return x
 
     # Nested sampling
-    ndim = 5
+    ndim = 7
     if sampler == "NestedSampler":
         sampler = dynesty.NestedSampler(
             lambda x: log_prob(*x), ptform, ndim, **sampler_kwargs

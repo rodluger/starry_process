@@ -12,12 +12,12 @@ def get_log_prob(
     ferr=1.0e-3,
     p=1.0,
     ydeg=15,
-    baseline_var=1e-4,
+    baseline_var=None,
+    baseline_mean=None,
     apply_jac=True,
     normalized=True,
     marginalize_over_inclination=True,
 ):
-
     # Dimensions
     K = len(t)
 
@@ -28,6 +28,8 @@ def get_log_prob(
     c = tt.dscalar()
     n = tt.dscalar()
     i = tt.dscalar()
+    m = tt.dscalar()
+    v = tt.dscalar()
     if flux is None:
         free_flux = True
         flux = tt.dmatrix()
@@ -55,12 +57,23 @@ def get_log_prob(
 
     # Residual matrix
     R = tt.transpose(flux) - tt.reshape(gp_mean, (-1, 1))
+    if baseline_mean is None:
+        # Tensor variable
+        R -= m
+    else:
+        # Fixed
+        R -= baseline_mean
 
     # Observational error
     gp_cov += ferr ** 2 * tt.eye(K)
 
     # Marginalize over the baseline
-    gp_cov += baseline_var
+    if baseline_var is None:
+        # Tensor variable
+        gp_cov += 10 ** v
+    else:
+        # Fixed
+        gp_cov += baseline_var
 
     # Compute the batched likelihood
     cho_gp_cov = cho_factor(gp_cov)
@@ -80,6 +93,10 @@ def get_log_prob(
 
     # Free variables
     theano_vars = [r, a, b, c, n]
+    if baseline_mean is None:
+        theano_vars += [m]
+    if baseline_var is None:
+        theano_vars += [v]
     if free_flux:
         theano_vars = [flux] + theano_vars
     if not marginalize_over_inclination:

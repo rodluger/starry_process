@@ -59,7 +59,10 @@ class Star(object):
 
 
 def generate(**kwargs):
+    """
+    Generate a synthetic ensemble of light curves with similar spot properties.
 
+    """
     # Get kwargs
     kwargs = update_with_defaults(**kwargs)
     seed = kwargs["seed"]

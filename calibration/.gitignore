@@ -1,7 +1,1 @@
-*.pkl
-*.npz
-*.pdf
-*.log
-*.json
-run.sh
-taskfile
+*

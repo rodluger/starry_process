@@ -51,34 +51,44 @@
 \section{Spherical Harmonics}
 \label{sec:ylm}
 %
-The spherical harmonics $Y_{l,m}$ are a complete set of orthogonal functions on the
+The spherical harmonics are a complete set of orthogonal functions on the
 surface of the sphere and, as such, are a convenient basis in which to construct
 our gaussian process. As in \citet{Luger2019}, here we describe the intensity
 on the surface of a star as an expansion in the real spherical harmonics, which is
 fully specified by a set of spherical harmonic coefficients
-$\{ y_{l,m}\}$, where $l \in [0, l_{\mathrm{max}}]$ is known as
+$\{ y^l_m \}$, where $l \in [0, l_{\mathrm{max}}]$ is known as
 the degree and
 $m \in [-l, l]$ is known as the order, with $l_{\mathrm{max}}$ equal to the highest
 degree in the expansion.
 It is often convenient to collect the spherical harmonic coefficients of
-a given expansion into a vector $\mathbf{y}$ indexed by a single
-integer $n$, where
+a given expansion into a vector
 %
 \begin{align}
-    \label{eq:n}
-    n = l^2 + l + m
-\end{align}
-%
-and, conversely,
-%
-\begin{align}
-    \label{eq:lm}
-    \begin{split}
-        l & = \floor{\sqrt{n}}
-        \\
-        m & = n - l^2 - l
-        \quad.
-    \end{split}
+    \label{eq:y}
+    \mathbf{y}
+     & =
+    \left(
+    \mathbf{y}^0 \,\,\,
+    \mathbf{y}^1 \,\,\,
+    \cdots \,\,\,
+    \mathbf{y}^{l_\mathrm{max}}
+    \right)^\top
+    \nonumber \\
+     & =
+    \left(
+    y^0_0 \,\,\,
+    \,\,\,
+    y^1_{-1} \,\,\,
+    y^1_{0} \,\,\,
+    y^1_{1} \,\,\,
+    \,\,\,
+    \cdots \,\,\,
+    \,\,\,
+    y^{l_\mathrm{max}}_{-l_\mathrm{max}} \,\,\,
+    \cdots \,\,\,
+    y^{l_\mathrm{max}}_{l_\mathrm{max}} \,\,\,
+    \right)^\top
+    \quad.
 \end{align}
 %
 \citet{Luger2019} derived the expression for the total disk-integrated
@@ -102,7 +112,8 @@ For reference, the rows of $\pmb{\mathcal{A}}$ are given by
 Equation~(18) in \citet{Luger2019}.
 
 An in-depth treatment of the spherical harmonics is beyond the scope of this
-paper. For more information, including closed-form expressions for $Y_{l,m}$
+paper. For more information, including closed-form expressions for
+the spherical harmonics
 and details on their usage in modeling stellar surfaces, the reader is
 encouraged to consult \citet{Luger2019}.
 
@@ -148,11 +159,13 @@ coefficients (Equation~\ref{eq:fAy}),
 we may write the mean and covariance of our flux GP as
 %
 \begin{align}
+    \label{eq:mean_f}
     \pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
      & = \pmb{\mathcal{A}}(\pmb{\theta}_\star) \, \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet)
     \\
+    \label{eq:cov_f}
     \pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
-     & = \pmb{\mathcal{A}}(\pmb{\theta}_\star) \, \pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta}_\bullet) \, \pmb{\mathcal{A}}^\top(\pmb{\theta_\star})
+     & = \pmb{\mathcal{A}}(\pmb{\theta}_\star) \, \pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta}_\bullet) \, \pmb{\mathcal{A}}^\top(\pmb{\theta}_\star)
     \quad,
 \end{align}
 %
@@ -380,7 +393,7 @@ and the second moment integrals
     p(c \, \big| \, \pmb{\theta}_c)
     \mathrm{d}c
     %
-    \quad,
+    \quad.
 \end{align}
 %
 In Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), we used the fact
@@ -394,7 +407,7 @@ integrals.
 \section{The Expectation Integrals}
 \label{sec:integrals}
 \subsection{The Size Integral}
-\label{sec:size}
+\label{sec:size}+
 %
 Our goal in this section is to compute the first and second moments
 of the size distribution ($\mathbf{e}_\phi$, $\mathbf{E}_\phi$) under
@@ -989,16 +1002,16 @@ and we define
     \quad.
 \end{align}
 %
-The integral $\mathbf{p}^l_\phi$ defined above has a closed-form solution.
+The integral $\mathbf{p}_\phi^l$ defined above has a closed-form solution.
 To show this, we write the terms of $\mathbf{p}^l_\phi$ as
 %
 \begin{align}
-    {p^l_\phi}_m
+    {({p^l_\phi})_{}}_m
      & =
     \int
     \sum\limits_{\mu=-l}^l
-    {D^l_{\hat{\mathbf{x}}}}_{m,\mu}(\phi) \,
-    {\bar{e}^l}{{}_r}_{\mu} \,
+    {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(\phi) \,
+    {({\bar{e}}^l_r)_{}}_{\mu} \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
     %
@@ -1007,18 +1020,18 @@ To show this, we write the terms of $\mathbf{p}^l_\phi$ as
      & =
     \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
     \sum\limits_{\mu=-l}^l
-    {\bar{e}^l}{{}_r}_{\mu}
+    {({\bar{e}}^l_r)_{}}_{\mu}
     \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu)}
     \sum\limits_{i=0}^{2l} c_{m,\mu,i}^{l}
     \,
-    {q^l_\phi}_i(\pmb{\theta}_{\phi})
+    {({q^l_\phi})_{}}_i(\pmb{\theta}_{\phi})
     \quad,
 \end{align}
 %
 where
 %
 \begin{proof}{test_qlphii}
-    {q^l_\phi}_i(\pmb{\theta}_{\phi})
+    {({q^l_\phi})_{}}_i(\pmb{\theta}_{\phi})
     & \equiv
     \frac{1}{2}
     \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}
@@ -1063,7 +1076,7 @@ of the hypergeometric function $_2F_1$:
 \begin{proof}{test_qlphii}
     %
     \label{eq:qlphii}
-    {q^l_\phi}_i(\pmb{\theta}_{\phi})
+    {({q^l_\phi})_{}}_i(\pmb{\theta}_{\phi})
     & =
     \resizebox{.75\hsize}{!}{$
             \begin{cases}
@@ -1168,14 +1181,14 @@ As before, we may express the solution to the integral $\mathbf{P}^l_\phi$ in
 closed form. Let us write the terms of $\mathbf{P}^l_\phi$ as
 %
 \begin{align}
-    {P^l_\phi}_{m,m'}
+    {({P^l_\phi})_{}}_{m,m'}
      & =
     \int
     \sum\limits_{\mu=-l}^l
     \sum\limits_{\nu=-l}^l
-    {D^l_{\hat{\mathbf{x}}}}_{m,\mu}(\phi) \,
-    {\bar{E}^l}{{}_r}_{\mu,\nu} \,
-    {D^l_{\hat{\mathbf{x}}}}_{\nu,m'}(\phi) \,
+    {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(\phi) \,
+    {(\bar{E}^l_r)_{}}_{\mu,\nu} \,
+    {({D^l_{\hat{\mathbf{x}}}})_{}}_{\nu,m'}(\phi) \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
     %
@@ -1186,14 +1199,14 @@ closed form. Let us write the terms of $\mathbf{P}^l_\phi$ as
         \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
         \sum\limits_{\mu=-l}^l
         \sum\limits_{\nu=-l}^l
-        {\bar{E}^l}{{}_r}_{\mu,\nu}
+        {(\bar{E}^l_r)_{}}_{\mu,\nu} \,
         \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu + \nu - m')}
         \sum\limits_{i=0}^{2l}
         \sum\limits_{j=0}^{2l}
         c_{m,\mu,i}^{l}
         c_{\nu,m',j}^{l}
         \,
-        {Q^l_\phi}_{i,j}(\pmb{\theta}_{\phi})
+        {({Q^l_\phi})_{}}_{i,j}(\pmb{\theta}_{\phi})
     $}
     \quad,
 \end{align}
@@ -1201,7 +1214,7 @@ closed form. Let us write the terms of $\mathbf{P}^l_\phi$ as
 where, similarly to before,
 %
 \begin{proof}{}
-    {Q^l_\phi}_{i,j}(\pmb{\theta}_{\phi})
+    {({Q^l_\phi})_{}}_{i,j}(\pmb{\theta}_{\phi})
     & \equiv
     \frac{1}{2}
     \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}
@@ -1243,7 +1256,7 @@ We may again express this integral in closed form:
 \begin{proof}{}
     %
     \label{eq:Qlphiij}
-    {Q^l_\phi}_{i,j}(\pmb{\theta}_{\phi})
+    {({Q^l_\phi})_{}}_{i,j}(\pmb{\theta}_{\phi})
     & =
     \resizebox{.75\hsize}{!}{$
             \begin{cases}
@@ -1389,12 +1402,12 @@ The integral $\mathbf{p}^l_\lambda$ defined above has a closed-form solution.
 To show this, we write the terms of $\mathbf{p}^l_\lambda$ as
 %
 \begin{align}
-    {p^l_\lambda}_m
+    {({p^l_\lambda})_{}}_m
      & =
     \int
     \sum\limits_{\mu=-l}^l
-    {D^l_{\hat{\mathbf{y}}}}_{m,\mu}(\lambda) \,
-    {\bar{e}^l}{{}_\phi}_{\mu} \,
+    {({D^l_{\hat{\mathbf{y}}}})_{}}_{m,\mu}(\lambda) \,
+    {({\bar{e}^l_\phi})_{}}_{\mu} \,
     p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
     \mathrm{d}\lambda
     %
@@ -1402,17 +1415,17 @@ To show this, we write the terms of $\mathbf{p}^l_\lambda$ as
     %
      & =
     \sum\limits_{\mu=-l}^l
-    {\bar{e}^l}{{}_\phi}_{\mu}
+    {({\bar{e}^l_\phi})_{}}_{\mu} \,
     \sum\limits_{i=0}^{2l} c_{m,\mu,i}^{l}
     \,
-    {q^l_\lambda}_i
+    {({q^l_\lambda})_{}}_i
     \quad,
 \end{align}
 %
 where
 %
 \begin{proof}{test_qllam}
-    {q^l_\lambda}_i
+    {({q^l_\lambda})_{}}_i
     & \equiv
     \frac{1}{2\pi}
     \int_{-\pi}^{\pi}
@@ -1517,14 +1530,14 @@ and we define
 We then express the terms of $\mathbf{P}^l_\lambda$ as
 %
 \begin{align}
-    {P^l_\lambda}_{m,m'}
+    {({P^l_\lambda})_{}}_{m,m'}
      & =
     \int
     \sum\limits_{\mu=-l}^l
     \sum\limits_{\nu=-l}^l
-    {D^l_{\hat{\mathbf{x}}}}_{m,\mu}(\lambda) \,
-    {\bar{E}^l}{{}_\phi}_{\mu,\nu} \,
-    {D^l_{\hat{\mathbf{x}}}}_{\nu,m'}(\lambda) \,
+    ({D^l_{\hat{\mathbf{x}}}})_{m,\mu}(\lambda) \,
+    (\bar{E}^l_\phi)_{\mu,\nu} \,
+    ({D^l_{\hat{\mathbf{x}}}})_{\nu,m'}(\lambda) \,
     p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
     \mathrm{d}\lambda
     %
@@ -1533,20 +1546,20 @@ We then express the terms of $\mathbf{P}^l_\lambda$ as
      & =
     \sum\limits_{\mu=-l}^l
     \sum\limits_{\nu=-l}^l
-    {\bar{E}^l}{{}_\phi}_{\mu,\nu}
+    (\bar{E}^l_\phi)_{\mu,\nu}
     \sum\limits_{i=0}^{2l}
     \sum\limits_{j=0}^{2l}
     c_{m,\mu,i}^{l}
     c_{\nu,m',j}^{l}
     \,
-    {Q^l_\lambda}_{i,j}
+    (Q^l_\lambda)_{i,j}
     \quad,
 \end{align}
 %
 where
 %
 \begin{proof}{}
-    {Q^l_\lambda}_{i,j}
+    (Q^l_\lambda)_{i,j}
     & \equiv
     \frac{1}{2\pi}
     \int_{-\pi}^{\pi}
@@ -1638,9 +1651,9 @@ characterized by a single parameter, the contrast of the spots:
 The moment integrals are then trivial to evaluate:
 %
 \begin{align}
-    \mathbf{e}_c & = c \, \mathbf{e}_\lambda
+    \mathbf{e}_c & = c_0 \, \mathbf{e}_\lambda
     \\
-    \mathbf{E}_c & = c^2 \mathbf{E}_\lambda
+    \mathbf{E}_c & = c_0^2 \mathbf{E}_\lambda
     \quad.
 \end{align}
 %
@@ -1648,32 +1661,130 @@ The moment integrals are then trivial to evaluate:
 
 
 \section{Marginalizing over inclination}
-\xxx{Coming soon.}
+%
+The equations for the mean and covariance of the flux GP
+(Equations~\ref{eq:mean_f} and \ref{eq:cov_f}, respectively) are conditioned
+on specific values of the stellar properties $\pmb{\theta}_\star$ and the
+spot properties $\pmb{\theta}_\bullet$. To obtain the posterior distribution
+for these parameters, we must typically resort to numerical sampling techniques,
+which often scale steeply with the number of parameters. It is therefore generally
+desirable to keep the total number of parameters small, especially when
+employing the GP in an ensemble setting.
+In such a setting, we might have light curves from $N_\star$ stars, all of which
+we believe to have similar spot properties (perhaps because they have
+similar spectral types and rotation periods, for example).
+The total number of parameters in our problem is therefore
+%
 \begin{align}
-    \pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
-     & = \pmb{\mathcal{A}}(\pmb{\theta}_\star) \, \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet)
-    \\
-    \pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
-     & = \pmb{\mathcal{A}}(\pmb{\theta}_\star) \, \pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta}_\bullet) \, \pmb{\mathcal{A}}^\top(\pmb{\theta_\star})
+    N_\theta = N_\star \, \mathrm{dim}(\pmb{\theta}_\star) + 5
     \quad,
 \end{align}
 %
+since each of the stars will have their own set of stellar properties
+$\pmb{\theta}_\star$ but will all share the same 5 spot properties
+$\pmb{\theta}_\bullet$ (by assumption).
+In a typical problem, the stellar parameters might be
+%
 \begin{align}
-    \pmb{\mu}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
-     & =
-    \int
-    \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
-    \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet)
-    p(i) \, \mathrm{d}i
-    \\
-    \pmb{\Sigma}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
-     & =
-    \int
-    \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
-    \pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta}_\bullet) \, \pmb{\mathcal{A}}^\top(i, \pmb{\theta_\star})
-    p(i) \, \mathrm{d}i
+    \pmb{\theta}_\star =
+    \left(
+    i \,\,\,
+    P \,\,\,
+    u_1 \,\,\,
+    u_2
+    \right)^\top
     \quad,
 \end{align}
+%
+i.e., the inclination, the rotational period, and some (usually two) limb
+darkening coefficients. Thus, for a reasonably sized ensemble of $N_\star=100$
+stars, we would have to sample over $N_\theta = 405$ parameters.
+While large, this number is certainly not absurd, especially by modern standards.
+However, it does pose
+a problem when considering how complex the posterior distribution for the
+spot mapping problem can be. In addition to strong nonlinear degeneracies
+between some of the parameters (such as the contrast $c$ and the
+number of spots $N$), the posterior is often multimodal, especially in the
+stellar inclinations. While modern sampling schemes such as Hamiltonian
+Monte Carlo and Nested Sampling may in principle be able to deal with these
+issues, in practice it can be very difficult to obtain convergence in a
+reasonable amount of time.
+
+One workaround is to fix the values of $\pmb{\theta}_\star$. This could be done,
+for instance, to the rotational period $P$, which can often be estimated with
+fairly good accuracy from a periodogram. The limb darkening coefficients could
+be fixed at theoretical values, or perhaps their values could be shared among
+all stars (and sampled over), given the similarity assumption above.
+
+The inclination, however, is a different matter. Absent prior information
+for a particular star (such as a measurement of its projected rotational
+velocity $v\sin i$ or the knowledge that it hosts a transiting planet), it
+is simply not possible to reliably estimate the inclination in a
+pre-processing step. Any light curve statistic one might argue should scale
+with inclination---such as the amplitude of the variability---is invariably
+degenerate with the spot parameters $\pmb{\theta}_\bullet$. If one knew
+$\pmb{\theta}_\bullet$, then perhaps a decent point estimate of $i$ could
+be obtained, but in that case the analysis wouldn't be needed in the first place!
+%
+
+Fortunately, there is a better way to reduce the number of parameters in
+the problem: we can explicitly marginalize over the stellar inclination.
+That is, we can write the first two moments of our flux GP as
+%
+\begin{align}
+    \label{eq:mu_marg}
+    \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
+     & =
+    \int
+    \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
+    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
+    p(i) \, \mathrm{d}i \\
+    \label{eq:cov_marg}
+    \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
+     & =
+    \int
+    \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
+    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] \,
+    \pmb{\mathcal{A}}^\top(i, \bar{\pmb{\theta}}_\star)
+    p(i) \, \mathrm{d}i    \quad,
+\end{align}
+%
+where the expectations inside the integrals are given by
+Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), respectively, and
+$\bar{\pmb{\theta}}_\star$ are all the stellar parameters \emph{except}
+the inclination, i.e.,
+%
+\begin{align}
+    \bar{\pmb{\theta}}_\star = \left(
+    P \,\,\,
+    u_1 \,\,\,
+    u_2
+    \right)^\top
+    \quad,
+\end{align}
+%
+where perhaps $P$ is fixed for each star and the limb darkening coefficients
+are shared among all stars, as described above.
+%
+Thus, if we are able to perform the integrals in Equations~(\ref{eq:mu_marg})
+and (\ref{eq:cov_marg}), we can \emph{dramatically} reduce the number of
+parameters in our ensemble problem.
+
+As we will see below, these integrals do in fact have closed-form solutions,
+since they are (again) integrals over Wigner matrices. In our derivation,
+we will assume that stellar rotation axes are distributed isotropically. In
+that case, the probability density for the inclination is simply
+%
+\begin{align}
+    p(i) = \sin i
+    \quad.
+\end{align}
+
+\subsection{First moment}
+\xxx{Coming soon.}
+
+\subsection{Second moment}
+\xxx{Coming soon.}
 
 \bibliography{bib}
 \end{document}

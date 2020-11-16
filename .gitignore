@@ -25,6 +25,7 @@ scratch/
 *latexindent*
 *.aux
 *.bbl
+gitlinks.tex
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
