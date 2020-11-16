@@ -30,10 +30,9 @@ def run_batch(
         if not os.path.exists(os.path.join(path, "{}".format(i))):
             os.makedirs(os.path.join(path, "{}".format(i)))
 
-    # Do we have slurm & disBatch?
+    # Do we have slurm?
     try:
         subprocess.check_output(["sbatch", "--version"])
-        subprocess.check_output(["module", "load", "disBatch"])
         use_slurm = True
     except:
         use_slurm = False
