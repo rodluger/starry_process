@@ -74,7 +74,7 @@ def run_batch(
             "--partition={}".format(slurm_queue),
             "-N {}".format(slurm_nodes),
             "--output={}".format(os.path.join(path, "batch.log")),
-            "--job-name={}".format(name),
+            "--job-name={}".format(path.split("/")[-1]),
             "--time={}:00:00".format(slurm_walltime),
             "--exclusive",
         ]
