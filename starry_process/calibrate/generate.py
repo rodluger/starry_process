@@ -68,6 +68,7 @@ def generate(**kwargs):
     seed = kwargs["seed"]
     gen_kwargs = kwargs["generate"]
     normalized = gen_kwargs["normalized"]
+    normalization_method = gen_kwargs["normalization_method"]
     nlon = gen_kwargs["nlon"]
     ydeg = gen_kwargs["ydeg"]
     smoothing = gen_kwargs["smoothing"]
@@ -144,7 +145,12 @@ def generate(**kwargs):
         flux[k] = flux0[k] + ferr * np.random.randn(npts)
 
         if normalized:
-            flux[k] = (1 + flux[k]) / (1 + np.median(flux[k])) - 1
+            if normalization_method.lower() == "median":
+                flux[k] = (1 + flux[k]) / (1 + np.median(flux[k])) - 1
+            elif normalization_method.lower() == "mean":
+                flux[k] = (1 + flux[k]) / (1 + np.mean(flux[k])) - 1
+            else:
+                raise ValueError("Unknown normalization method.")
 
     # Return a dict
     data = dict(

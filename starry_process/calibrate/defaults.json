@@ -2,6 +2,7 @@
     "seed": 0,
     "generate": {
         "normalized": true,
+        "normalization_method": "median",
         "nlon": 300,
         "ydeg": 30,
         "smoothing": 0.1,
