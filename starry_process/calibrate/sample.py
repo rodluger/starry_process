@@ -28,6 +28,10 @@ def sample(data, clobber=False, **kwargs):
     bmmax = sample_kwargs["bmmax"]
     bvmin = sample_kwargs["bvmin"]
     bvmax = sample_kwargs["bvmax"]
+    fit_for_bm = sample_kwargs["fit_for_bm"]
+    fit_for_bv = sample_kwargs["fit_for_bv"]
+    bm = sample_kwargs["bm"]
+    bv = sample_kwargs["bv"]
     sampler = sample_kwargs["sampler"]
     sampler_kwargs = sample_kwargs["sampler_kwargs"]
     run_nested_kwargs = sample_kwargs["run_nested_kwargs"]
@@ -43,12 +47,38 @@ def sample(data, clobber=False, **kwargs):
         ferr,
         period,
         ydeg=ydeg,
-        baseline_var=None,
-        baseline_mean=None,
+        baseline_var=None if fit_for_bv else bv,
+        baseline_mean=None if fit_for_bm else bm,
         apply_jac=apply_jac,
         normalized=normalized,
         marginalize_over_inclination=True,
     )
+
+    # Extra stuff if we're solving for the baseline
+    if fit_for_bm and fit_for_bv:
+        ndim = 7
+
+        def baseline_ptform(u, x):
+            x[5] = bmmin + u[5] * (bmmax - bmmin)
+            x[6] = bvmin + u[6] * (bvmax - bvmin)
+
+    elif fit_for_bm:
+        ndim = 6
+
+        def baseline_ptform(u, x):
+            x[5] = bmmin + u[5] * (bmmax - bmmin)
+
+    elif fit_for_bv:
+        ndim = 6
+
+        def baseline_ptform(u, x):
+            x[5] = bvmin + u[5] * (bvmax - bvmin)
+
+    else:
+        ndim = 5
+
+        def baseline_ptform(u, x):
+            return
 
     # Prior transform
     def ptform(u):
@@ -58,12 +88,10 @@ def sample(data, clobber=False, **kwargs):
         x[2] = bmin + u[2] * (bmax - bmin)
         x[3] = cmin + u[3] * (cmax - cmin)
         x[4] = nmin + u[4] * (nmax - nmin)
-        x[5] = bmmin + u[5] * (bmmax - bmmin)
-        x[6] = bvmin + u[6] * (bvmax - bvmin)
+        baseline_ptform(u, x)
         return x
 
     # Nested sampling
-    ndim = 7
     if sampler == "NestedSampler":
         sampler = dynesty.NestedSampler(
             lambda x: log_prob(*x), ptform, ndim, **sampler_kwargs

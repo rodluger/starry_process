@@ -8,6 +8,7 @@ defaults = dict(
     p=1.0,
     i=60.0,
     normalized=True,
+    normalization_order=10,
     marginalize_over_inclination=True,
     baseline_mean=0.0,
     baseline_var=0.0,

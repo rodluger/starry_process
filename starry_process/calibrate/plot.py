@@ -287,9 +287,7 @@ def plot_trace(results, **kwargs):
     return fig
 
 
-def plot_corner(
-    results, include_baseline=True, transform_beta=False, **kwargs
-):
+def plot_corner(results, transform_beta=False, **kwargs):
     """
     Plot the posterior corner plot.
 
@@ -339,8 +337,6 @@ def plot_corner(
 
     samples = np.array(results.samples)
     ndim = samples.shape[-1]
-    if not include_baseline:
-        ndim -= 2
 
     if transform_beta:
 

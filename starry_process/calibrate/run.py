@@ -16,9 +16,7 @@ def run(
     plot_latitude_pdf=True,
     plot_trace=False,
     plot_corner=False,
-    plot_corner_no_baseline=False,
     plot_corner_transformed=True,
-    plot_corner_transformed_no_baseline=True,
     plot_inclination_pdf=True,
     **kwargs,
 ):
@@ -93,27 +91,10 @@ def run(
         fig = calibrate.plot_corner(results, transform_beta=False, **kwargs)
         fig.savefig(os.path.join(path, "corner.pdf"), bbox_inches="tight")
 
-    if plot_all or plot_corner_no_baseline:
-        fig = calibrate.plot_corner(
-            results, transform_beta=False, include_baseline=False, **kwargs
-        )
-        fig.savefig(
-            os.path.join(path, "corner_no_baseline.pdf"), bbox_inches="tight"
-        )
-
     if plot_all or plot_corner_transformed:
         fig = calibrate.plot_corner(results, transform_beta=True, **kwargs)
         fig.savefig(
             os.path.join(path, "corner_transformed.pdf"), bbox_inches="tight"
-        )
-
-    if plot_all or plot_corner_transformed_no_baseline:
-        fig = calibrate.plot_corner(
-            results, transform_beta=True, include_baseline=False, **kwargs
-        )
-        fig.savefig(
-            os.path.join(path, "corner_transformed_no_baseline.pdf"),
-            bbox_inches="tight",
         )
 
     if (plot_all or plot_inclination_pdf) and (compute_inclination_pdf):

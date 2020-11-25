@@ -102,6 +102,9 @@ class StarryProcess(object):
                 to ``True`` and make sure observations are mean- (or median-)
                 normalized. Setting this to ``False`` is not recommended for
                 usage on real data. Default is %%defaults["normalized"]%%.
+            normalization_order (int, optional): Order of the series
+                expansion for the normalized covariance. Default is
+                %%defaults["normalization_order"]%%.
             log_alpha_max (float, optional): The maximum value of 
                 ``log(alpha)``. Default is %%defaults["log_alpha_max"]%%.
             log_beta_max (float, optional): The maximum value of ``log(beta)``. 
@@ -140,6 +143,9 @@ class StarryProcess(object):
 
         # Is the flux normalized?
         self._normalized = kwargs.get("normalized", defaults["normalized"])
+        self._normN = kwargs.get(
+            "normalization_order", defaults["normalization_order"]
+        )
 
         # Initialize the Ylm integral ops
         self._size = SizeIntegral(r, **kwargs)
@@ -172,6 +178,14 @@ class StarryProcess(object):
         self.random = tt.shared_randomstreams.RandomStreams(
             kwargs.get("seed", 0)
         )
+
+        # Moments of the standard normal, which we'll use to
+        # compute the normalized covariance
+        self._g = np.zeros(self._normN + 1)
+        self._g[0] = 1.0
+        self._g[2] = 1.0
+        for n in range(4, self._normN + 1, 2):
+            self._g[n] = self._g[n - 2] * (n - 1)
 
     @property
     def size(self):
@@ -366,9 +380,48 @@ class StarryProcess(object):
         if self._normalized:
             cov = self._flux.cov(t, i, p)
             mean = self._flux.mean(t, i, p)
-            return cov / (1 + mean) ** 2
+            return self._normalize(1.0 + mean, cov)  # cov / (1 + mean) ** 2
         else:
             return self._flux.cov(t, i, p)
+
+    def _normalize(self, mu, Sig):
+        """
+        Return the series expansion of the normalized covariance matrix.
+
+        See Luger (2020) for details.
+
+        """
+        K = Sig.shape[0]
+        J = tt.ones_like(Sig)
+        barSig = tt.mean(Sig)
+
+        # Powers of S / barSig
+        G = tt.dot(Sig, J) / K ** 2 / barSig
+        Gpow = [tt.eye(K)]
+        for n in range((self._normN + 2) // 2):
+            Gpow.append(tt.dot(Gpow[-1], G))
+
+        # Series expansion
+        norm_cov = tt.zeros_like(Sig)
+        for n in range(0, self._normN + 1, 2):
+            fac = (
+                (-1) ** n
+                * (n + 1)
+                * self._g[n]
+                * barSig ** (n // 2)
+                / (mu ** n)
+            )
+            norm_cov += fac * (
+                Sig
+                + n * tt.dot(Gpow[n // 2], Sig)
+                + (n + 1) * barSig * J
+                - (n + 1)
+                * barSig
+                * K
+                * (Gpow[(n + 2) // 2] + tt.transpose(Gpow[(n + 2) // 2]))
+            )
+
+        return norm_cov / mu ** 2
 
     def sample(self, t, i=defaults["i"], p=defaults["p"], nsamples=1):
         """
