@@ -1,4 +1,4 @@
-.PHONY : clean, default, publish
+.PHONY : clean, default, publish, pdflatex, tectonic
 
 TEX_FILES   = ms
 TMP_SUFFS   = pdf aux bbl blg log dvi ps eps out ent

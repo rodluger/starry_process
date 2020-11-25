@@ -27,91 +27,476 @@
 
 \section{The problem}
 
-Suppose I have a process with mean $\pmb{\mu}$ and covariance
-$\pmb{\Sigma}$ that generates a variable
-$\mathbf{y} = \left( y_0 \,\, \cdots \,\, y_{K-1} \right)^\top$:
+Let $\mathbf{x} = \left( x_0 \,\, \cdots \,\, x_{K-1} \right)^\top$
+be a $K$-dimensional multivariate normal random variable with mean $\pmb{\mu}$
+and covariance $\pmb{\Sigma}$:
 %
 \begin{align}
-    \mathbf{y} \sim \mathcal{N}\left( \pmb{\mu}, \pmb{\Sigma} \right)
+    \mathbf{x} \sim \mathcal{N}\left( \pmb{\mu}, \pmb{\Sigma} \right)
     \quad.
 \end{align}
 %
-Now suppose
-I don't have access to $\mathbf{y}$; instead, I can only observe the \emph{normalized}
-values of $\mathbf{y}$:
+For simplicity, let us assume the mean is constant, i.e.,
 %
 \begin{align}
-    \mathbf{y}_{\mathrm{obs}}
-     & = \frac{\mathbf{y}}{\big<\mathbf{y}\big>}
+    \pmb{\mu} = \mu \, \mathbf{j}_K
+\end{align}
+%
+where $\mathbf{j}_K$ is the vector of $K$ ones.
+%
+Now suppose we cannot observe $\mathbf{x}$ directly, but instead we can
+observe the \emph{normalized} version of $\mathbf{x}$, which we will call
+$\mathbf{y}$:
+%
+\begin{align}
+    \mathbf{y}
+     & \equiv \frac{\mathbf{x}}{\bar{x}}
     \nonumber                                                      \\[0.5em]
-     & = \frac{\mathbf{y}}{\frac{1}{K}\sum\limits_{k=0}^{K-1} y_k}
+     & = \frac{\mathbf{x}}{\frac{1}{K}\sum\limits_{k=0}^{K-1} x_k}
     \quad.
 \end{align}
 %
-What are the mean and covariance of $\mathbf{y}_{\mathrm{obs}}$?
+The variable $\mathbf{y}$ is no longer normally distributed, but as long as
+the variance of $\bar{x}$ is small, we can approximate it as such. Let the mean
+and covariance of $\mathbf{y}$ be $\mathbf{m}$ and $\mathbf{C}$, respectively:
+%
+\begin{align}
+    \mathbf{y} \mathrel{\dot\sim} \mathcal{N}\left( \mathbf{m}, \mathbf{C} \right)
+    \quad.
+\end{align}
+%
+By definition, the mean is unity, i.e,
+%
+\begin{align}
+    \mathbf{m} = \mathbf{j}_K
+    \quad.
+\end{align}
+%
+What is the expression for $\mathbf{C}$?
 
 \section{The solution}
 
-The mean is easy, I think: it should be
+The covariance is given by
 %
 \begin{align}
-    \pmb{\mu}_{\mathrm{obs}}
+    \mathbf{C}
      & =
-    \mathrm{E}\big[ \mathbf{y}_{\mathrm{obs}} \big]
+    \mathrm{E}\big[ \mathbf{y} \mathbf{y}^\top \big]
+    - \mathbf{m}\mathbf{m}^\top
     \nonumber \\[0.5em]
      & =
-    \mathbf{1}
+    \mathrm{E}\left[ \frac{\mathbf{x}\mathbf{x}^\top}{\bar{x}^2} \right]
+    - \mathbf{J}_K
     \quad,
 \end{align}
 %
-since the mean value of $\mathbf{y}_{\mathrm{obs}}$ for any realization
-of the noise process is always unity. Now, the covariance is
+where $\mathbf{J}_K$ is the $K\times K$ matrix of ones.
+To evaluate this, it is convenient to write
 %
 \begin{align}
-    \pmb{\Sigma}_{\mathrm{obs}}
+    \mathbf{x} = \pmb{\mu} + \mathbf{L} \mathbf{u}
+    \quad,
+\end{align}
+%
+where $\mathbf{L}$ is the lower Cholesky decomposition of $\pmb{\Sigma}$,
+i.e.,
+%
+\begin{align}
+    \pmb{\Sigma} = \mathbf{L}\,\mathbf{L}^\top
+\end{align}
+%
+and $\mathbf{u}$ is a standard multivariate normal random variable,
+%
+\begin{align}
+    \mathbf{u} \sim \mathcal{N}\left( 0, \mathbf{I}_K \right)
+    \quad,
+\end{align}
+%
+where $\mathbf{I}_K$ is the
+$K \times K$ identity matrix.
+The expression for the covariance $\mathbf{C}$ may now be written
+%
+\begin{align}
+    \mathbf{C}
      & =
-    \mathrm{E}\big[ \mathbf{y}_{\mathrm{obs}} \mathbf{y}_{\mathrm{obs}}^\top \big]
-    - \pmb{\mu}_{\mathrm{obs}} \pmb{\mu}_{\mathrm{obs}}^\top
-    \nonumber \\[0.5em]
-     & =
-    \mathrm{E}\left[ \frac{\mathbf{y}\mathbf{y}^\top}{\big<\mathbf{y}\big>^2} \right]
-    - \mathbf{1}
+    \mathrm{E}\left[
+        \frac{
+            (\pmb{\mu} + \mathbf{L} \mathbf{u})(\pmb{\mu} + \mathbf{L} \mathbf{u})^\top
+        }{
+            \bar{x}^2
+        }
+        \right]
+    - \mathbf{J}_K
+\end{align}
+%
+The mean $\bar{x}$ is
+%
+\begin{align}
+    \bar{x} & = \sum\limits_{j=0}^{K-1}(\mu_j + L_{i,j}u_j)
+    \nonumber                                               \\
+            & =
+    \mu + \frac{1}{K}\mathbf{j}^\top \mathbf{L} \, \mathbf{u}
     \quad.
 \end{align}
 %
-How do I compute that? I know that
+Plugging this in and dividing the numerator and denominator in the expecation
+by $\mu^2$, we obtain
 %
 \begin{align}
-    \mathrm{E}\big[ \mathbf{y} \mathbf{y}^\top \big] = \pmb{\Sigma} + \pmb{\mu}\pmb{\mu}^\top
-\end{align}
-%
-and I \emph{think} that
-%
-\begin{align}
-    \mathrm{E}\big[ \big<\mathbf{y}\big>^2 \big] \stackrel{?}{=} \frac{\pmb{\mu}^\top\pmb{\mu}}{K}
-\end{align}
-%
-so can I just do
-%
-\begin{align}
-    \pmb{\Sigma}_{\mathrm{obs}}
+    \mathbf{C}
      & =
-    \mathrm{E}\left[ \frac{\mathbf{y}\mathbf{y}^\top}{\big<\mathbf{y}\big>^2} \right]
-    - \mathbf{1}
-    \nonumber          \\[0.5em]
-     & \stackrel{?}{=}
-    \frac{ \mathrm{E}\left[\mathbf{y}\mathbf{y}^\top \right]}
-    { \mathrm{E}\left[\big<\mathbf{y}\big>^2 \right]}
-    - \mathbf{1}
-    \nonumber          \\[0.5em]
-     & \stackrel{?}{=}
-    K
-    \frac{ \pmb{\Sigma} }
-    { \pmb{\mu}^\top\pmb{\mu} }
-    +
-    \left(K\frac{ \pmb{\mu}\pmb{\mu}^\top }{\pmb{\mu}^\top\pmb{\mu}}
-    - \mathbf{1}
-    \right)
+    \frac{1}{\mu^2}
+    \mathrm{E}\left[
+        \frac{
+            (\pmb{\mu} + \mathbf{L} \mathbf{u})(\pmb{\mu} + \mathbf{L} \mathbf{u})^\top
+        }{
+            \left(1 + \frac{1}{\mu K}\mathbf{j}^\top \mathbf{L} \, \mathbf{u}\right)^2
+        }
+        \right]
+    - \mathbf{J}_K
+    \nonumber \\[0.5em]
+     & =
+    \frac{1}{\mu^2}
+    \mathrm{E}\left[
+        \frac{
+            \mathbf{J}_K
+            +
+            \mathbf{j}_K\mathbf{u}^\top \mathbf{L}^\top
+            +
+            \mathbf{L} \, \mathbf{u} \, \mathbf{j}_K^\top
+            +
+            \mathbf{L} \, \mathbf{u} \, \mathbf{u}^\top \, \mathbf{L}^\top
+        }{
+            \left(1 + \frac{1}{\mu K}\mathbf{j}^\top \mathbf{L} \, \mathbf{u}\right)^2
+        }
+        \right]
+    - \mathbf{J}_K
+    \quad.
 \end{align}
-?
+%
+The denominator in the expression above makes direct evaluation of the expectation
+intractable. As long as
+$\big| \frac{1}{\mu K}\mathbf{j}^\top \mathbf{L} \, \mathbf{u} \big| < 1$, we
+can Taylor expand the covariance as
+%
+\begin{align}
+    \mathbf{C}
+     & =
+    \frac{1}{\mu^2}
+    \mathrm{E}\left[
+        \Bigg(
+        \mathbf{J}_K
+        +
+        \mathbf{j}_K\mathbf{u}^\top \mathbf{L}^\top
+        +
+        \mathbf{L} \, \mathbf{u} \, \mathbf{j}_K^\top
+        +
+        \mathbf{L} \, \mathbf{u} \, \mathbf{u}^\top \, \mathbf{L}^\top
+        \Bigg)
+        \left(
+        \sum\limits_{n=0}^\infty
+        (-1)^n (n + 1) x^n
+        \right)
+        \right]
+    - \mathbf{J}_K
+    \quad,
+\end{align}
+%
+where we define the scalar quantity
+%
+\begin{align}
+    x \equiv \frac{1}{\mu K}\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}
+    \quad.
+\end{align}
+%
+Since the expectation is a linear operator, we can write this as
+%
+\begin{align}
+    \mathbf{C}
+     & =
+    \frac{1}{\mu^2}
+    \sum\limits_{n=0}^\infty
+    (-1)^n (n + 1)
+    \,
+    \mathrm{E}\left[
+        x^n
+        \Bigg(
+        \mathbf{J}_K
+        +
+        \mathbf{j}_K\mathbf{u}^\top \mathbf{L}^\top
+        +
+        \mathbf{L} \, \mathbf{u} \, \mathbf{j}_K^\top
+        +
+        \mathbf{L} \, \mathbf{u} \, \mathbf{u}^\top \, \mathbf{L}^\top
+        \Bigg)
+        \right]
+    - \mathbf{J}_K
+    \nonumber \\[0.5em]
+     & =
+    \frac{1}{\mu^2}
+    \sum\limits_{n=0}^\infty
+    \frac{(-1)^n (n + 1)}{(\mu K)^n}
+    \,
+    \left(
+    \mathbf{P}_n
+    +
+    \mathbf{Q}_n
+    +
+    \mathbf{Q}_n^\top
+    +
+    \mathbf{R}_n
+    \right)
+    - \mathbf{J}_K
+    \quad,
+\end{align}
+%
+where
+%
+\begin{align}
+    \mathbf{P}_n & \equiv \mathrm{E}\left[ \left(\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}\right)^n \mathbf{J}_K \right]
+    \nonumber                                                                                                                                                               \\[0.5em]
+    \mathbf{Q}_n & \equiv \mathrm{E}\left[ \left(\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}\right)^n \mathbf{L} \, \mathbf{u} \, \mathbf{j}_K^\top \right]
+    \nonumber                                                                                                                                                               \\[0.5em]
+    \mathbf{R}_n & \equiv \mathrm{E}\left[ \left(\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}\right)^n \mathbf{L} \, \mathbf{u} \, \mathbf{u}^\top \, \mathbf{L}^\top \right]
+    \quad.
+\end{align}
+%
+We compute these in the sections below, where we will make use of the expression for the
+$n^\mathrm{th}$ moment of the standard normal distribution:
+%
+\begin{align}
+    \mathrm{E}\left[ u^n \right]
+     & =
+    \begin{cases}
+        0   & n \, \mathrm{odd}
+        \\
+        g_n & n \, \mathrm{even}
+    \end{cases}
+\end{align}
+%
+for scalar $u \sim \mathcal{N}(0, 1)$, where
+%
+\begin{align}
+    g_n \equiv \dfrac{n!}{2^\frac{n}{2} \left(\frac{n}{2}\right)!}
+    \quad.
+\end{align}
+%
+For future reference, we can apply this relation to compute expectations
+of products of the components of a random normal vector $\mathbf{u}$:
+%
+\begin{align}
+    \mathrm{E}\left[u_i \right]                    & = 0
+    \\[1em]
+    \mathrm{E}\left[u_i u_j\right]                 & = g_2
+    \\[1em]
+    \mathrm{E}\left[u_i u_j u_k\right]             & = 0
+    \\[1em]
+    \mathrm{E}\left[u_i u_j u_k u_l\right]         & =
+    \begin{cases}
+        g_4   & i = j = k = l
+        \\
+        g_2^2 & i = j, k = l, i \ne k
+        \\
+        g_2^2 & i = k, j = l, i \ne j
+        \\
+        g_2^2 & i = l, j = k, i \ne j
+        \\
+        0     & \mathrm{otherwise}
+    \end{cases}
+    \\[1em]
+    \mathrm{E}\left[u_i u_j u_k u_l u_m\right]     & = 0
+    \\[1em]
+    \mathrm{E}\left[u_i u_j u_k u_l u_m u_n\right] & =
+    \xxx{...}
+\end{align}
+
+\subsection{The $\mathbf{P}$ expectation}
+
+Let us begin by computing the first several terms in $\mathbf{P}$.
+%
+\begin{align}
+    \mathbf{P}_0 & = \mathrm{E}\left[ \mathbf{J}_K \right]
+    \nonumber                                              \\
+                 & = \mathbf{J}_K
+\end{align}
+%
+since $\mathbf{J}_K$ is constant. Next,
+%
+\begin{align}
+    \mathbf{P}_1 & = \mathrm{E}\left[ \left(\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}\right) \mathbf{J}_K \right]
+    \nonumber                                                                                                      \\
+                 & = \left(\mathbf{j}_K^\top \mathbf{L} \, \mathrm{E}\left[ \mathbf{u} \right]\right) \mathbf{J}_K
+    \nonumber                                                                                                      \\
+                 & = \mathbf{0}
+\end{align}
+%
+since $\mathrm{E}\left[ \mathbf{u} \right] = \mathbf{0}$. The next term is
+%
+\begin{align}
+    \mathbf{P}_2 & = \mathrm{E}\left[ \left(\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}\right)^2 \mathbf{J}_K \right]
+    \nonumber                                                                                                                                                         \\
+                 & = \mathrm{E}\left[\left(\mathbf{j}_K^\top \mathbf{L} \,  \mathbf{u} \mathbf{u}^\top  \mathbf{L}^\top \, \mathbf{j}_K \right)  \mathbf{J}_K \right]
+    \nonumber                                                                                                                                                         \\
+                 & = \left(\mathbf{j}_K^\top \mathbf{L} \, \mathrm{E}\left[ \mathbf{u} \mathbf{u}^\top \right] \mathbf{L}^\top \, \mathbf{j}_K \right)  \mathbf{J}_K
+    \nonumber                                                                                                                                                         \\
+                 & = \left(\mathbf{j}_K^\top \mathbf{L} \mathbf{L}^\top \, \mathbf{j}_K \right)  \mathbf{J}_K
+    \nonumber                                                                                                                                                         \\
+                 & = \mathrm{sum}(\mathbf{\Sigma}) \mathbf{J}_K
+\end{align}
+%
+where we made use of the fact that $\mathrm{E}\left[ \mathbf{u} \mathbf{u}^\top\right] = \mathbf{I}_K$.
+%
+Next,
+%
+\begin{align}
+    \mathbf{P}_3 & = \mathrm{E}\left[ \left(\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}\right)^3 \mathbf{J}_K \right]
+    \nonumber                                                                                                                                                                                                       \\
+                 & = \mathrm{E}\left[\left(\mathbf{j}_K^\top \mathbf{L} \,  \mathbf{u} \mathbf{u}^\top  \mathbf{L}^\top \, \mathbf{j}_K \, \mathbf{j}_K^\top \mathbf{L} \,  \mathbf{u} \right) \mathbf{J}_K \right]
+    \nonumber                                                                                                                                                                                                       \\
+                 & = \left(\mathbf{j}_K^\top \mathbf{L} \,  \mathrm{E}\left[\mathbf{u} \mathbf{u}^\top  \mathbf{L}^\top \, \mathbf{J}_K \mathbf{L} \,  \mathbf{u}\right] \right) \mathbf{J}_K
+    \nonumber                                                                                                                                                                                                       \\
+                 & = \mathbf{0}
+\end{align}
+%
+since we may write the component at index $i$ of the vector within the expectation
+as
+\begin{align}
+    \mathrm{E}\left[\mathbf{u} \mathbf{u}^\top  \mathbf{L}^\top \, \mathbf{J}_K \mathbf{L} \,  \mathbf{u}\right]_{i} = \sum\limits_{k,l}(\mathbf{L}^\top \mathbf{J}_K \mathbf{L})_{k,l} u_i u_k u_l = 0
+    \quad,
+    \nonumber
+\end{align}
+%
+which is zero since it is the product of an odd number of random normal variables.
+Finally,
+%
+\begin{align}
+    \mathbf{P}_4 & = \mathrm{E}\left[ \left(\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}\right)^4 \mathbf{J}_K \right]
+    \nonumber                                                                                                                                                                                                                                                           \\
+                 & = \mathrm{E}\left[\left(\mathbf{j}_K^\top \mathbf{L} \,  \mathbf{u} \mathbf{u}^\top  \mathbf{L}^\top \, \mathbf{j}_K \, \mathbf{j}_K^\top \mathbf{L} \,  \mathbf{u} \, \mathbf{u}^\top  \mathbf{L}^\top \, \mathbf{j}_K \right) \mathbf{J}_K \right]
+    \nonumber                                                                                                                                                                                                                                                           \\
+                 & = \left(\mathbf{j}_K^\top \mathbf{L} \, \mathrm{E}\left[ \mathbf{u} \mathbf{u}^\top  \mathbf{L}^\top \, \mathbf{J}_K \, \mathbf{L} \,  \mathbf{u} \, \mathbf{u}^\top \right] \mathbf{L}^\top \, \mathbf{j}_K \right) \mathbf{J}_K
+    \nonumber                                                                                                                                                                                                                                                           \\
+                 & = \left(3 \mathbf{j}_K^\top \mathbf{L} \, \mathbf{L}^\top \mathbf{J}_K \mathbf{L} \, \mathbf{L}^\top \, \mathbf{j}_K \right) \mathbf{J}_K
+    \nonumber                                                                                                                                                                                                                                                           \\
+                 & = 3 \, \mathrm{sum}(\mathbf{\Sigma})^2  \mathbf{J}_K
+\end{align}
+%
+since
+\begin{align}
+    \mathrm{E}\left[\mathbf{u} \mathbf{u}^\top  \mathbf{L}^\top \, \mathbf{J}_K \mathbf{L} \,  \mathbf{u} \,  \mathbf{u}^\top\right]_{i,j}
+     & =
+    \sum\limits_{k,l}(\mathbf{L}^\top \mathbf{J}_K \mathbf{L})_{k,l} u_i u_j u_k u_l
+    \nonumber \\
+     & =
+    3 \sum\limits_{k,l}(\mathbf{L}^\top \mathbf{J}_K \mathbf{L})_{k,l} \delta_{ijkl}
+    \nonumber \\
+     & =
+    3 (\mathbf{L}^\top \mathbf{J}_K \mathbf{L})_{i,j}
+    \nonumber \quad.
+\end{align}
+%
+Based on this pattern, the general term in $\mathbf{P}$ is
+%
+\begin{align}
+    \mathbf{P}_n & =
+    \mathbf{J}_K
+    \begin{cases}
+        0                                                                                             & n \, \mathrm{odd}
+        \\
+        \dfrac{n! \, \mathrm{sum}(\pmb{\Sigma})^\frac{n}{2}}{2^\frac{n}{2} \left(\frac{n}{2}\right)!} & n \, \mathrm{even}
+        \quad.
+    \end{cases}
+\end{align}
+
+\subsection{The $\mathbf{Q}$ expectation}
+%
+The first several terms in $\mathbf{Q}$ are given by
+%
+\setlength{\abovedisplayskip}{1em}
+\begin{align}
+    \mathbf{Q}_0 & = \mathrm{E}\left[ \mathbf{L} \, \mathbf{u} \, \mathbf{j}_K^\top \right]
+    \nonumber                                                                                                                                                                            \\
+                 & = \mathbf{L} \, \mathrm{E}\left[  \mathbf{u} \right] \, \mathbf{j}_K^\top
+    \nonumber                                                                                                                                                                            \\
+                 & = \mathbf{0}
+    %
+    \\[1em]
+    %
+    \mathbf{Q}_1 & = \mathrm{E}\left[ \left(\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}\right) \mathbf{L} \, \mathbf{u} \, \mathbf{j}_K^\top \right]
+    \nonumber                                                                                                                                                                            \\
+                 & = \mathrm{E}\left[ \left(\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}\right) \mathbf{L} \, \mathbf{u} \right] \, \mathbf{j}_K^\top
+    \nonumber                                                                                                                                                                            \\
+                 & = \mathrm{E}\left[ \mathbf{L} \, \mathbf{u} (\mathbf{u}^\top \mathbf{L}^\top \mathbf{j}_K) \right] \, \mathbf{j}_K^\top
+    \nonumber                                                                                                                                                                            \\
+                 & = \mathrm{E}\left[ \mathbf{L} \, \mathbf{u} \mathbf{u}^\top \mathbf{L}^\top  \right] \, \mathbf{J}_K
+    \nonumber                                                                                                                                                                            \\
+                 & = \mathbf{L} \, \mathrm{E}\left[  \mathbf{u} \mathbf{u}^\top   \right]  \, \mathbf{L}^\top \mathbf{J}_K
+    \nonumber                                                                                                                                                                            \\
+                 & = \mathbf{L} \, \mathbf{L}^\top \mathbf{J}_K
+    \nonumber                                                                                                                                                                            \\
+                 & = \pmb{\Sigma} \, \mathbf{J}_K
+    %
+    \\
+    \intertext{%
+        where we made liberal use of the fact that $\left(\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}\right)$ is a scalar,%
+    }
+    %
+    \mathbf{Q}_2 & = \mathrm{E}\left[ \left(\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}\right)^2 \mathbf{L} \, \mathbf{u} \, \mathbf{j}_K^\top \right]
+    \nonumber                                                                                                                                                                            \\
+                 & =  \mathrm{E}\left[ \mathbf{L} \, \mathbf{u} \, (\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}) (\mathbf{u}^\top \mathbf{L}^\top \mathbf{j}_K) \mathbf{j}_K^\top \right]
+    \nonumber                                                                                                                                                                            \\
+                 & = \mathbf{L} \, \mathrm{E}\left[ \mathbf{u} \, \mathbf{j}_K^\top \mathbf{L} \, \mathbf{u} \mathbf{u}^\top \right] \, \mathbf{L}^\top \mathbf{J}_K
+    \nonumber                                                                                                                                                                            \\
+                 & = \mathbf{0}
+    %
+    \\
+    \intertext{since $\mathrm{E}\left[ \mathbf{u} \, \mathbf{j}_K^\top \mathbf{L} \, \mathbf{u} \mathbf{u}^\top \right]_{i,j} = 0$,}
+    %
+    \mathbf{Q}_3 & = \mathrm{E}\left[ \left(\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}\right)^3 \mathbf{L} \, \mathbf{u} \, \mathbf{j}_K^\top \right]
+    \nonumber                                                                                                                                                                            \\
+                 & = \xxx{...}
+    \nonumber                                                                                                                                                                            \\
+                 & = 3 \, \pmb{\Sigma} \, \mathbf{J}_K \, \pmb{\Sigma} \, \mathbf{J}_K
+\end{align}
+%
+Based on this pattern, the general term in $\mathbf{Q}$ is
+%
+\begin{align}
+    \mathbf{Q}_n & =
+    \begin{cases}
+        \mathbf{0}                                                                                                          & n \, \mathrm{even}
+        \\
+        \dfrac{(n + 1)!}{2^\frac{n + 1}{2} \left(\frac{n + 1}{2}\right)!} \, (\pmb{\Sigma} \, \mathbf{J}_K)^\frac{n + 1}{2} & n \, \mathrm{odd}
+        \quad.
+    \end{cases}
+\end{align}
+
+\subsection{The $\mathbf{R}$ expectation}
+%
+The first several terms in $\mathbf{R}$ are given by
+%
+\setlength{\abovedisplayskip}{1em}
+\begin{align}
+    \mathbf{R}_0 & = \mathrm{E}\left[ \mathbf{L} \, \mathbf{u} \, \mathbf{u}^\top \mathbf{L}^\top \right]
+    \nonumber                                                                                                                                                       \\
+                 & = \mathbf{L} \, \mathrm{E}\left[  \mathbf{u} \, \mathbf{u}^\top \right] \, \mathbf{L}^\top
+    \nonumber                                                                                                                                                       \\
+                 & = \pmb{\Sigma}
+    %
+    \\[1em]
+    %
+    \mathbf{R}_1 & = \mathrm{E}\left[ \left(\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}\right) \mathbf{L} \, \mathbf{u} \, \mathbf{u}^\top \mathbf{L}^\top \right]
+    \nonumber                                                                                                                                                       \\
+                 & = \xxx{...}
+    \nonumber                                                                                                                                                       \\
+                 & = \mathbf{0}
+    %
+    \\[1em]
+    %
+    \mathbf{R}_2 & = \mathrm{E}\left[ \left(\mathbf{j}_K^\top \mathbf{L} \, \mathbf{u}\right)^2 \mathbf{L} \, \mathbf{u} \, \mathbf{u}^\top \mathbf{L}^\top \right]
+    \nonumber                                                                                                                                                       \\
+                 & = \xxx{...}
+    \nonumber                                                                                                                                                       \\
+                 & = 3 \, \pmb{\Sigma} \, \mathbf{J}_K \, \pmb{\Sigma}
+\end{align}
 \end{document}

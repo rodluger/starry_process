@@ -60,7 +60,7 @@ for k in range(len(r)):
         ls=ls[k],
         alpha=alpha[k],
         color=color[k],
-        label=r"$r = {}^\circ$".format(r[k]),
+        label=r"$\rho = {}^\circ$".format(r[k]),
     )
 
 ax.legend(loc="lower right", fontsize=12)

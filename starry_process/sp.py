@@ -371,6 +371,10 @@ class StarryProcess(object):
             return self._flux.cov(t, i, p)
 
     def sample(self, t, i=defaults["i"], p=defaults["p"], nsamples=1):
+        """
+        TODO: Samples are noisy because of `eps3`.
+
+        """
         if self._marginalize_over_inclination:
             t = cast(t)
             u = self.random.normal((t.shape[0], nsamples))

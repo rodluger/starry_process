@@ -46,50 +46,15 @@
 \label{sec:intro}
 \xxx{Talk about starry, gps, etc.}
 
-\appendix
+\section{A Gaussian Process for Star Spots}
 
-\section{Spherical Harmonics}
+\subsection{Spherical Harmonics}
 \label{sec:ylm}
 %
 The spherical harmonics are a complete set of orthogonal functions on the
 surface of the sphere and, as such, are a convenient basis in which to construct
 our gaussian process. As in \citet{Luger2019}, here we describe the intensity
-on the surface of a star as an expansion in the real spherical harmonics, which is
-fully specified by a set of spherical harmonic coefficients
-$\{ y^l_m \}$, where $l \in [0, l_{\mathrm{max}}]$ is known as
-the degree and
-$m \in [-l, l]$ is known as the order, with $l_{\mathrm{max}}$ equal to the highest
-degree in the expansion.
-It is often convenient to collect the spherical harmonic coefficients of
-a given expansion into a vector
-%
-\begin{align}
-    \label{eq:y}
-    \mathbf{y}
-     & =
-    \left(
-    \mathbf{y}^0 \,\,\,
-    \mathbf{y}^1 \,\,\,
-    \cdots \,\,\,
-    \mathbf{y}^{l_\mathrm{max}}
-    \right)^\top
-    \nonumber \\
-     & =
-    \left(
-    y^0_0 \,\,\,
-    \,\,\,
-    y^1_{-1} \,\,\,
-    y^1_{0} \,\,\,
-    y^1_{1} \,\,\,
-    \,\,\,
-    \cdots \,\,\,
-    \,\,\,
-    y^{l_\mathrm{max}}_{-l_\mathrm{max}} \,\,\,
-    \cdots \,\,\,
-    y^{l_\mathrm{max}}_{l_\mathrm{max}} \,\,\,
-    \right)^\top
-    \quad.
-\end{align}
+on the surface of a star as an expansion in the real spherical harmonics.
 %
 \citet{Luger2019} derived the expression for the total disk-integrated
 flux $\mathbf{f}$ (i.e., the light curve)
@@ -108,16 +73,9 @@ design matrix, a purely linear operator that transforms from the spherical
 harmonic basis to the flux basis; it is implicitly
 a function of the stellar inclination $i$, the stellar
 rotation period $P$, the stellar limb darkening coefficients, etc.
-For reference, the rows of $\pmb{\mathcal{A}}$ are given by
-Equation~(18) in \citet{Luger2019}.
+(see Appendix~\ref{sec:starry} for details).
 
-An in-depth treatment of the spherical harmonics is beyond the scope of this
-paper. For more information, including closed-form expressions for
-the spherical harmonics
-and details on their usage in modeling stellar surfaces, the reader is
-encouraged to consult \citet{Luger2019}.
-
-\section{A Gaussian Process for Star Spots}
+\subsection{Computing the GP}
 \label{sec:gp}
 %
 
@@ -127,9 +85,9 @@ encouraged to consult \citet{Luger2019}.
 % the distribution of features on the surface.
 
 Let
-$\mathbf{f} = \left( f_0 \, f_1 \, \cdots \,  f_K \right)^\top$
+$\mathbf{f} = \left( f_0 \, f_1 \, \cdots \,  f_{K-1} \right)^\top$
 denote a vector of $K$ flux measurements at times
-$\mathbf{t} = \left( t_0 \,  t_1 \,  \cdots \, t_K \right)^\top$.
+$\mathbf{t} = \left( t_0 \,  t_1 \,  \cdots \, t_{K-1} \right)^\top$.
 Conditioned on certain physical properties of the
 star
 (such as its inclination, rotation period, etc.), $\pmb{\theta}_\star$,
@@ -140,7 +98,7 @@ covariance $\pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$
 of $\mathbf{f}$, which together fully specify our GP in flux.
 %
 As with any random variable, the mean and covariance may be computed from
-the expectation value of $\mathbf{f}$ and
+the expectation values of $\mathbf{f}$ and
 $\mathbf{f}\,\mathbf{f}^\top$, respectively:
 %
 \begin{align}
@@ -182,7 +140,8 @@ where
 \end{align}
 %
 are the mean and covariance of the GP in the spherical harmonics basis.
-The bulk of the math in this paper is devoted to computing
+The bulk of the math in this paper (Appendix~\ref{sec:integrals})
+is devoted to computing
 the expectations in the expressions above, which
 are given by the integrals
 %
@@ -200,13 +159,322 @@ are given by the integrals
 \end{align}
 %
 where $\mathbf{x}$ is a random vector-valued variable corresponding to a particular
-distribution of features on the surface  (i.e., the size and location of star spots)
+distribution of features on the surface
 and $p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$ is its probability density
 function (PDF).
-
-In the sections that follow we will show that for suitable choices of $\mathbf{y}(\mathbf{x})$
+%
+In the Appendix we show that for suitable choices of $\pmb{\theta}_\bullet$,
+$\mathbf{y}(\mathbf{x})$,
 and $p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$, the integrals in the expressions
 above have closed form solutions that may be evaluated quickly.
+%
+In particular, we let the spot hyperparameters of our GP be
+%
+\begin{align}
+    \pmb{\theta}_\bullet
+     & =
+    \left(
+    N
+    \,\,\,
+    c
+    \,\,\,
+    \alpha
+    \,\,\,
+    \beta
+    \,\,\,
+    r
+    \,\,\,
+    \Delta
+    \right)^\top
+    \quad,
+\end{align}
+%
+where $N$ is the number of star spots, $c$ is their contrast,
+$\alpha$ and $\beta$ describe the latitudinal
+distribution of the spots, and $r$ and $\Delta$ are the mean and
+half-width, respectively, of the distribution of spot radii.
+%
+The PDF for the radius is a uniform distribution
+between $r - \Delta$ and $r + \Delta$ (Appendix \ref{sec:size}),
+while
+the PDF for the latitude $\phi$ of the spots is a Beta distribution in
+$\cos\phi$ with shape parameters $\alpha$ and $\beta$ (Appendix \ref{sec:lat-lon}).
+The spot longitude is assumed to be uniformly distributed. Finally,
+the PDFs for the spot contrast and the number of spots are delta functions
+centered at $c$ and $N$, respectively.
+
+\xxx{More soon.}
+
+
+\subsection{Marginalizing over inclination}
+%
+The equations for the mean and covariance of the flux GP
+(Equations~\ref{eq:mean_f} and \ref{eq:cov_f}, respectively) are conditioned
+on specific values of the stellar properties $\pmb{\theta}_\star$ and the
+spot properties $\pmb{\theta}_\bullet$. To obtain the posterior distribution
+for these parameters, we must typically resort to numerical sampling techniques,
+which often scale steeply with the number of parameters. It is therefore generally
+desirable to keep the total number of parameters small, especially when
+employing the GP in an ensemble setting.
+In such a setting, we might have light curves from $N_\star$ stars, all of which
+we believe to have similar spot properties (perhaps because they have
+similar spectral types and rotation periods, for example).
+The total number of parameters in our problem is therefore
+%
+\begin{align}
+    N_\theta = N_\star \, \mathrm{dim}(\pmb{\theta}_\star) + 5
+    \quad,
+\end{align}
+%
+since each of the stars will have their own set of stellar properties
+$\pmb{\theta}_\star$ but will all share the same 5 spot properties
+$\pmb{\theta}_\bullet$ (by assumption).
+In a typical problem, the stellar parameters might be
+%
+\begin{align}
+    \pmb{\theta}_\star =
+    \left(
+    i \,\,\,
+    P \,\,\,
+    u_1 \,\,\,
+    u_2
+    \right)^\top
+    \quad,
+\end{align}
+%
+i.e., the inclination, the rotational period, and some (usually two) limb
+darkening coefficients. Thus, for a reasonably sized ensemble of $N_\star=100$
+stars, we would have to sample over $N_\theta = 405$ parameters.
+While large, this number is certainly not absurd, especially by modern standards.
+However, it does pose
+a problem when considering how complex the posterior distribution for the
+spot mapping problem can be. In addition to strong nonlinear degeneracies
+between some of the parameters (such as the contrast $c$ and the
+number of spots $N$), the posterior is often multimodal, especially in the
+stellar inclinations. While modern sampling schemes such as Hamiltonian
+Monte Carlo and Nested Sampling may in principle be able to deal with these
+issues, in practice it can be very difficult to obtain convergence in a
+reasonable amount of time.
+
+One workaround is to fix the values of $\pmb{\theta}_\star$. This could be done,
+for instance, to the rotational period $P$, which can often be estimated with
+fairly good accuracy from a periodogram. The limb darkening coefficients could
+be fixed at theoretical values, or perhaps their values could be shared among
+all stars (and sampled over), given the similarity assumption above.
+
+The inclination, however, is a different matter. Absent prior information
+for a particular star (such as a measurement of its projected rotational
+velocity $v\sin i$ or the knowledge that it hosts a transiting planet), it
+is simply not possible to reliably estimate the inclination in a
+pre-processing step. Any light curve statistic one might argue should scale
+with inclination---such as the amplitude of the variability---is invariably
+degenerate with the spot parameters $\pmb{\theta}_\bullet$. If one knew
+$\pmb{\theta}_\bullet$, then perhaps a decent point estimate of $i$ could
+be obtained, but in that case the analysis wouldn't be needed in the first place!
+%
+
+Fortunately, there is a better way to reduce the number of parameters in
+the problem: we can explicitly marginalize over the stellar inclination.
+That is, we can write the first two moments of our flux GP as
+%
+\begin{align}
+    \label{eq:mu_marg}
+    \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
+     & =
+    \int
+    \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
+    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
+    p(i) \, \mathrm{d}i \\
+    \label{eq:cov_marg}
+    \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
+     & =
+    \int
+    \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
+    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] \,
+    \pmb{\mathcal{A}}^\top(i, \bar{\pmb{\theta}}_\star)
+    p(i) \, \mathrm{d}i    \quad,
+\end{align}
+%
+where the expectations inside the integrals are given by
+Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), respectively, and
+$\bar{\pmb{\theta}}_\star$ are all 0524the stellar parameters \emph{except}
+the inclination, i.e.,
+%
+\begin{align}
+    \bar{\pmb{\theta}}_\star = \left(
+    P \,\,\,
+    u_1 \,\,\,
+    u_2
+    \right)^\top
+    \quad,
+\end{align}
+%
+where perhaps $P$ is fixed for each star and the limb darkening coefficients
+are shared among all stars, as described above.
+%
+Thus, if we are able to perform the integrals in Equations~(\ref{eq:mu_marg})
+and (\ref{eq:cov_marg}), we can \emph{dramatically} reduce the number of
+parameters in our ensemble problem.
+%
+As we show in Appendix~\ref{sec:inclination}, if we assume that stellar
+inclinations are distributed isotropically, these integrals
+do in fact have closed-form solutions,
+since they are (again) integrals over Wigner matrices.
+%
+
+\section{Stuff}
+
+
+\begin{figure}[t!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/nullspace.pdf}
+        \oscaption{nullspace}{%
+            The null space.
+            \label{fig:nullspace}
+        }
+    \end{centering}
+\end{figure}
+
+
+%
+%
+%
+%
+
+\appendix
+
+%
+%
+%
+%
+
+\section{Notation}
+\label{sec:notation}
+%
+Unless otherwise noted, we adopt
+the following conventions throughout this paper:
+integers are represented by italic uppercase letters (i.e., $N$),
+scalars are represented by italic lowercase
+letters (i.e., $x$), column vectors are
+represented by boldface lowercase letters
+($\mathbf{x}$), and matrices and other linear operators are represented
+by boldface capital letters ($\mathbf{X}$). In general, the elements of a vector
+$\mathbf{x}$ are denoted $x_i$ and the elements of a matrix $\mathbf{X}$
+are denoted $X_{i,j}$. The exception to this is if the vector or matrix
+represents a quantity in the spherical harmonic basis, in which case we use
+\emph{two} indices to represent a vector element, $x^l_m$, and \emph{four}
+indices to represent a matrix element, $X^{l,l'}_{m,m'}$.
+%
+The upper indices corresponds to the spherical harmonic degree,
+$l \in [0, l_{\mathrm{max}}]$ and $l' \in [0, l_{\mathrm{max}}]$,
+while the lower indices correspond to the
+spherical harmonic order, $m \in [-l, l]$ and $m' \in [-l', l']$.
+%
+Vector elements are arranged in order of increasing $l$ and,
+within each $l$, in order of increasing $m$.
+For example, a vector $\mathbf{x}$
+representing a quantity in the spherical harmonic basis up to degree
+$l_\mathrm{max}$ has components given by
+%
+\begin{align}
+    \mathbf{x}
+     & =
+    \left(
+    x^0_0 \,\,\,
+    \,\,\,\,\,\,
+    x^1_{-1} \,\,\,
+    x^1_{0} \,\,\,
+    x^1_{1} \,\,\,
+    \,\,\,\,\,\,
+    \cdots \,\,\,
+    \,\,\,\,\,\,
+    x^{l_\mathrm{max}}_{-l_\mathrm{max}}
+    \cdots \,\,
+    x^{l_\mathrm{max}}_{l_\mathrm{max}} \,\,\,
+    \right)^\top
+    \quad,
+\end{align}
+%
+while a matrix $\mathbf{X}$ in the same basis has components given by
+%
+\begin{align}
+    \setstackgap{L}{1.25\baselineskip}
+    \fixTABwidth{T}
+    \mathbf{X} =
+    \parenMatrixstack{
+    X^{0,0}_{0,0}  &  & X^{0,1}_{0,-1}  & X^{0,1}_{0,0}  & X^{0,1}_{0,1}  &        \\
+                   &  &                 &                &                &        \\
+    X^{1,0}_{-1,0} &  & X^{1,1}_{-1,-1} & X^{1,1}_{-1,0} & X^{1,1}_{-1,1} &        \\
+    X^{1,0}_{0,0}  &  & X^{1,1}_{0,-1}  & X^{1,1}_{0,0}  & X^{1,1}_{0,1}  &        \\
+    X^{1,0}_{1,0}  &  & X^{1,1}_{1,-1}  & X^{1,1}_{1,0}  & X^{1,1}_{1,1}  &        \\
+                   &  &                 &                &                & \ddots
+    }\quad.
+\end{align}
+%
+For completeness, the element of a spherical harmonic vector $\mathbf{x}$ with
+degree $l$ and order $m$ is at (flattened) index
+%
+\begin{align}
+    \label{eq:n}
+    n = l^2 + l + m
+    \quad.
+\end{align}
+%
+Conversely, the element at (flattened) index $n$ has degree and order
+%
+\begin{align}
+    \label{eq:lm}
+    \begin{split}
+        l & = \floor{\sqrt{n}}
+        \\
+        m & = n - l^2 - l
+        \quad,
+    \end{split}
+\end{align}
+%
+respectively.
+%
+Note, finally, that our use of upper and lower indices is purely a
+notational convenience,
+and should not be confused with
+exponentiation or a distinction between covariant and contravariant
+tensors. It should also not be confused with the notation used for the complex
+spherical harmonics, which also uses upper and lower indexing.
+%
+
+\section{Computing the flux}
+\label{sec:starry}
+\xxx{Coming soon.}
+
+\section{The Expectation Integrals}
+\label{sec:integrals}
+
+Our goal in this section is to find closed-form solutions to the
+first and second moments of the spherical harmonic representation of the
+stellar surface $\mathbf{y}$,
+%
+\begin{align}
+    \label{eq:exp_y_app}
+    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
+     & =
+    \int \mathbf{y}(\mathbf{x} ) \, p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)\mathrm{d}\mathbf{x}
+    \\
+    \label{eq:exp_yy_app}
+    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
+     & =
+    \int \mathbf{y}(\mathbf{x} ) \mathbf{y}^\top(\mathbf{x} ) \, p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)\mathrm{d}\mathbf{x}
+    \quad,
+\end{align}
+%
+which are linearly related to the mean and the covariance of our GP in flux
+(\S\ref{sec:gp}).
+%
+Recall that $\mathbf{x}$ is a vector of parameters describing the particular
+configuration of features on the surface of a star, and
+$p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$ is its probability
+density function conditioned on hyperparameters $\pmb{\theta}_\bullet$,
+which describe the \emph{distribution} of the features on the surface
+of one or many stars.
 %
 As we are specifically interested in modeling the effect of star spots
 on stellar light curves, we let
@@ -214,13 +482,11 @@ on stellar light curves, we let
 \begin{align}
     \mathbf{x} =
     \left(
-    c_0 \,\, \cdots \,\, c_{N-1} \,\,
-    ,
-    \lambda_0 \,\, \cdots \,\, \lambda_{N-1} \,\,
-    ,
-    \phi_0 \,\, \cdots \,\, \phi_{N-1} \,\,
-    ,
-    r_0 \,\, \cdots \,\, r_{N-1} \,\,
+    \eta \,\,\,\,
+    \xi_0 \,\, \cdots \,\, \xi_{\eta-1} \,\,\,\,
+    \lambda_0 \,\, \cdots \,\, \lambda_{\eta-1} \,\,\,\,
+    \phi_0 \,\, \cdots \,\, \phi_{\eta-1} \,\,\,\,
+    \rho_0 \,\, \cdots \,\, \rho_{\eta-1}
     \right)^\top
 \end{align}
 %
@@ -229,20 +495,21 @@ and
 \begin{align}
     \label{eq:RRs}
     \mathbf{y}(\mathbf{x}) =
-    \sum_{n=0}^{N-1}
-    c_n
+    \sum_{n=0}^{\eta-1}
+    \xi_n
     \,
     \mathbf{R}_{\hat{\mathbf{y}}}(\lambda_n)
     \,
     \mathbf{R}_{\hat{\mathbf{x}}}(\phi_n)
     \,
-    \mathbf{s}(r_n)
+    \mathbf{s}(\rho_n)
     \quad,
 \end{align}
 %
-where $c_n$ is the contrast of the $n^\mathrm{th}$ spot,
+where $\eta$ is the total number of spots,
+$\xi_n$ is the contrast of the $n^\mathrm{th}$ spot,
 $\lambda_n$ is its longitude, $\phi_n$ is its latitude,
-$r_n$ is its radius, and $N$ is the total number of spots.
+and $\rho_n$ is its radius.
 The vector function $\mathbf{s}(r_n)$
 returns the spherical harmonic expansion of a negative unit brightness
 circular spot of radius $r_n$ at $\lambda = \phi = 0$,
@@ -262,18 +529,42 @@ $\mathbf{y}$; rather, we would like to know its expectation value under
 the probability distribution governing the different spot properties $\mathbf{x}$,
 i.e., $p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$.
 %
-For simplicity, we assume that $p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$
-is separable in each of the four spot properties, and that all of the spots
+
+For simplicity, we assume that
+the total number of spots is fixed to a value $N$, i.e.,
+%
+\begin{align}
+    p(\eta \, \big| \, \pmb{\theta}_\bullet)
+     & =
+    \delta(\eta - N)
+    \quad,
+\end{align}
+%
+where $\delta$ is the delta function.%
+\footnote{%
+    When modeling a single star using the GP, this assumption is justified by
+    definition. It is less justified when the GP is used to model an ensemble of
+    stars, where each star may have a different total number of spots $\eta$.
+    However, as we argue in the text, $\eta$ is extremely difficult to constrain
+    from light curves, in particular because of how degenerate it is with
+    the spot contrast. In practice, we find that assuming that all stars in the
+    ensemble have the same number of spots $N$ leads to higher variance in the
+    estimate of $N$, but it does not lead to noticeable bias in $N$ or in any of
+    the other hyperparameters.
+}
+We further asume that
+$p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$
+is separable in each of the four other spot properties, and that all of the spots
 are drawn from the same distribution:
 %
 \begin{align}
     p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)
     =
     \prod_{n=0}^{N-1}
-    p(c_n \, \big| \, \pmb{\theta}_{c}) \,
+    p(\xi_n \, \big| \, \pmb{\theta}_{\xi}) \,
     p(\lambda_n \, \big| \, \pmb{\theta}_{\lambda}) \,
     p(\phi_n \, \big| \, \pmb{\theta}_{\phi})\,
-    p(r_n \, \big| \, \pmb{\theta}_{r})
+    p(\rho_n \, \big| \, \pmb{\theta}_{\rho})
     \quad,
 \end{align}
 %
@@ -281,39 +572,44 @@ where
 %
 \begin{align}
     \pmb{\theta}_\bullet = \left(
-    \pmb{\theta}_{c} \, \,
+    N \, \,
+    \pmb{\theta}_{\xi} \, \,
     \pmb{\theta}_{\lambda} \, \,
     \pmb{\theta}_{\phi} \, \,
-    \pmb{\theta}_{r} \right)^\top
+    \pmb{\theta}_{\rho} \right)^\top
 \end{align}
 %
-is the vector of yet-to-be-specified hyperparameters describing the process.
+is the vector of hyperparameters describing the process and
+$\pmb{\theta}_{\xi}$,
+$\pmb{\theta}_{\lambda}$,
+$\pmb{\theta}_{\phi}$, and
+$\pmb{\theta}_{\rho}$ are yet to be specified.
 %
-This allows us to rewrite the expectation integrals (\ref{eq:exp_y})
-and (\ref{eq:exp_yy}) as
+This allows us to rewrite the expectation integrals (\ref{eq:exp_y_app})
+and (\ref{eq:exp_yy_app}) as
 %
 \begin{align}
     \label{eq:exp_y_sep}
     \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
      & =
-    N \mathbf{e}_c
+    N \mathbf{e}_\xi
     \\[1em]
     \label{eq:exp_yy_sep}
     \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
      & =
-    N \mathbf{E}_c
+    N \mathbf{E}_\xi
 \end{align}
 %
 where we define the first moment integrals
 %
 \begin{align}
     \label{eq:e1}
-    \mathbf{e}_r
+    \mathbf{e}_\rho
      & \equiv
     \int
-    \mathbf{s}(r) \,
-    p(r \, \big| \, \pmb{\theta}_{r}) \,
-    \mathrm{d}r
+    \mathbf{s}(\rho) \,
+    p(\rho \, \big| \, \pmb{\theta}_{\rho}) \,
+    \mathrm{d}\rho
     %
     \\[1em]
     %
@@ -322,7 +618,7 @@ where we define the first moment integrals
      & \equiv
     \int
     \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{e}_r \,
+    \mathbf{e}_\rho \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
     %
@@ -338,13 +634,13 @@ where we define the first moment integrals
     \mathrm{d}\lambda
     \\[1em]
     \label{eq:e4}
-    \mathbf{e}_c
+    \mathbf{e}_\xi
      & \equiv
     \int
-    c \,
+    \xi \,
     \mathbf{e}_\lambda \,
-    p(c \, \big| \, \pmb{\theta}_{c}) \,
-    \mathrm{d}c
+    p(\xi \, \big| \, \pmb{\theta}_{\xi}) \,
+    \mathrm{d}\xi
     %
 \end{align}
 %
@@ -352,12 +648,12 @@ and the second moment integrals
 %
 \begin{align}
     \label{eq:E1}
-    \mathbf{E}_r
+    \mathbf{E}_\rho
      & \equiv
     \int
-    \mathbf{s}(r) \, \mathbf{s}^\top(r) \,
-    p(r \, \big| \, \pmb{\theta}_{r}) \,
-    \mathrm{d}r
+    \mathbf{s}(\rho) \, \mathbf{s}^\top(\rho) \,
+    p(\rho \, \big| \, \pmb{\theta}_{\rho}) \,
+    \mathrm{d}\rho
     %
     \\[1em]
     %
@@ -366,7 +662,7 @@ and the second moment integrals
      & \equiv
     \int
     \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{E}_r \,
+    \mathbf{E}_\rho \,
     \mathbf{R}_{\hat{\mathbf{x}}}^\top(\phi) \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi})
     \mathrm{d}\phi
@@ -385,13 +681,13 @@ and the second moment integrals
     \\[1em]
     %
     \label{eq:E4}
-    \mathbf{E}_c
+    \mathbf{E}_\xi
      & \equiv
     \int
-    c^2 \,
+    \xi^2 \,
     \mathbf{E}_\lambda \,
-    p(c \, \big| \, \pmb{\theta}_c)
-    \mathrm{d}c
+    p(\xi \, \big| \, \pmb{\theta}_\xi)
+    \mathrm{d}\xi
     %
     \quad.
 \end{align}
@@ -401,34 +697,32 @@ that both the mean and the variance of the sum of $N$
 independent, identically-distributed random variables are equal to $N$
 times the individual mean and the variance, respectively.
 
-We devote the next section to the computation of these eight
+We devote the remainder of this section to the computation of these eight
 integrals.
 
-\section{The Expectation Integrals}
-\label{sec:integrals}
-\subsection{The Size Integral}
-\label{sec:size}+
+\subsection{The Radius Integral}
+\label{sec:size}
 %
-Our goal in this section is to compute the first and second moments
-of the size distribution ($\mathbf{e}_\phi$, $\mathbf{E}_\phi$) under
-a suitable spherical harmonic expansion $\mathbf{s}(r)$ of the spot profile
+Below we compute the first and second moments
+of the radius distribution ($\mathbf{e}_\rho$, $\mathbf{E}_\rho$) under
+a suitable spherical harmonic expansion $\mathbf{s}(\rho)$ of the spot profile
 and a suitable probability distribution function for the spot radius,
-$p(r \, \big| \, \pmb{\theta}_{r})$.
+$p(\rho \, \big| \, \pmb{\theta}_{\rho})$.
 
 \subsubsection{Spot profile}
 %
 We model the brightness $b$ an angle $\vartheta$ away from the
-center of a spot of negative unit intensity and radius $r$ be
+center of a spot of negative unit intensity and radius $\rho$ as
 %
 \begin{align}
     \label{eq:brvartheta}
-    b(r; \vartheta) & = \frac{1}{1 + \exp\left(\dfrac{r-\vartheta}{s}\right)} - 1
+    b(\rho; \vartheta) & = \frac{1}{1 + \exp\left(\dfrac{\rho-\vartheta}{s}\right)} - 1
 \end{align}
 %
 for some (constant) shape parameter $s$. In the limit $s \rightarrow 0$, $b$ approaches an
-inverted top-hat function with half-width equal to $r$,
+inverted top-hat function with half-width equal to $\rho$,
 corresponding to a circular spot of uniform intensity. For $s > 0$, each half
-of $b$ is a sigmoid with half-width at half-minimum equal to $r$.
+of $b$ is a sigmoid with half-width at half-minimum equal to $\rho$.
 In our implementation of the algorithm we choose $s = 0.2^\circ$,
 which is small compared to features of interest but not too small as to
 create numerical issues when computing model gradients (which would be
@@ -453,11 +747,11 @@ We wish to model the brightness evaluated at each $\vartheta_k$
 as a weighted combination of Legendre polynomials,
 %
 \begin{align}
-    \mathbf{B} \, \tilde{\mathbf{s}}(r) = \mathbf{b}(r)
+    \mathbf{B} \, \tilde{\mathbf{s}}(\rho) = \mathbf{b}(\rho)
 \end{align}
 %
 %
-where $\mathbf{b}(r)$ is computed by evaluating Equation~(\ref{eq:brvartheta})
+where $\mathbf{b}(\rho)$ is computed by evaluating Equation~(\ref{eq:brvartheta})
 at each of the $\vartheta_k$,
 $\mathbf{B}$ is a design matrix whose columns are
 the weighted Legendre polynomials,
@@ -467,20 +761,20 @@ the weighted Legendre polynomials,
     \quad,
 \end{align}
 %
-and $\tilde{\mathbf{s}}(r)$ are the coefficients of the expansion.
+and $\tilde{\mathbf{s}}(\rho)$ are the coefficients of the expansion.
 These are related to the full vector of spherical harmonic coefficients describing
-the spot, $\mathbf{s}(r)$, by
+the spot, $\mathbf{s}(\rho)$, by
 %
 \begin{align}
-    s^l_m(r) = \tilde{s}_l(r) \delta_{m,0}
+    s^l_m(\rho) = \tilde{s}_l(\rho) \delta_{m,0}
     \quad,
 \end{align}
 %
 where $\delta$ is the Kronecker delta function.
-To find the coefficients $\tilde{\mathbf{s}}(r)$, we solve the (linear) inverse problem,
+To find the coefficients $\tilde{\mathbf{s}}(\rho)$, we solve the (linear) inverse problem,
 %
 \begin{align}
-    \tilde{\mathbf{s}}(r) & = \mathbf{B}^+ \, \mathbf{b}(r)
+    \tilde{\mathbf{s}}(\rho) & = \mathbf{B}^+ \, \mathbf{b}(\rho)
 \end{align}
 %
 %
@@ -513,9 +807,9 @@ and $\sigma \approx 15$.
         \includegraphics[width=\linewidth]{figures/spot_profile.pdf}
         \oscaption{spot_profile}{%
             Intensity profiles for spots with different
-            radii $r$ computed at spherical harmonic
+            radii $\rho$ computed at spherical harmonic
             degree $l_{\mathrm{max}} = \LMAX$.
-            For $r \gtrsim 10^\circ$, the spherical harmonic expansion
+            For $\rho \gtrsim 10^\circ$, the spherical harmonic expansion
             captures the spot shape and intensity reasonably well,
             albeit with some ringing due to the truncated expansion.
             \label{fig:spot_profile}
@@ -525,22 +819,15 @@ and $\sigma \approx 15$.
 
 Figure~\ref{fig:spot_profile} shows the intensity profile for spots of
 different radii expanded to spherical harmonic degree $l_{\mathrm{max}} = \LMAX$.
-% computed from
-% %
-% \begin{align}
-%     \mathbf{b'}(r) & = \mathbf{B}
-%     \mathbf{B}^+ \, \mathbf{b}(r) \quad.
-% \end{align}
-%
 The average intensity
 within the spots is close to $-1$ and the half-widths at half-minimum are
 equal to the spot radii, as expected.
 The effect of ringing due to the truncated spherical harmonic expansion is
 evident, although it is strongly suppressed compared to an expansion
 without the smoothing term (i.e., $\sigma = \infty$). However, for
-$r \lesssim 10^\circ$, an expansion to $l_{\mathrm{max}} = \LMAX$ is
+$\rho \lesssim 10^\circ$, an expansion to $l_{\mathrm{max}} = \LMAX$ is
 insufficient to correctly model the spot, as can be seen from the
-$r = 5^\circ$ profile (dashed curve). Expansions to higher spherical harmonic
+$\rho = 5^\circ$ profile (dashed curve). Expansions to higher spherical harmonic
 degree allow one to model spots with radii smaller than $10^\circ$, although
 at increased computational cost and potential numerical stability issues;
 we discuss this point at length in \S\ref{sec:tiny-spots}.
@@ -549,13 +836,13 @@ we discuss this point at length in \S\ref{sec:tiny-spots}.
 \subsubsection{Probability density function}
 %
 For simplicity, we will adopt a uniform probability distribution for the
-spot radius, characterized by a mean radius $r_0$ and a half-width $\Delta$:
+spot radius, characterized by a mean radius $r$ and a half-width $\Delta$:
 %
 \begin{align}
-    p(r \, \big| \, \pmb{\theta}_{r})
+    p(\rho \, \big| \, \pmb{\theta}_{\rho})
      & =
     \begin{cases}
-        \frac{1}{2\Delta} & r_0 - \Delta \leq r \leq r_0 + \Delta
+        \frac{1}{2\Delta} & r - \Delta \leq r \leq r + \Delta
         \\
         0                 & \mathrm{otherwise}
         \quad,
@@ -565,8 +852,8 @@ spot radius, characterized by a mean radius $r_0$ and a half-width $\Delta$:
 where the hyperparameters of the distribution are
 %
 \begin{align}
-    \pmb{\theta}_r = \left(
-    r_0 \, \, \, \,
+    \pmb{\theta}_\rho = \left(
+    r \, \, \, \,
     \Delta \right)^\top
     \quad.
 \end{align}
@@ -577,9 +864,9 @@ therefore useful to also consider the limiting case of the radius distribution
 as $\Delta \rightarrow 0$, in which case the PDF becomes
 %
 \begin{align}
-    p(r \, \big| \, \pmb{\theta}_{r}, \Delta = 0)
+    p(\rho \, \big| \, \pmb{\theta}_{\rho}, \Delta = 0)
      & =
-    \delta(r - r_0)
+    \delta(\rho - r)
     \quad,
 \end{align}
 %
@@ -591,37 +878,37 @@ where $\delta$ is the delta function.
 The first moment of the radius distribution is (Equation~\ref{eq:e1})
 %
 \begin{align}
-    \mathbf{e}_r
+    \mathbf{e}_\rho
      & \equiv
     \int
-    \mathbf{s}(r) \,
-    p(r \, \big| \, \pmb{\theta}_{r}) \,
-    \mathrm{d}r
+    \mathbf{s}(\rho) \,
+    p(\rho \, \big| \, \pmb{\theta}_{\rho}) \,
+    \mathrm{d}\rho
     \nonumber \\
      & =
     \frac{1}{2\Delta}
     \int_{r_0 - \Delta}^{r_0 + \Delta}
-    \mathbf{s}(r) \,
-    \mathrm{d}r
+    \mathbf{s}(\rho) \,
+    \mathrm{d}\rho
     \quad.
 \end{align}
 %
 Using the equations from the previous section, its components may be written
 %
 \begin{align}
-    (e_r)^l_m
+    (e_\rho)^l_m
      & =
     \frac{\delta_{m,0}}{2\Delta}
-    \int_{r_0 - \Delta}^{r_0 + \Delta}
-    \tilde{s}_{l}(r) \,
-    \mathrm{d}r
+    \int_{r - \Delta}^{r+ \Delta}
+    \tilde{s}_{l}(\rho) \,
+    \mathrm{d}\rho
     \nonumber \\
      & =
     \frac{\delta_{m,0}}{2\Delta}
     \sum_{k=0}^{K-1} B^+_{l,k}
-    \int_{r_0 - \Delta}^{r_0 + \Delta}
-    b_{k}(r)
-    \mathrm{d}r
+    \int_{r - \Delta}^{r + \Delta}
+    b_{k}(\rho)
+    \mathrm{d}\rho
     \nonumber \\
      & =
     \frac{\delta_{m,0} s}{2\Delta}
@@ -642,7 +929,7 @@ In the limit $\Delta \rightarrow 0$,
 %
 \begin{align}
     \lim_{\Delta \rightarrow 0}
-    \mathbf{e}_r
+    \mathbf{e}_\rho
      & =
     \mathbf{B}^+ \mathbf{b}(r)
     \quad.
@@ -654,20 +941,20 @@ In the limit $\Delta \rightarrow 0$,
 The second moment of the radius distribution is (Equation~\ref{eq:E1})
 %
 \begin{align}
-    \mathbf{E}_r
+    \mathbf{E}_\rho
      & \equiv
     \int
-    \mathbf{s}(r) \,
-    \mathbf{s}^\top(r) \,
-    p(r \, \big| \, \pmb{\theta}_{r}) \,
-    \mathrm{d}r
+    \mathbf{s}(\rho) \,
+    \mathbf{s}^\top(\rho) \,
+    p(\rho \, \big| \, \pmb{\theta}_{\rho}) \,
+    \mathrm{d}\rho
     \nonumber \\
      & =
     \frac{1}{2\Delta}
-    \int_{r_0 - \Delta}^{r_0 + \Delta}
-    \mathbf{s}(r) \,
-    \mathbf{s}^\top(r) \,
-    \mathrm{d}r
+    \int_{r - \Delta}^{r + \Delta}
+    \mathbf{s}(\rho) \,
+    \mathbf{s}^\top(\rho) \,
+    \mathrm{d}\rho
     \quad.
 \end{align}
 %
@@ -675,35 +962,35 @@ As before, its components may be written
 %
 %
 \begin{align}
-    (E_r)^{l,l'}_{m,m'}
+    (E_\rho)^{l,l'}_{m,m'}
      & =
     \frac{\delta_{m,0}\delta_{m',0}}{2\Delta}
-    \int_{r_0 - \Delta}^{r_0 + \Delta}
-    \tilde{s}^l_{m}(r) \,
-    \tilde{s}^{l'}_{m'}(r) \,
-    \mathrm{d}r
+    \int_{r - \Delta}^{r + \Delta}
+    \tilde{s}^l_{m}(\rho) \,
+    \tilde{s}^{l'}_{m'}(\rho) \,
+    \mathrm{d}\rho
     \nonumber \\
      & =
     \frac{\delta_{m,0}\delta_{m',0}}{2\Delta}
     \sum_{k=0}^{K-1} B^+_{l,k}
     \sum_{k'=0}^{K-1} B^+_{l',k'}
-    \int_{r_0 - \Delta}^{r_0 + \Delta}
-    b_{k}(r)
-    b_{k'}(r)
-    \mathrm{d}r
+    \int_{r - \Delta}^{r + \Delta}
+    b_{k}(\rho)
+    b_{k'}(\rho)
+    \mathrm{d}\rho
     \nonumber \\
      & =
     \frac{\delta_{m,0}\delta_{m',0}s}{2\Delta}
     \sum_{k=0}^{K-1} B^+_{l,k}
     \sum_{k'=0}^{K-1} B^+_{l',k'}
-    C_{k,k'}(r)
+    C_{k,k'}(r,\Delta)
     \quad,
 \end{align}
 %
 where
 %
 \begin{align}
-    C_{k,k'}(r)
+    C_{k,k'}(r,\Delta)
      & \equiv
     \frac{
         \exp\left(\frac{\vartheta_{k} - \vartheta_{k'}}{s}\right)
@@ -738,7 +1025,7 @@ In the limit $\Delta \rightarrow 0$,
 %
 \begin{align}
     \lim_{\Delta \rightarrow 0}
-    \mathbf{E}_r
+    \mathbf{E}_\rho
      & =
     \mathbf{B}^+ \mathbf{b}(r) \mathbf{b}^\top(r) {\mathbf{B}^+}^\top
     \quad.
@@ -1595,9 +1882,10 @@ whose terms may again be computed by upward recursion.
 \label{sec:contrast}
 %
 The final integrals we must take in our computation of
-$\pmb{\mu}_{\mathbf{y}}(\pmb{\theta})$
-amd $\pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta})$ are the integrals over
-the spot contrast distribution, $\mathbf{e}_c$ and $\mathbf{E}_c$.
+$\mathrm{E} \big[ \mathbf{y} \, \big| \, \pmb{\theta}_\bullet \big]$
+and $\mathrm{E} \big[ \mathbf{y} \mathbf{y}^\top \, \big| \, \pmb{\theta}_\bullet \big]$
+are the integrals over
+the spot contrast distribution, $\mathbf{e}_\xi$ and $\mathbf{E}_\xi$.
 These are by far the easiest, since the spot contrast is a scalar
 multiplier of the spherical harmonic coefficient vector, so we can
 pull the terms $\mathbf{e}_\lambda$ and $\mathbf{E}_\lambda$ out
@@ -1605,176 +1893,64 @@ of the
 integrals in Equations (\ref{eq:e4}) and (\ref{eq:E4}) to write
 %
 \begin{align}
-    \mathbf{e}_c
+    \mathbf{e}_\xi
      & \equiv
     \mathbf{e}_\lambda \,
     \int
-    c \,
-    p(c \, \big| \, \pmb{\theta}_{c}) \,
-    \mathrm{d}c
+    \xi \,
+    p(\xi \, \big| \, \pmb{\theta}_{\xi}) \,
+    \mathrm{d}\xi
     \\
-    \mathbf{E}_c
+    \mathbf{E}_\xi
      & \equiv
     \mathbf{E}_\lambda \,
     \int
-    c^2 \,
-    p(c \, \big| \, \pmb{\theta}_c)
-    \mathrm{d}c
+    \xi^2 \,
+    p(\xi \, \big| \, \pmb{\theta}_\xi)
+    \mathrm{d}\xi
     \quad.
 \end{align}
 %
 These integrals may be computed analytically for any choice of
-probability density function $p(c \, \big| \, \pmb{\theta}_c)$
+probability density function $p(\xi \, \big| \, \pmb{\theta}_\xi)$
 with closed-form moments.
 %
 However, in practice, it is quite difficult to constrain the
 spot contrast from light curves, let alone higher moments of its
-distribution; this is due largely to the fact that the contrast $c$
-is extremely degenerate with the total number of spots $N$
+distribution; this is due largely to the fact that the contrast
+is extremely degenerate with the total number of spots
 (see \S\ref{sec:cN-degeneracy}).
 %
-In our imeplementation of the algorithm,
+In our implementation of the algorithm,
 we therefore choose the simplest possible probability distribution,
 a delta function:
 %
 \begin{align}
-    p(c \, \big| \, \pmb{\theta}_{c}) = \delta(c - c_0)
+    p(\xi \, \big| \, \pmb{\theta}_{\xi}) = \delta(\xi - c)
 \end{align}
 %
 characterized by a single parameter, the contrast of the spots:
 %
 \begin{align}
-    \pmb{\theta}_c = \left( c_0 \right)^\top
+    \pmb{\theta}_\xi = \left( \, c \, \right)^\top
     \quad.
 \end{align}
 %
 The moment integrals are then trivial to evaluate:
 %
 \begin{align}
-    \mathbf{e}_c & = c_0 \, \mathbf{e}_\lambda
+    \mathbf{e}_\xi & = c \, \mathbf{e}_\lambda
     \\
-    \mathbf{E}_c & = c_0^2 \mathbf{E}_\lambda
+    \mathbf{E}_\xi & = c^2 \mathbf{E}_\lambda
     \quad.
 \end{align}
 %
 
 
 
-\section{Marginalizing over inclination}
-%
-The equations for the mean and covariance of the flux GP
-(Equations~\ref{eq:mean_f} and \ref{eq:cov_f}, respectively) are conditioned
-on specific values of the stellar properties $\pmb{\theta}_\star$ and the
-spot properties $\pmb{\theta}_\bullet$. To obtain the posterior distribution
-for these parameters, we must typically resort to numerical sampling techniques,
-which often scale steeply with the number of parameters. It is therefore generally
-desirable to keep the total number of parameters small, especially when
-employing the GP in an ensemble setting.
-In such a setting, we might have light curves from $N_\star$ stars, all of which
-we believe to have similar spot properties (perhaps because they have
-similar spectral types and rotation periods, for example).
-The total number of parameters in our problem is therefore
-%
-\begin{align}
-    N_\theta = N_\star \, \mathrm{dim}(\pmb{\theta}_\star) + 5
-    \quad,
-\end{align}
-%
-since each of the stars will have their own set of stellar properties
-$\pmb{\theta}_\star$ but will all share the same 5 spot properties
-$\pmb{\theta}_\bullet$ (by assumption).
-In a typical problem, the stellar parameters might be
-%
-\begin{align}
-    \pmb{\theta}_\star =
-    \left(
-    i \,\,\,
-    P \,\,\,
-    u_1 \,\,\,
-    u_2
-    \right)^\top
-    \quad,
-\end{align}
-%
-i.e., the inclination, the rotational period, and some (usually two) limb
-darkening coefficients. Thus, for a reasonably sized ensemble of $N_\star=100$
-stars, we would have to sample over $N_\theta = 405$ parameters.
-While large, this number is certainly not absurd, especially by modern standards.
-However, it does pose
-a problem when considering how complex the posterior distribution for the
-spot mapping problem can be. In addition to strong nonlinear degeneracies
-between some of the parameters (such as the contrast $c$ and the
-number of spots $N$), the posterior is often multimodal, especially in the
-stellar inclinations. While modern sampling schemes such as Hamiltonian
-Monte Carlo and Nested Sampling may in principle be able to deal with these
-issues, in practice it can be very difficult to obtain convergence in a
-reasonable amount of time.
+\section{Inclination}
+\label{sec:inclination}
 
-One workaround is to fix the values of $\pmb{\theta}_\star$. This could be done,
-for instance, to the rotational period $P$, which can often be estimated with
-fairly good accuracy from a periodogram. The limb darkening coefficients could
-be fixed at theoretical values, or perhaps their values could be shared among
-all stars (and sampled over), given the similarity assumption above.
-
-The inclination, however, is a different matter. Absent prior information
-for a particular star (such as a measurement of its projected rotational
-velocity $v\sin i$ or the knowledge that it hosts a transiting planet), it
-is simply not possible to reliably estimate the inclination in a
-pre-processing step. Any light curve statistic one might argue should scale
-with inclination---such as the amplitude of the variability---is invariably
-degenerate with the spot parameters $\pmb{\theta}_\bullet$. If one knew
-$\pmb{\theta}_\bullet$, then perhaps a decent point estimate of $i$ could
-be obtained, but in that case the analysis wouldn't be needed in the first place!
-%
-
-Fortunately, there is a better way to reduce the number of parameters in
-the problem: we can explicitly marginalize over the stellar inclination.
-That is, we can write the first two moments of our flux GP as
-%
-\begin{align}
-    \label{eq:mu_marg}
-    \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
-     & =
-    \int
-    \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
-    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
-    p(i) \, \mathrm{d}i \\
-    \label{eq:cov_marg}
-    \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
-     & =
-    \int
-    \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
-    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] \,
-    \pmb{\mathcal{A}}^\top(i, \bar{\pmb{\theta}}_\star)
-    p(i) \, \mathrm{d}i    \quad,
-\end{align}
-%
-where the expectations inside the integrals are given by
-Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), respectively, and
-$\bar{\pmb{\theta}}_\star$ are all the stellar parameters \emph{except}
-the inclination, i.e.,
-%
-\begin{align}
-    \bar{\pmb{\theta}}_\star = \left(
-    P \,\,\,
-    u_1 \,\,\,
-    u_2
-    \right)^\top
-    \quad,
-\end{align}
-%
-where perhaps $P$ is fixed for each star and the limb darkening coefficients
-are shared among all stars, as described above.
-%
-Thus, if we are able to perform the integrals in Equations~(\ref{eq:mu_marg})
-and (\ref{eq:cov_marg}), we can \emph{dramatically} reduce the number of
-parameters in our ensemble problem.
-
-As we will see below, these integrals do in fact have closed-form solutions,
-since they are (again) integrals over Wigner matrices. In our derivation,
-we will assume that stellar rotation axes are distributed isotropically. In
-that case, the probability density for the inclination is simply
-%
 \begin{align}
     p(i) = \sin i
     \quad.

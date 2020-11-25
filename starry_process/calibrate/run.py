@@ -54,11 +54,9 @@ def run(
         results = pickle.load(open(os.path.join(path, "results.pkl"), "rb"))
 
     # Compute inclination pdf
-    try:
-        compute_inclination_pdf = kwargs["sample"]["compute_inclination_pdf"]
-    except:
-        # DEBUG: wtf?
-        breakpoint()
+    compute_inclination_pdf = update_with_defaults(**kwargs)["sample"][
+        "compute_inclination_pdf"
+    ]
     if compute_inclination_pdf:
         if clobber or not os.path.exists(
             os.path.join(path, "inclinations.npz")
