@@ -140,17 +140,23 @@ def generate(**kwargs):
         images[k] = 1.0 + star.map.render(projection="moll", res=300)
         y[k] = np.array(star.map.amp * star.map.y)
 
-    # Add photon noise
+    # Add photon noise & optionally normalize
     for k in tqdm(range(nlc)):
-        flux[k] = flux0[k] + ferr * np.random.randn(npts)
 
         if normalized:
+
             if normalization_method.lower() == "median":
-                flux[k] = (1 + flux[k]) / (1 + np.median(flux[k])) - 1
+                flux[k] = (1 + flux0[k]) / (1 + np.median(flux0[k])) - 1
             elif normalization_method.lower() == "mean":
-                flux[k] = (1 + flux[k]) / (1 + np.mean(flux[k])) - 1
+                flux[k] = (1 + flux0[k]) / (1 + np.mean(flux0[k])) - 1
             else:
                 raise ValueError("Unknown normalization method.")
+
+            flux[k] += ferr * np.random.randn(npts)
+
+        else:
+
+            flux[k] = flux0[k] + ferr * np.random.randn(npts)
 
     # Return a dict
     data = dict(

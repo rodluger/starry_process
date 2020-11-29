@@ -28,8 +28,8 @@ def sample(data, clobber=False, **kwargs):
     bmmax = sample_kwargs["bmmax"]
     bvmin = sample_kwargs["bvmin"]
     bvmax = sample_kwargs["bvmax"]
-    fit_for_bm = sample_kwargs["fit_for_bm"]
-    fit_for_bv = sample_kwargs["fit_for_bv"]
+    fit_bm = sample_kwargs["fit_bm"]
+    fit_bv = sample_kwargs["fit_bv"]
     bm = sample_kwargs["bm"]
     bv = sample_kwargs["bv"]
     sampler = sample_kwargs["sampler"]
@@ -47,28 +47,28 @@ def sample(data, clobber=False, **kwargs):
         ferr,
         period,
         ydeg=ydeg,
-        baseline_var=None if fit_for_bv else bv,
-        baseline_mean=None if fit_for_bm else bm,
+        baseline_log_var=None if fit_bv else bv,
+        baseline_mean=None if fit_bm else bm,
         apply_jac=apply_jac,
         normalized=normalized,
         marginalize_over_inclination=True,
     )
 
     # Extra stuff if we're solving for the baseline
-    if fit_for_bm and fit_for_bv:
+    if fit_bm and fit_bv:
         ndim = 7
 
         def baseline_ptform(u, x):
             x[5] = bmmin + u[5] * (bmmax - bmmin)
             x[6] = bvmin + u[6] * (bvmax - bvmin)
 
-    elif fit_for_bm:
+    elif fit_bm:
         ndim = 6
 
         def baseline_ptform(u, x):
             x[5] = bmmin + u[5] * (bmmax - bmmin)
 
-    elif fit_for_bv:
+    elif fit_bv:
         ndim = 6
 
         def baseline_ptform(u, x):

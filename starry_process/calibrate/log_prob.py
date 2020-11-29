@@ -12,7 +12,7 @@ def get_log_prob(
     ferr=1.0e-3,
     p=1.0,
     ydeg=15,
-    baseline_var=0.0,
+    baseline_log_var=0.0,
     baseline_mean=0.0,
     apply_jac=True,
     normalized=True,
@@ -68,12 +68,12 @@ def get_log_prob(
     gp_cov += ferr ** 2 * tt.eye(K)
 
     # Marginalize over the baseline
-    if baseline_var is None:
+    if baseline_log_var is None:
         # Tensor variable
         gp_cov += 10 ** v
     else:
         # Fixed
-        gp_cov += baseline_var
+        gp_cov += 10 ** baseline_log_var
 
     # Compute the batched likelihood
     cho_gp_cov = cho_factor(gp_cov)
@@ -95,7 +95,7 @@ def get_log_prob(
     theano_vars = [r, a, b, c, n]
     if baseline_mean is None:
         theano_vars += [m]
-    if baseline_var is None:
+    if baseline_log_var is None:
         theano_vars += [v]
     if free_flux:
         theano_vars = [flux] + theano_vars

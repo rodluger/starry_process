@@ -32,14 +32,14 @@ def compute_inclination_pdf(data, results, **kwargs):
     lp = np.empty((nlc, ninc_samples, ninc_pts))
 
     # Compile the likelihood function for a given inclination
-    if sample_kwargs["fit_for_bm"]:
+    if sample_kwargs["fit_bm"]:
         baseline_mean = None
     else:
         baseline_mean = sample_kwargs["bm"]
-    if sample_kwargs["fit_for_bb"]:
-        baseline_var = None
+    if sample_kwargs["fit_bv"]:
+        baseline_log_var = None
     else:
-        baseline_var = sample_kwargs["bv"]
+        baseline_log_var = sample_kwargs["bv"]
     log_prob = get_log_prob(
         t,
         flux=None,
@@ -47,7 +47,7 @@ def compute_inclination_pdf(data, results, **kwargs):
         p=period,
         ydeg=ydeg,
         baseline_mean=baseline_mean,
-        baseline_var=baseline_var,
+        baseline_log_var=baseline_log_var,
         apply_jac=apply_jac,
         normalized=normalized,
         marginalize_over_inclination=False,
