@@ -24,6 +24,7 @@ def get_functions(marginalize_over_inclination=False):
             c=c,
             n=n,
             marginalize_over_inclination=marginalize_over_inclination,
+            normalized=False,
         )
         return gp.log_likelihood(t, flux, data_cov, p=p, i=i)
 
@@ -37,6 +38,7 @@ def get_functions(marginalize_over_inclination=False):
             c=c,
             n=n,
             marginalize_over_inclination=marginalize_over_inclination,
+            normalized=False,
         )
         gp.random.seed(42)
         return tt.reshape(gp.sample(t, p=p, i=i), (-1,))

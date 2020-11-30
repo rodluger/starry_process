@@ -590,6 +590,11 @@ class StarryProcess(object):
 class StarryProcessSum(StarryProcess):
     def __init__(self, first, second):
         # Verify props
+        assert isinstance(
+            second,
+            (StarryProcess, StarryProcessSum),
+            "Can only add instances of `StarryProcess` to each other.",
+        )
         assert first._ydeg == second._ydeg, "Mismatch in `ydeg`."
         assert (
             first._normalized == second._normalized
@@ -606,6 +611,8 @@ class StarryProcessSum(StarryProcess):
             first._marginalize_over_inclination
         )
         self._covpts = first._covpts
+        self._normN = first._normN
+        self._normzmax = first._normzmax
         self._kwargs = first._kwargs
         self.random = first.random
 
