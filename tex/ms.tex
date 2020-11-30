@@ -46,7 +46,36 @@
 \label{sec:intro}
 \xxx{Talk about starry, gps, etc.}
 
+\section{Motivation}
+\label{sec:motivation}
+See Figure~\ref{fig:nullspace_ensemble}.
+
+\begin{figure}[ht!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/nullspace_ensemble.pdf}
+        \oscaption{nullspace_ensemble}{%
+            Posterior shrinkage as a function of spherical harmonic degree
+            for a hypothetical scenario in which an observer can measure a
+            stellar light curve at a single inclination (thin blue curves),
+            at 3 different inclinations (thin orange curves), and at 10 different
+            inclinations (thin green curves). The thicker curves correspond to
+            the mean shrinkage for each experiment. The inclinations are
+            drawn randomly from an isotropic distribution.
+            The information content in the light curve of a star observed
+            from a single vantage point approaches zero as $\mathrm{l}$
+            increases. However, observing the star from many vantage points
+            allows one to recover nearly all of the information in the
+            even spherical harmonic modes.
+            While this thought experiment is not possible in practice for
+            a single star, it is extremely relevant to ensemble analyses of statistically
+            similar stars.
+            \label{fig:nullspace_ensemble}
+        }
+    \end{centering}
+\end{figure}
+
 \section{A Gaussian Process for Star Spots}
+\label{sec:main}
 
 \subsection{Spherical Harmonics}
 \label{sec:ylm}
@@ -64,7 +93,7 @@ coefficient vector $\mathbf{y}$:
 %
 \begin{align}
     \label{eq:fAy}
-    \mathbf{f} = \pmb{\mathcal{A}} \, \mathbf{y}
+    \mathbf{f} = \mathbf{1} + \pmb{\mathcal{A}} \, \mathbf{y}
     \quad,
 \end{align}
 %
@@ -87,7 +116,9 @@ rotation period $P$, the stellar limb darkening coefficients, etc.
 Let
 $\mathbf{f} = \left( f_0 \, f_1 \, \cdots \,  f_{K-1} \right)^\top$
 denote a vector of $K$ flux measurements at times
-$\mathbf{t} = \left( t_0 \,  t_1 \,  \cdots \, t_{K-1} \right)^\top$.
+$\mathbf{t} = \left( t_0 \,  t_1 \,  \cdots \, t_{K-1} \right)^\top$,
+defined in units such that a star with no spots on it will have
+$\mathbf{f} = \mathbf{1}$.
 Conditioned on certain physical properties of the
 star
 (such as its inclination, rotation period, etc.), $\pmb{\theta}_\star$,
@@ -119,7 +150,7 @@ we may write the mean and covariance of our flux GP as
 \begin{align}
     \label{eq:mean_f}
     \pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
-     & = \pmb{\mathcal{A}}(\pmb{\theta}_\star) \, \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet)
+     & = \mathbf{1} + \pmb{\mathcal{A}}(\pmb{\theta}_\star) \, \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet)
     \\
     \label{eq:cov_f}
     \pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
@@ -203,10 +234,11 @@ The spot longitude is assumed to be uniformly distributed. Finally,
 the PDFs for the spot contrast and the number of spots are delta functions
 centered at $c$ and $N$, respectively.
 
-\xxx{More soon.}
+\xxx{More soon. Include likelihood function.}
 
 
 \subsection{Marginalizing over inclination}
+\label{sec:inclination}
 %
 The equations for the mean and covariance of the flux GP
 (Equations~\ref{eq:mean_f} and \ref{eq:cov_f}, respectively) are conditioned
@@ -287,17 +319,19 @@ That is, we can write the first two moments of our flux GP as
     p(i) \, \mathrm{d}i \\
     \label{eq:cov_marg}
     \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
+    - \mathbf{1} \mathbf{1}^\top
      & =
     \int
     \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
     \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] \,
     \pmb{\mathcal{A}}^\top(i, \bar{\pmb{\theta}}_\star)
-    p(i) \, \mathrm{d}i    \quad,
+    p(i) \, \mathrm{d}i
+    \quad,
 \end{align}
 %
 where the expectations inside the integrals are given by
 Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), respectively, and
-$\bar{\pmb{\theta}}_\star$ are all 0524the stellar parameters \emph{except}
+$\bar{\pmb{\theta}}_\star$ are all the stellar parameters \emph{except}
 the inclination, i.e.,
 %
 \begin{align}
@@ -322,19 +356,175 @@ do in fact have closed-form solutions,
 since they are (again) integrals over Wigner matrices.
 %
 
-\section{Stuff}
+\subsection{The baseline problem}
+\label{sec:baseline}
+
+There is one final subtle---but extremely important---point that remains to
+be discussed in our derivation of a Gaussian process for stellar
+rotation. Thus far we have cast the light curve problem in a typical GP inference
+setting: we model our observations $\mathbf{f}$ as
+a multidimensional random variable distributed as a multivariate Gaussian with mean vector
+$\pmb{\mu}$ and covariance matrix $\pmb{\Sigma}$. However, in the context of
+relative photometry, the mean $\pmb{\mu}$ is typically \emph{unobservable}.
+%
+To understand why, consider what
+$\pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$ actually represents:
+it is the expected value
+of the flux
+for a star with certain properties $\pmb{\theta}_\star$ and $\pmb{\theta}_\bullet$,
+\emph{in units of the flux one would measure if the star had no spots}.
+We do not observe in these units: rather, we observe in units of counts on
+the detector, which depend on the luminosity of the star, the distance to
+the star, and various properties of the telescope. Even if we knew all these
+things, we would still need to know the intrinsic photospheric brightness
+in order to properly normalize our dataset for direct application of
+the Gaussian process.
+
+Instead, what astronomers typically do is to self-normalize their data:
+i.e., divide the flux by the mean, median, maximum, or some similar
+statistic of the light curve. This operation folds the unknowability of
+the flux baseline under the rug and transforms the light curve into a \emph{relative}
+measurement of the star's temporal variability. While relative measurements
+are typically what we are interested in anyways, this normalization procedure
+has two significant drawbacks: (1) it introduces a new set of perfect degeneracies
+in the modeling and (2) it can substantially change the covariance structure
+of the dataset.
+
+The first point is illustrated in the toy example in
+Figure~\ref{fig:mean_normalization}. As it has been pointed out before \xxx{(?)},
+we will not spend too much time discussing it, other than to say that the
+flux normalization introduces a degeneracy between the total spot coverage
+of a star and the contrast of any individual feature on the surface.
+While this is a formally perfect degeneracy for a single light curve, we can
+again resort to ensemble statistics across many light curves to break it;
+we discuss this further in \S\ref{sec:breaking_baseline_degeneracy}.
+
+The second point is of more immediate concern, since we must correct our
+expression for the covariance matrix
+$\pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$ if we are to
+use our GP to model normalized light curves. For definiteness, let us
+consider only mean-normalized light curves.
+Since we are dividing the
+flux by the mean, one might imagine that we could simply divide the
+covariance matrix by the square of the mean and call it a day. However,
+this is incorrect, since we must be careful to distinguish between the
+\emph{sample} mean and the \emph{process} mean. When normalizing a light
+curve by the mean, the operation we perform is
+%
+\begin{align}
+    \tilde{\mathbf{f}} & = \frac{\mathbf{f}}{\left<f\right>}
+    \quad,
+\end{align}
+%
+where $\tilde{\mathbf{f}}$ is the normalized, unit-mean light curve,
+$\mathbf{f}$ is the measured light curve (in detector counts), and
+$\left<f\right>$ is the \emph{sample} mean: i.e., the average value of
+a given star's light curve (which we model as a sample from our GP).
+This may be close to but is in general different from the \emph{process} mean,
+$\pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$, since the mean of
+a draw from the GP is itself normally distributed with a variance that scales
+with the GP variance.
+
+Computing the covariance of the normalized process is tricky, especially
+because the normalized process is \emph{not} strictly Gaussian: the distribution
+has heavy tails due to the fact that $\tilde{\mathbf{f}}$ diverges as
+the sample mean approaches zero. In fact, because of these tails, the covariance
+of the normalized process is formally \emph{infinite}, since the probability of
+drawing a sample whose mean is arbitrarily close to zero is finite.
+
+If this is all starting to sound like a bad idea, that's because it is!
+A much safer approach is to resist the temptation to normalize the light curve
+and instead model the unknown baseline as a latent variable. However,
+this would require an extra parameter \emph{for every light curve}, so the
+computational savings we achieved by marginalizing out the inclination
+would be gone. Fortunately, in practice, the variance of a stellar light curve
+is usually small compared to its mean: stellar variability amplitudes are
+typically at the level of a few percent or lower. When this is the case,
+the probability of drawing a GP sample whose mean is close to zero is
+extremely small, and we can make use of the approximate expression derived
+in \citet{Luger2020} for the covariance of a normalized Gaussian process:
+%
+\begin{align}
+    \label{eq:SigmaTilde}
+    \tilde{\pmb{\Sigma}}
+     & \approx
+    \frac{A}{\mu^2} \pmb{\Sigma} +
+    z \Big(
+    (A + B) \, (\mathbf{1} - \mathbf{q}) \, (\mathbf{1} - \mathbf{q})^\top
+    - A \, \mathbf{q} \, \mathbf{q}^\top
+    \Big)
+    \quad,
+\end{align}
+%
+where
+%
+\begin{align}
+    z & \equiv \frac{\left< \Sigma \right>}{\mu^2}
+\end{align}
+%
+is the ratio of the average element in $\pmb{\Sigma}$
+to the square of the mean of the Gaussian process,
+$\mathbf{q}$ is the ratio of the average of each row in $\pmb{\Sigma}$
+to the average element in $\pmb{\Sigma}$, and $A$, $B$ are
+order unity and zero scalars, respectively,
+given by the optimally-truncated diverging series
+%
+\begin{align}
+    \label{eq:baseline_alpha}
+    A
+     & \equiv
+    \sum\limits_{n=0}^N
+    \frac{(2n + 1)!}{2^n \, n!}
+    z^n
+    \\[1em]
+    \label{eq:baseline_beta}
+    B
+     & \equiv
+    \sum\limits_{n=0}^N
+    \frac{2n(2n + 1)!}{2^n \, n!}
+    z^n
+    \quad,
+\end{align}
+%
+where $N$ is the largest value for which the series coefficient at $N$ is
+smaller than the coefficient at $N - 1$.
+
+\xxx{More soon.}
 
 
-\begin{figure}[t!]
+\begin{figure}[ht!]
     \begin{centering}
-        \includegraphics[width=\linewidth]{figures/nullspace.pdf}
-        \oscaption{nullspace}{%
-            The null space.
-            \label{fig:nullspace}
+        \includegraphics[width=\linewidth]{figures/mean_normalization.pdf}
+        \oscaption{mean_normalization}{%
+            An example of the baseline problem.
+            \emph{Top:} Consider a star with a single
+            equatorial spot of contrast $c$ viewed at a certain inclination.
+            The total flux (in some units) as a function of time is shown as
+            the blue curve. Now, consider a second star,
+            identical in all respects to the first, except that (1) the equatorial spot
+            has half the contrast (i.e., $\nicefrac{c}{2}$); and (2) there is
+            a second, large spot centered on the pole. The corresponding light
+            curve is shown as the dashed orange curve.
+            The orange light curve is different from the blue one in two ways:
+            (1) since the equatorial spot has half the contrast, the amplitude of the associated
+            dips in the light curve is half that of the first star; and
+            (2) since the polar spot is azimuthally symmetric, its only
+            contribution is a net darkening at all phases.
+            \emph{Bottom:} The true baseline level of a stellar
+            light curve, which corresponds to the flux one would measure in the
+            absence of any spots, is almost always unknown. Photometric measurements
+            are therefore meaningful only in a relative sense, i.e., as deviations from
+            the mean, median, or maximum level of the light curve.
+            The bottom panel shows the same two light curves, this time plotted as
+            deviations in parts per thousand (ppt) from their respective maxima.
+            To the observer, the two light curves are \emph{indistinguishable}.
+            In the absence of baseline information, there
+            exists a perfect degeneracy between the total spot coverage
+            and the contrast of any individual feature on the surface.
+            \label{fig:mean_normalization}
         }
     \end{centering}
 \end{figure}
-
 
 %
 %
@@ -524,7 +714,11 @@ Equation~(\ref{eq:RRs}) thus provides a way of converting a random variable
 $\mathbf{x}$ describing the size, brightness, and position of spots to the
 corresponding representation in terms of spherical harmonics.
 %
-Note, importantly, that we are not interested in any specific value of
+Regarding this equation,
+two things should be noted. First, we define $\mathbf{y}$ relative to
+a baseline of zero: i.e., a star with no spots on it will have
+$\mathbf{y} = \mathbf{0}$. Second, and more importantly,
+we are not interested in any specific value of
 $\mathbf{y}$; rather, we would like to know its expectation value under
 the probability distribution governing the different spot properties $\mathbf{x}$,
 i.e., $p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$.
@@ -1961,6 +2155,77 @@ The moment integrals are then trivial to evaluate:
 
 \subsection{Second moment}
 \xxx{Coming soon.}
+
+\section{Latitude Distribution Transforms}
+
+Given the shape parameters $\alpha$ and $\beta$,
+the mode $\mu$ and standard deviation $\sigma$ of the
+distribution of spot latitudes may be written
+%
+\begin{proof}{}
+    \mu &= 2 \tan^{-1}
+    \left(
+    \sqrt{
+        2 \alpha + \beta - 2 -
+        \sqrt{
+            4 \alpha^2
+            - 8 \alpha
+            - 6 \beta
+            + 4 \alpha \beta
+            + \beta^2
+            + 5
+        }
+    }
+    \right)
+    \\
+    \sigma &= \frac{\sin\mu}{
+        \sqrt{1
+            - \alpha
+            + \beta
+            + \left(\beta - 1\right) \cos\mu
+            + \dfrac{\alpha - 1}{\cos\mu^2}}}
+    \quad.
+\end{proof}
+%
+The reverse transform is given by
+%
+\begin{proof}{}
+    \alpha &= \frac{2 + 4 \sigma^2 + (3 + 8 \sigma^2) \cos\mu + 2 \cos\left( 2\mu \right) + \cos\left( 3\mu \right)}{16 \sigma^2 \cos\left( \frac{\mu}{2} \right)^4} \\
+    \beta &= \frac{\cos\mu + 2 \sigma^2 (3 + \cos\left( 2\mu \right)) - \cos\left( 3\mu \right)}{16 \sigma^2 \cos\left( \frac{\mu}{2} \right)^4}
+    \quad.
+\end{proof}
+%
+These expressions may be used to compute the Jacobian of the transform:
+%
+\begin{proof}{}
+    J &=
+    \frac{\partial{\mu}}{\partial{\alpha}}
+    \frac{\partial{\sigma}}{\partial{\beta}} -
+    \frac{\partial{\mu}}{\partial{\beta}}
+    \frac{\partial{\sigma}}{\partial{\alpha}}
+    %
+    \\
+    %
+    &=\resizebox{.925\hsize}{!}{$
+            \frac{
+                \alpha \beta \left(1 + \cos\mu\right)^3
+                \sin\left(2\mu\right)^3
+            }{
+                \sigma
+                \left(
+                2 \alpha + \beta - 3 +
+                \left(2 \alpha + \beta - 1\right) \cos\mu
+                \right)
+                \left(
+                2 \left( \alpha + \beta - 1\right) +
+                3 (\beta - 1) \cos\mu
+                - 2 \left( \alpha - \beta - 1 \right) \cos\left( 2\mu \right)
+                + \left( \beta - 1\right) \cos\left( 3\mu \right)
+                \right)^2
+            }
+        $}
+    \nonumber
+\end{proof}
 
 \bibliography{bib}
 \end{document}
