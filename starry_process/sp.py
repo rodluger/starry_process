@@ -395,9 +395,9 @@ class StarryProcess(object):
         K = Sig.shape[0]
         j = tt.ones((K, 1))
         m = tt.mean(Sig)
-        mvec = tt.dot(Sig, j) / K
+        q = tt.dot(Sig, j) / (K * m)
         z = m / mu ** 2
-        s = m * j - mvec
+        p = j - q
 
         # Coefficients
         fac = 1.0
@@ -409,12 +409,12 @@ class StarryProcess(object):
             fac *= z * (2 * n + 3)
 
         # We're done
-        ssT = tt.dot(s, tt.transpose(s))
-        migT = tt.dot(mvec, tt.transpose(mvec))
-        normSig = (
-            alpha * Sig + alpha / m * (ssT - migT) + beta / m * ssT
-        ) / mu ** 2
-        return ifelse(tt.gt(z, self._normzmax), Sig * np.inf, normSig,)
+        ppT = tt.dot(p, tt.transpose(p))
+        qqT = tt.dot(q, tt.transpose(q))
+        normSig = (alpha / mu ** 2) * Sig + z * (
+            (alpha + beta) * ppT - alpha * qqT
+        )
+        return ifelse(tt.gt(z, self._normzmax), Sig * np.inf, normSig)
 
     def sample(self, t, i=defaults["i"], p=defaults["p"], nsamples=1):
         """

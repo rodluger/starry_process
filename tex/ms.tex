@@ -77,19 +77,44 @@ See Figure~\ref{fig:nullspace_ensemble}.
 \section{A Gaussian Process for Star Spots}
 \label{sec:main}
 
-\subsection{Spherical Harmonics}
-\label{sec:ylm}
-%
-The spherical harmonics are a complete set of orthogonal functions on the
-surface of the sphere and, as such, are a convenient basis in which to construct
-our gaussian process. As in \citet{Luger2019}, here we describe the intensity
-on the surface of a star as an expansion in the real spherical harmonics.
-%
-\citet{Luger2019} derived the expression for the total disk-integrated
+In this section, we present an overview of the computation of our Gaussian
+process, which boils down to computing the mean and covariance of the stellar
+flux conditioned on certain physical properties of the star and its star spot
+distribution. Most of the math is folded into the Appendix for readability;
+readers may want to refer to Appendix~\ref{sec:notation} in particular for
+a discussion of the notation and conventions we adopt.
+
+\begin{figure}[t!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/ylms.pdf}
+        \oscaption{ylms}{%
+            The real spherical harmonics in the polar frame up to
+            $l = 5$. Rows correspond to the degree $l$ and columns to
+            the order $m$. The set of all spherical harmonics forms a
+            complete, orthogonal basis on the sphere.
+            \label{fig:ylms}
+        }
+    \end{centering}
+\end{figure}
+
+Before we dive in, it is useful to introduce the spherical harmonics,
+a set of orthogonal functions on the surface of the sphere which we will use
+to describe the intensity field on the surface of a star. As we will see below,
+the spherical harmonics are a particularly convenient basis in which to
+describe star spot distributions%
+\footnote{There are, of course, drawbacks to using this basis:
+    in particular, the spherical harmonics are smooth, continuous functions that
+    struggle (at finite degree $l$) to capture high resolution features such as
+    small star spots. We discuss this point at length in \S\ref{sec:tinyspots},
+    where we show that our model is useful even when applied to stars with spots
+    smaller than the effective resolution of the GP.}, as they will allow us to compute
+moments of the intensity distribution analytically. And of more immediate concern,
+\citet{Luger2019} showed that there is a linear relationship between the
+spherical harmonic expansion of a stellar surface and the total disk-integrated
 flux $\mathbf{f}$ (i.e., the light curve)
-one would observe from a star rotating about a fixed axis
-if the stellar surface intensity is well described by the spherical harmonic
-coefficient vector $\mathbf{y}$:
+one would observe as the star rotates about a fixed axis.
+If the stellar surface intensity is described by the spherical harmonic
+coefficient vector $\mathbf{y}$, the flux is given by
 %
 \begin{align}
     \label{eq:fAy}
@@ -97,7 +122,8 @@ coefficient vector $\mathbf{y}$:
     \quad,
 \end{align}
 %
-where $\pmb{\mathcal{A}}$ is the \starry
+where $\mathbf{1}$ is the ones vector and
+$\pmb{\mathcal{A}}$ is the \starry
 design matrix, a purely linear operator that transforms from the spherical
 harmonic basis to the flux basis; it is implicitly
 a function of the stellar inclination $i$, the stellar
@@ -107,11 +133,6 @@ rotation period $P$, the stellar limb darkening coefficients, etc.
 \subsection{Computing the GP}
 \label{sec:gp}
 %
-
-% The vector $\pmb{\theta}$ includes physical properties of the star such
-% as its inclination $i$ and rotational period $P$ as well as parameters
-% describing the shape of the probability density function (PDF) governing
-% the distribution of features on the surface.
 
 Let
 $\mathbf{f} = \left( f_0 \, f_1 \, \cdots \,  f_{K-1} \right)^\top$
@@ -126,7 +147,24 @@ and on certain properties of the  star spots
 (such as their sizes, positions, etc.), $\pmb{\theta}_\bullet$,
 we wish to compute the mean $\pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$ and
 covariance $\pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$
-of $\mathbf{f}$, which together fully specify our GP in flux.
+of $\mathbf{f}$. Together, these specify a multidimensional Gaussian
+distribution, which we assume fully describes%
+\footnote{The \emph{true} distribution of stellar light curves conditioned
+    on $\pmb{\theta}_\star$ and $\pmb{\theta}_\bullet$ is not Gaussian, so our
+    assumption is formally wrong. But, as the saying goes, \emph{all models are
+        wrong; some are useful}. As we will show later, this turns out to be
+    an extremely useful assumption.}
+how our flux measurements
+are distributed:
+%
+\begin{align}
+    \mathbf{f}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right) \sim
+    \mathcal{N}\Big(
+    \pmb{\mu}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right),
+    \,
+    \pmb{\Sigma}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \Big)
+\end{align}
 %
 As with any random variable, the mean and covariance may be computed from
 the expectation values of $\mathbf{f}$ and
@@ -209,9 +247,9 @@ In particular, we let the spot hyperparameters of our GP be
     \,\,\,
     c
     \,\,\,
-    \alpha
+    a
     \,\,\,
-    \beta
+    b
     \,\,\,
     r
     \,\,\,
@@ -221,7 +259,7 @@ In particular, we let the spot hyperparameters of our GP be
 \end{align}
 %
 where $N$ is the number of star spots, $c$ is their contrast,
-$\alpha$ and $\beta$ describe the latitudinal
+$a$ and $b$ describe the latitudinal
 distribution of the spots, and $r$ and $\Delta$ are the mean and
 half-width, respectively, of the distribution of spot radii.
 %
@@ -229,18 +267,96 @@ The PDF for the radius is a uniform distribution
 between $r - \Delta$ and $r + \Delta$ (Appendix \ref{sec:size}),
 while
 the PDF for the latitude $\phi$ of the spots is a Beta distribution in
-$\cos\phi$ with shape parameters $\alpha$ and $\beta$ (Appendix \ref{sec:lat-lon}).
+$\cos\phi$ with (normalized) shape parameters $a$ and $b$,
+which have a one-to-one correspondence to the mean $\mu_\phi$ and
+standard deviation $\sigma_\phi$ of the distribution in $\phi$
+(Appendix \ref{sec:lat-lon}).
 The spot longitude is assumed to be uniformly distributed. Finally,
 the PDFs for the spot contrast and the number of spots are delta functions
 centered at $c$ and $N$, respectively.
 
-\xxx{More soon. Include likelihood function.}
+In this paper, we assume that the parameters $\pmb{\theta}_\bullet$
+described above are the \emph{physically interesting} ones. That is,
+given a set of $M$ light curves
+$\left( \mathbf{f}_0 \, \mathbf{f}_1 \, \cdots \,  \mathbf{f}_{M-1} \right)^\top$,
+we wish to infer the statistical properties of the star spots, encoded in
+the entries of the vector $\pmb{\theta}_\bullet$.
+%
+This is typically a tall order, since it requires marginalizing over all
+the nuisance parameters, which include the nitty-gritty details of the
+size, contrast, and location of \emph{every spot} on \emph{every star}
+in the sample. Fortunately, however, the Gaussian process we constructed
+does just that. Specifically, given the mean and covariance of the process,
+we are able to directly evaluate the log marginal likelihood of the $m^\mathrm{th}$
+dataset
+conditioned on a specific value of $\pmb{\theta}_\bullet$ (and $\pmb{\theta}_\star$):
+%
+\begin{align}
+    \label{eq:log-like}
+    \resizebox{.9\hsize}{!}{$
+        \ln \mathcal{L}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+        =
+        -\frac{1}{2}
+        \mathbf{r}_m^\top\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+        \mathbf{K}_m^{-1}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+        \mathbf{r}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+        -
+        \frac{1}{2}
+        \ln \Big| \mathbf{K}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right) \Big|
+        -
+        \frac{K_m}{2}
+        \ln \left( 2 \pi \right)
+        \quad,
+    $}
+\end{align}
+%
+where
+%
+\begin{align}
+    \mathbf{r}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+     & \equiv
+    \mathbf{f}_m - \pmb{\mu}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+\end{align}
+%
+is the residual vector,
+%
+\begin{align}
+    \mathbf{K}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+     & \equiv
+    \pmb{\Sigma}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    +
+    \mathbf{C}_m
+\end{align}
+%
+is the sum of the GP covariance and the data covariance $\mathbf{C}_m$
+(which in most cases is a diagonal matrix whose entries
+are the squared uncertainty corresponding to each data point in the light curve),
+%
+$| \cdots |$ denotes the determinant, and $K_m$ is the number of data points.
+In an ensemble analysis, the joint marginal likelihood of all datasets is
+simply the product of the individual likelihoods, so in log space we have
+%
+\begin{align}
+    \ln \mathcal{L}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+     & =
+    \sum_{m} \ln \mathcal{L}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \quad.
+\end{align}
+%
+The marginal likelihood may be interpreted as the probability of the data
+given the model. Typically, we are interested in the reverse: the probability
+of the \emph{model} given the \emph{data}, i.e., the posterior probability
+distribution. In later sections we present a comprehensive suite of
+posterior inference exercises demonstrating that our GP model is correctly
+calibrated, allowing one to efficiently infer statistical properties of star spots
+from light curves with minimal bias.
 
 
 \subsection{Marginalizing over inclination}
 \label{sec:inclination}
 %
-The equations for the mean and covariance of the flux GP
+As we mentioned in the previous section,
+the equations for the mean and covariance of the flux GP
 (Equations~\ref{eq:mean_f} and \ref{eq:cov_f}, respectively) are conditioned
 on specific values of the stellar properties $\pmb{\theta}_\star$ and the
 spot properties $\pmb{\theta}_\bullet$. To obtain the posterior distribution
@@ -355,6 +471,18 @@ inclinations are distributed isotropically, these integrals
 do in fact have closed-form solutions,
 since they are (again) integrals over Wigner matrices.
 %
+We may then replace our expressions for the GP mean and covariance with
+%
+\begin{align}
+    \pmb{\mu}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
+     & = \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
+    \\
+    \pmb{\Sigma}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
+     & = \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big] - \pmb{\mu}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet) \pmb{\mu}^\top(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
+    \quad.
+\end{align}
+%
+and use these to compute the marginal likelihood instead.
 
 \subsection{The baseline problem}
 \label{sec:baseline}
@@ -446,11 +574,11 @@ this is incorrect, since we must be careful to distinguish between the
 curve by the mean, the operation we perform is
 %
 \begin{align}
-    \tilde{\mathbf{f}} & = \frac{\mathbf{f}}{\left<f\right>}
+    \tilde{\mathbf{f}\hspace{0.2em}} & = \frac{\mathbf{f}}{\left<f\right>}
     \quad,
 \end{align}
 %
-where $\tilde{\mathbf{f}}$ is the normalized, unit-mean light curve,
+where $\tilde{\mathbf{f}\hspace{0.2em}}$ is the normalized, unit-mean light curve,
 $\mathbf{f}$ is the measured light curve (in detector counts), and
 $\left<f\right>$ is the \emph{sample} mean: i.e., the average value of
 a given star's light curve (which we model as a sample from our GP).
@@ -461,7 +589,7 @@ with the GP variance.
 
 Computing the covariance of the normalized process is tricky, especially
 because the normalized process is \emph{not} strictly Gaussian: the distribution
-has heavy tails due to the fact that $\tilde{\mathbf{f}}$ diverges as
+has heavy tails due to the fact that $\tilde{\mathbf{f}\hspace{0.2em}}$ diverges as
 the sample mean approaches zero. In fact, because of these tails, the covariance
 of the normalized process is formally \emph{infinite}, since the probability of
 drawing a sample whose mean is arbitrarily close to zero is finite.
@@ -531,19 +659,60 @@ the unknown baseline by modeling the \emph{normalized} flux as a draw
 from a Gaussian process:
 %
 \begin{align}
-    \tilde{\mathbf{f}} \sim \mathcal{N}\left( \mathbf{1}, \tilde{\pmb{\Sigma}} \right)
+    \tilde{\mathbf{f}\hspace{0.2em}}
+    \left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \sim
+    \mathcal{N}\left(
+    \mathbf{1},
+    \tilde{\pmb{\Sigma}} \left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \right)
     \quad.
 \end{align}
 %
 This is appropriate as long as the quantity $z \ll 1$, for which the true
-distribution of $\tilde{\mathbf{f}}$ is approximately Gaussian. In practice,
+distribution of $\tilde{\mathbf{f}\hspace{0.2em}}$ is approximately Gaussian. In practice,
 we recommend employing this trick only for $z \lesssim 0.02$, for which the
 error in the approximation to the covariance is less than $10^{-6}$.
 In cases where the light curve variability exceeds a few percent, we recommend
 modeling the baseline in each light curve as a latent variable, as discussed
 above.
 
+\begin{figure}[ht!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/normgp.pdf}
+        \oscaption{normgp}{%
+            An example of a flux covariance matrix $\pmb{\Sigma}$ for a
+            \starry process (left) and the corresponding covariance of the
+            normalized process (right), computed from Equation~(\ref{eq:SigmaTilde}).
+            In addition to an offset and an overall scaling relative to the
+            original covariance matrix, the covariance of the normalized process
+            is discernibly non-stationary.
+            \label{fig:normgp}
+        }
+    \end{centering}
+\end{figure}
 
+Figure~\ref{fig:normgp} shows an example of a covariance matrix normalized
+according to the procedure outlined above. The principal difference between
+the normalized covariance and the original covariance is an overall
+scaling and a small offset. However, the normalization also results in
+the process becoming non-stationary: the covariance between two points in
+a light curve is now slightly dependent on their phases.
+
+
+\subsection{Other stuff}
+\label{sec:baseline}
+
+Figure~\ref{fig:nongaussianity}
+\begin{figure}[ht!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/nongaussianity.pdf}
+        \oscaption{nongaussianity}{%
+            Non-Gaussianity of the process.
+            \label{fig:nongaussianity}
+        }
+    \end{centering}
+\end{figure}
 
 %
 %
