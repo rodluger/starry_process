@@ -62,7 +62,7 @@ See Figure~\ref{fig:nullspace_ensemble}.
             the mean shrinkage for each experiment. The inclinations are
             drawn randomly from an isotropic distribution.
             The information content in the light curve of a star observed
-            from a single vantage point approaches zero as $\mathrm{l}$
+            from a single vantage point approaches zero as $l$
             increases. However, observing the star from many vantage points
             allows one to recover nearly all of the information in the
             even spherical harmonic modes.
@@ -399,6 +399,40 @@ While this is a formally perfect degeneracy for a single light curve, we can
 again resort to ensemble statistics across many light curves to break it;
 we discuss this further in \S\ref{sec:breaking_baseline_degeneracy}.
 
+\begin{figure}[ht!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/mean_normalization.pdf}
+        \oscaption{mean_normalization}{%
+            An example of the baseline problem.
+            \emph{Top:} Consider a star with a single
+            equatorial spot of contrast $c$ viewed at a certain inclination.
+            The total flux (in some units) as a function of time is shown as
+            the blue curve. Now, consider a second star,
+            identical in all respects to the first, except that (1) the equatorial spot
+            has half the contrast (i.e., $\nicefrac{c}{2}$); and (2) there is
+            a second, large spot centered on the pole. The corresponding light
+            curve is shown as the dashed orange curve.
+            The orange light curve is different from the blue one in two ways:
+            (1) since the equatorial spot has half the contrast, the amplitude of the associated
+            dips in the light curve is half that of the first star; and
+            (2) since the polar spot is azimuthally symmetric, its only
+            contribution is a net darkening at all phases.
+            \emph{Bottom:} The true baseline level of a stellar
+            light curve, which corresponds to the flux one would measure in the
+            absence of any spots, is almost always unknown. Photometric measurements
+            are therefore meaningful only in a relative sense, i.e., as deviations from
+            the mean, median, or maximum level of the light curve.
+            The bottom panel shows the same two light curves, this time plotted as
+            deviations in parts per thousand (ppt) from their respective maxima.
+            To the observer, the two light curves are \emph{indistinguishable}.
+            In the absence of baseline information, there
+            exists a perfect degeneracy between the total spot coverage
+            and the contrast of any individual feature on the surface.
+            \label{fig:mean_normalization}
+        }
+    \end{centering}
+\end{figure}
+
 The second point is of more immediate concern, since we must correct our
 expression for the covariance matrix
 $\pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$ if we are to
@@ -487,44 +521,29 @@ given by the optimally-truncated diverging series
 \end{align}
 %
 where $N$ is the largest value for which the series coefficient at $N$ is
-smaller than the coefficient at $N - 1$.
+smaller than the coefficient at $N - 1$. In the expressions above, it is
+assumed that the mean $\pmb{\mu}$ is constant, i.e., $\pmb{\mu} = \mu\, \mathbf{1}$.
+Since our Gaussian process is azimuthally isotropic (i.e., no preferred
+longitude), that is the case throughout this paper.
 
-\xxx{More soon.}
+What Equation~(\ref{eq:SigmaTilde}) allows us to do is effectively marginalize over
+the unknown baseline by modeling the \emph{normalized} flux as a draw
+from a Gaussian process:
+%
+\begin{align}
+    \tilde{\mathbf{f}} \sim \mathcal{N}\left( \mathbf{1}, \tilde{\pmb{\Sigma}} \right)
+    \quad.
+\end{align}
+%
+This is appropriate as long as the quantity $z \ll 1$, for which the true
+distribution of $\tilde{\mathbf{f}}$ is approximately Gaussian. In practice,
+we recommend employing this trick only for $z \lesssim 0.02$, for which the
+error in the approximation to the covariance is less than $10^{-6}$.
+In cases where the light curve variability exceeds a few percent, we recommend
+modeling the baseline in each light curve as a latent variable, as discussed
+above.
 
 
-\begin{figure}[ht!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/mean_normalization.pdf}
-        \oscaption{mean_normalization}{%
-            An example of the baseline problem.
-            \emph{Top:} Consider a star with a single
-            equatorial spot of contrast $c$ viewed at a certain inclination.
-            The total flux (in some units) as a function of time is shown as
-            the blue curve. Now, consider a second star,
-            identical in all respects to the first, except that (1) the equatorial spot
-            has half the contrast (i.e., $\nicefrac{c}{2}$); and (2) there is
-            a second, large spot centered on the pole. The corresponding light
-            curve is shown as the dashed orange curve.
-            The orange light curve is different from the blue one in two ways:
-            (1) since the equatorial spot has half the contrast, the amplitude of the associated
-            dips in the light curve is half that of the first star; and
-            (2) since the polar spot is azimuthally symmetric, its only
-            contribution is a net darkening at all phases.
-            \emph{Bottom:} The true baseline level of a stellar
-            light curve, which corresponds to the flux one would measure in the
-            absence of any spots, is almost always unknown. Photometric measurements
-            are therefore meaningful only in a relative sense, i.e., as deviations from
-            the mean, median, or maximum level of the light curve.
-            The bottom panel shows the same two light curves, this time plotted as
-            deviations in parts per thousand (ppt) from their respective maxima.
-            To the observer, the two light curves are \emph{indistinguishable}.
-            In the absence of baseline information, there
-            exists a perfect degeneracy between the total spot coverage
-            and the contrast of any individual feature on the surface.
-            \label{fig:mean_normalization}
-        }
-    \end{centering}
-\end{figure}
 
 %
 %
