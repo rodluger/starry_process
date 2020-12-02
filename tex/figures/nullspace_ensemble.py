@@ -7,7 +7,7 @@ from tqdm import tqdm
 ntheta = 50
 ydeg = 15
 ydeg_pad = 3
-L = 1e12
+L = 1e9
 C = 1
 ninc = [1, 3, 10]
 kpn = 300

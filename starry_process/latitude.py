@@ -60,7 +60,9 @@ def gauss2beta(
     alpha = (2 + 4 * v + (3 + 8 * v) * c1 + 2 * c2 + c3) * term
     beta = (c1 + 2 * v * (3 + c2) - c3) * term
     a = np.log(alpha) / log_alpha_max
-    b = (np.log(beta) - np.log(0.5)) / (log_beta_max - np.log(0.5))
+    b = np.maximum(
+        0.0, (np.log(beta) - np.log(0.5)) / (log_beta_max - np.log(0.5))
+    )
     if is_vector:
         return a, b
     else:

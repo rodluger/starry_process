@@ -1074,14 +1074,14 @@ footnote\the\fncount\endcsname{\if@two@col\hsize=242pt\fi\relax#1}}
    \twocolumngrid
    \fi
 \fi
-    \@startsection{section}{1}{\z@}{9pt plus 1pt minus
-    1pt}{4pt}{\apjsecfont\center}}
+    \@startsection{section}{1}{\z@}{18pt plus 2pt minus
+    2pt}{4pt}{\apjsecfont\center}}
 
-\def\subsection{\@startsection{subsection}{2}{\z@}{9pt plus 1pt minus 1pt}{4pt}%
+\def\subsection{\@startsection{subsection}{2}{\z@}{18pt plus 2pt minus 2pt}{4pt}%
   {\normalsize\itshape \center}}
 
 \def\subsubsection{\@startsection{subsubsection}{3}{\z@}%
-  {2ex plus 1ex minus .2ex}{1ex plus .2ex}{\small\itshape \center}}
+{18pt plus 2pt minus 2pt}{4pt}{\small\itshape \center}}
 
 \def\paragraph{\@startsection{paragraph}{4}{\z@}%
   {1.5ex plus 1ex minus .2ex}{0pt}{\small\itshape}}

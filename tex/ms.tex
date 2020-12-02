@@ -99,7 +99,8 @@ a discussion of the notation and conventions we adopt.
 
 Before we dive in, it is useful to introduce the spherical harmonics,
 a set of orthogonal functions on the surface of the sphere which we will use
-to describe the intensity field on the surface of a star. As we will see below,
+to describe the intensity field on the surface of a star
+(Figure~\ref{fig:ylms}). As we will see below,
 the spherical harmonics are a particularly convenient basis in which to
 describe star spot distributions%
 \footnote{There are, of course, drawbacks to using this basis:
@@ -270,10 +271,11 @@ the PDF for the latitude $\phi$ of the spots is a Beta distribution in
 $\cos\phi$ with (normalized) shape parameters $a$ and $b$,
 which have a one-to-one correspondence to the mean $\mu_\phi$ and
 standard deviation $\sigma_\phi$ of the distribution in $\phi$
-(Appendix \ref{sec:lat-lon}).
-The spot longitude is assumed to be uniformly distributed. Finally,
+(Appendix \ref{sec:lat}).
+The spot longitude is assumed to be uniformly distributed
+(Appendix \ref{sec:lon}). Finally,
 the PDFs for the spot contrast and the number of spots are delta functions
-centered at $c$ and $N$, respectively.
+centered at $c$ and $N$, respectively (Appendix \ref{sec:contrast}).
 
 In this paper, we assume that the parameters $\pmb{\theta}_\bullet$
 described above are the \emph{physically interesting} ones. That is,
@@ -708,7 +710,19 @@ Figure~\ref{fig:nongaussianity}
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/nongaussianity.pdf}
         \oscaption{nongaussianity}{%
-            Non-Gaussianity of the process.
+            Corner plot showing the joint distributions of select spherical
+            harmonic coefficients corresponding to the $l=15$ expansion of
+            $5\times 10^{4}$ stellar surface maps drawn from a certain
+            star spot distribution (black points and contours).
+            At $l=15$ there are 256 coefficients in total;
+            we chose five of the coefficients with the most odd-looking
+            distributions to illustrate the non-Gaussianity of the process.
+            In addition to non-linear correlations, skewness, and the
+            existence of points of very high curvature, some of the distributions
+            are also multi-modal.
+            The orange contours show slices of the Gaussian approximation to
+            the joint distribution; this is the approximation adopted in
+            this paper.
             \label{fig:nongaussianity}
         }
     \end{centering}
@@ -1082,7 +1096,7 @@ times the individual mean and the variance, respectively.
 We devote the remainder of this section to the computation of these eight
 integrals.
 
-\subsection{The Radius Integral}
+\subsection{The Radius Integrals}
 \label{sec:size}
 %
 Below we compute the first and second moments
@@ -1414,17 +1428,17 @@ In the limit $\Delta \rightarrow 0$,
 \end{align}
 %
 
-\subsection{The Latitude and Longitude Integrals}
-\label{sec:lat-lon}
+\subsection{The Latitude Integrals}
+\label{sec:lat}
 %
 Our goal in this section is to compute the first and second moments
-of the latitude ($\mathbf{e}_\phi$, $\mathbf{E}_\phi$)
-and longitude ($\mathbf{e}_\lambda$, $\mathbf{E}_\lambda$) distributions
-(Equations \ref{eq:e2}, \ref{eq:e3}, \ref{eq:E2}, and \ref{eq:E3},
-respectively). These involve integrals over the terms in the Wigner
+of the latitude distribution ($\mathbf{e}_\phi$ and $\mathbf{E}_\phi$,
+given by Equations \ref{eq:e2} and \ref{eq:E2}, respectively).
+These involve integrals over the terms in the Wigner
 rotation matrix for spherical harmonics, which we discuss below.
 
 \subsubsection{Rotation matrices}
+\label{sec:wigner}
 %
 The Wigner rotation matrix for real spherical harmonics up to degree $l_{\mathrm{max}}$
 may be written as the block-diagonal matrix
@@ -1528,7 +1542,7 @@ where
 \end{proof}
 %
 
-\subsubsection{Probability density function for the latitude}
+\subsubsection{Probability density function}
 %
 The latitude integrals (Equations~\ref{eq:e2} and \ref{eq:E2}) involve
 rotations by an angle $\phi$ about $\hat{\mathbf{x}}$, which
@@ -1562,19 +1576,12 @@ analytically compute the first two moments of the distribution of
 $\phi$ conditioned on $\pmb{\theta}_\phi$.
 
 %
-The Beta distribution in $\cos\phi$ has hyperparameters
-%
-\begin{align}
-    \pmb{\theta}_\phi = \left(
-    \alpha \, \, \, \,
-    \beta \right)^\top
-\end{align}
-%
+The Beta distribution in $\cos\phi$ has hyperparameters $\alpha$ and $\beta$
 and PDF given by
 %
 \begin{align}
     \label{eq:cosphi-pdf}
-    p \big(\cos\phi \, \big| \, \pmb{\theta}_\phi \big)
+    p \big(\cos\phi \, \big| \, \alpha, \beta \big)
      & =
     \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
     (\cos\phi)^{\alpha - 1}
@@ -1587,7 +1594,7 @@ may be computed by a straightforward change of variable:
 %
 \begin{proof}{test_beta_transform}
     \label{eq:phi-pdf}
-    p \big(\phi \, \big| \, \pmb{\theta}_\phi \big)
+    p \big(\phi \, \big| \, \alpha, \beta \big)
     & =
     \dfrac{\Gamma(\alpha + \beta)}{2\Gamma(\alpha)\Gamma(\beta)}
     \big|
@@ -1599,8 +1606,76 @@ may be computed by a straightforward change of variable:
 \end{proof}
 %
 for $\phi \in \left[ -\frac{\pi}{2}, \frac{\pi}{2} \right]$.
+%
+Both $\alpha$ and $\beta$ are restricted to $(0, \infty)$.
+However, in practice it is necessary to limit the values of these parameters
+to a finite range to ensure the numerical stability of the algorithm.
+It is also convenient
+to work with the log of these quantities because of their large dynamic range.
+We therefore introduce the modified shape parameters
+%
+\begin{align}
+    \label{eq:gauss2beta}
+    a & \equiv \frac{\ln\alpha - K_{00}}{K_{10} - K_{00}}
+    \nonumber                                             \\[0.5em]
+    b & \equiv \frac{\ln\beta - K_{10}}{K_{11} - K_{10}}
+\end{align}
+%
+with inverse transform
+%
+\begin{align}
+    \label{eq:beta2gauss}
+    \alpha & = e^{K_{00} + (K_{10} - K_{00})a}
+    \nonumber                                  \\
+    \beta  & = e^{K_{10} + (K_{11} - K_{10})b}
+    \quad,
+\end{align}
+%
+where the matrix
+%
+\begin{align}
+    \setstackgap{L}{1.25\baselineskip}
+    \fixTABwidth{T}
+    \mathbf{K}
+    =
+    \parenMatrixstack{
+    0              & 5 \\
+    \ln\frac{1}{2} & 5
+    }
+\end{align}
+%
+defines the minimum and maximum values of $\ln\alpha$ (top row) and $\ln\beta$
+(bottom row) we adopt in our implementation of the algorithm. The lower limits
+correspond to $\alpha > 1$ and $\beta > \frac{1}{2}$, which excludes
+distributions with unphysically sharp peaks at $\phi = 90^\circ$. Both $a$
+and $b$ are restricted to the domain $(0, 1)$, and together comprise the
+hyperparameter vector
+%
+\begin{align}
+    \pmb{\theta}_\phi = \left(
+    a \, \, \, \,
+    b \right)^\top
+    \quad.
+\end{align}
+%
 
-\subsubsection{First moment of the latitude}
+Although we use $a$ and $b$ as the inputs to our algorithm, below
+we derive expressions for the moments of the distribution in terms
+of $\alpha$ and $\beta$, as this is somewhat more convenient. Note that
+this requires us to explicitly add a Jacobian term to the likelihood
+when doing posterior inference to account for the change in volume due
+to the transformation from $\alpha, \beta$ to $a, b$. In practice, however,
+$\alpha$ and $\beta$ are no more natural a set of parameters to sample in,
+since they do not \emph{obviously} relate to physical quantities of interest.
+It is therefore desirable to introduce one final transform, from $\alpha, \beta$
+to parameters controlling the mean (or mode) $\mu_\phi$ and
+standard deviation  $\sigma_\phi$ of the
+distribution of spot latitudes, which \emph{are} of physical interest.
+We introduce this transform, and the associated Jacobian for the complete
+transform $\mu_\phi, \sigma_\phi \rightarrow a, b$,
+in \S\ref{sec:lat-transform} below.
+
+\subsubsection{First moment}
 %
 Since the Wigner matrices are block diagonal, we may evaluate the moments of the
 distribution one spherical harmonic degree at a time. To that end, let us
@@ -1775,7 +1850,7 @@ for all $0 \leq l \leq l_{\mathrm{max}}$, $0 \leq i \leq 2l$,
 which can be done efficiently via upward recursion relations for both
 the gamma function and the hypergeometric function.
 
-\subsubsection{Second moment of the latitude}
+\subsubsection{Second moment}
 %
 Similarly as before, let us write the second moment integral as
 %
@@ -1952,7 +2027,179 @@ We may again express this integral in closed form:
 As before, this integral may be evaluated recursively to efficiently compute all
 of the terms in $\mathbf{E}_\phi$.
 
-\subsubsection{Probability density function for the longitude}
+\subsubsection{Variable transforms}
+\label{sec:lat-transform}
+
+\xxx{...}
+
+Although we adopt $a$ and $b$ as the actual inputs to our Gaussian process
+(i.e., as elements of the input vector $\pmb{\theta}_\bullet$), these
+parameters are not themselves ``interpretable'', as they do not directly
+correspond to physical
+quantities of interest such as the mean and standard deviation of the spot
+latitude distribution. However, over most of the parameter space in $a$ and $b$,
+the spot latitude distribution is well approximated
+by a bimodal Gaussian. In particular, there exists
+a one-to-one relationship between $a$ and $b$ and the mean $\mu_\phi$
+and standard deviation $\sigma_\phi$ of a normal approximation to the
+distribution. Moreover, we find that
+if we let $\mu_\phi$ be the \emph{mode} of the PDF and
+$\sigma_\phi^2$ be a \emph{local} approximation to the variance of the PDF,
+the relationship has a convenient closed form.
+
+To compute $\mu_\phi$, we differentiate Equation~(\ref{eq:phi-pdf}) with respect
+to $\phi$, set the expression equal to zero, and solve
+for $\phi$ to obtain
+%
+\begin{proof}{}
+    \mu_\phi &= 2 \tan^{-1}
+    \left(
+    \sqrt{
+        2 \alpha + \beta - 2 -
+        \sqrt{
+            4 \alpha^2
+            - 8 \alpha
+            - 6 \beta
+            + 4 \alpha \beta
+            + \beta^2
+            + 5
+        }
+    }
+    \right)
+\end{proof}
+%
+where $\alpha$ and $\beta$ may be computed from $a$ and $b$ via
+Equation~(\ref{eq:beta2gauss}).
+%
+To compute $\sigma_\phi$, we note that the variance of a Gaussian distribution
+$\varphi(\phi)$
+is the negative reciprocal of its curvature in log space:
+%
+\begin{align}
+    \sigma^2 = -\left(\frac{\mathrm{d}^2 \ln \varphi(\phi)}{\mathrm{d}\phi^2}\right)^{-1}
+\end{align}
+%
+We therefore twice differentiate the log of Equation~(\ref{eq:phi-pdf}), negate it,
+take the reciprocal, and evaluate it at $\phi = \mu_\phi$ to obtain a local
+approximation to the standard deviation of the distribution at the mode:
+%
+\begin{proof}{}
+    \sigma_\phi &= \frac{\sin\mu_\phi}{
+        \sqrt{1
+            - \alpha
+            + \beta
+            + \left(\beta - 1\right) \cos\mu_\phi
+            + \dfrac{\alpha - 1}{\cos\mu_\phi^2}}}
+    \quad.
+\end{proof}
+%
+For completeness, the inverse transform also has a closed form:
+%
+\begin{proof}{}
+    \alpha &= \frac{2 + 4 \sigma_\phi^2 + (3 + 8 \sigma_\phi^2) \cos\mu_\phi + 2 \cos\left( 2\mu_\phi \right) + \cos\left( 3\mu_\phi \right)}{16 \sigma_\phi^2 \cos\left( \frac{\mu_\phi}{2} \right)^4} \\
+    \beta &= \frac{\cos\mu_\phi + 2 \sigma_\phi^2 (3 + \cos\left( 2\mu_\phi \right)) - \cos\left( 3\mu_\phi \right)}{16 \sigma_\phi^2 \cos\left( \frac{\mu_\phi}{2} \right)^4}
+    \quad.
+\end{proof}
+
+These transformations allow one to easily transform constraints on $a$ and
+$b$ to constraints on the mode and approximate variance of the distribution
+of spot latitudes. Importantly, they also allow us to compute the Jacobian
+of the transform, given by
+%
+\begin{proof}{}
+    J &=
+    \frac{\partial{\mu_\phi}}{\partial{a}}
+    \frac{\partial{\sigma_\phi}}{\partial{b}} -
+    \frac{\partial{\mu_\phi}}{\partial{b}}
+    \frac{\partial{\sigma_\phi}}{\partial{a}}
+    %
+    \\
+    %
+    &=\resizebox{.925\hsize}{!}{$
+            \frac{
+                \alpha \beta \left(1 + \cos\mu_\phi\right)^3
+                \sin\left(2\mu_\phi\right)^3
+            }{
+                \sigma_\phi
+                \left(
+                2 \alpha + \beta - 3 +
+                \left(2 \alpha + \beta - 1\right) \cos\mu_\phi
+                \right)
+                \left(
+                2 \left( \alpha + \beta - 1\right) +
+                3 (\beta - 1) \cos\mu_\phi
+                - 2 \left( \alpha - \beta - 1 \right) \cos\left( 2\mu_\phi \right)
+                + \left( \beta - 1\right) \cos\left( 3\mu_\phi \right)
+                \right)^2
+            }
+        $}
+    \nonumber
+\end{proof}
+%
+While one could sample in $\mu_\phi$ and $\sigma_\phi$ directly, we instead
+recommend sampling in the quantities $a$ and $b$ under a uniform prior on
+$(0, 1)$ for both of them, then correcting for the implied prior on
+$\mu_\phi$ and $\sigma_\phi$ by adding the log of the absolute value of $J$ to the log
+likelihood. This corrects for the \emph{ad hoc}
+prior on the latitude parameters introduced by our particular choice of
+parametrization, enforcing instead a uniform prior on the quantities $\mu_\phi$
+and $\sigma_\phi$.
+
+\begin{figure}[ht!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/latitude_pdf.pdf}
+        \oscaption{latitude_pdf}{%
+            Probability density function for the spot latitude (blue curves)
+            for different values of the mode $\mu_\phi$ (columns)
+            and local standard deviation $\sigma_\phi$ (rows).
+            The corresponding values of $a$ and $b$ are
+            indicated within each panel. The bimodal
+            normal distribution with mean $\mu_\phi$ and standard deviation
+            $\sigma_\phi$ is shown as the dashed orange curves; for mid-latitude
+            modes and low standard deviations, the Gaussian approximation is
+            quite good.
+            The shaded panel in the lower right
+            ($\mu_\phi = 0^\circ$, $\sigma_\phi = 0^\circ$)
+            corresponds to an approximately isotropic distribution of
+            spots over the surface of the star; in this panel only, the
+            dashed orange curve corresponds to a cosine distribution in
+            $\phi$ (i.e., the exact isotropic distribution).
+            \label{fig:latitude_pdf}
+        }
+    \end{centering}
+\end{figure}
+
+For reference, Figure~\ref{fig:latitude_pdf} shows the latitude PDF
+and the corresponding Gaussian approximation for different values of
+$\mu_\phi$ and $\sigma_\phi$. The corresponding values of $a$ and $b$ are
+indicated in the top left of each panel. For $\mu_\phi$ at intermediate
+latitudes and moderate values of $\sigma_\phi$, the approximation is quite good.
+However, for $\mu_\phi$ very close to the equator or to the poles, the curvature of
+the distribution changes significantly as a function of $\phi$, so the variance is somewhat
+underestimated by the approximation; and for $\sigma_\phi$ large, the
+distribution becomes noticeably non-Gaussian.
+
+The shaded panel at the lower left is a special case of the distribution
+($\mu_\phi = 0^\circ$, $\sigma_\phi \approx 40^\circ$; or equivalently,
+$a \approx 0.06$, $b = 0$), which is approximately isotropic in latitude. In
+this panel, the orange curve instead corresponds to an isotropic (cosine)
+distribution in $\phi$; note the excellent agreement.
+
+Thus, in addition to having closed-form moments, the Beta distribution is
+quite flexible and, via the transforms outlined above, intuitive in how
+it affects the distribution of spots on the surface of a star.
+
+\subsection{The Longitude Integrals}
+\label{sec:lon}
+
+In this section we will compute the first and second moments
+of the longitude distribution
+($\mathbf{e}_\lambda$ and $\mathbf{E}_\lambda$, given by Equations
+\ref{eq:e3} and \ref{eq:E3}, respectively). The math here is
+very similar to that in the previous section, as we are again
+dealing with integrals of Wigner matrices (\S\ref{sec:wigner}).
+
+\subsubsection{Probability density function}
 %
 The longitude integrals (Equations~\ref{eq:e3} and \ref{eq:E3}) involve
 rotations by an angle $\lambda$ about $\hat{\mathbf{y}}$, which
@@ -1997,7 +2244,7 @@ controlling the longitudinal distribution, i.e.,
 \end{align}
 %
 
-\subsubsection{First moment of the longitude}
+\subsubsection{First moment}
 %
 As before, we will solve for the terms of the moment integrals one
 spherical harmonic degree at a time:
@@ -2125,7 +2372,7 @@ where
 %
 whose terms may easily be computed by upward recursion.
 
-\subsubsection{Second moment of the longitude}
+\subsubsection{Second moment}
 %
 We write the second moment integral as
 %
@@ -2260,7 +2507,7 @@ where
 whose terms may again be computed by upward recursion.
 
 
-\subsection{The Contrast Integral}
+\subsection{The Contrast Integrals}
 \label{sec:contrast}
 %
 The final integrals we must take in our computation of
@@ -2344,76 +2591,7 @@ The moment integrals are then trivial to evaluate:
 \subsection{Second moment}
 \xxx{Coming soon.}
 
-\section{Latitude Distribution Transforms}
 
-Given the shape parameters $\alpha$ and $\beta$,
-the mode $\mu$ and standard deviation $\sigma$ of the
-distribution of spot latitudes may be written
-%
-\begin{proof}{}
-    \mu &= 2 \tan^{-1}
-    \left(
-    \sqrt{
-        2 \alpha + \beta - 2 -
-        \sqrt{
-            4 \alpha^2
-            - 8 \alpha
-            - 6 \beta
-            + 4 \alpha \beta
-            + \beta^2
-            + 5
-        }
-    }
-    \right)
-    \\
-    \sigma &= \frac{\sin\mu}{
-        \sqrt{1
-            - \alpha
-            + \beta
-            + \left(\beta - 1\right) \cos\mu
-            + \dfrac{\alpha - 1}{\cos\mu^2}}}
-    \quad.
-\end{proof}
-%
-The reverse transform is given by
-%
-\begin{proof}{}
-    \alpha &= \frac{2 + 4 \sigma^2 + (3 + 8 \sigma^2) \cos\mu + 2 \cos\left( 2\mu \right) + \cos\left( 3\mu \right)}{16 \sigma^2 \cos\left( \frac{\mu}{2} \right)^4} \\
-    \beta &= \frac{\cos\mu + 2 \sigma^2 (3 + \cos\left( 2\mu \right)) - \cos\left( 3\mu \right)}{16 \sigma^2 \cos\left( \frac{\mu}{2} \right)^4}
-    \quad.
-\end{proof}
-%
-These expressions may be used to compute the Jacobian of the transform:
-%
-\begin{proof}{}
-    J &=
-    \frac{\partial{\mu}}{\partial{\alpha}}
-    \frac{\partial{\sigma}}{\partial{\beta}} -
-    \frac{\partial{\mu}}{\partial{\beta}}
-    \frac{\partial{\sigma}}{\partial{\alpha}}
-    %
-    \\
-    %
-    &=\resizebox{.925\hsize}{!}{$
-            \frac{
-                \alpha \beta \left(1 + \cos\mu\right)^3
-                \sin\left(2\mu\right)^3
-            }{
-                \sigma
-                \left(
-                2 \alpha + \beta - 3 +
-                \left(2 \alpha + \beta - 1\right) \cos\mu
-                \right)
-                \left(
-                2 \left( \alpha + \beta - 1\right) +
-                3 (\beta - 1) \cos\mu
-                - 2 \left( \alpha - \beta - 1 \right) \cos\left( 2\mu \right)
-                + \left( \beta - 1\right) \cos\left( 3\mu \right)
-                \right)^2
-            }
-        $}
-    \nonumber
-\end{proof}
 
 \bibliography{bib}
 \end{document}
