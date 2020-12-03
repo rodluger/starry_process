@@ -64,9 +64,6 @@ class FluxIntegral:
         # Pre-compute the integrals
         self._precompute(clobber=clobber)
 
-        # Stability hacks
-        self._eps = kwargs.pop("eps3", defaults["eps3"])
-
     def _check_params(self, i, p):
         # Period
         p = CheckBoundsOp(name="p", lower=0, upper=np.inf)(p)
@@ -244,7 +241,6 @@ class FluxIntegral:
             + self._a3[inds] * x0 ** 3,
             (t.shape[0], t.shape[0]),
         )
-        cov += self._eps * tt.eye(t.shape[0])
 
         # If len(t) == 1, return the *variance* instead
         cov = ifelse(tt.eq(t.shape[0], 1), self._var, cov)

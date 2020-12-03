@@ -25,10 +25,10 @@ class ContrastIntegral:
         )
 
         # Stability hacks
-        eps1 = kwargs.pop("eps1", defaults["eps1"])
-        eps2 = kwargs.pop("eps2", defaults["eps2"])
-        lam = np.ones(self._nylm) * eps1
-        lam[15 ** 2 :] = eps2
+        epsy = kwargs.pop("epsy", defaults["epsy"])
+        epsy15 = kwargs.pop("epsy15", defaults["epsy15"])
+        lam = np.ones(self._nylm) * epsy
+        lam[15 ** 2 :] = epsy15
         lam = tt.diag(lam)
         self._cov += lam
 

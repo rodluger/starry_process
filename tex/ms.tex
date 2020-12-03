@@ -56,11 +56,10 @@ See Figure~\ref{fig:nullspace_ensemble}.
         \oscaption{nullspace_ensemble}{%
             Posterior shrinkage as a function of spherical harmonic degree
             for a hypothetical scenario in which an observer can measure a
-            stellar light curve at a single inclination (thin blue curves),
-            at 3 different inclinations (thin orange curves), and at 10 different
+            stellar light curve at a single random inclination (thin blue curves),
+            at 3 random inclinations (thin orange curves), and at 10 random
             inclinations (thin green curves). The thicker curves correspond to
-            the mean shrinkage for each experiment. The inclinations are
-            drawn randomly from an isotropic distribution.
+            the mean shrinkage for each experiment.
             The information content in the light curve of a star observed
             from a single vantage point approaches zero as $l$
             increases. However, observing the star from many vantage points
@@ -271,7 +270,7 @@ the PDF for the latitude $\phi$ of the spots is a Beta distribution in
 $\cos\phi$ with (normalized) shape parameters $a$ and $b$,
 which have a one-to-one correspondence to the mean $\mu_\phi$ and
 standard deviation $\sigma_\phi$ of the distribution in $\phi$
-(Appendix \ref{sec:lat}).
+(Appendix \ref{sec:lat-transform}).
 The spot longitude is assumed to be uniformly distributed
 (Appendix \ref{sec:lon}). Finally,
 the PDFs for the spot contrast and the number of spots are delta functions
@@ -402,7 +401,7 @@ spot mapping problem can be. In addition to strong nonlinear degeneracies
 between some of the parameters (such as the contrast $c$ and the
 number of spots $N$), the posterior is often multimodal, especially in the
 stellar inclinations. While modern sampling schemes such as Hamiltonian
-Monte Carlo and Nested Sampling may in principle be able to deal with these
+M0onte Carlo and Nested Sampling may in principle be able to deal with these
 issues, in practice it can be very difficult to obtain convergence in a
 reasonable amount of time.
 
@@ -428,16 +427,15 @@ the problem: we can explicitly marginalize over the stellar inclination.
 That is, we can write the first two moments of our flux GP as
 %
 \begin{align}
-    \label{eq:mu_marg}
+    \label{eq:einc}
     \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
      & =
     \int
     \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
     \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
     p(i) \, \mathrm{d}i \\
-    \label{eq:cov_marg}
+    \label{eq:Einc}
     \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
-    - \mathbf{1} \mathbf{1}^\top
      & =
     \int
     \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
@@ -476,9 +474,11 @@ since they are (again) integrals over Wigner matrices.
 We may then replace our expressions for the GP mean and covariance with
 %
 \begin{align}
+    \label{eq:mu_marg}
     \pmb{\mu}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
      & = \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
     \\
+    \label{eq:cov_marg}
     \pmb{\Sigma}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
      & = \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big] - \pmb{\mu}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet) \pmb{\mu}^\top(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
     \quad.
@@ -836,7 +836,93 @@ spherical harmonics, which also uses upper and lower indexing.
 
 \section{Computing the flux}
 \label{sec:starry}
-\xxx{Coming soon.}
+
+\subsection{Basic expression}
+%
+As we mentioned in \S\ref{sec:gp}, the flux $\mathbf{f}$ is a purely
+linear function of the spherical harmonic coefficient vector $\mathbf{y}$:
+%
+\begin{align}
+    \mathbf{f} = \mathbf{1} + \pmb{\mathcal{A}} \, \mathbf{y}
+    \quad.
+\end{align}
+%
+Even though this is derived in detail in \citet{Luger2019}, it is useful to
+expand on the computation of the design matrix $\pmb{\mathcal{A}}$ in more
+detail here. Let $\mathbf{a}_k^\top$ denote the $k^{th}$ row of $\pmb{\mathcal{A}}$,
+such that
+%
+\begin{align}
+    \label{eq:Arows}
+    \pmb{\mathcal{A}}
+     & =
+    \setstackgap{L}{1.25\baselineskip}
+    \fixTABwidth{T}
+    \parenMatrixstack{
+        \mathbf{a}_0^\top \\
+        \mathbf{a}_1^\top \\
+        \vdots            \\
+        \mathbf{a}_{K-1}^\top
+    }\quad.
+\end{align}
+%
+The row vector $\mathbf{a}_k^\top$ encodes how the spherical harmonic
+coefficient vector projects onto the $k^\mathrm{th}$ cadence in the flux timeseries, and
+may be computed from
+%
+\begin{align}
+    \label{eq:akT}
+    \mathbf{a}_k^\top = \mathbf{r}^\top \,
+    \mathbf{A_1} \,
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(-i\right) \,
+    \mathbf{R}_{\hat{\mathbf{z}}}\left(\frac{2\pi}{P}t_k\right) \,
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(\frac{\pi}{2}\right) \,
+    \mathbf{y}
+    \quad.
+\end{align}
+%
+To understand the expression above, let us proceed from right to left,
+starting with the spherical harmonic vector $\mathbf{y}$, which we assume
+describes the surface intensity of the star at time $t = 0$
+in a frame where $\hat{\mathbf{x}}$
+points to the right, $\hat{\mathbf{y}}$ points up, and $\hat{\mathbf{z}}$
+points out of the page. The quantity $\mathbf{R}_{\hat{\mathbf{x}}}$
+is a Wigner rotation matrix
+(described in detail in \S\ref{sec:wigner}),
+which in this case rotates the spherical harmonic representation
+of the star by an angle $\nicefrac{\pi}{2}$ counter-clockwise about $\hat{\mathbf{x}}$
+such that the north pole of the star points along $\hat{\mathbf{z}}$. In this
+frame, we apply a second Wigner rotation matrix, $\mathbf{R}_{\hat{\mathbf{z}}}$,
+to rotate the star about $\hat{\mathbf{z}}$ counter-clockwise (i.e., eastward) by an angle
+$\nicefrac{2\pi t_k}{P}$, where $P$ is the rotation period and $t_k$ is the
+time at cadence $t$.
+Next, we rotate the star by a \emph{clockwise} angle of $i$ about $\hat{\mathbf{x}}$,
+where $i$ is the stellar inclination ($i = 0$ corresponding to a pole-on view and
+$i = \nicefrac{\pi}{2}$ corresponding to an edge-on view). With this last rotation,
+we are now in the observer's frame%
+\footnote{In principle, one last rotation could be performed about $\hat{\mathbf{z}}$
+    to orient the projected disk of the star on the plane of the sky; however, the disk-integrated
+    flux is independent of the rotation angle along the plane of the sky
+    (which we refer to as the \emph{obliquity}), so this step is unnecessary.}.
+
+Following \citet{Luger2019}, the next step is to project the representation of
+the star into a more convenient basis for performing the integration over the stellar
+disk. The change-of-basis matrix $\mathbf{A}_1$ \citep[c.f. Appendix~B in][]{Luger2019}
+projects the stellar map into the \emph{polynomial basis}
+\citep[Equation~7 in][]{Luger2019}, comprised of the sequence of monomials in Cartesian
+coordinates
+$\left( 1 \,\, x \,\, z \,\, y \,\, x^2 \,\, xz \,\, xy \,\, yz \,\, y^2 \cdots \right)$
+where $z = \sqrt{1 - x^2 - y^2}$ on the surface of the unit sphere. We
+can now compute the disk-integrated flux by integrating each of the terms in the basis
+over the unit disk, which is straightforward in the polynomial basis; the
+individual terms integrate to simple ratios of Gamma functions. These are then
+assembled into the row vector $\mathbf{r}^\top$, given by Equation~(20) in
+\citet{Luger2019}, which we dot into our expression (and add one) to obtain the
+flux at the $k^\mathrm{th}$ cadence.
+
+\subsection{With limb darkening}
+%
+\xxx{TODO.}
 
 \section{The Expectation Integrals}
 \label{sec:integrals}
@@ -2030,9 +2116,8 @@ of the terms in $\mathbf{E}_\phi$.
 \subsubsection{Variable transforms}
 \label{sec:lat-transform}
 
-\xxx{...}
-
-Although we adopt $a$ and $b$ as the actual inputs to our Gaussian process
+As we mentioned earlier,
+although we adopt $a$ and $b$ as the actual inputs to our Gaussian process
 (i.e., as elements of the input vector $\pmb{\theta}_\bullet$), these
 parameters are not themselves ``interpretable'', as they do not directly
 correspond to physical
@@ -2580,13 +2665,83 @@ The moment integrals are then trivial to evaluate:
 \section{Inclination}
 \label{sec:inclination}
 
+In this section we will compute the first and second moments of the
+inclination distribution (Equations~\ref{eq:einc} and \ref{eq:Einc}),
+which allows us to compute the mean and covariance of the process
+that describes the flux marginalized over all values of the inclination
+(Equations~\ref{eq:mu_marg} and \ref{eq:cov_marg}).
+
+\subsection{Probability density function}
+%
+Similar to the latitude integrals, the process of inclining a star relative to the
+observer (see Equation~\ref{eq:akT}) involves
+rotations by an angle $-i$ about $\hat{\mathbf{x}}$, which
+may be accomplished by choosing
+Euler angles $\alpha = \nicefrac{\pi}{2}$, $\beta = -i$, and
+$\gamma = -\nicefrac{\pi}{2}$, such that
+%
+\begin{align}
+    \mathbf{R}^l_{\hat{\mathbf{x}}}\left(-i\right)
+     & =
+    {\mathbf{U}^l}^{-1} \mathbf{D}^l_{\hat{\mathbf{x}}}\left(-i\right) \mathbf{U}^l
+\end{align}
+%
+with
+\begin{align}
+    \mathbf{D}^l_{\hat{\mathbf{x}}}\left(-i\right)
+     & =
+    \mathbf{D}^l\left(\frac{\pi}{2}, -i, -\frac{\pi}{2}\right)
+    \quad.
+\end{align}
+%
+Since we expect an isotropic distribution of stellar rotation axes (absent
+prior constraints on individual stars), the prior probability density for
+the inclination $i$ is simply
+%
 \begin{align}
     p(i) = \sin i
+\end{align}
+%
+for $i \in [0, \frac{\pi}{2}]$.
+
+\subsection{First moment}
+The expression for the first moment is
+%
+\begin{proof}{}
+    \mathbf{e}_i
+    & \equiv
+    \int
+    %\mathbf{R}_{\hat{\mathbf{x}}}(-i) \,
+    \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
+    \mathbf{e}_y \,
+    p(i) \,
+    \mathrm{d}i
+\end{proof}
+%
+where
+%
+\begin{proof}{}
+    \mathbf{e}_y
+    & \equiv
+    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
+\end{proof}
+%
+is the first moment of the GP in the spherical harmonic basis
+(Equation~\ref{eq:exp_y}). Let us expand the expression above using
+Equation~(\ref{eq:akT})
+
+\begin{align}
+    \label{eq:akT}
+    \mathbf{a}_k^\top = \mathbf{r}^\top \,
+    \mathbf{A_1} \,
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(-i\right) \,
+    \mathbf{R}_{\hat{\mathbf{z}}}\left(\frac{2\pi}{P}t_k\right) \,
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(\frac{\pi}{2}\right) \,
+    \mathbf{y}
     \quad.
 \end{align}
 
-\subsection{First moment}
-\xxx{Coming soon.}
+\xxx{More soon.}
 
 \subsection{Second moment}
 \xxx{Coming soon.}

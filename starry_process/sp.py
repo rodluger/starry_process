@@ -127,17 +127,16 @@ class StarryProcess(object):
                 in the header file
                 `starry_process/ops/include/constants.h 
                 <https://github.com/rodluger/starry_process/blob/master/starry_process/ops/include/constants.h>`_.
-            eps1 (float, optional): A small number added to the diagonal of the
+            eps (float, optional): A small number added to the diagonal of the
+                flux covariance matrix when marginalizing over inclination
+                for extra stability. Default is %%defaults["eps"]%%.
+            epsy (float, optional): A small number added to the diagonal of the
                 spherical harmonic covariance matrix for stability.
-                Default is %%defaults["eps1"]%%.
-            eps2 (float, optional): A small number added to terms in the 
+                Default is %%defaults["epsy"]%%.
+            epsy15 (float, optional): A small number added to terms in the 
                 diagonal of the spherical harmonic covariance matrix 
                 above degree ``15``, which become particularly unstable.
-                Default is %%defaults["eps2"]%%.
-            eps3 (float, optional): A small number added to the diagonal of the
-                flux covariance matrix when marginalizing over inclination
-                for extra stability. Default is %%defaults["eps3"]%%.
-
+                Default is %%defaults["epsy15"]%%.
         """
         # Spherical harmonic degree of the process
         self._ydeg = kwargs.get("ydeg", defaults["ydeg"])
@@ -380,7 +379,7 @@ class StarryProcess(object):
         if self._normalized:
             cov = self._flux.cov(t, i, p)
             mean = self._flux.mean(t, i, p)[0]
-            return self._normalize(1.0 + mean, cov)  # cov / (1 + mean) ** 2
+            return self._normalize(1.0 + mean, cov)
         else:
             return self._flux.cov(t, i, p)
 
@@ -416,15 +415,21 @@ class StarryProcess(object):
         )
         return ifelse(tt.gt(z, self._normzmax), Sig * np.inf, normSig)
 
-    def sample(self, t, i=defaults["i"], p=defaults["p"], nsamples=1):
+    def sample(
+        self,
+        t,
+        i=defaults["i"],
+        p=defaults["p"],
+        nsamples=1,
+        eps=defaults["eps"],
+    ):
         """
-        TODO: Samples are noisy because of `eps3`.
 
         """
         if self._marginalize_over_inclination:
             t = cast(t)
             u = self.random.normal((t.shape[0], nsamples))
-            cho_cov = cho_factor(self.cov(t, i, p))
+            cho_cov = cho_factor(self.cov(t, i, p) + eps * tt.eye(t.shape[0]))
             return tt.transpose(
                 self.mean(t, i, p)[:, None] + tt.dot(cho_cov, u)
             )

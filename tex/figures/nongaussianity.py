@@ -191,5 +191,8 @@ for k in range(4):
 [ax.set_xlim(*xlim) for ax, xlim in zip(np.array(fig.axes).flatten(), xlims)]
 [ax.set_ylim(*ylim) for ax, ylim in zip(np.array(fig.axes).flatten(), ylims)]
 
+for ax in np.array(fig.axes).flatten():
+    ax.set_rasterization_zorder(0)
+
 # We're done
 fig.savefig(__file__.replace(".py", ".pdf"), bbox_inches="tight", dpi=300)
