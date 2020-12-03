@@ -126,7 +126,7 @@ where $\mathbf{1}$ is the ones vector and
 $\pmb{\mathcal{A}}$ is the \starry
 design matrix, a purely linear operator that transforms from the spherical
 harmonic basis to the flux basis; it is implicitly
-a function of the stellar inclination $i$, the stellar
+a function of the stellar inclination $I$, the stellar
 rotation period $P$, the stellar limb darkening coefficients, etc.
 (see Appendix~\ref{sec:starry} for details).
 
@@ -383,7 +383,7 @@ In a typical problem, the stellar parameters might be
 \begin{align}
     \pmb{\theta}_\star =
     \left(
-    i \,\,\,
+    I \,\,\,
     P \,\,\,
     u_1 \,\,\,
     u_2
@@ -431,17 +431,17 @@ That is, we can write the first two moments of our flux GP as
     \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
      & =
     \int
-    \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
+    \pmb{\mathcal{A}}(I, \bar{\pmb{\theta}}_\star) \,
     \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
-    p(i) \, \mathrm{d}i \\
+    p(I) \, \mathrm{d}I \\
     \label{eq:Einc}
     \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
      & =
     \int
-    \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
+    \pmb{\mathcal{A}}(I, \bar{\pmb{\theta}}_\star) \,
     \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] \,
-    \pmb{\mathcal{A}}^\top(i, \bar{\pmb{\theta}}_\star)
-    p(i) \, \mathrm{d}i
+    \pmb{\mathcal{A}}^\top(I, \bar{\pmb{\theta}}_\star)
+    p(I) \, \mathrm{d}I
     \quad,
 \end{align}
 %
@@ -749,13 +749,20 @@ integers are represented by italic uppercase letters (i.e., $N$),
 scalars are represented by italic lowercase
 letters (i.e., $x$), column vectors are
 represented by boldface lowercase letters
-($\mathbf{x}$), and matrices and other linear operators are represented
+($\mathbf{x}$), and matrices are represented
 by boldface capital letters ($\mathbf{X}$). In general, the elements of a vector
 $\mathbf{x}$ are denoted $x_i$ and the elements of a matrix $\mathbf{X}$
-are denoted $X_{i,j}$. The exception to this is if the vector or matrix
+are denoted $X_{i,j}$. Importantly, we make a distinction between
+quantities like $X_{i,j}$ and $\mathbf{X}_{i,j}$: the former is a scalar
+element of a matrix, while the latter is a \emph{matrix}, which is itself
+a component of a higher-dimensional (in this case, 4-dimensional) linear
+operator. Thus, lowercase bold symbols \emph{always} represent vectors, and
+uppercase bold symbols \emph{always} represent matrices.
+
+The exception to our indexing notation is if the vector or matrix
 represents a quantity in the spherical harmonic basis, in which case we use
-\emph{two} indices to represent a vector element, $x^l_m$, and \emph{four}
-indices to represent a matrix element, $X^{l,l'}_{m,m'}$.
+\emph{two} indices to represent a scalar vector element, $x^l_m$, and \emph{four}
+indices to represent a scalar matrix element, $X^{l,l'}_{m,m'}$.
 %
 The upper indices corresponds to the spherical harmonic degree,
 $l \in [0, l_{\mathrm{max}}]$ and $l' \in [0, l_{\mathrm{max}}]$,
@@ -874,10 +881,9 @@ may be computed from
     \label{eq:akT}
     \mathbf{a}_k^\top = \mathbf{r}^\top \,
     \mathbf{A_1} \,
-    \mathbf{R}_{\hat{\mathbf{x}}}\left(-i\right) \,
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(-I\right) \,
     \mathbf{R}_{\hat{\mathbf{z}}}\left(\frac{2\pi}{P}t_k\right) \,
-    \mathbf{R}_{\hat{\mathbf{x}}}\left(\frac{\pi}{2}\right) \,
-    \mathbf{y}
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(\frac{\pi}{2}\right)
     \quad.
 \end{align}
 %
@@ -896,9 +902,9 @@ frame, we apply a second Wigner rotation matrix, $\mathbf{R}_{\hat{\mathbf{z}}}$
 to rotate the star about $\hat{\mathbf{z}}$ counter-clockwise (i.e., eastward) by an angle
 $\nicefrac{2\pi t_k}{P}$, where $P$ is the rotation period and $t_k$ is the
 time at cadence $t$.
-Next, we rotate the star by a \emph{clockwise} angle of $i$ about $\hat{\mathbf{x}}$,
-where $i$ is the stellar inclination ($i = 0$ corresponding to a pole-on view and
-$i = \nicefrac{\pi}{2}$ corresponding to an edge-on view). With this last rotation,
+Next, we rotate the star by a \emph{clockwise} angle of $I$ about $\hat{\mathbf{x}}$,
+where $I$ is the stellar inclination ($I = 0$ corresponding to a pole-on view and
+$I = \nicefrac{\pi}{2}$ corresponding to an edge-on view). With this last rotation,
 we are now in the observer's frame%
 \footnote{In principle, one last rotation could be performed about $\hat{\mathbf{z}}$
     to orient the projected disk of the star on the plane of the sky; however, the disk-integrated
@@ -1809,7 +1815,7 @@ where
     & =
     %
     {\mathbf{U}^l}^{-1}
-    \mathbf{p}^l
+    \mathbf{p}^l_\phi
     \quad,
 \end{proof}
 %
@@ -1941,6 +1947,7 @@ the gamma function and the hypergeometric function.
 Similarly as before, let us write the second moment integral as
 %
 \begin{proof}{}
+    \label{eq:Ephi}
     \mathbf{E}_\phi
     & \equiv
     \int
@@ -1973,7 +1980,7 @@ where
     & =
     \int
     \mathbf{R}^l_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{E}^l_r \,
+    \mathbf{E}^{l,l'}_r \,
     {\mathbf{R}^{l'}_{\hat{\mathbf{x}}}}^\top(\phi) \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
@@ -1982,43 +1989,43 @@ where
     & =
     %
     {\mathbf{U}^l}^{-1}
-    \mathbf{P}^l_\phi
-    {{\mathbf{U}^l}^{-1}}^\top
+    \mathbf{P}^{l,l'}_\phi
+    {{\mathbf{U}^{l'}}^{-1}}^\top
 \end{proof}
 %
 and we define
 %
 \begin{align}
     \label{eq:Plphi}
-    \mathbf{P}^l_\phi
+    \mathbf{P}^{l,l'}_\phi
      & \equiv
     \int
     \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi) \,
-    \bar{\mathbf{E}}^l_r \,
-    {\mathbf{D}^l_{\hat{\mathbf{x}}}}^\top(\phi) \,
+    \bar{\mathbf{E}}^{l,l'}_r \,
+    {\mathbf{D}^{l'}_{\hat{\mathbf{x}}}}^\top(\phi) \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
     \\
-    \bar{\mathbf{E}}^l_r
+    \bar{\mathbf{E}}^{l,l'}_r
      & \equiv
     \mathbf{U}^l
-    \mathbf{E}^l_r
-    {\mathbf{U}^l}^\top
+    \mathbf{E}^{l,l'}_r
+    {\mathbf{U}^{l'}}^\top
     \quad.
 \end{align}
 %
-As before, we may express the solution to the integral $\mathbf{P}^l_\phi$ in
-closed form. Let us write the terms of $\mathbf{P}^l_\phi$ as
+As before, we may express the solution to the integral $\mathbf{P}^{l,l'}_\phi$ in
+closed form. Let us write the terms of $\mathbf{P}^{l,l'}_\phi$ as
 %
 \begin{align}
-    {({P^l_\phi})_{}}_{m,m'}
+    {({P^{l,l'}_\phi})_{}}_{m,m'}
      & =
     \int
     \sum\limits_{\mu=-l}^l
-    \sum\limits_{\nu=-l}^l
+    \sum\limits_{{\mu'}=-l'}^{l'}
     {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(\phi) \,
-    {(\bar{E}^l_r)_{}}_{\mu,\nu} \,
-    {({D^l_{\hat{\mathbf{x}}}})_{}}_{\nu,m'}(\phi) \,
+    {(\bar{E}^{l,l'}_r)_{}}_{\mu,{\mu'}} \,
+    {({D^{l'}_{\hat{\mathbf{x}}}})_{}}_{{\mu'},m'}(\phi) \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
     %
@@ -2028,15 +2035,15 @@ closed form. Let us write the terms of $\mathbf{P}^l_\phi$ as
     \resizebox{.75\hsize}{!}{$
         \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
         \sum\limits_{\mu=-l}^l
-        \sum\limits_{\nu=-l}^l
-        {(\bar{E}^l_r)_{}}_{\mu,\nu} \,
-        \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu + \nu - m')}
+        \sum\limits_{{\mu'}=-l'}^{l'}
+        {(\bar{E}^{l,l'}_r)_{}}_{\mu,{\mu'}} \,
+        \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu + {\mu'} - m')}
         \sum\limits_{i=0}^{2l}
-        \sum\limits_{j=0}^{2l}
+        \sum\limits_{i'=0}^{2l'}
         c_{m,\mu,i}^{l}
-        c_{\nu,m',j}^{l}
+        c_{{\mu'},m',i'}^{l'}
         \,
-        {({Q^l_\phi})_{}}_{i,j}(\pmb{\theta}_{\phi})
+        {({Q^{l,l'}_\phi})_{}}_{i,i'}(\pmb{\theta}_{\phi})
     $}
     \quad,
 \end{align}
@@ -2044,16 +2051,16 @@ closed form. Let us write the terms of $\mathbf{P}^l_\phi$ as
 where, similarly to before,
 %
 \begin{proof}{}
-    {({Q^l_\phi})_{}}_{i,j}(\pmb{\theta}_{\phi})
+    {({Q^{l,l'}_\phi})_{}}_{i,i'}(\pmb{\theta}_{\phi})
     & \equiv
     \frac{1}{2}
     \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}
     %
-    \mathrm{sgn}(\sin\phi)^{i+j}
+    \mathrm{sgn}(\sin\phi)^{i+i'}
     \big| \sin\phi \big|
     (\cos\phi)^{\alpha - 1}
-    (1 - \cos\phi)^{2l + \beta - \frac{i+j}{2} - 1}
-    (1 + \cos\phi)^\frac{i+j}{2}
+    (1 - \cos\phi)^{l + l' + \beta - \frac{i+i'}{2} - 1}
+    (1 + \cos\phi)^\frac{i+i'}{2}
     %
     \,
     \mathrm{d}\phi
@@ -2065,19 +2072,19 @@ where, similarly to before,
         \displaystyle\int_{0}^{1}
         %
         x^{\alpha - 1}
-        (1 - x)^{2l + \beta - \frac{i+j}{2} - 1 }
-        (1 + x)^\frac{i+j}{2}
+        (1 - x)^{l + l' + \beta - \frac{i+i'}{2} - 1 }
+        (1 + x)^\frac{i+i'}{2}
         %
         \,
         \mathrm{d}x
         %
-         & i+j \,\, \mathrm{even}
+         & i+i' \,\, \mathrm{even}
         %
         \\
         %
         0
         %
-         & i+j \,\, \mathrm{odd} \quad.
+         & i+i' \,\, \mathrm{odd} \quad.
     \end{cases}
 \end{proof}
 %
@@ -2086,26 +2093,26 @@ We may again express this integral in closed form:
 \begin{proof}{}
     %
     \label{eq:Qlphiij}
-    {({Q^l_\phi})_{}}_{i,j}(\pmb{\theta}_{\phi})
+    {({Q^{l,l'}_\phi})_{}}_{i,i'}(\pmb{\theta}_{\phi})
     & =
     \resizebox{.75\hsize}{!}{$
             \begin{cases}
-                \dfrac{\Gamma(\alpha)\Gamma(2l + \beta - \frac{i+j}{2})}{\Gamma(2l + \alpha + \beta - \frac{i+j}{2})}
+                \dfrac{\Gamma(\alpha)\Gamma(l + l' + \beta - \frac{i+i'}{2})}{\Gamma(l + l' + \alpha + \beta - \frac{i+i'}{2})}
                 \,
                 _2F_1\Big(
-                -\frac{i+j}{2},
+                -\frac{i+i'}{2},
                 \alpha;
-                2l + \alpha + \beta - \frac{i+j}{2};
+                l + l' + \alpha + \beta - \frac{i+i'}{2};
                 -1
                 \Big)
                 %
-                 & i+j \,\, \mathrm{even}
+                 & i+i' \,\, \mathrm{even}
                 %
                 \\
                 %
                 0
                 %
-                 & i+j \,\, \mathrm{odd} \quad.
+                 & i+i' \,\, \mathrm{odd} \quad.
             \end{cases}
         $}
 \end{proof}
@@ -2456,6 +2463,9 @@ where
 \end{proof}
 %
 whose terms may easily be computed by upward recursion.
+Since $\mathbf{q}^l_I$ does not depend on any user inputs,
+it may be computed a single time as a pre-processing step
+for efficiency.
 
 \subsubsection{Second moment}
 %
@@ -2494,7 +2504,7 @@ where
     & =
     \int
     \mathbf{R}^l_{\hat{\mathbf{y}}}(\lambda) \,
-    \mathbf{E}^l_\phi \,
+    \mathbf{E}^{l,l'}_\phi \,
     {\mathbf{R}^{l'}_{\hat{\mathbf{y}}}}^\top(\lambda) \,
     p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
     \mathrm{d}\lambda
@@ -2503,42 +2513,42 @@ where
     & =
     %
     {\mathbf{U}^l}^{-1}
-    \mathbf{P}^l_\lambda
-    {{\mathbf{U}^l}^{-1}}^\top
+    \mathbf{P}^{l,l'}_\lambda
+    {{\mathbf{U}^{l'}}^{-1}}^\top
 \end{proof}
 %
 and we define
 %
 \begin{align}
     \label{eq:Pllam}
-    \mathbf{P}^l_\lambda
+    \mathbf{P}^{l,l'}_\lambda
      & \equiv
     \int
     \mathbf{D}^l_{\hat{\mathbf{x}}}(\lambda) \,
-    \bar{\mathbf{E}}^l_\phi \,
-    {\mathbf{D}^l_{\hat{\mathbf{x}}}}^\top(\lambda) \,
+    \bar{\mathbf{E}}^{l,l'}_\phi \,
+    {\mathbf{D}^{l'}_{\hat{\mathbf{x}}}}^\top(\lambda) \,
     p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
     \mathrm{d}\lambda
     \\
-    \bar{\mathbf{E}}^l_\phi
+    \bar{\mathbf{E}}^{l,l'}_\phi
      & \equiv
     \mathbf{U}^l
-    \mathbf{E}^l_\phi
-    {\mathbf{U}^l}^\top
+    \mathbf{E}^{l,l'}_\phi
+    {\mathbf{U}^{l'}}^\top
     \quad.
 \end{align}
 %
-We then express the terms of $\mathbf{P}^l_\lambda$ as
+We then express the terms of $\mathbf{P}^{l,l'}_\lambda$ as
 %
 \begin{align}
-    {({P^l_\lambda})_{}}_{m,m'}
+    {({P^{l,l'}_\lambda})_{}}_{m,m'}
      & =
     \int
     \sum\limits_{\mu=-l}^l
-    \sum\limits_{\nu=-l}^l
+    \sum\limits_{{\mu'}=-l'}^{l'}
     ({D^l_{\hat{\mathbf{x}}}})_{m,\mu}(\lambda) \,
-    (\bar{E}^l_\phi)_{\mu,\nu} \,
-    ({D^l_{\hat{\mathbf{x}}}})_{\nu,m'}(\lambda) \,
+    (\bar{E}^{l,l'}_\phi)_{\mu,{\mu'}} \,
+    ({D^{l'}_{\hat{\mathbf{x}}}})_{{\mu'},m'}(\lambda) \,
     p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
     \mathrm{d}\lambda
     %
@@ -2546,28 +2556,28 @@ We then express the terms of $\mathbf{P}^l_\lambda$ as
     %
      & =
     \sum\limits_{\mu=-l}^l
-    \sum\limits_{\nu=-l}^l
-    (\bar{E}^l_\phi)_{\mu,\nu}
+    \sum\limits_{{\mu'}=-l'}^{l'}
+    (\bar{E}^{l,l'}_\phi)_{\mu,{\mu'}}
     \sum\limits_{i=0}^{2l}
-    \sum\limits_{j=0}^{2l}
+    \sum\limits_{i'=0}^{2l'}
     c_{m,\mu,i}^{l}
-    c_{\nu,m',j}^{l}
+    c_{{\mu'},m',i'}^{l'}
     \,
-    (Q^l_\lambda)_{i,j}
+    (Q^{l,l'}_\lambda)_{i,i'}
     \quad,
 \end{align}
 %
 where
 %
 \begin{proof}{}
-    (Q^l_\lambda)_{i,j}
+    (Q^{l,l'}_\lambda)_{i,i'}
     & \equiv
     \frac{1}{2\pi}
     \int_{-\pi}^{\pi}
     %
-    \mathrm{sgn}(\sin\lambda)^{i+j}
-    (1 - \cos\lambda)^{2l - \frac{i+j}{2}}
-    (1 + \cos\lambda)^\frac{i+j}{2}
+    \mathrm{sgn}(\sin\lambda)^{i+i'}
+    (1 - \cos\lambda)^{l + l' - \frac{i+i'}{2}}
+    (1 + \cos\lambda)^\frac{i+i'}{2}
     %
     \,
     \mathrm{d}\lambda
@@ -2576,20 +2586,21 @@ where
     & =
     %
     \begin{cases}
-        \dfrac{2^{2l} \Gamma \left(\frac{1+i+j}{2}\right)
-            \Gamma \left(2l+\frac{1-i-j}{2}\right)}{\pi  \Gamma (2l+1)}
+        \dfrac{2^{l+l'} \Gamma \left(\frac{1+i+i'}{2}\right)
+            \Gamma \left(l+l'+\frac{1-i-i'}{2}\right)}{\pi  \Gamma (l+l'+1)}
         %
-         & i+j \,\, \mathrm{even}
+         & i+i' \,\, \mathrm{even}
         %
         \\
         %
         0
         %
-         & i+j \,\, \mathrm{odd} \quad,
+         & i+i' \,\, \mathrm{odd} \quad,
     \end{cases}
 \end{proof}
 %
-whose terms may again be computed by upward recursion.
+whose terms may again be computed by upward recursion in a single
+pre-processing step.
 
 
 \subsection{The Contrast Integrals}
@@ -2675,47 +2686,47 @@ that describes the flux marginalized over all values of the inclination
 %
 Similar to the latitude integrals, the process of inclining a star relative to the
 observer (see Equation~\ref{eq:akT}) involves
-rotations by an angle $-i$ about $\hat{\mathbf{x}}$, which
+rotations by an angle $-I$ about $\hat{\mathbf{x}}$, which
 may be accomplished by choosing
-Euler angles $\alpha = \nicefrac{\pi}{2}$, $\beta = -i$, and
+Euler angles $\alpha = \nicefrac{\pi}{2}$, $\beta = -I$, and
 $\gamma = -\nicefrac{\pi}{2}$, such that
 %
 \begin{align}
-    \mathbf{R}^l_{\hat{\mathbf{x}}}\left(-i\right)
+    \mathbf{R}^l_{\hat{\mathbf{x}}}\left(-I\right)
      & =
-    {\mathbf{U}^l}^{-1} \mathbf{D}^l_{\hat{\mathbf{x}}}\left(-i\right) \mathbf{U}^l
+    {\mathbf{U}^l}^{-1} \mathbf{D}^l_{\hat{\mathbf{x}}}\left(-I\right) \mathbf{U}^l
 \end{align}
 %
 with
 \begin{align}
-    \mathbf{D}^l_{\hat{\mathbf{x}}}\left(-i\right)
+    \mathbf{D}^l_{\hat{\mathbf{x}}}\left(-I\right)
      & =
-    \mathbf{D}^l\left(\frac{\pi}{2}, -i, -\frac{\pi}{2}\right)
+    \mathbf{D}^l\left(\frac{\pi}{2}, -I, -\frac{\pi}{2}\right)
     \quad.
 \end{align}
 %
 Since we expect an isotropic distribution of stellar rotation axes (absent
 prior constraints on individual stars), the prior probability density for
-the inclination $i$ is simply
+the inclination $I$ is simply
 %
 \begin{align}
-    p(i) = \sin i
+    p(I) = \sin I
 \end{align}
 %
-for $i \in [0, \frac{\pi}{2}]$.
+for $I \in [0, \frac{\pi}{2}]$.
 
 \subsection{First moment}
+\label{sec:inc-mom1}
 The expression for the first moment is
 %
 \begin{proof}{}
-    \mathbf{e}_i
+    \mathbf{e}_I
     & \equiv
     \int
-    %\mathbf{R}_{\hat{\mathbf{x}}}(-i) \,
-    \pmb{\mathcal{A}}(i, \bar{\pmb{\theta}}_\star) \,
+    \pmb{\mathcal{A}}(I, \bar{\pmb{\theta}}_\star) \,
     \mathbf{e}_y \,
-    p(i) \,
-    \mathrm{d}i
+    p(I) \,
+    \mathrm{d}I
 \end{proof}
 %
 where
@@ -2727,26 +2738,486 @@ where
 \end{proof}
 %
 is the first moment of the GP in the spherical harmonic basis
-(Equation~\ref{eq:exp_y}). Let us expand the expression above using
-Equation~(\ref{eq:akT})
-
+(Equation~\ref{eq:exp_y}). We can use Equations~(\ref{eq:Arows})
+and (\ref{eq:akT})
+to express the element at index $k$ (corresponding to the mean of the
+GP at time $t = t_k$) as
+%
 \begin{align}
-    \label{eq:akT}
-    \mathbf{a}_k^\top = \mathbf{r}^\top \,
+    \left(e_I\right)_k
+     & =
+    \int
+    \mathbf{a}_k^\top
+    \mathbf{e}_y \,
+    p(I) \,
+    \mathrm{d}I
+    \nonumber \\
+     & =
+    \mathbf{r}^\top \,
     \mathbf{A_1} \,
-    \mathbf{R}_{\hat{\mathbf{x}}}\left(-i\right) \,
+    \int
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(-I\right) \,
+    \,
+    \left(\mathbf{e}_{y'}\right)_k \,
+    p(I) \,
+    \mathrm{d}I
+    \quad,
+\end{align}
+%
+where we define
+%
+\begin{align}
+    \left(\mathbf{e}_{y'}\right)_k
+     & \equiv
     \mathbf{R}_{\hat{\mathbf{z}}}\left(\frac{2\pi}{P}t_k\right) \,
     \mathbf{R}_{\hat{\mathbf{x}}}\left(\frac{\pi}{2}\right) \,
-    \mathbf{y}
+    \mathbf{e}_y
+\end{align}
+%
+as the expectation of $\mathbf{y}$ in the polar frame at time $t = t_k$.
+%
+At this point, it is convenient to invoke the fact that our GP
+is longitudinally isotropic: there is no preferred longitude on
+the surface of the star, or, equivalently, no preferred phase
+in the light curve. The rotation about $\hat{\mathbf{z}}$ (i.e., the
+rotational axis of the star) therefore cannot change the expectation
+of $\mathbf{y}$, so
+%
+\begin{proof}{}
+    \left(\mathbf{e}_{y'}\right)_k
+    &=
+    \left(\mathbf{e}_{y'}\right)_0
+    \nonumber \\
+    &=
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(\frac{\pi}{2}\right) \,
+    \mathbf{e}_y
+    \nonumber \\
+    &\equiv \mathbf{e}_{y'}
+    \quad.
+\end{proof}
+%
+We therefore have
+%
+\begin{proof}{}
+    \mathbf{e}_I
+    & \equiv
+    e_I \, \mathbf{1}
+\end{proof}
+%
+where
+%
+\begin{align}
+    e_I
+     & =
+    \mathbf{r}^\top \,
+    \mathbf{A_1} \,
+    \mathbf{e}_{y''}
+\end{align}
+%
+where
+%
+\begin{align}
+    \mathbf{e}_{y''}
+     & =
+    \int
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(-I\right) \,
+    \,
+    \mathbf{e}_{y'} \,
+    p(I) \,
+    \mathrm{d}I
+    \nonumber \\
+    %
+     & =
+    %
+    \left(
+    \mathbf{e}_{y''}^0
+    \,\,\,
+    \mathbf{e}_{y''}^1
+    \,\,\,
+    \mathbf{e}_{y''}^2
+    \,\,\,
+    \cdots
+    \,\,\,
+    \mathbf{e}_{y''}^{l_{\mathrm{max}}}
+    \right)^\top
+\end{align}
+%
+is the expectation of $\mathbf{y}$ in the observer's frame,
+and as before we explicitly separate it out by spherical harmonic degree.
+As in \S\ref{sec:lat}, we may write
+%
+\begin{proof}{}
+    \mathbf{e}_{y''}^l
+    & =
+    \int
+    \mathbf{R}^l_{\hat{\mathbf{x}}}(-I) \,
+    \mathbf{e}^l_{y'} \,
+    p(I) \,
+    \mathrm{d}I
+    \nonumber \\
+    %
+    & =
+    %
+    {\mathbf{U}^l}^{-1}
+    \mathbf{p}^l_I
+    \quad,
+\end{proof}
+%
+and we define
+%
+\begin{align}
+    \mathbf{p}^l_I
+     & \equiv
+    \int
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(-I) \,
+    \bar{\mathbf{e}}^l_{y'} \,
+    p(I) \,
+    \mathrm{d}I
+    \\
+    \bar{\mathbf{e}}^l_{y'}
+     & \equiv
+    \mathbf{U}^l
+    \mathbf{e}^l_{y'}
     \quad.
 \end{align}
-
-\xxx{More soon.}
+%
+The integral $\mathbf{p}^l_I$ defined above has a closed-form solution.
+To show this, we write the terms of $\mathbf{p}^l_I$ as
+%
+\begin{align}
+    {({p^l_I})_{}}_m
+     & =
+    \int
+    \sum\limits_{\mu=-l}^l
+    {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(-I) \,
+    {({\bar{e}}^l_{y'})_{}}_{\mu} \,
+    p(I) \,
+    \mathrm{d}I
+    %
+    \nonumber \\[0.5em]
+    %
+     & =
+    \sum\limits_{\mu=-l}^l
+    {({\bar{e}}^l_{y'})_{}}_{\mu}
+    \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu)}
+    \sum\limits_{i=0}^{2l} c_{m,\mu,i}^{l}
+    \,
+    {({q^l_I})_{}}_i
+    \quad,
+\end{align}
+%
+where
+%
+\begin{proof}{}
+    {({q^l_I})_{}}_i
+    & \equiv
+    \int_{0}^{\frac{\pi}{2}}
+    %
+    (-1)^{i}
+    (1 - \cos I)^{\frac{2l - i}{2}}
+    (1 + \cos I)^\frac{i}{2}
+    \sin I
+    %
+    \,
+    \mathrm{d}I
+    \nonumber \\[0.5em]
+    %
+    & =
+    %
+    (-1)^{i + 1}
+    \displaystyle\int_{0}^{1}
+    %
+    (1 - x)^{\frac{2l - i}{2}}
+    (1 + x)^\frac{i}{2}
+    \,
+    \mathrm{d}x
+    \nonumber \\[0.5em]
+    &=
+    \frac{(-1)^{i+1}}{l-\frac{i}{2}+1}
+    \,
+    {_2F_1}\left(
+    1, -\frac{i}{2}; 2 + l - \frac{i}{2}; -1
+    \right)
+    \quad,
+\end{proof}
+%
+which may easily be computed recursively.
+As with the longitude integrals, the vector
+$\mathbf{q}^l_I$ need only be computed a single
+time as a pre-processing step, as it does not
+depend on any user inputs.
 
 \subsection{Second moment}
-\xxx{Coming soon.}
+%
+The expression for the second moment is
+%
+\begin{proof}{}
+    \mathbf{E}_I
+    & \equiv
+    \int
+    \pmb{\mathcal{A}}(I, \bar{\pmb{\theta}}_\star) \,
+    \mathbf{E}_y \,
+    \pmb{\mathcal{A}}^\top(I, \bar{\pmb{\theta}}_\star) \,
+    p(I) \,
+    \mathrm{d}I
+\end{proof}
+%
+where
+%
+\begin{proof}{}
+    \mathbf{E}_y
+    & \equiv
+    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
+\end{proof}
+%
+is the second moment of the GP in the spherical harmonic basis
+(Equation~\ref{eq:exp_yy}). We can use Equations~(\ref{eq:Arows})
+and (\ref{eq:akT})
+to express the element at index $k, k'$ (corresponding to the covariance of the
+GP between times $t = t_k$ and $t' = t_{k'}$) as
+%
+\begin{align}
+    \label{eq:Eikkp}
+    \left(E_I\right)_{k, k'}
+     & =
+    \int
+    \mathbf{a}_k^\top
+    \mathbf{E}_y \,
+    \mathbf{a}_{k'}
+    p(I) \,
+    \mathrm{d}I
+    \nonumber \\
+     & =
+    \mathbf{r}^\top \,
+    \mathbf{A_1} \,
+    \left(\mathbf{E}_{y''}\right)_{k,k'}
+    \mathbf{A_1}^\top \,
+    \mathbf{r}
+    \quad,
+\end{align}
+%
+where
+%
+\begin{align}
+    \label{eq:Eyppkkp}
+    \left(\mathbf{E}_{y''}\right)_{k,k'}
+     & =
+    \int
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(-I\right) \,
+    \left(\mathbf{E}_{y'}\right)_{k,k'} \,
+    \mathbf{R}_{\hat{\mathbf{x}}}^\top\left(-I\right) \,
+    p(I) \,
+    \mathrm{d}I
+\end{align}
+%
+is the expectation of $\mathbf{y}\,\mathbf{y}^\top$ in the
+observer's frame at times $t = t_k$ and $t' = t_{k'}$
+and
+%
+\begin{align}
+    \left(\mathbf{E}_{y'}\right)_{k,k'}
+     & \equiv
+    \mathbf{R}_{\hat{\mathbf{z}}}\left(\frac{2\pi}{P}t_k\right) \,
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(\frac{\pi}{2}\right) \,
+    \mathbf{E}_y \,
+    \mathbf{R}_{\hat{\mathbf{x}}}^\top\left(\frac{\pi}{2}\right) \,
+    \mathbf{R}_{\hat{\mathbf{z}}}^\top\left(\frac{2\pi}{P}t_{k'}\right)
+\end{align}
+%
+is the expectation of $\mathbf{y}\,\mathbf{y}^\top$ in the
+polar frame at times $t = t_k$ and $t' = t_{k'}$.
+%
+The rest of the computation follows what we did in \S\ref{sec:lat},
+except that the number of operations required to compute $\mathbf{E}_I$
+is a factor of $K^2$ larger than in the computation of expectations
+like $\mathbf{E}_\phi$ (Equation~\ref{eq:Ephi}). That is because we
+must compute the integral of all terms of a matrix
+for \emph{each} of the $K^2$ elements of $\mathbf{E}_I$.
+We discuss in \S\ref{sec:inc-speedup} below strategies that can drastically
+improve the computational scaling of marginalizing over the inclination.
 
+Let us write Equation~(\ref{eq:Eyppkkp}) in terms of its spherical harmonic
+components:
+%
+\begin{proof}{}
+    \resizebox{.85\hsize}{!}{$
+            \left(\mathbf{E}_{y''}\right)_{k,k'}
+            =
+            \setstackgap{L}{1.25\baselineskip}
+            \fixTABwidth{T}
+            \parenMatrixstack{
+                \left(\mathbf{E}_{y''}^{0,0}\right)_{k,k'} & \left(\mathbf{E}_{y''}^{0,1}\right)_{k,k'} & \left(\mathbf{E}_{y''}^{0,2}\right)_{k,k'} & \cdots & \left(\mathbf{E}_{y''}^{0,l_{\mathrm{max}}}\right)_{k,k'} \\
+                \left(\mathbf{E}_{y''}^{1,0}\right)_{k,k'} & \left(\mathbf{E}_{y''}^{1,1}\right)_{k,k'} & \left(\mathbf{E}_{y''}^{1,2}\right)_{k,k'} & \cdots & \left(\mathbf{E}_{y''}^{1,l_{\mathrm{max}}}\right)_{k,k'} \\
+                \left(\mathbf{E}_{y''}^{2,0}\right)_{k,k'} & \left(\mathbf{E}_{y''}^{2,1}\right)_{k,k'} & \left(\mathbf{E}_{y''}^{2,2}\right)_{k,k'} & \cdots & \left(\mathbf{E}_{y''}^{2,l_{\mathrm{max}}}\right)_{k,k'} \\
+                \vdots & \vdots & \vdots & \ddots & \vdots \\
+                \left(\mathbf{E}_{y''}^{l_{\mathrm{max}},0}\right)_{k,k'} & \left(\mathbf{E}_{y''}^{l_{\mathrm{max}},1}\right)_{k,k'} & \left(\mathbf{E}_{y''}^{l_{\mathrm{max}},2}\right)_{k,k'} & \cdots & \left(\mathbf{E}_{y''}^{l_{\mathrm{max}},l_{\mathrm{max}}}\right)_{k,k'}
+            }
+        $}
+    \quad,
+\end{proof}
+%
+where
+%
+\begin{proof}{}
+    \left(\mathbf{E}_{y''}^{l,l'}\right)_{k,k'}
+    & =
+    \int
+    \mathbf{R}^l_{\hat{\mathbf{x}}}(-I) \,
+    \left(\mathbf{E}_{y'}^{l,l'}\right)_{k,k'} \,
+    {\mathbf{R}^{l'}_{\hat{\mathbf{x}}}}^\top(-I) \,
+    p(I) \,
+    \mathrm{d}I
+    \nonumber \\
+    %
+    & =
+    %
+    {\mathbf{U}^l}^{-1}
+    \left(\mathbf{P}^{l,l'}_I\right)_{k,k'}
+    {{\mathbf{U}^{l'}}^{-1}}^\top
+\end{proof}
+%
+and we define
+%
+\begin{align}
+    \label{eq:PllpIkkp}
+    \left(\mathbf{P}^{l,l'}_I\right)_{k,k'}
+     & \equiv
+    \int
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(-I) \,
+    \left(\bar{\mathbf{E}}^{l,l'}_{y'}\right)_{k,k'} \,
+    {\mathbf{D}^{l'}_{\hat{\mathbf{x}}}}^\top(-I) \,
+    p(I) \,
+    \mathrm{d}I
+    \\
+    \left(\bar{\mathbf{E}}^{l,l'}_{y'}\right)_{k,k'}
+     & \equiv
+    \mathbf{U}^l
+    \left(\mathbf{E}^{l,l'}_{y'}\right)_{k,k'}
+    {\mathbf{U}^{l'}}^\top
+    \quad.
+\end{align}
+%
+As before, we may express the solution to the integral in Equation~(\ref{eq:PllpIkkp}) in
+closed form. Let us write its terms as
+%
+\begin{align}
+    \label{eq:nightmare}
+    \left[{\left({P^{l,l'}_I}\right)_{}}_{k,k'}\right]_{m,m'}
+     & =
+    \int
+    \sum\limits_{\mu=-l}^l
+    \sum\limits_{{\mu'}=-l}^l
+    {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(-I) \,
+    \left[{\left({\bar{E}^{l,l'}_{y'}}\right)_{}}_{k,k'}\right]_{\mu,\mu'}
+    {({D^{l'}_{\hat{\mathbf{x}}}})_{}}_{{\mu'},m'}(-I) \,
+    p(I) \,
+    \mathrm{d}I
+    %
+    \nonumber \\[0.5em]
+    %
+     & =
+    \resizebox{.75\hsize}{!}{$
+        \sum\limits_{\mu=-l}^l
+        \sum\limits_{{\mu'}=-l'}^{l'}
+        \left[{\left({\bar{E}^{l,l'}_{y'}}\right)_{}}_{k,k'}\right]_{\mu,\mu'}
+        \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu + {\mu'} - m')}
+        \sum\limits_{i=0}^{2l}
+        \sum\limits_{i'=0}^{2l'}
+        c_{m,\mu,i}^{l}
+        c_{{\mu'},m',i'}^{l'}
+        \,
+        {({Q^{l,l'}_I})_{}}_{i,i'}
+    $}
+    \quad,
+\end{align}
+%
+where, similarly to before,
+%
+\begin{proof}{}
+    \label{eq:QllpIiip}
+    {({Q^{l,l'}_I})_{}}_{i,i'}
+    & \equiv
+    \int_{0}^{\frac{\pi}{2}}
+    %
+    (-1)^{i+i'}
+    (1 - \cos\phi)^{l + l' - \frac{i+i'}{2}}
+    (1 + \cos\phi)^\frac{i+i'}{2}
+    \sin I
+    %
+    \,
+    \mathrm{d}I
+    \nonumber \\[0.5em]
+    %
+    & =
+    %
+    (-1)^{i+i'+1}
+    \int_{0}^{\frac{\pi}{2}}
+    %
+    (1 - x)^{l + l' - \frac{i+i'}{2}}
+    (1 + x)^\frac{i+i'}{2}
+    %
+    \,
+    \mathrm{d}I
+    \nonumber \\[0.5em]
+    %
+    &=
+    %
+    \frac{(-1)^{i+i'+1}}{l+l'-\frac{i+i'}{2}+1}
+    \,
+    {_2F_1}\left(
+    1, -\frac{i+i'}{2}; 2 + l + l' - \frac{i+i'}{2}; -1
+    \right)
+    \quad,
+\end{proof}
+%
+which may again be computed recursively in a pre-processing step.
 
+\subsection{Speeding up the computation}
+\label{sec:speedup}
+%
+The expressions in the previous section are a bit of a nightmare,
+particularly because of the dimensionality of some of the linear
+operators involved. The complexity of the expressions is due to
+the fact that the second moment of the spherical harmonic vector
+projected onto the sky (Equation~\ref{eq:Eyppkkp}) is time-dependent:
+it changes as the star rotates. Computing the second moment of the
+\emph{flux} requires computing the outer product of this tensor
+with itself, leading to expressions like those in
+Equation~(\ref{eq:nightmare}). In addition to being cumbersome to
+evaluate, the full second moment matrix $\mathbf{E}_I$
+(and hence the flux covariance matrix) is costly to compute.
+It is helpful that Equation~(\ref{eq:QllpIiip}) does not depend
+on any user inputs and thus may be pre-computed, but even still
+we require evaluating the four nested sums
+in Equation~(\ref{eq:Eyppkkp})
+$\mathcal{O}(l_\mathrm{max}^3)$ times
+\emph{for each entry} in the $K \times K$ matrix $\mathbf{E}_I$.
+
+Fortunately, the inner two sums in Equation~(\ref{eq:Eyppkkp})
+do not depend on user inputs, so those may be pre-computed,
+and Equation~(\ref{eq:Eyppkkp}) may be cast as a straightforward
+matrix dot product. However, in practice we find it helpful to
+take advantage of the phase independence (i.e., stationarity)
+of the covariance of our GP, as we did in \S\ref{sec:inc-mom1}:
+any two entries $(E_I)_{k,k'}$ and $(E_I)_{j,j'}$ are
+the same if $t_{k} - t_{k'} = t_{j} - t_{j'}$. If the data
+happen to be evenly sampled, such that the time difference between
+adjacent cadences is constant, then we need only compute the
+covariance at a total of $K$ points (as opposed to $K^2$), as the
+covariance is a circulant matrix which is fully specified by a
+single vector of length $K$.
+
+In the more general case where the data are not evenly sampled,
+we may still evaluate the covariance at a fixed number of points
+$K' < K^2$ and approximate the full covariance matrix via
+interpolation. As long as the data are roughly evenly sampled,
+as is the case with \emph{Kepler} or \emph{TESS} light curves,
+this approximation leads to negligible error when $K' \approx K$,
+affording the same $\mathcal{O}(K)$ computational savings.
+Note that even in the case where the flux is normalized
+(c.f. \S\ref{sec:baseline}), the non-stationary correction to the
+covariance is applied \emph{after} the step where we marginalize
+over the inclination, so this approach is still valid.
 
 \bibliography{bib}
 \end{document}
