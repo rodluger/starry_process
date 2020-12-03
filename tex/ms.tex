@@ -401,7 +401,7 @@ spot mapping problem can be. In addition to strong nonlinear degeneracies
 between some of the parameters (such as the contrast $c$ and the
 number of spots $N$), the posterior is often multimodal, especially in the
 stellar inclinations. While modern sampling schemes such as Hamiltonian
-M0onte Carlo and Nested Sampling may in principle be able to deal with these
+Monte Carlo and Nested Sampling may in principle be able to deal with these
 issues, in practice it can be very difficult to obtain convergence in a
 reasonable amount of time.
 
@@ -426,26 +426,61 @@ Fortunately, there is a better way to reduce the number of parameters in
 the problem: we can explicitly marginalize over the stellar inclination.
 That is, we can write the first two moments of our flux GP as
 %
+\xxx{FIX THE NOTATION IN THIS SECTION}
+%
 \begin{align}
     \label{eq:einc}
     \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
      & =
+    \mathrm{E} \Big[ \mathbf{1} + \pmb{\mathcal{A}} \, \mathbf{y} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
+    \nonumber \\[0.5em]
+     & =
+    \mathbf{1} + FOO
+\end{align}
+%
+where
+%
+\begin{align}
+    FOO
+     & \equiv
+    \mathrm{E} \Big[ \pmb{\mathcal{A}} \, \mathbf{y} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
+    \nonumber \\[0.5em]
+     & =
+    \mathbf{1} +
     \int
     \pmb{\mathcal{A}}(I, \bar{\pmb{\theta}}_\star) \,
     \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
-    p(I) \, \mathrm{d}I \\
+    p(I) \, \mathrm{d}I
+\end{align}
+%
+and
+%
+\begin{align}
     \label{eq:Einc}
     \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
      & =
+    \mathrm{E} \Big[ \left(\mathbf{1} + \pmb{\mathcal{A}} \, \mathbf{y}\right) \left(\mathbf{1} + \pmb{\mathcal{A}} \, \mathbf{y}\right)^\top  \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
+    \nonumber \\[0.5em]
+     & =
+    \mathbf{1} \, \mathbf{1}^\top +
+    2 \sum FOO +
+    BAR
+\end{align}
+%
+where
+%
+\begin{align}
+    BAR
+     & \equiv
     \int
     \pmb{\mathcal{A}}(I, \bar{\pmb{\theta}}_\star) \,
     \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] \,
     \pmb{\mathcal{A}}^\top(I, \bar{\pmb{\theta}}_\star)
     p(I) \, \mathrm{d}I
-    \quad,
+    \quad.
 \end{align}
 %
-where the expectations inside the integrals are given by
+The expectations inside the integrals are given by
 Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), respectively, and
 $\bar{\pmb{\theta}}_\star$ are all the stellar parameters \emph{except}
 the inclination, i.e.,
