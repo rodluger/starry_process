@@ -424,9 +424,21 @@ be obtained, but in that case the analysis wouldn't be needed in the first place
 
 Fortunately, there is a better way to reduce the number of parameters in
 the problem: we can explicitly marginalize over the stellar inclination.
-That is, we can write the first two moments of our flux GP as
+Let
 %
-\xxx{FIX THE NOTATION IN THIS SECTION}
+\begin{align}
+    \bar{\pmb{\theta}}_\star = \left(
+    P \,\,\,
+    u_1 \,\,\,
+    u_2
+    \right)^\top
+    \quad,
+\end{align}
+%
+be the vector of all stellar parameters \emph{except}
+the inclination, where perhaps $P$ is fixed for each star and the limb darkening coefficients
+are shared among all stars, as described above.
+Then we can write the first two moments of our flux GP as
 %
 \begin{align}
     \label{eq:einc}
@@ -435,18 +447,18 @@ That is, we can write the first two moments of our flux GP as
     \mathrm{E} \Big[ \mathbf{1} + \pmb{\mathcal{A}} \, \mathbf{y} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
     \nonumber \\[0.5em]
      & =
-    \mathbf{1} + FOO
+    \mathbf{1} + \mathbf{e}_I
 \end{align}
 %
-where
+where we define the first moment integral
 %
 \begin{align}
-    FOO
+    \label{eq:eI}
+    \mathbf{e}_I
      & \equiv
     \mathrm{E} \Big[ \pmb{\mathcal{A}} \, \mathbf{y} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
     \nonumber \\[0.5em]
      & =
-    \mathbf{1} +
     \int
     \pmb{\mathcal{A}}(I, \bar{\pmb{\theta}}_\star) \,
     \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
@@ -463,14 +475,16 @@ and
     \nonumber \\[0.5em]
      & =
     \mathbf{1} \, \mathbf{1}^\top +
-    2 \sum FOO +
-    BAR
+    \mathbf{1} \, \mathbf{e}_I^\top +
+    \mathbf{e}_I \, \mathbf{1}^\top +
+    \mathbf{E}_I
 \end{align}
 %
-where
+where we define the second moment integral
 %
 \begin{align}
-    BAR
+    \label{eq:EI}
+    \mathbf{E}_I
      & \equiv
     \int
     \pmb{\mathcal{A}}(I, \bar{\pmb{\theta}}_\star) \,
@@ -480,31 +494,18 @@ where
     \quad.
 \end{align}
 %
-The expectations inside the integrals are given by
-Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), respectively, and
-$\bar{\pmb{\theta}}_\star$ are all the stellar parameters \emph{except}
-the inclination, i.e.,
+The expectations inside the integrals in the expressions for
+$\mathbf{e}_I$ and $\mathbf{E}_I$
+are given by
+Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), respectively.
 %
-\begin{align}
-    \bar{\pmb{\theta}}_\star = \left(
-    P \,\,\,
-    u_1 \,\,\,
-    u_2
-    \right)^\top
-    \quad,
-\end{align}
-%
-where perhaps $P$ is fixed for each star and the limb darkening coefficients
-are shared among all stars, as described above.
-%
-Thus, if we are able to perform the integrals in Equations~(\ref{eq:mu_marg})
-and (\ref{eq:cov_marg}), we can \emph{dramatically} reduce the number of
+If we are able to perform the integrals in those expressions,
+we can \emph{dramatically} reduce the number of
 parameters in our ensemble problem.
 %
 As we show in Appendix~\ref{sec:inclination}, if we assume that stellar
 inclinations are distributed isotropically, these integrals
-do in fact have closed-form solutions,
-since they are (again) integrals over Wigner matrices.
+do in fact have closed-form solutions.
 %
 We may then replace our expressions for the GP mean and covariance with
 %
@@ -512,10 +513,19 @@ We may then replace our expressions for the GP mean and covariance with
     \label{eq:mu_marg}
     \pmb{\mu}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
      & = \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
-    \\
+    \nonumber                                                                                                                                                                                                                                       \\
+     & = \mathbf{1} + \mathbf{e}_I
+    \\[0.5em]
     \label{eq:cov_marg}
     \pmb{\Sigma}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
      & = \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big] - \pmb{\mu}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet) \pmb{\mu}^\top(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
+    \nonumber
+    \\
+     & =
+    \mathbf{E}_I
+    -
+    \mathbf{e}_I \,
+    \mathbf{e}_I^\top
     \quad.
 \end{align}
 %
@@ -2711,9 +2721,9 @@ The moment integrals are then trivial to evaluate:
 \section{Inclination}
 \label{sec:inclination}
 
-In this section we will compute the first and second moments of the
-inclination distribution (Equations~\ref{eq:einc} and \ref{eq:Einc}),
-which allows us to compute the mean and covariance of the process
+In this section we will compute the first and second moment integrals of the
+inclination distribution (Equations~\ref{eq:eI} and \ref{eq:EI}),
+which allow us to compute the mean and covariance of the process
 that describes the flux marginalized over all values of the inclination
 (Equations~\ref{eq:mu_marg} and \ref{eq:cov_marg}).
 
@@ -3217,7 +3227,7 @@ the fact that the second moment of the spherical harmonic vector
 projected onto the sky (Equation~\ref{eq:Eyppkkp}) is time-dependent:
 it changes as the star rotates. Computing the second moment of the
 \emph{flux} requires computing the outer product of this tensor
-with itself, leading to expressions like those in
+with itself, leading to multi-indexed quantities like those in
 Equation~(\ref{eq:nightmare}). In addition to being cumbersome to
 evaluate, the full second moment matrix $\mathbf{E}_I$
 (and hence the flux covariance matrix) is costly to compute.
@@ -3231,7 +3241,7 @@ $\mathcal{O}(l_\mathrm{max}^3)$ times
 Fortunately, the inner two sums in Equation~(\ref{eq:Eyppkkp})
 do not depend on user inputs, so those may be pre-computed,
 and Equation~(\ref{eq:Eyppkkp}) may be cast as a straightforward
-matrix dot product. However, in practice we find it helpful to
+matrix dot product. In practice we also find it helpful to
 take advantage of the phase independence (i.e., stationarity)
 of the covariance of our GP, as we did in \S\ref{sec:inc-mom1}:
 any two entries $(E_I)_{k,k'}$ and $(E_I)_{j,j'}$ are
