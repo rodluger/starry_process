@@ -1062,7 +1062,7 @@ footnote\the\fncount\endcsname{\if@two@col\hsize=242pt\fi\relax#1}}
      \let\footnotetext=\old@foot@note@text
      \let\footnotemark=\old@foot@note@mark
 \ifnobreakafterkeywords
-\ifmodern\vskip24pt
+\ifmodern\clearpage
 \else
 \vskip12pt\fi%%
 \goodbreak

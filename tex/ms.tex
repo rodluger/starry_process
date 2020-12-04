@@ -36,11 +36,43 @@
 
 \keywords{methods: analytic}
 
-% \begin{abstract}
-%     Abstract here.
-%     %
-%     \href{https://github.com/rodluger/starry_process}{\color{linkcolor}\faGithub}
-% \end{abstract}
+\begin{abstract}
+    The use of Gaussian processes (GPs) in stellar light curve modeling has recently
+    become almost ubiquitous, given their ease of use, flexibility, and
+    computational efficiency. GPs excel in particular at marginalization
+    of the stellar signal in cases where the stellar variability is treated
+    as a nuisance, such as in exoplanet transit modeling.
+    However, in cases where the stellar signal is of primary interest,
+    GPs have thus far been less useful, as it is often difficult to
+    relate their hyperparameters to the physical properties of interest, such
+    as the size, contrast, and latitudinal distribution of star spots.
+    Instead, it is common practice to explicitly model the effect
+    of individual star spots on the light curve and attempt to infer their
+    properties via optimization or posterior inference, a process that is
+    ill-posed, ridden by degeneracies, and computationally intractable when
+    applied to stars with more than a few spots and/or to ensembles of many
+    light curves.
+    %
+    In this paper, we derive a closed-form expression for the
+    mean and covariance of the Gaussian process that best describes
+    the light curve of a rotating star with a given distribution of
+    star spot sizes, contrasts, and latitudes.
+    %
+    We show that, when employed in an inference setting, our GP is unbiased,
+    allowing one to correctly infer physical parameters of interest from one
+    or more stellar light curves, including
+    the typical radii and the mean and variance of the latitude
+    distribution of star spots.
+    %
+    Our GP has far-ranging implications for understanding the variability and
+    magnetic activity of stars from both light curves and radial velocity (RV)
+    measurements, as well as for modeling correlated noise in both transiting
+    and RV exoplanet searches.
+    %
+    Our implementation is efficient, user-friendly, and open source, available
+    as the \Python package \starryprocess.
+    \href{https://github.com/rodluger/starry_process}{\color{linkcolor}\faGithub}
+\end{abstract}
 
 \section{Introduction}
 \label{sec:intro}
@@ -240,6 +272,7 @@ above have closed form solutions that may be evaluated quickly.
 In particular, we let the spot hyperparameters of our GP be
 %
 \begin{align}
+    \label{eq:thetaspot}
     \pmb{\theta}_\bullet
      & =
     \left(
@@ -427,6 +460,7 @@ the problem: we can explicitly marginalize over the stellar inclination.
 Let
 %
 \begin{align}
+    \label{eq:thetastarbar}
     \bar{\pmb{\theta}}_\star = \left(
     P \,\,\,
     u_1 \,\,\,
@@ -515,6 +549,8 @@ We may then replace our expressions for the GP mean and covariance with
      & = \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
     \nonumber                                                                                                                                                                                                                                       \\
      & = \mathbf{1} + \mathbf{e}_I
+    \nonumber                                                                                                                                                                                                                                       \\
+     & = \mu \, \mathbf{1}
     \\[0.5em]
     \label{eq:cov_marg}
     \pmb{\Sigma}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
@@ -526,10 +562,13 @@ We may then replace our expressions for the GP mean and covariance with
     -
     \mathbf{e}_I \,
     \mathbf{e}_I^\top
-    \quad.
 \end{align}
 %
-and use these to compute the marginal likelihood instead.
+and use these to compute the marginal likelihood instead. Note that in the
+expression for the mean we made explicit use of the fact that the longitudinal
+isotropy of the process results in $\mathbf{e}_I = e_I \, \mathbf{1}$ being
+constant (see Appendix~\ref{sec:inc-mom1}), so the process mean is likewise
+constant, with $\mu = 1 + e_I$.
 
 \subsection{The baseline problem}
 \label{sec:baseline}
@@ -612,7 +651,10 @@ The second point is of more immediate concern, since we must correct our
 expression for the covariance matrix
 $\pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$ if we are to
 use our GP to model normalized light curves. For definiteness, let us
-consider only mean-normalized light curves.
+consider only mean-normalized light curves.%
+\footnote{In practice, the expressions derived below also work well
+    for median-normalized light curves, since the distribution of the GP sample median
+    is usually close to the distribution of sample mean.}%
 Since we are dividing the
 flux by the mean, one might imagine that we could simply divide the
 covariance matrix by the square of the mean and call it a day. However,
@@ -621,6 +663,7 @@ this is incorrect, since we must be careful to distinguish between the
 curve by the mean, the operation we perform is
 %
 \begin{align}
+    \label{eq:ftilde}
     \tilde{\mathbf{f}\hspace{0.2em}} & = \frac{\mathbf{f}}{\left<f\right>}
     \quad,
 \end{align}
@@ -746,11 +789,82 @@ scaling and a small offset. However, the normalization also results in
 the process becoming non-stationary: the covariance between two points in
 a light curve is now slightly dependent on their phases.
 
+\subsection{Summary}
+\label{sec:summary}
+%
+As the computation of the GP relies on many interdependent equations
+scattered throughout the previous sections and the Appendix, it
+is useful to summarize the procedure for the case where we marginalize
+over the inclination (\S\ref{sec:inclination}) and the light curves are
+normalized to their means (\S\ref{sec:baseline}), which is likely to be the primary
+use case for our algorithm.
 
-\subsection{Other stuff}
-\label{sec:baseline}
+We model the mean-normalized flux $\tilde{\mathbf{f}\hspace{0.2em}}$
+(Equation~\ref{eq:ftilde}) as a Gaussian process:
+%
+\begin{align}
+    \tilde{\mathbf{f}\hspace{0.2em}}
+    \left(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet\right)
+    \sim
+    \mathcal{N}\left(
+    \mathbf{1},
+    \tilde{\pmb{\Sigma}} \left(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet\right)
+    \right)
+    \quad,
+\end{align}
+%
+where $\bar{\pmb{\theta}}_\star$ are hyperparameters describing the star, such
+as the rotation period and limb darkening coefficients
+(Equation~\ref{eq:thetastarbar}),
+$\pmb{\theta}_\bullet$ are the hyperparameters describing the star spot
+distribution, including the number of spots, their contrast, parameters
+describing their latitudinal distribution, and parameters describing their
+radius distribution (Equation~\ref{eq:thetaspot}),
+and $\tilde{\pmb{\Sigma}}$ is the covariance of the normalized process
+(Equation~\ref{eq:SigmaTilde}). This covariance is a straightforward correction to the
+true covariance of the process, which accounts for
+changes of scale and phase dependence introduced by the common process of
+normalizing light curves to a mean of unity. It depends on the
+true (constant) mean $\mu$
+and true covariance $\pmb{\Sigma}$,
+given by Equations~(\ref{eq:mu_marg}) and (\ref{eq:cov_marg}),
+respectively.
+Those expressions in turn depend on the inclination expectation integrals
+$e_I$ (Appendix~\ref{sec:inc-mom1}) and $\mathbf{E}_I$
+(Appendix~\ref{sec:inc-mom2}). Those, in turn, depend on the first and
+second moments of the distribution of spherical harmonic coefficient vectors,
+$\mathrm{E}\left[ \mathbf{y} \big| \pmb{\theta}_\bullet \right]$
+and
+$\mathrm{E}\left[ \mathbf{y} \, \mathbf{y}^\top \big| \pmb{\theta}_\bullet \right]$,
+given by Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), respectively.
+To compute those, we must evaluate four nested integrals
+(Equations~\ref{eq:e1}--\ref{eq:e4} for the first moment
+and \ref{eq:E1}--\ref{eq:E4} for the second moment), corresponding to integrals
+over the radius, latitude, longitude, and contrast distributions, respectively.
+The computation of these integrals is discussed at length in Appendix~\ref{sec:integrals}.
 
-Figure~\ref{fig:nongaussianity}
+While lengthy (and quite tedious), all of the computations described above rely
+on equations whose solutions have a closed form.%
+%
+\footnote{The exception to this is the
+    normalization correction (\S\ref{sec:baseline}), which depends on a rapidly
+    converging series and thus adds negligible overhead to the computation.}
+%
+Moreover, most of the terms in the expectation vectors and matrices may
+be computed recursively, and many may be pre-computed, as they do not
+depend on user inputs.
+%
+It is therefore possible to evaluate $\tilde{\pmb{\Sigma}}$ in an extremely
+efficient manner. In \S\ref{sec:implementation} we discuss our
+implementation of the algorithm in a user-friendly \Python package.
+
+
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Caveats}
+\label{sec:caveats}
+The true process is not Gaussian. See Figure~\ref{fig:nongaussianity}.
 \begin{figure}[ht!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/nongaussianity.pdf}
@@ -950,11 +1064,11 @@ time at cadence $t$.
 Next, we rotate the star by a \emph{clockwise} angle of $I$ about $\hat{\mathbf{x}}$,
 where $I$ is the stellar inclination ($I = 0$ corresponding to a pole-on view and
 $I = \nicefrac{\pi}{2}$ corresponding to an edge-on view). With this last rotation,
-we are now in the observer's frame%
+we are now in the observer's frame.%
 \footnote{In principle, one last rotation could be performed about $\hat{\mathbf{z}}$
     to orient the projected disk of the star on the plane of the sky; however, the disk-integrated
     flux is independent of the rotation angle along the plane of the sky
-    (which we refer to as the \emph{obliquity}), so this step is unnecessary.}.
+    (which we refer to as the \emph{obliquity}), so this step is unnecessary.}
 
 Following \citet{Luger2019}, the next step is to project the representation of
 the star into a more convenient basis for performing the integration over the stellar
@@ -2719,7 +2833,7 @@ The moment integrals are then trivial to evaluate:
 
 
 \section{Inclination}
-\label{sec:inclination}
+\label{sec:inc}
 
 In this section we will compute the first and second moment integrals of the
 inclination distribution (Equations~\ref{eq:eI} and \ref{eq:EI}),
@@ -2993,6 +3107,7 @@ time as a pre-processing step, as it does not
 depend on any user inputs.
 
 \subsection{Second moment}
+\label{sec:inc-mom2}
 %
 The expression for the second moment is
 %
