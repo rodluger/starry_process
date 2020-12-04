@@ -288,18 +288,18 @@ revtex4-1.cls^^J^^J}\stop
 %% Passing options to revtex while loading:
   \iftwelvepoint
       \iflongauthor
-         \LoadClass[nofootinbib,showkeys,twoside,floatfix,unsortedaddress,flushbottom,12pt,aps,pra]
+         \LoadClass[nofootinbib,showkeys,showfeats,twoside,floatfix,unsortedaddress,flushbottom,12pt,aps,pra]
           {\@revtex@cls}
      \else
-        \LoadClass[nofootinbib,showkeys,twoside,floatfix,superscriptaddress,flushbottom,12pt,aps,pra]
+        \LoadClass[nofootinbib,showkeys,showfeats,twoside,floatfix,superscriptaddress,flushbottom,12pt,aps,pra]
        {\@revtex@cls}
      \fi
   \else %not twelvepoint
      \iflongauthor
-         \LoadClass[nofootinbib,showkeys,twoside,floatfix,unsortedaddress,flushbottom,10pt,aps,pra]
+         \LoadClass[nofootinbib,showkeys,showfeats,twoside,floatfix,unsortedaddress,flushbottom,10pt,aps,pra]
          {\@revtex@cls}
      \else
-        \LoadClass[nofootinbib,showkeys,twoside,floatfix,superscriptaddress,flushbottom,10pt,aps,pra]
+        \LoadClass[nofootinbib,showkeys,showfeats,twoside,floatfix,superscriptaddress,flushbottom,10pt,aps,pra]
         {\@revtex@cls}
     \fi
   \fi
@@ -966,8 +966,6 @@ footnote\the\fncount\endcsname{\if@two@col\hsize=242pt\fi\relax#1}}
    \frontmatter@keys@format%
    \@keys@name#1
 \vrule depth 12pt width 0pt
-\ifnobreakafterkeywords
-\vrule depth 24pt width0pt\fi
 \par
   \endgroup
  }{%
@@ -978,6 +976,37 @@ footnote\the\fncount\endcsname{\if@two@col\hsize=242pt\fi\relax#1}}
 }%
 
 \let\subjectheadings=\keywords
+
+%  ****************************************
+%  *             FEATURES                 *
+%  ****************************************
+
+
+\def\@feats@name{\textit{Features:}\/~\mbox{}}%
+
+\newlength{\feats@width}
+\def\frontmatter@feats@format{\ifmodern\vskip0pt\else\vspace*{0.5mm}\fi%
+  \settowidth{\feats@width}{\normalsize\@feats@name}%
+\ifmodern\else
+\rightskip=0.5in
+\leftskip=34pt
+\fi
+\parindent=0pt%
+    \hangindent=\feats@width\hangafter=1\normalsize}%
+\def\@features@produce#1{%
+ \showFEATS@sw{%
+  \begingroup%
+   \frontmatter@feats@format%
+   \@feats@name#1
+\vrule depth 12pt width 0pt
+\par
+  \endgroup
+ }{%
+ \@if@empty{#1}{}{%
+ \class@warn{If you want your features to appear in your output, use document class option showfeats}%
+}%
+ }%
+}%
 
 
 %  ****************************************
@@ -5621,6 +5650,9 @@ to 20pt{\hfill}}\vskip12pt}%
   }%
   \@ifx@empty\@keywords{}{%
    \@keywords@produce\@keywords
+  }%
+  \@ifx@empty\@features{}{%
+   \@features@produce\@features
   }%
   \par
   \frontmatter@finalspace

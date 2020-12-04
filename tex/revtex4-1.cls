@@ -2453,6 +2453,13 @@ ltxfront%
 \appdef\frontmatter@init{%
  \let\@keywords\@empty
 }%
+\def\features#1{%
+  \aftermaketitle@chk{\features}%
+  \gdef\@features{#1}%
+}%
+\appdef\frontmatter@init{%
+ \let\@features\@empty
+}%
 \newcommand*\frontmatter@date[2][\Dated@name]{\def\@date{#1#2}}%
 \def\@date{}%
 \newcommand*\received[2][\Received@name]{\def\@received{#1#2}}%
@@ -2671,6 +2678,9 @@ ltxfront%
   }%
   \@ifx@empty\@keywords{}{%
    \@keywords@produce\@keywords
+  }%
+  \@ifx@empty\@features{}{%
+   \@features@produce\@features
   }%
   \par
   \frontmatter@finalspace
@@ -2952,6 +2962,18 @@ ltxfront%
   }%
  }%
 }%
+\def\@features@produce#1{%
+ \showFEATS@sw{%
+  \begingroup
+   \frontmatter@feats@format
+   \@feats@name#1\par
+  \endgroup
+ }{%
+  \@if@empty{#1}{}{%
+   \class@warn{If you want your features to appear in your output, use document class option showfeats}%
+  }%
+ }%
+}%
 \def\frontmatter@footnote@produce@footnote{%
  \let\@TBN@opr\present@FM@footnote
  \@FMN@list
@@ -3012,6 +3034,7 @@ ltxfront%
 \def\frontmatter@RRAP@format{}%
 \def\frontmatter@PACS@format{}%
 \def\frontmatter@keys@format{}%
+\def\frontmatter@feats@format{}%
 \def\frontmatter@finalspace{\addvspace{18\p@}}
 \def\frontmatter@addressnewline{%
   \@ifhmode{\skip@\lastskip\unskip\unpenalty\break\hskip\skip@}{}%
@@ -5782,6 +5805,7 @@ ltxgrid%
   \def\@pointsize{12}%
   \@booleantrue\showPACS@sw
   \@booleantrue\showKEYS@sw
+  \@booleantrue\showFEATS@sw
   \def\fp@proc@h{\allow@breaking@tables}%
   \def\fp@proc@H{\allow@breaking@tables}%
 }%
@@ -5817,8 +5841,15 @@ ltxgrid%
 \DeclareOption{noshowkeys}{%
   \@booleanfalse\showKEYS@sw
 }%
+\DeclareOption{showfeats}{%
+  \@booleantrue\showFEATS@sw
+}%
+\DeclareOption{noshowfeats}{%
+  \@booleanfalse\showFEATS@sw
+}%
 \@booleanfalse\showPACS@sw
 \@booleanfalse\showKEYS@sw
+\@booleanfalse\showFEATS@sw
 \DeclareOption{balancelastpage}{%
   \@booleantrue\balancelastpage@sw
 }%
@@ -7413,6 +7444,7 @@ ltxgrid%
 \def\andname{and}
 \def\@pacs@name{PACS numbers: }%
 \def\@keys@name{Keywords: }%
+\def\@feats@name{Features: }%
 \def\ppname{pp}
 \def\numbername{number}
 \def\volumename{volume}

@@ -45,7 +45,6 @@ for n in tqdm(range(len(ninc))):
         zorder=1,
     )
 ax.set_rasterization_zorder(0)
-
 ax.set_xlim(0, (ydeg + 1) ** 2 - 1)
 for tick in ax.xaxis.get_major_ticks():
     tick.label.set_fontsize(10)
@@ -61,5 +60,11 @@ leg = ax.legend(loc="upper right", title="light curves", fontsize=10)
 leg.get_title().set_fontsize(8)
 leg.get_title().set_fontweight("bold")
 
+# Print some info
+print(
+    "Total shrinkage for each scenario:",
+    np.mean(S[:, :, : (ydeg + 1) ** 2], axis=(1, 2)),
+)
 
+# Save
 fig.savefig(__file__.replace("py", "pdf"), bbox_inches="tight", dpi=300)

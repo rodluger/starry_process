@@ -36,6 +36,8 @@
 
 \keywords{methods: analytic}
 
+\features{open-source figures \codeicon; equation unit tests \testpassicon}
+
 \begin{abstract}
     The use of Gaussian processes (GPs) in stellar light curve modeling has recently
     become almost ubiquitous, given their ease of use, flexibility, and
@@ -80,7 +82,33 @@
 
 \section{Motivation}
 \label{sec:motivation}
-See Figure~\ref{fig:nullspace_ensemble}.
+
+Figure~\ref{fig:nullspace_ensemble} shows the posterior shrinkage
+as a function of spherical harmonic degree for three different
+(purely hypothetical) scenarios: a single high signal-to-noise ratio (SNR)
+observation of a stellar light curve at a random
+observer inclination (thin blue curves), a set of three observations
+of the same star at three \emph{different} random inclinations (thin
+orange curves), and a set of ten observations at ten different
+random inclinations (thin green curves).
+The denser, opaque curves show the average for each scenario over 300 trials.
+The posterior shrinkage $R$ for a given
+spherical harmonic coefficient is computed from
+%
+\begin{align}
+    R \equiv 1 - \lim\limits_{\sigma_0^2 \rightarrow \infty}
+    \frac{\sigma^2}{\sigma_0^2}
+\end{align}
+%
+where $\sigma_0^2$ is the prior variance
+and $\sigma^2$ is the posterior variance.
+It is a measure of how informative a measurement is about a
+given mode on the surface in the limit of infinite SNR
+and is independent of what the stellar surface actually looks like.
+If, at infinite SNR and with a completely uninformative prior,
+a particular mode can be learned exactly from a dataset, the posterior
+shrinkage is defined to be unity. Conversely, if the data is completely
+unconstraining, $R$ will tend to zero.
 
 \begin{figure}[ht!]
     \begin{centering}
@@ -104,6 +132,59 @@ See Figure~\ref{fig:nullspace_ensemble}.
         }
     \end{centering}
 \end{figure}
+
+Let us first consider the blue curves, in which a light curve is
+collected from a star viewed at a single random inclination (which, of course, is
+all we can do from our fixed vantage point on Earth).
+For some of the low-degree modes, the shrinkage is relatively high: it is
+fairly easy to constrain the dipole moment from a light curve, as this is
+usually the dominant sinusoidal signal. However, as the degree $l$
+increases, the shrinkage decreases dramatically: at $l = 14$, corresponding
+to features on scales of roughly $15^\circ$, the light curve
+can only tell us about $\sim 10\%$ of the total information about what the
+surface looks like. As $l$ increases further, $R$ tends to zero.
+Another important feature of the shrinkage is that it is exactly zero for
+all odd-degree modes above $l = 1$. This is a well-known fact: all odd spherical
+harmonics other than the dipole are in the null space \emph{regardless of
+    inclination} \citep[e.g.,][]{Luger2019}. In other words, these spherical
+harmonics are perfectly antisymmetric in projection over the unit disk
+when viewed from any orientation. Absent structure to break these symmetries
+(see \S\ref{sec:limbdark}), we simply cannot learn anything about these modes from
+stellar light curves. If we average over the shrinkage for all modes up to $l=15$,
+we find that a single light curve measurement can only tell us $\sim 9\%$
+of the information about the surface.
+
+The orange curves correspond to the scenario in which we can collect light curves
+from a star viewed at three different random inclinations. This is obviously
+impossible in practice, but it is still instructive as a thought experiment.
+Interestingly, the shrinkage increased at all even spherical harmonic degrees
+(the odd degrees, as we mentioned above, are always invisible).
+Note that since we are in the limit of infinite SNR, the fact that we have
+three times the data as we did in the previous scenario is irrelevant: the
+increase in the shrinkage is instead due to the fact that our observations
+from different vantage points broke some degeneracies in the problem.
+This is a consequence of the fact that the null space (for the even modes)
+is a strong function of the inclination: modes that are invisbile
+at one inclination can actually project into the flux at a different inclination.
+If we average over all modes, we obtain a total shrinkage of $\sim 24\%$
+for $l\leq15$ in this case.
+
+Finally, the green curves correspond to observations taken at ten random
+inclinations. In this scenario, the posterior shrinkage is nearly $100\%$
+for all even modes (it asymptotically approaches $100\%$ as the number
+of light curves increases further). The total shrinkage is $\sim 47\%$
+and approaches $50\%$ as both $l_\mathrm{max}$  and the number of light curves
+tend to infinity. Thus, if we were able to measure a light curve of a star
+from many different inclinations, the null space would consist \emph{only}
+of the odd modes, and our data would tell us exactly half of all the
+information about the surface.
+
+As we mentioned above, it is obviously not possible to observe a \emph{single}
+star from many different inclinations (at least not at present!).
+However, it is certainly the case that we can observe \emph{many} stars
+at a wide range of inclinations. Those stars certainly have different
+surface intensity distributions, but what if we restricted ourselves to
+light curves of ``similar'' stars?
 
 \section{A Gaussian Process for Star Spots}
 \label{sec:main}
