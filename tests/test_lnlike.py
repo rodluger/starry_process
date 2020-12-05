@@ -13,7 +13,7 @@ from tqdm import tqdm
 from itertools import product
 
 
-def get_functions(marginalize_over_inclination=False):
+def get_functions(marginalize_over_inclination=False, seed=42):
     def _lnlike(
         r, a, b, c, n, i, p, t, flux, data_cov,
     ):
@@ -40,7 +40,7 @@ def get_functions(marginalize_over_inclination=False):
             marginalize_over_inclination=marginalize_over_inclination,
             normalized=False,
         )
-        gp.random.seed(42)
+        gp.random.seed(seed)
         return tt.reshape(gp.sample(t, p=p, i=i), (-1,))
 
     # Likelihood func
@@ -61,11 +61,11 @@ def get_functions(marginalize_over_inclination=False):
 
 
 @pytest.mark.parametrize("marginalize_over_inclination", [True, False])
-def test_lnlike_array(marginalize_over_inclination, plot=False):
+def test_lnlike_array(marginalize_over_inclination, plot=False, seed=42):
 
     # Get the functions
     lnlike, sample = get_functions(
-        marginalize_over_inclination=marginalize_over_inclination
+        marginalize_over_inclination=marginalize_over_inclination, seed=seed
     )
 
     # Generate a dataset
@@ -80,9 +80,9 @@ def test_lnlike_array(marginalize_over_inclination, plot=False):
     ]
     t = np.linspace(0, 1, 1000)
     flux = sample(*params, t)
-    flux_err = 1e-6
+    flux_err = 1e-3
     data_cov = flux_err ** 2
-    np.random.seed(42)
+    np.random.seed(seed)
     flux += np.random.randn(len(t)) * flux_err
 
     # Compute the pdf of `b` for definiteness

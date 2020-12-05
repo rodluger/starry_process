@@ -127,9 +127,6 @@ class StarryProcess(object):
                 in the header file
                 `starry_process/ops/include/constants.h 
                 <https://github.com/rodluger/starry_process/blob/master/starry_process/ops/include/constants.h>`_.
-            eps (float, optional): A small number added to the diagonal of the
-                flux covariance matrix when marginalizing over inclination
-                for extra stability. Default is %%defaults["eps"]%%.
             epsy (float, optional): A small number added to the diagonal of the
                 spherical harmonic covariance matrix for stability.
                 Default is %%defaults["epsy"]%%.
@@ -424,7 +421,10 @@ class StarryProcess(object):
         eps=defaults["eps"],
     ):
         """
-
+        Parameters:
+            eps (float, optional): A small number added to the diagonal of the
+                flux covariance matrix when marginalizing over inclination
+                for extra stability. Default is %%defaults["eps"]%%.
         """
         if self._marginalize_over_inclination:
             t = cast(t)

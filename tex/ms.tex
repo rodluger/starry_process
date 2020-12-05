@@ -107,7 +107,8 @@ But the real showstopper is the application of GPs to inference problems.
 Multivariate Gaussian distributions have a closed-form (marginal) likelihood
 function, so it is easy (and extremely efficient) to compute the probability
 of one's data conditioned on a given value of $\pmb{\mu}$ and $\pmb{\Sigma}$
-(i.e., the ``likelihood''). This can in turn be maximized
+(i.e., the ``likelihood''; see Equation~\ref{eq:log-like} below).
+This can in turn be maximized
 to infer the optimal values of the model parameters
 or used in a
 numerical sampling scheme to compute the probability of those parameters
@@ -119,21 +120,23 @@ for a reasonably-sized dataset (i.e., $K \lesssim 10^5$ datapoints).
 
 Another big advantage of GPs is their flexibility. GPs are often dubbed
 a class of ``non-parametric'' models, given that nowhere in the specification
-of the GP is there an explicit functional form for $\mathbf{f}$. Rather, GPs are a stochastic
+of the GP is there an explicit functional form for $\mathbf{f}$. Rather, a GP
+is a stochastic
 process whose draws can in principle take on \emph{any} functional form,
 subject, however, to certain smoothness and correlation criteria
 of tunable strictness
 that are fully
-encoded in the covariance $\pmb{\Sigma}$. A common approach to constructing
-$\pmb{\Sigma}$ is to define a continuous \emph{kernel function} $k(t_i, t_j)$
-such that the covariance between points at times $t = t_i$ and $t = t_j$ is
+encoded in the covariance $\pmb{\Sigma}$. Importantly, the covariance
+$\pmb{\Sigma}$ of a GP is assembled via a continuous \emph{kernel function} $k(t_i, t_j)$
+that specifies the covariance between points at times $t = t_i$ and $t = t_j$:
 %
 \begin{align}
     \Sigma_{i,j} = k(t_i, t_j)
     \quad.
 \end{align}
 %
-In many applications, it is customary to further restrict the problem by
+In many applications, particularly when modeling stellar light curves,
+it is customary to restrict the problem by
 assuming that the process is \emph{stationary}, such that we may write
 %
 \begin{align}
@@ -148,19 +151,20 @@ assuming that the process is \emph{stationary}, such that we may write
 A stationary process is one that is independent of phase (or, in this case,
 the actual value of the time $t$); rather, it depends only on the \emph{difference}
 between the phases of two data points. The kernel of a stationary process is
-therefore a one-dimensional function, which is typically chosen from a set of
-standard functions with desirable smoothness and spectral properties. These
-include, for example, the squared exponential kernel
+therefore a one-dimensional function, typically chosen from a set of
+standard functions with desirable smoothness and spectral properties.
+Among a vast number of kernels are a few that are commonly used
+in modeling stellar variability: the squared exponential kernel,
 %
 \begin{align}
     k_\mathrm{E^2}(\Delta t) = \sigma^2 e^{-\frac{\Delta t}{2\tau}}
     \quad,
 \end{align}
 %
-the Mat\'ern-3/2 kernel
+the Mat\'ern-3/2 kernel,
 %
 \begin{align}
-    k_\mathrm{M}(\Delta t) = \sigma^2 \left( 1 + \frac{\sqrt{3}\Delta t}{\tau} \right) e^{-\frac{\sqrt{3}\Delta t}{\tau}}
+    k_\mathrm{M^\frac{3}{2}}(\Delta t) = \sigma^2 \left( 1 + \frac{\sqrt{3}\Delta t}{\tau} \right) e^{-\frac{\sqrt{3}\Delta t}{\tau}}
     \quad,
 \end{align}
 %
@@ -174,15 +178,38 @@ the exponential sine squared kernel,
 the cosine kernel,
 %
 \begin{align}
-    k_\mathrm{C}(\Delta t) = \cos\left( \frac{2\pi \Delta t}{P} \right)
+    k_\mathrm{C}(\Delta t) = \sigma^2 \cos\left( \frac{2\pi \Delta t}{P} \right)
     \quad,
 \end{align}
 %
-or any linear combination or product of those (as well as many other kernels not
-listed here). In the expressions above, $\sigma$, $\tau$, $\Gamma$, and $P$ are
-the \emph{hyperparameters} of the kernels, scalar quantities that (together with
-the assumed functional form for the kernel) fully specify the covariance of the
-Gaussian process.
+or any linear combination and/or product of these. In the expressions above,
+$\sigma$, $\tau$, $\Gamma$, and $P$ are
+the \emph{hyperparameters} of the kernels.
+Specifically, $\sigma^2$ is the variance (the value
+of the kernel when $t_i = t_j$), $\tau$ is a typical timescale over which
+data are correlated, $\Gamma$ is a dimensionless scale parameter, and $P$ is
+a period. Once a kernel has been chosen, these scalar quantities fully
+specify the covariance of the Gaussian process. GP-based inference
+entails optimizing or sampling over these few quantities, which in many
+cases can be done easily and efficiently.
+
+Which brings us, finally, to an important drawback of GPs when applied
+to modeling stellar variability. While it is straightforward to derive
+posterior constraints on the hyperparameters of a GP, it is usually
+not obvious what those constraints actually tell us about the star
+or the actual source of the variability. While the GP period $P$
+may usually be interpreted as the rotational period of the star,%
+\footnote{An exception to this is in the presence of strong differential
+    rotation, in which case many periods may be present in the data, or
+    when spots evolve coherently, which can also introduce weak periodicities
+    in the light curve.}%
+the relationship between quantities like the amplitude $\sigma^2$
+and the timescale $\tau$ and physical quantites of interest---such
+as the properties of the star spots---are much fuzzier.
+It may be tempting to interpret $\sigma^2$ as some measure of the
+contrast or number of spots, or $\tau$ as the timescale on which the
+spots evolve, but there are no guarantees these interpretations will
+hold in general.
 
 \xxx{More on this soon!}
 
