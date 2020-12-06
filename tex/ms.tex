@@ -198,20 +198,97 @@ to modeling stellar variability. While it is straightforward to derive
 posterior constraints on the hyperparameters of a GP, it is usually
 not obvious what those constraints actually tell us about the star
 or the actual source of the variability. While the GP period $P$
-may usually be interpreted as the rotational period of the star,%
+may sometimes be interpreted as the rotational period of the star,%
 \footnote{An exception to this is in the presence of strong differential
     rotation, in which case many periods may be present in the data, or
     when spots evolve coherently, which can also introduce weak periodicities
-    in the light curve.}%
+    in the light curve.}
 the relationship between quantities like the amplitude $\sigma^2$
 and the timescale $\tau$ and physical quantites of interest---such
-as the properties of the star spots---are much fuzzier.
-It may be tempting to interpret $\sigma^2$ as some measure of the
-contrast or number of spots, or $\tau$ as the timescale on which the
+as the properties of the star spots---is much fuzzier.
+It may be tempting to interpret $\sigma^2$ as some measure of the spot
+contrast or the total number of spots, or $\tau$ as the timescale on which the
 spots evolve, but there are no guarantees these interpretations will
-hold in general.
+hold in general. After all, the choice of kernel is quite often \emph{ad hoc},
+providing an \emph{effective}---as opposed to \emph{interpretable}---description
+of the physics.
 
-\xxx{More on this soon!}
+For this reason, GPs are usually employed to model stellar variability
+when the variability itself is a nuisance parameter. For example, if the
+goal is to constrain properties of a transiting exoplanet, a GP might be
+used to remove (or, better yet, to marginalize over) the stellar signal.
+In this case, the physics behind the variability is irrelevant, so an
+effective model of this sort is generally sufficient. When the goal is to understand
+the variability itself, however, GPs have been far less useful to date. Instead,
+the usual approach has been to explicitly model the stellar signal: in the
+case of star spot-induced variability, one must construct a physical model
+for the stellar surface and for how it projects into the light curve as the
+star rotates. This might entail directly modeling the star spots,
+with free parameters controling the spot size, contrast, position,
+and temporal evolution of each of the $N$ spots, where $N$ is also
+a free parameter. In addition to this being a numerically challenging
+problem for all but the smallest values of $N$, the problem is
+intrinsically ill-posed, meaning there are strong degeneracies at play
+that formally preclude a unique solution to the stellar map.
+After all, a stellar light curve is a one-dimensional representation of a
+two-dimensional (or, if the star evolves in time, three-dimensional)
+surface, and thus it simply cannot encode all the information about the stellar surface.
+In fact, the \emph{vast majority} of the modes on the stellar surface
+are in the \emph{null space}, the set of surface features that have identically
+zero effect on the light curve.
+The underdetermined nature of the stellar mapping problem is therefore fundamental: it
+is simply not possible to uniquely determine the properties of all the spots on
+a star from its rotational light curve.
+
+However, it is hardly ever the case that this is actually our end goal.
+After all, physics predicts the properties of stellar surfaces at a fairly
+high level: i.e., typical spot sizes, active spot latitudes, or approximate
+timescales on which spots evolve. We are hardly ever interested in the
+\emph{particular} properties of a \emph{particular} spot, as we wouldn't really
+know what to do with that information! Instead, we often treat
+(whether explicitly or not)
+the properties of a star spot as a draw from some parent distribution
+controlling (say) the average and spread in the radii of the spots.
+The parameters controling this distribution are the ones that we can
+predict with physics; they are therefore also the ones we are usually
+interested in.
+
+Thus, if we were able to derive robust posterior constraints
+on the properties of each of the spots on a star, we could then
+\emph{marginalize} (integrate) over them to infer the properties
+describing the distribution of all the spots as a whole.
+%In principle,
+%this would work even if our posterior distributions contain
+%strong degeneracies: as we will see, the statistical properties of
+%star spots have a much smaller null space than the properties of
+%individual spots. 
+We could do this in the usual way described above, by
+modeling the properties of each of the spots in a posterior sampling
+scheme, but also including a few
+\emph{hyperparameters} controlling the distribution of those properties
+across all spots (acting, therefore, as a prior term): i.e., a one-level
+hierarchical model. The marginal posteriors for the hyperparameters, then,
+would encode what we actually wish to know.
+%
+In practice, however, the degeneracies and often extreme multi-modality
+of the distributions of individual spot properties would make this
+quite hard (and expensive) to perform.
+%
+If only we could use the elegant machinery of Gaussian processes to
+perform this marginalization for us!
+
+\textbf{In this paper, we derive an exact, closed-form expression for
+    the Gaussian approximation to the marginal likelihood of a light curve
+    conditioned on the statistical properties of star spots.} Our Gaussian
+process analytically marginalizes over the (degenerate, often unknowable)
+distributions of properties of individual star spots, revealing the
+constraints imposed on the bulk spot properties without the need to
+explicitly model or sample over properties of individual spots. It inherits
+the speed, ease-of-use, and all other properties of traditionally-used
+GPs, with the added benefit of direct physical interpretability of its
+hyperparameters.
+%
+
 
 \section{A Gaussian Process for Star Spots}
 \label{sec:main}
