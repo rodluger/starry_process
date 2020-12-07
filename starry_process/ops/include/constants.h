@@ -1,7 +1,7 @@
 /**
  * \file constants.h
  * \brief Hard-coded constants.
-*/
+ */
 
 #ifndef _SP_CONSTANTS_H_
 #define _SP_CONSTANTS_H_
@@ -15,8 +15,19 @@
 #define SP__LMAX 15
 #endif
 
+//! Degree of limb darkening
+#ifndef SP__UMAX
+#define SP__UMAX 2
+#endif
+
+//! Total degree
+#define SP__LUMAX (SP__LMAX + SP__UMAX)
+
 //! Number of Ylm terms
 #define SP__N ((SP__LMAX + 1) * (SP__LMAX + 1))
+
+//! Number of Ylm + LD terms
+#define SP__NLU ((SP__LMAX + SP__UMAX + 1) * (SP__LMAX + SP__UMAX + 1))
 
 //! Number of terms in the Wigner rotation matrix
 #define SP__NWIG                                                               \

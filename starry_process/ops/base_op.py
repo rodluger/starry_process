@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from ..starry_process_version import __version__
+from ..defaults import defaults
 from theano import gof
 import theano
 import theano.tensor as tt
@@ -18,16 +19,21 @@ __all__ = ["BaseOp", "IntegralOp"]
 
 class BaseOp(gof.COp):
 
-    __props__ = ("ydeg", "compile_args")
+    __props__ = ("ydeg", "udeg", "compile_args")
     func_file = None
     func_name = None
 
-    def __init__(self, ydeg=None, compile_args=[], **kwargs):
-        if ydeg is not None:
-            self.ydeg = ydeg
-            self.N = (self.ydeg + 1) ** 2
-        else:
-            self.ydeg = None
+    def __init__(
+        self,
+        ydeg=defaults["ydeg"],
+        udeg=defaults["udeg"],
+        compile_args=[],
+        **kwargs
+    ):
+        self.ydeg = ydeg
+        self.N = (self.ydeg + 1) ** 2
+        self.udeg = udeg
+        self.NLU = (self.ydeg + self.udeg + 1) ** 2
         assert type(compile_args) is list, "arg `compile_args` must be a list"
         for item in compile_args:
             assert (
@@ -76,8 +82,8 @@ class BaseOp(gof.COp):
         args = ["-std=c++14", "-O2", "-DNDEBUG"]
         if sys.platform == "darwin":
             args += ["-stdlib=libc++", "-mmacosx-version-min=10.7"]
-        if self.ydeg is not None:
-            args += ["-DSP__LMAX={0}".format(self.ydeg)]
+        args += ["-DSP__LMAX={0}".format(self.ydeg)]
+        args += ["-DSP__UMAX={0}".format(self.udeg)]
         for (key, value) in self.compile_args:
             if key.startswith("SP_"):
                 args += ["-D{0}={1}".format(key, value)]

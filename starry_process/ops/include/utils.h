@@ -1,7 +1,7 @@
 /**
  * \file utils.h
  * \brief Miscellaneous utilities and definitions used throughout the code.
-*/
+ */
 
 #ifndef _SP_UTILS_H_
 #define _SP_UTILS_H_
@@ -9,6 +9,7 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
+#include <Eigen/SparseLU>
 #include <cmath>
 #include <exception>
 #include <iomanip>
@@ -27,8 +28,8 @@ using std::isnan;
 using std::max;
 
 //! Eigen shorthand
-using Eigen::Map;
 using Eigen::Dynamic;
+using Eigen::Map;
 template <typename Scalar, int M, int N>
 using RowMatrix = Eigen::Matrix<Scalar, M, N, Eigen::RowMajor>;
 template <typename Scalar, int M, int N>
@@ -62,7 +63,7 @@ void for_constexpr_impl(F &&f, std::index_sequence<Is...> /*meta*/) {
 /**
  * Compile-time for loop. From https://nilsdeppe.com/posts/for-constexpr
  * Requires C++14
-*/
+ */
 template <class Bounds0, class F> void for_constexpr(F &&f) {
   for_constexpr_detail::for_constexpr_impl<Bounds0::lower>(
       std::forward<F>(f),
@@ -71,7 +72,7 @@ template <class Bounds0, class F> void for_constexpr(F &&f) {
 
 /**
  * Generic starry exception class.
-*/
+ */
 class StarryProcessException : public std::exception {
 
   std::string m_msg;

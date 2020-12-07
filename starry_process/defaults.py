@@ -1,5 +1,6 @@
 defaults = dict(
     ydeg=15,
+    udeg=0,
     r=20.0,
     a=0.40,
     b=0.27,

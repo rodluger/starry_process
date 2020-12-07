@@ -1378,7 +1378,82 @@ flux at the $k^\mathrm{th}$ cadence.
 
 \subsection{With limb darkening}
 %
-\xxx{TODO.}
+\label{sec:ld}
+We must adjust our expression for the flux in the presence of limb darkening.
+For any polynomial limb darkening law of the form
+%
+\begin{align}
+    \label{eq:ld:I}
+    \frac{I(\mu)}{I(\mu = 1)} = 1 - \sum_{n=1}^{n_\mathrm{max}} u_n(1 - \mu)^n
+    \quad,
+\end{align}
+%
+where $I$ is the intensity on the stellar surface,
+$\mu = z = \sqrt{1 - x^2 - y^2}$ is the radial coordinate on the
+projected disk, and $u_n$ is a limb darkening coefficient, the effect of
+limb darkening on the stellar map can be expressed exactly as a linear
+operation on the spherical harmonic coefficient vector
+\citep{Luger2019}.
+This includes the popular linear and quadractic limb darkening laws
+and generalizes to \emph{any} limb darkening law in the limit
+$n_\mathrm{max} \rightarrow \infty$. The linearity of the problem
+can be understood by noting that all terms
+in Equation~(\ref{eq:ld:I}) are strictly polynomials in $x$, $y$, and $z$,
+all of which can be expressed exactly as sums of spherical harmonics
+\citep{Luger2019}. When weighting the surface intensity by the limb darkening
+profile, the resulting intensity is simply a product of spherical harmonics,
+which is itself a linear combination of spherical harmonics.
+Thus, given a limb darkening law
+of degree $n_\mathrm{max}$ with coefficients $\mathbf{u}$,
+we can construct a matrix $\mathbf{L}(\mathbf{u})$
+that transforms a spherical harmonic vector $\mathbf{y}$ of degree
+$l_\mathrm{max}$ to a limb-darkened spherical harmonic vector $\mathbf{y'}$
+of degree $l_\mathrm{max} + n_\mathrm{max}$. As an example, consider
+a map of degree $l_\mathrm{max} = 1$ and the linear limb darkening law
+($n_\mathrm{max} = 1$) with coefficient vector $\mathbf{u} = ( u_1 )$.
+The transformation matrix from $\mathbf{y}$ to $\mathbf{y'}$ is
+%
+\begin{proof}{}
+    \label{eq:ld:L}
+    \setstackgap{L}{1.5\baselineskip}
+    \mathbf{L}(\mathbf{u}) =
+    \frac{1}{1 - \frac{u_1}{3}}
+    \begin{pmatrix}
+        \quadquad1-u_1\quadquad & 0                       & \frac{u_1}{\sqrt{3}}    & 0                       \\
+        0                       & \quadquad1-u_1\quadquad & 0                       & 0                       \\
+        \frac{u_1}{\sqrt{3}}    & 0                       & \quadquad1-u_1\quadquad & 0                       \\
+        0                       & 0                       & 0                       & \quadquad1-u_1\quadquad \\
+        0                       & 0                       & 0                       & 0                       \\
+        0                       & \frac{u_1}{\sqrt{5}}    & 0                       & 0                       \\
+        0                       & 0                       & \frac{2u_1}{\sqrt{15}}  & 0                       \\
+        0                       & 0                       & 0                       & \frac{u_1}{\sqrt{5}}    \\
+        0                       & 0                       & 0                       & 0
+    \end{pmatrix}
+    \quad.
+\end{proof}
+%
+The columns of $\mathbf{L}$ are constructed from the coefficient vectors of
+each transformed spherical harmonic, which are in turn computed by
+multiplying each spherical harmonic by the spherical harmonic decomposition
+of the particular limb darkening law. \xxx{A simple algorithm for computing
+    $\mathbf{L}$ for limb darkening of any order is given in the link next to
+    Equation~(\ref{eq:ld:L}).}
+
+In the presence of limb darkening, we may therefore replace our expression for the
+$k^\mathrm{th}$ row of the flux design matrix $\mathcal{A}$ (Equation~\ref{eq:akT})
+with
+%
+\begin{align}
+    \label{eq:akTld}
+    \mathbf{a}_k^\top = \mathbf{r}^\top \,
+    \mathbf{A_1} \,
+    \mathbf{L}(\mathbf{u})
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(-I\right) \,
+    \mathbf{R}_{\hat{\mathbf{z}}}\left(\frac{2\pi}{P}t_k\right) \,
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(\frac{\pi}{2}\right)
+\end{align}
+%
+for a given limb darkening coefficient vector $\mathbf{u}$.
 
 \section{The Expectation Integrals}
 \label{sec:integrals}
