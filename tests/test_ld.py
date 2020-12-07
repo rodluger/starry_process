@@ -1,7 +1,7 @@
 from starry_process.ops import rTA1LOp
 import starry
 import numpy as np
-from verify_grad import verify_grad
+from theano.tests.unittest_tools import verify_grad
 from theano.configparser import change_flags
 import theano
 import theano.tensor as tt
