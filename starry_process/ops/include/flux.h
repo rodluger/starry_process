@@ -304,7 +304,7 @@ public:
   Eigen::SparseMatrix<Scalar> U1;
   Vector<Scalar, Dynamic> p;
   RowMatrix<Scalar, Dynamic, Dynamic> Lp;
-  Vector<Eigen::SparseMatrix<Scalar>, Dynamic> DLpDp;
+  RowMatrix<Scalar, Dynamic, Dynamic> DDp;
 
   /**
   Compute the change of basis matrix `U1` from limb darkening coefficients
@@ -433,7 +433,7 @@ public:
   just pre-compute it!
 
   */
-  inline void computeDLpDp() {
+  inline void computeDDp() {
     bool odd1;
     int l, n;
     int n1 = 0, n2 = 0;
@@ -462,9 +462,9 @@ public:
         ++n1;
       }
     }
-    DLpDp.resize((SP__UMAX + 1) * (SP__UMAX + 1));
+    DDp.resize((SP__UMAX + 1) * (SP__UMAX + 1), SP__N);
     for (n = 0; n < (SP__UMAX + 1) * (SP__UMAX + 1); ++n)
-      DLpDp(n) = D(n).sparseView();
+      DDp.row(n) = rT * D(n) * A1NbyN;
   }
 
   explicit LimbDark() {
@@ -475,7 +475,7 @@ public:
       computeA1(SP__LUMAX, A1);
       computeU1();
       A1NbyN = A1.topLeftCorner(SP__N, SP__N);
-      computeDLpDp();
+      computeDDp();
     }
   };
 
@@ -529,8 +529,7 @@ public:
 
     // Backprop p
     RowVector<Scalar, (SP__UMAX + 1) * (SP__UMAX + 1)> bp;
-    for (int j = 0; j < (SP__UMAX + 1) * (SP__UMAX + 1); ++j)
-      bp(j) = (rT * DLpDp(j) * A1NbyN).cwiseProduct(bf).sum();
+    bp = DDp * bf.transpose();
 
     // Compute the limb darkening derivatives
     RowMatrix<Scalar, Dynamic, Dynamic> DpDu =
