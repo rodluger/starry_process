@@ -40,7 +40,7 @@ jobs:
       conda activate starry_process
       pip install -e ".[app,tests]"
       pip uninstall -y theano
-      pip install -U theano-pymc
+      pip install -U git+https://github.com/pymc-devs/Theano-PyMC.git@master
       theano-cache purge
     displayName: 'Install the package'
 
