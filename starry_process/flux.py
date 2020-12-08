@@ -201,6 +201,11 @@ class FluxIntegral:
         # since it doesn't have any inputs. But if there's
         # limb darkening, we need to stick to tensor operations.
 
+        # In the computation of the second moment below, we implicitly
+        # make use of the fact that `rTA1 = 0` if `m != 0` because
+        # of symmetry. This vastly reduces the number of operations
+        # we need to do!
+
         if self._limbdarkened:
 
             # First moment

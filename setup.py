@@ -34,7 +34,7 @@ setup(
             "pytest",
             "pytest-dependency",
             "pytest-env",
-            "pymc3>=3.10.0",  # ==3.9.3",  # DEBUG: 3.10.0 --> cannot import name 'TestValueError' from 'theano.gof.utils'
+            "pymc3>=3.10.0",
             "corner",
             "pymc3-ext>=0.0.2",
             "starry@git+https://github.com/rodluger/starry@master",
