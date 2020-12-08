@@ -1,6 +1,6 @@
 defaults = dict(
     ydeg=15,
-    udeg=0,
+    udeg=2,
     r=20.0,
     a=0.40,
     b=0.27,
@@ -8,6 +8,7 @@ defaults = dict(
     n=10.0,
     p=1.0,
     i=60.0,
+    u=None,
     normalized=True,
     normalization_order=20,
     normalization_zmax=0.023,

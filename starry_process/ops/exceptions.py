@@ -3,7 +3,7 @@ import numpy as np
 from theano import gof
 import theano.tensor as tt
 
-__all__ = ["CheckBoundsOp"]
+__all__ = ["CheckBoundsOp", "CheckVectorSizeOp"]
 
 
 class CheckBoundsOp(tt.Op):
@@ -73,3 +73,41 @@ class CheckBoundsOp(tt.Op):
             return eval_points
         return self.grad(inputs, eval_points)
 
+
+class CheckVectorSizeOp(tt.Op):
+    """
+
+    """
+
+    __props__ = ("name", "size")
+
+    def __init__(self, name=None, size=None):
+        self.size = size
+        if name is None:
+            self.name = "vector"
+        else:
+            self.name = name
+
+    def make_node(self, *inputs):
+        inputs = [tt.as_tensor_variable(inputs[0]).astype(tt.config.floatX)]
+        outputs = [inputs[0].type()]
+        return gof.Apply(self, inputs, outputs)
+
+    def infer_shape(self, node, shapes):
+        return shapes
+
+    def perform(self, node, inputs, outputs):
+        outputs[0][0] = np.array(inputs[0])
+        if inputs[0].size != self.size:
+            raise ValueError(
+                "Vector `%s` has the wrong size. Expected %d, got %d."
+                % (self.name, self.size, inputs[0].size)
+            )
+
+    def grad(self, inputs, gradients):
+        return [1.0 * gradients[0]]
+
+    def R_op(self, inputs, eval_points):
+        if eval_points[0] is None:
+            return eval_points
+        return self.grad(inputs, eval_points)

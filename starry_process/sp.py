@@ -22,6 +22,7 @@ class StarryProcess(object):
         b=defaults["b"],
         c=defaults["c"],
         n=defaults["n"],
+        u=defaults["u"],
         marginalize_over_inclination=defaults["marginalize_over_inclination"],
         covpts=defaults["covpts"],
         **kwargs,
@@ -65,6 +66,9 @@ class StarryProcess(object):
                 should have a mean (on average) equal to the true number of
                 spots (assuming all other model assumptions are valid).
                 Default is %%defaults["n"]%%.
+            u (vector, optional): The limb darkening coefficients for the
+                star. In the case of no limb darkening, set this to
+                ``None``. Default is %%defaults["u"]%%.
             marginalize_over_inclination (bool, optional): Whether or not to
                 marginalize over the inclination under the assumption of an
                 isotropic prior. Recommended if there are no constraints on
@@ -72,6 +76,20 @@ class StarryProcess(object):
                 the value of the ``i`` keyword to several of the methods in 
                 this class will be ignored. Default is 
                 %%defaults["marginalize_over_inclination"]%%.
+            normalized (bool, optional): Whether or not the flux observations 
+                (passed in calls to ``log_likelihood`` and 
+                ``sample_ylm_conditional``) are normalized. Usually, the
+                true baseline in stellar photometry is unknown, as it
+                requires knowledge of how bright the star would be in the
+                absence of star spots. If the baseline is unknown
+                (which is almost certainly the case), we recommend setting 
+                this keyword to ``True`` and make sure observations are 
+                mean- (or median-) normalized. 
+                Alternatively, particularly when the amplitude of variability
+                is large, you may set this to ``False`` and explicitly
+                model the unknown baseline with a latent parameter *for
+                each star* when doing inference. 
+                Default is %%defaults["normalized"]%%.
             covpts (int, optional): The number of grid points on which to
                 compute the kernel when ``marginalize_over_inclination`` is
                 set to ``True``. Since the full covariance is expensive to
@@ -92,16 +110,11 @@ class StarryProcess(object):
                 to model small features on the surface. Increasing this
                 above the default value is not recommended, as it can lead
                 to numerical instabilities.
-            normalized (bool, optional): Whether or not the flux observations 
-                (passed in calls to ``log_likelihood`` and 
-                ``sample_ylm_conditional``) are normalized. Usually, the
-                true baseline in stellar photometry is unknown, as it
-                requires knowledge of how bright the star would be in the
-                absence of star spots. If the baseline is unknown
-                (which is almost certainly the case), set this keyword
-                to ``True`` and make sure observations are mean- (or median-)
-                normalized. Setting this to ``False`` is not recommended for
-                usage on real data. Default is %%defaults["normalized"]%%.
+            udeg (int, optional): The degree of limb darkening.
+                Default is %%defaults["udeg"]%%. Changing this is currently
+                supported, but it is likely that future releases will
+                deprecate this in favor of always using quadratic limb 
+                darkening, which can be analytically marginalized over.
             normalization_order (int, optional): Order of the series
                 expansion for the normalized covariance. Default is
                 %%defaults["normalization_order"]%%.
@@ -136,10 +149,12 @@ class StarryProcess(object):
                 Default is %%defaults["epsy15"]%%.
         """
         # Spherical harmonic degree of the process
-        self._ydeg = kwargs.get("ydeg", defaults["ydeg"])
+        self._ydeg = int(kwargs.get("ydeg", defaults["ydeg"]))
         assert self._ydeg > 5, "Degree of map must be > 5."
+        self._udeg = int(kwargs.get("udeg", defaults["udeg"]))
+        assert self._udeg >= 0, "Degree of limb darkening must be >= 0."
         self._nylm = (self._ydeg + 1) ** 2
-        self._covpts = covpts
+        self._covpts = int(covpts)
         self._kwargs = kwargs
 
         # Is the flux normalized?
@@ -173,6 +188,7 @@ class StarryProcess(object):
         self._flux = FluxIntegral(
             self._mean_ylm,
             self._cov_ylm,
+            u=u,
             marginalize_over_inclination=self._marginalize_over_inclination,
             covpts=self._covpts,
             **self._kwargs,
@@ -184,8 +200,20 @@ class StarryProcess(object):
         )
 
     @property
-    def size(self):
-        return self._size
+    def ydeg(self):
+        return self._ydeg
+
+    @property
+    def covpts(self):
+        return self._covpts
+
+    @property
+    def normalized(self):
+        return self._normalized
+
+    @property
+    def marginalize_over_inclination(self):
+        return self._marginalize_over_inclination
 
     @property
     def latitude(self):

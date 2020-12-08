@@ -4,7 +4,9 @@ from .ops import (
     tensordotRzOp,
     special_tensordotRzOp,
     rTA1Op,
+    rTA1LOp,
     CheckBoundsOp,
+    CheckVectorSizeOp,
 )
 from .wigner import R
 from .defaults import defaults
@@ -27,13 +29,20 @@ class FluxIntegral:
         self,
         mean_ylm,
         cov_ylm,
+        udeg=defaults["udeg"],
+        u=defaults["u"],
         marginalize_over_inclination=defaults["marginalize_over_inclination"],
         covpts=defaults["covpts"],
         ydeg=defaults["ydeg"],
-        clobber=False,
         **kwargs
     ):
         # General
+        self._udeg = udeg
+        if u is None or self._udeg == 0:
+            self._limbdarkened = False
+        else:
+            self._limbdarkened = True
+            self._u = CheckVectorSizeOp("u", self._udeg)(u)
         self._marginalize_over_inclination = marginalize_over_inclination
         self._covpts = covpts
         self._mean_ylm = mean_ylm
@@ -50,6 +59,10 @@ class FluxIntegral:
             self._ydeg, cos_alpha=0, sin_alpha=1, cos_gamma=0, sin_gamma=-1
         )
         self._CC = tt.extra_ops.CpuContiguous()
+        if self._limbdarkened:
+            self._rTA1 = rTA1LOp(ydeg=self._ydeg, udeg=self._udeg)(self._u)
+        else:
+            self._rTA1 = rTA1Op(ydeg=self._ydeg)()
 
         # Get the moments of the Ylm process in the polar frame
         self._ez = tt.transpose(
@@ -62,7 +75,7 @@ class FluxIntegral:
         self._Ez = self._dotRx(tmp, 0.5 * np.pi)
 
         # Pre-compute the integrals
-        self._precompute(clobber=clobber)
+        self._precompute()
 
     def _check_params(self, i, p):
         # Period
@@ -124,14 +137,14 @@ class FluxIntegral:
             1 + 0.5 * i, -0.5 * j, 2 + 0.5 * i, 0.5
         )
 
-    @cache("_ydeg")
-    def _precompute_inclination_integrals(self, clobber=False):
+    def _precompute_inclination_integrals(self):
         """
         Pre-compute the inclination marginalization integrals.
 
         """
-        # The flux integral operator
-        rTA1 = rTA1Op(self._ydeg)().eval()
+        # First, we can pre-compute a bunch of stuff
+        # using `numpy`, as it doesn't depend on tensor
+        # variables.
 
         # The marginalization integral
         G = np.array(
@@ -146,42 +159,96 @@ class FluxIntegral:
         for l in range(self._ydeg + 1):
             m = np.arange(-l, l + 1)
             i = slice(l ** 2, (l + 1) ** 2)
-            t[l] = rTA1[i] @ self._R[l] @ G[l - m, l + m]
+            t[l] = self._R[l] @ G[l - m, l + m]
 
-        # Second moment integral
-        T = np.zeros((self._nylm, self._nylm))
-        for i in tqdm(
-            range(self._nylm), desc="Computing inclination integrals"
-        ):
-            l1 = int(np.floor(np.sqrt(i)))
+        # Second moment integral. Apologies for
+        # how opaque this all is, since it's the result of
+        # a few hours of tinkering with linear algebra to
+        # maximize the number of operations *before*
+        # we get theano involved.
+        Q = np.empty(
+            (
+                2 * self._ydeg + 1,
+                2 * self._ydeg + 1,
+                2 * self._ydeg + 1,
+                self._nylm,
+            )
+        )
+        for l1 in range(self._ydeg + 1):
             k = np.arange(l1 ** 2, (l1 + 1) ** 2)
             k0 = np.arange(2 * l1 + 1).reshape(-1, 1)
             for p in range(self._nylm):
                 l2 = int(np.floor(np.sqrt(p)))
                 j = np.arange(l2 ** 2, (l2 + 1) ** 2)
                 j0 = np.arange(2 * l2 + 1).reshape(1, -1)
-                Wik = rTA1[i] * self._R[l1][i - l1 ** 2, k - l1 ** 2]
-                Wjp = rTA1[j] @ self._R[l2][j - l2 ** 2, p - l2 ** 2]
-                M = G[k0 + j0, 2 * l1 - k0 + 2 * l2 - j0]
-                T[k, p] += Wik @ M @ Wjp
+                L = (
+                    self._R[l1][l1, k - l1 ** 2]
+                    @ G[k0 + j0, 2 * l1 - k0 + 2 * l2 - j0]
+                )
+                R = self._R[l2][j - l2 ** 2, p - l2 ** 2].T
+                Q[l1, : 2 * l1 + 1, : 2 * l2 + 1, p] = L @ R
+        P = np.empty((self._nylm, self._nylm))
+        for l1 in range(self._ydeg + 1):
+            i = np.arange(l1 ** 2, (l1 + 1) ** 2)
+            for l2 in range(self._ydeg + 1):
+                j = np.arange(l2 ** 2, (l2 + 1) ** 2)
+                P[i.reshape(-1, 1), j.reshape(1, -1)] = Q[
+                    l1, : 2 * l1 + 1, l2, j
+                ].T
 
-        # Return a cacheable dict
-        return dict(
-            rTA1=rTA1,
-            T=T,
-            **{"t{:d}".format(l): t[l] for l in range(self._ydeg + 1)},
-        )
+        # Now we need to deal with user inputs. If there's
+        # no limb darkening, we can just `eval` the flux op,
+        # since it doesn't have any inputs. But if there's
+        # limb darkening, we need to stick to tensor operations.
 
-    def _precompute(self, clobber=False):
+        if self._limbdarkened:
+
+            # First moment
+            self._t = [None for l in range(self._ydeg + 1)]
+            for l in range(self._ydeg + 1):
+                i = slice(l ** 2, (l + 1) ** 2)
+                self._t[l] = tt.dot(self._rTA1[i], t[l])
+
+            # Second moment
+            m0 = np.array([l ** 2 + l for l in range(self._ydeg + 1)])
+            Z = tt.outer(self._rTA1[m0], self._rTA1[m0])
+            self._T = tt.zeros((self._nylm, self._nylm))
+            for l1 in range(self._ydeg + 1):
+                i = np.arange(l1 ** 2, (l1 + 1) ** 2).reshape(-1, 1)
+                for l2 in range(self._ydeg + 1):
+                    j = np.arange(l2 ** 2, (l2 + 1) ** 2).reshape(1, -1)
+                    self._T = tt.set_subtensor(
+                        self._T[i, j], P[i, j] * Z[l1, l2]
+                    )
+
+        else:
+
+            # Get the numeric value of the `rTA1` vector
+            rTA1 = self._rTA1.eval()
+
+            # First moment
+            self._t = [None for l in range(self._ydeg + 1)]
+            for l in range(self._ydeg + 1):
+                i = slice(l ** 2, (l + 1) ** 2)
+                self._t[l] = rTA1[i] @ t[l]
+
+            # Second moment
+            m0 = np.array([l ** 2 + l for l in range(self._ydeg + 1)])
+            Z = np.outer(rTA1[m0], rTA1[m0])
+            self._T = np.zeros((self._nylm, self._nylm))
+            for l1 in range(self._ydeg + 1):
+                i = np.arange(l1 ** 2, (l1 + 1) ** 2).reshape(-1, 1)
+                for l2 in range(self._ydeg + 1):
+                    j = np.arange(l2 ** 2, (l2 + 1) ** 2).reshape(1, -1)
+                    self._T[i, j] = P[i, j] * Z[l1, l2]
+
+    def _precompute(self):
         """
         Pre-compute some vectors and matrices.
         
         """
-        # Compute or load from cache
-        integrals = self._precompute_inclination_integrals(clobber=clobber)
-        self._rTA1 = integrals["rTA1"]
-        self._T = integrals["T"]
-        self._t = [integrals["t{:d}".format(l)] for l in range(self._ydeg + 1)]
+        # Pre-compute some matrices
+        self._precompute_inclination_integrals()
 
         # If we're marginalizing over inclination, pre-compute the
         # radial kernel on a fine grid. We'll interpolate over it

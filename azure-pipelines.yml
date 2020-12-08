@@ -27,10 +27,10 @@ jobs:
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
       conda install -y -q numpy scipy mkl openblas=0.3.6 sympy
-      theano-cache purge
       pip install -U pip
       pip install -U setuptools
       conda install -y -q -c conda-forge tectonic pandoc theano-pymc
+      theano-cache purge
       pip install -U sphinx
       pip install -U dynesty
 

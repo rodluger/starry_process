@@ -1,4 +1,5 @@
 from starry_process.ops import rTA1LOp
+from starry_process import StarryProcess
 import starry
 import numpy as np
 from theano.tests.unittest_tools import verify_grad
@@ -36,3 +37,10 @@ def test_compare_to_starry(ydeg=15, udeg=2):
 
     assert np.allclose(flux1, flux2)
 
+
+def test_null_limb_darkening():
+
+    t = np.linspace(0, 1, 300)
+    cov1 = StarryProcess(udeg=2, u=None).cov(t).eval()
+    cov2 = StarryProcess(udeg=2, u=[0.0, 0.0]).cov(t).eval()
+    assert np.allclose(cov1, cov2)
