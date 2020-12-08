@@ -26,7 +26,7 @@ jobs:
   - script: |
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
-      conda install -y -q numpy scipy mkl openblas=0.3.6 sympy
+      conda install -y -q numpy scipy mkl openblas=0.3.6 sympy theano
       pip install -U pip
       pip install -U setuptools
       conda install -y -q -c conda-forge tectonic pandoc
@@ -39,8 +39,6 @@ jobs:
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
       pip install -e ".[app,tests]"
-      pip uninstall -y theano
-      pip install -U theano-pymc
     displayName: 'Install the package'
 
   - script: |
