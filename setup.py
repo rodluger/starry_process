@@ -22,7 +22,7 @@ setup(
         "setuptools_scm",
         "numpy>=1.19.2",
         "scipy>=1.5.0",
-        "theano>=1.0.5",
+        "Theano-PyMC",
         "tqdm",
         "matplotlib",
     ],
@@ -34,7 +34,7 @@ setup(
             "pytest",
             "pytest-dependency",
             "pytest-env",
-            "pymc3==3.9.3",
+            "pymc3>=3.10.0",  # ==3.9.3",  # DEBUG: 3.10.0 --> cannot import name 'TestValueError' from 'theano.gof.utils'
             "corner",
             "pymc3-ext>=0.0.2",
             "starry@git+https://github.com/rodluger/starry@master",
