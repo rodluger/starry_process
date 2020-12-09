@@ -1,4 +1,4 @@
-from .css import loader, description, style, TEMPLATE
+from .css import description, style, TEMPLATE
 from .design import get_intensity_design_matrix, get_flux_design_matrix
 from .moll import get_latitude_lines, get_longitude_lines
 from starry_process import StarryProcess
@@ -30,6 +30,7 @@ from bokeh.models.tickers import FixedTicker
 from bokeh.models.formatters import FuncTickFormatter
 from bokeh.models.mappers import LinearColorMapper
 from bokeh.palettes import Plasma6, Category10
+from bokeh.events import DocumentReady
 from scipy.special import legendre as P
 from scipy.stats import norm as Normal
 
@@ -255,7 +256,7 @@ class Samples(object):
             sizing_mode="fixed",
             height=30,
             width=75,
-            active=False,
+            active=True,
         )
 
         self.reset_button = Button(
@@ -405,7 +406,7 @@ class Samples(object):
         self.slider_callback(None, None, None)
         self.smooth_button.active = False
         self.smooth_callback(None)
-        self.auto_button.active = False
+        self.auto_button.active = True
         self.callback(None, None, None)
 
     def smooth_callback(self, event):
@@ -707,7 +708,6 @@ class Application(object):
         throttle_time=0.40,
         load_timeout=1.0,
         nosmooth=False,
-        noloader=False,
     ):
         self.ydeg = ydeg
         self.npix = npix
@@ -716,7 +716,6 @@ class Application(object):
         self.throttle_time = throttle_time
         self.load_timeout = load_timeout
         self.nosmooth = nosmooth
-        self.noloader = noloader
         self._compiled = False
 
     def compile(self):
@@ -746,21 +745,24 @@ class Application(object):
         doc.title = "starry process"
         doc.template = TEMPLATE
 
-        # Show the loading spinner?
-        if self.noloader:
-            self.layout = column(Div(), style(), sizing_mode="scale_both")
-            doc.add_root(self.layout)
-            self._run()
-        else:
-            self.layout = column(loader(), style(), sizing_mode="scale_both")
-            doc.add_root(self.layout)
-            doc.add_timeout_callback(self._run, int(1000 * self.load_timeout))
+        # Set a timer; when it's done, load the widgets
+        self.layout = column(Div(), style(), sizing_mode="scale_both")
+        doc.add_root(self.layout)
+        doc.add_timeout_callback(
+            lambda: self._run(doc), int(1000 * self.load_timeout)
+        )
 
-    def _run(self):
+    def _run(self, doc=None):
+
+        # Get current document if needed
+        if doc is None:
+            doc = curdoc()
 
         # Compile if needed
         if not self._compiled:
             self.compile()
+
+        print("Rendering...")
 
         # The GP samples
         self.Samples = Samples(
@@ -846,6 +848,18 @@ class Application(object):
             )
         )
 
+        print("Done rendering.")
+
+        # Remove the loading spinner
+        js_dummy = self.Samples.flux_plot[0].circle(x=0, y=0, size=1, alpha=0)
+        js_dummy.glyph.js_on_change(
+            "size",
+            CustomJS(
+                code="document.getElementsByClassName('preloader')[0].style.display = 'none';"
+            ),
+        )
+        js_dummy.glyph.size = 0
+
 
 # Instantiate the base app
 app = Application(
@@ -854,7 +868,6 @@ app = Application(
     npts=int(os.getenv("NPTS", 300)),
     nmaps=int(os.getenv("NMAPS", 5)),
     nosmooth=int(os.getenv("NOSMOOTH", 0)),
-    noloader=int(os.getenv("NOLOADER", 0)),
     throttle_time=float(os.getenv("THROTTLE_TIME", 0.15)),
     load_timeout=float(os.getenv("LOAD_TIMEOUT", 1.0)),
 )

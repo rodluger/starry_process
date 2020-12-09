@@ -18,12 +18,14 @@ class StarryProcess(object):
     def __init__(
         self,
         r=defaults["r"],
+        d=defaults["d"],
         a=defaults["a"],
         b=defaults["b"],
         c=defaults["c"],
         n=defaults["n"],
         u=defaults["u"],
         marginalize_over_inclination=defaults["marginalize_over_inclination"],
+        normalized=defaults["normalized"],
         covpts=defaults["covpts"],
         **kwargs,
     ):
@@ -41,6 +43,10 @@ class StarryProcess(object):
                 typically lead to poor approximations, although the
                 process will in general still be valid and numerically
                 stable.
+            d (scalar, optional): The half-width of the uniform prior
+                on the spot radius in degrees. Default is %%defaults["d"]%%.
+                If this value is zero, a delta-function prior centered at
+                ``r`` is assumed.
             a (scalar, optional): Shape parameter of the spot latitude
                 distribution. This is equal to the log of the ``alpha``
                 parameter characterizing the Beta distribution in the
@@ -158,7 +164,7 @@ class StarryProcess(object):
         self._kwargs = kwargs
 
         # Is the flux normalized?
-        self._normalized = kwargs.get("normalized", defaults["normalized"])
+        self._normalized = normalized
         self._normN = kwargs.get(
             "normalization_order", defaults["normalization_order"]
         )
@@ -168,7 +174,7 @@ class StarryProcess(object):
         self._get_alpha_beta = AlphaBetaOp(self._normN)
 
         # Initialize the Ylm integral ops
-        self._size = SizeIntegral(r, **kwargs)
+        self._size = SizeIntegral(r, d, **kwargs)
         self._latitude = LatitudeIntegral(a, b, child=self._size, **kwargs)
         self._longitude = LongitudeIntegral(child=self._latitude, **kwargs)
         self._contrast = ContrastIntegral(
@@ -202,18 +208,34 @@ class StarryProcess(object):
 
     @property
     def ydeg(self):
+        """The spherical harmonic degree of the surface map expansion."""
         return self._ydeg
 
     @property
     def covpts(self):
+        """
+        The number of interpolation points for the covariance matrix
+        when ``marginalize_over_inclination`` is ``True``.
+
+        """
         return self._covpts
 
     @property
     def normalized(self):
+        """
+        Whether or not the process is modeling light curves that have
+        been normalized to the (sample) mean (or median).
+
+        """
         return self._normalized
 
     @property
     def marginalize_over_inclination(self):
+        """
+        Whether or not the process marginalizes over inclination under
+        an isotropic prior.
+
+        """
         return self._marginalize_over_inclination
 
     @property
@@ -248,10 +270,12 @@ class StarryProcess(object):
 
     @property
     def contrast(self):
+        """The contrast distribution integral (not *really* user-facing)."""
         return self._contrast
 
     @property
     def flux(self):
+        """The flux integral  (not *really* user-facing)."""
         return self._flux
 
     @property
@@ -315,7 +339,7 @@ class StarryProcess(object):
 
                     .. code-block:: python
                     
-                        flux = counts / np.median(counts) - 1
+                        flux = counts / np.mean(counts) - 1
 
                 If the baseline is something else (such as unity), users
                 may alternatively set the ``baseline_mean`` parameter to
@@ -396,12 +420,34 @@ class StarryProcess(object):
         return tt.transpose(ymu[:, None] + tt.dot(cho_ycov, u))
 
     def mean(self, t, i=defaults["i"], p=defaults["p"]):
+        """
+        The GP flux mean vector.
+
+        Args:
+            t (vector): The time array in arbitrary units.
+            i (scalar, optional): The inclination of the star in degrees.
+                Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
+                is set, this argument is ignored.
+            p (scalar, optional): The rotational period of the star in the same
+                units as ``t``. Default is %%defaults["p"]%%.           
+        """
         if self._normalized:
             return tt.zeros_like(cast(t, vectorize=True))
         else:
             return self._flux.mean(t, i, p)
 
     def cov(self, t, i=defaults["i"], p=defaults["p"]):
+        """
+        The GP flux covariance matrix.
+
+        Args:
+            t (vector): The time array in arbitrary units.
+            i (scalar, optional): The inclination of the star in degrees.
+                Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
+                is set, this argument is ignored.
+            p (scalar, optional): The rotational period of the star in the same
+                units as ``t``. Default is %%defaults["p"]%%.           
+        """
         if self._normalized:
             cov = self._flux.cov(t, i, p)
             mean = self._flux.mean(t, i, p)[0]
@@ -442,7 +488,16 @@ class StarryProcess(object):
         eps=defaults["eps"],
     ):
         """
-        Parameters:
+        Draw samples from the prior distribution over light curves.
+
+        Args:
+            t (vector): The time array in arbitrary units.
+            i (scalar, optional): The inclination of the star in degrees.
+                Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
+                is set, this argument is ignored.
+            p (scalar, optional): The rotational period of the star in the same
+                units as ``t``. Default is %%defaults["p"]%%.
+            nsamples (int, optional): The number of samples to draw. Default 1.
             eps (float, optional): A small number added to the diagonal of the
                 flux covariance matrix when marginalizing over inclination
                 for extra stability. Default is %%defaults["eps"]%%.
@@ -531,7 +586,7 @@ class StarryProcess(object):
 
                     .. code-block:: python
                     
-                        flux = counts / np.median(counts) - 1
+                        flux = counts / np.mean(counts) - 1
 
                 If the baseline is something else (such as unity), users
                 may alternatively set the ``baseline_mean`` parameter to
@@ -637,6 +692,7 @@ class StarryProcessSum(StarryProcess):
         self._covpts = first._covpts
         self._normN = first._normN
         self._normzmax = first._normzmax
+        self._get_alpha_beta = first._get_alpha_beta
         self._kwargs = first._kwargs
         self.random = first.random
 

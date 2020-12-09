@@ -50,7 +50,7 @@ class Spot:
 
 
 class SizeIntegral(MomentIntegral):
-    def _ingest(self, r, **kwargs):
+    def _ingest(self, r, d, **kwargs):
         """
         Ingest the parameters of the distribution and 
         set up the transform and rotation operators.
@@ -60,12 +60,22 @@ class SizeIntegral(MomentIntegral):
         self._r = CheckBoundsOp(name="r", lower=0, upper=0.5 * np.pi)(
             r * self._angle_fac
         )
-        self._params = [self._r]
+        # TODO: Implement the uniform prior on `r`
+        self._d = CheckBoundsOp(
+            name="Radius half-width parameter not yet implemented. "
+            "Currently only `d = 0` is supported.",
+            lower=0,
+            upper=0,
+        )(d)
+        self._params = [self._r, self._d]
 
         # Set up the spot operator
         self._spot = Spot(ydeg=self._ydeg, **kwargs)
-        self._q = self._spot.get_y(self._r)
+        self._q = self._spot.get_y(self._r) + self._d
         self._eigQ = tt.reshape(self._q, (-1, 1))
+
+        # HACK: Throw exception if d != 0
+        self._q += self._d
 
     def _compute(self):
         pass

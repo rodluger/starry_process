@@ -5,7 +5,9 @@ from tqdm import tqdm
 
 
 class Star(object):
-    def __init__(self, nlon=300, ydeg=30, linear=True, smoothing=0.1):
+    def __init__(
+        self, nlon=300, ydeg=30, linear=True, smoothing=0.1, eps=1e-12
+    ):
         # Generate a uniform intensity grid
         self.nlon = nlon
         self.nlat = nlon // 2
@@ -20,7 +22,10 @@ class Star(object):
 
         # cos(lat)-weighted SHT
         w = np.cos(self.lat.flatten() * np.pi / 180)
-        PTSinv = P.T * (w ** 2)[None, :]  # @ np.diag(w ** 2)
+        P = self.map.intensity_design_matrix(
+            lat=self.lat.flatten(), lon=self.lon.flatten()
+        )
+        PTSinv = P.T * (w ** 2)[None, :]
         self.Q = np.linalg.solve(PTSinv @ P + eps * np.eye(P.shape[1]), PTSinv)
         if smoothing > 0:
             l = np.concatenate(

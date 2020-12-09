@@ -3267,6 +3267,7 @@ to express the element at index $k$ (corresponding to the mean of the
 GP at time $t = t_k$) as
 %
 \begin{align}
+    \label{eq:eIk}
     \left(e_I\right)_k
      & =
     \int
@@ -3297,7 +3298,10 @@ where we define
     \mathbf{e}_y
 \end{align}
 %
-as the expectation of $\mathbf{y}$ in the polar frame at time $t = t_k$.
+as the expectation of $\mathbf{y}$ in the polar frame at time $t = t_k$.%
+\footnote{In the presence of limb darkening, we must include the limb
+    darkening operator $\mathbf{L}(\mathbf{u})$ in Equation~(\ref{eq:eIk});
+    see \S\ref{sec:ld}.}
 %
 At this point, it is convenient to invoke the fact that our GP
 is longitudinally isotropic: there is no preferred longitude on

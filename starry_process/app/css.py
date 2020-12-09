@@ -3,7 +3,7 @@ from bokeh.palettes import Plasma256, Plasma6
 import numpy as np
 import os
 
-__all__ = ["plasma", "svg_mu", "svg_nu", "loader", "description", "style"]
+__all__ = ["plasma", "svg_mu", "svg_nu", "description", "style"]
 
 # jinja template
 TEMPLATE = """
@@ -31,6 +31,20 @@ TEMPLATE = """
   {% block body %}
   <body style="min-width: 1400px; !important">
     <div style="width:90%; height:90%; margin-left: auto; margin-right: auto;">
+
+    <div class="preloader">
+        <div class="spinner">
+            <div class="dot1"></div>
+            <div class="dot2"></div>
+            <div class="loader-message">
+                &nbsp;starry process
+                <div style="font-size: 10pt; font-weight: 100; margin-top: 10px;">
+                    sit tight while the page renders...
+                </div>
+            </div>
+        </div>
+    </div>
+
     {% block inner_body %}
       {% block contents %}
         {% for doc in docs %}
@@ -60,25 +74,6 @@ for v, hex_color in enumerate(Plasma100):
 plasma = plasma[::3]
 plasma = ",\n    ".join(plasma)
 PLASMA = "background: linear-gradient(to left, \n{:s}\n);".format(plasma)
-
-
-# Loading screen
-loader = lambda: Div(
-    text="""
-<div class="preloader">
-    <div class="spinner">
-        <div class="dot1"></div>
-        <div class="dot2"></div>
-        <div class="loader-message">
-            &nbsp;starry process
-            <div style="font-size: 10pt; font-weight: 100; margin-top: 10px;">
-                sit tight while the page renders...
-            </div>
-        </div>
-    </div>
-</div>
-"""
-)
 
 
 # Description textbox
@@ -234,9 +229,10 @@ style = lambda: Div(
         flex-flow: row nowrap;
         justify-content: center;
         align-items: center;
-        background: none repeat scroll 0 0 #ffffff;
+        background: none repeat scroll 0 0 #ffffff; 
     }
     .loader-message {
+        font-family: Helvetica, Arial, sans-serif;
         font-size: 20pt;
         font-weight: 600;
         color: #999;
