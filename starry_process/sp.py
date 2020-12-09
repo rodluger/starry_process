@@ -5,7 +5,7 @@ from .contrast import ContrastIntegral
 from .flux import FluxIntegral
 from .math import cho_factor, cho_solve, cast
 from .defaults import defaults
-from .ops import CheckBoundsOp
+from .ops import CheckBoundsOp, AlphaBetaOp
 import theano.tensor as tt
 from theano.ifelse import ifelse
 import numpy as np
@@ -165,6 +165,7 @@ class StarryProcess(object):
         self._normzmax = kwargs.get(
             "normalization_zmax", defaults["normalization_zmax"]
         )
+        self._get_alpha_beta = AlphaBetaOp(self._normN)
 
         # Initialize the Ylm integral ops
         self._size = SizeIntegral(r, **kwargs)
@@ -422,15 +423,7 @@ class StarryProcess(object):
         q = tt.dot(Sig, j) / (K * m)
         z = m / mu ** 2
         p = j - q
-
-        # Coefficients
-        fac = 1.0
-        alpha = 0.0
-        beta = 0.0
-        for n in range(0, self._normN + 1):
-            alpha += fac
-            beta += 2 * n * fac
-            fac *= z * (2 * n + 3)
+        alpha, beta, _, _ = self._get_alpha_beta(z)
 
         # We're done
         ppT = tt.dot(p, tt.transpose(p))
