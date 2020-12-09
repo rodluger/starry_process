@@ -12,3 +12,4 @@ from .log_prob import get_log_prob
 from .run import run
 from .inclination import compute_inclination_pdf
 from .batch import run_batch
+from .defaults import update_with_defaults

@@ -126,7 +126,7 @@ y_inds = np.array([1, 48, 120, 168, 225])
 seed = 0
 clobber = False
 
-DATA_FILE = os.path.abspath(__file__.replace(".py", ".npz"))
+DATA_FILE = os.path.abspath(os.path.join("data", "nongaussianity.npz"))
 if clobber or not os.path.exists(DATA_FILE):
 
     # Sample `nmaps` sph harm vectors
@@ -140,11 +140,8 @@ if clobber or not os.path.exists(DATA_FILE):
         y[k] = star.get_y()
 
     # Keep only the most interesting (i.e., non-gaussian) coeffs
-    try:
-        y = y[:, y_inds]
-        np.savez(DATA_FILE, y=y)
-    except:
-        breakpoint()
+    y = y[:, y_inds]
+    np.savez_compressed(DATA_FILE, y=np.array(y, dtype="float32"))
 
 else:
 
@@ -188,6 +185,15 @@ for k in range(4):
         hist_kwargs=dict(alpha=0),
         levels=[levels[k]],
     )
+fig = corner(
+    ygauss,
+    fig=fig,
+    plot_datapoints=False,
+    plot_density=False,
+    fill_contours=False,
+    no_fill_contours=True,
+    color=color(1, 0.75),
+)
 [ax.set_xlim(*xlim) for ax, xlim in zip(np.array(fig.axes).flatten(), xlims)]
 [ax.set_ylim(*ylim) for ax, ylim in zip(np.array(fig.axes).flatten(), ylims)]
 

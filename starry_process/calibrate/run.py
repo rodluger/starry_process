@@ -1,6 +1,6 @@
-from .defaults import update_with_defaults
-from starry_process import calibrate
-from starry_process.latitude import beta2gauss
+from . import plot, defaults
+from . import generate, sample, inclination
+from ..latitude import beta2gauss
 from dynesty import utils as dyfunc
 import pickle
 import numpy as np
@@ -26,7 +26,7 @@ def run(
     # Save the kwargs
     if clobber or not os.path.exists(os.path.join(path, "kwargs.json")):
         json.dump(
-            update_with_defaults(**kwargs),
+            defaults.update_with_defaults(**kwargs),
             open(os.path.join(path, "kwargs.json"), "w"),
         )
     else:
@@ -34,32 +34,32 @@ def run(
 
     # Generate
     if clobber or not os.path.exists(os.path.join(path, "data.npz")):
-        data = calibrate.generate(**kwargs)
+        data = generate(**kwargs)
         np.savez(os.path.join(path, "data.npz"), **data)
     else:
         data = np.load(os.path.join(path, "data.npz"))
 
     # Plot the data
     if plot_all or plot_data:
-        fig = calibrate.plot_data(data, **kwargs)
+        fig = plot.plot_data(data, **kwargs)
         fig.savefig(os.path.join(path, "data.pdf"), bbox_inches="tight")
 
     # Sample
     if clobber or not os.path.exists(os.path.join(path, "results.pkl")):
-        results = calibrate.sample(data, **kwargs)
+        results = sample(data, **kwargs)
         pickle.dump(results, open(os.path.join(path, "results.pkl"), "wb"))
     else:
         results = pickle.load(open(os.path.join(path, "results.pkl"), "rb"))
 
     # Compute inclination pdf
-    compute_inclination_pdf = update_with_defaults(**kwargs)["sample"][
-        "compute_inclination_pdf"
-    ]
+    compute_inclination_pdf = defaults.update_with_defaults(**kwargs)[
+        "sample"
+    ]["compute_inclination_pdf"]
     if compute_inclination_pdf:
         if clobber or not os.path.exists(
             os.path.join(path, "inclinations.npz")
         ):
-            inc_results = calibrate.compute_inclination_pdf(
+            inc_results = inclination.compute_inclination_pdf(
                 data, results, **kwargs
             )
             np.savez(os.path.join(path, "inclinations.npz"), **inc_results)
@@ -80,25 +80,25 @@ def run(
 
     # Plot the results
     if plot_all or plot_latitude_pdf:
-        fig = calibrate.plot_latitude_pdf(results, **kwargs)
+        fig = plot.plot_latitude_pdf(results, **kwargs)
         fig.savefig(os.path.join(path, "latitude.pdf"), bbox_inches="tight")
 
     if plot_all or plot_trace:
-        fig = calibrate.plot_trace(results, **kwargs)
+        fig = plot.plot_trace(results, **kwargs)
         fig.savefig(os.path.join(path, "trace.pdf"), bbox_inches="tight")
 
     if plot_all or plot_corner:
-        fig = calibrate.plot_corner(results, transform_beta=False, **kwargs)
+        fig = plot.plot_corner(results, transform_beta=False, **kwargs)
         fig.savefig(os.path.join(path, "corner.pdf"), bbox_inches="tight")
 
     if plot_all or plot_corner_transformed:
-        fig = calibrate.plot_corner(results, transform_beta=True, **kwargs)
+        fig = plot.plot_corner(results, transform_beta=True, **kwargs)
         fig.savefig(
             os.path.join(path, "corner_transformed.pdf"), bbox_inches="tight"
         )
 
     if (plot_all or plot_inclination_pdf) and (compute_inclination_pdf):
-        fig = calibrate.plot_inclination_pdf(data, inc_results, **kwargs)
+        fig = plot.plot_inclination_pdf(data, inc_results, **kwargs)
         fig.savefig(
             os.path.join(path, "inclination.pdf"), bbox_inches="tight",
         )

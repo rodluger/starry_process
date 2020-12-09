@@ -6,6 +6,7 @@ from matplotlib import colors
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from starry_process import StarryProcess
 from starry_process.latitude import beta2gauss, gauss2beta
+import starry
 import theano
 import theano.tensor as tt
 import numpy as np
@@ -110,7 +111,7 @@ def plot_data(data, **kwargs):
     incs = data["incs"]
     flux = data["flux"]
     flux0 = data["flux0"]
-    images = data["images"]
+    y = data["y"]
 
     # Plot the synthetic dataset
     nlc = len(flux)
@@ -140,9 +141,12 @@ def plot_data(data, **kwargs):
     eps = 0.01
     xe = (1 - eps) * xe
     ye = (1 - 0.5 * eps) * ye
-    for k in range(nlc):
+    map = starry.Map(kwargs["generate"]["ydeg"], lazy=False)
+    for k in tqdm(range(nlc)):
+        map[:, :] = y[k]
+        image = 1.0 + map.render(projection="moll", res=300)
         im = axtop[k].imshow(
-            images[k],
+            image,
             origin="lower",
             extent=(-2, 2, -1, 1),
             cmap="plasma",
@@ -261,7 +265,7 @@ def plot_trace(results, **kwargs):
     # Get kwargs
     kwargs = update_with_defaults(**kwargs)
     gen_kwargs = kwargs["generate"]
-    labels = ["r", "a", "b", "c", "n", "bm", "bv"]
+    labels = ["r", "a", "b", "c", "n", "bm", "blv"]
 
     # Get truths
     try:

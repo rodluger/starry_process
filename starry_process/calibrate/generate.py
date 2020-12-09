@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 
 class Star(object):
-    def __init__(self, nlon=300, ydeg=30, linear=True):
+    def __init__(self, nlon=300, ydeg=30, linear=True, smoothing=0.1):
         # Generate a uniform intensity grid
         self.nlon = nlon
         self.nlat = nlon // 2
@@ -17,6 +17,17 @@ class Star(object):
 
         # Instantiate a starry map
         self.map = starry.Map(ydeg, lazy=False)
+
+        # cos(lat)-weighted SHT
+        w = np.cos(self.lat.flatten() * np.pi / 180)
+        PTSinv = P.T * (w ** 2)[None, :]  # @ np.diag(w ** 2)
+        self.Q = np.linalg.solve(PTSinv @ P + eps * np.eye(P.shape[1]), PTSinv)
+        if smoothing > 0:
+            l = np.concatenate(
+                [np.repeat(l, 2 * l + 1) for l in range(ydeg + 1)]
+            )
+            s = np.exp(-0.5 * l * (l + 1) * smoothing ** 2)
+            self.Q *= s[:, None]
 
     def _angular_distance(self, lam1, lam2, phi1, phi2):
         # https://en.wikipedia.org/wiki/Great-circle_distance
@@ -41,20 +52,10 @@ class Star(object):
         else:
             self.intensity[idx] = -contrast
 
-    def flux(self, t, period=1.0, inc=60.0, smoothing=0.1):
+    def flux(self, t, period=1.0, inc=60.0):
         # Expand in Ylms
-        self.map.load(self.intensity)
+        self.map[:, :] = self.Q @ self.intensity.flatten()
         self.map.inc = inc
-
-        # Smooth to get rid of ringing
-        if smoothing > 0:
-            l = np.concatenate(
-                [np.repeat(l, 2 * l + 1) for l in range(self.map.ydeg + 1)]
-            )
-            s = np.exp(-0.5 * l * (l + 1) * smoothing ** 2)
-            self.map._y *= s
-
-        # Get the flux
         return self.map.flux(theta=360.0 / period * t)
 
 
@@ -119,10 +120,14 @@ def generate(**kwargs):
     t = np.linspace(0, tmax, npts)
     flux0 = np.empty((nlc, npts))
     flux = np.empty((nlc, npts))
-    images = [None for k in range(nlc)]
     incs = 180 / np.pi * np.arccos(np.random.uniform(0, 1, size=nlc))
     y = np.zeros((nlc, (ydeg + 1) ** 2))
-    star = Star(nlon=nlon, ydeg=ydeg, linear=gen_kwargs["nspots"]["linear"])
+    star = Star(
+        nlon=nlon,
+        ydeg=ydeg,
+        linear=gen_kwargs["nspots"]["linear"],
+        smoothing=smoothing,
+    )
     for k in tqdm(range(nlc)):
 
         # Generate the stellar map
@@ -132,12 +137,9 @@ def generate(**kwargs):
             star.add_spot(longitude(), latitude(), radius(), contrast())
 
         # Get the light curve
-        flux0[k] = star.flux(
-            t, period=period, inc=incs[k], smoothing=smoothing
-        )
+        flux0[k] = star.flux(t, period=period, inc=incs[k])
 
-        # Render the surface
-        images[k] = 1.0 + star.map.render(projection="moll", res=300)
+        # Store the coefficients
         y[k] = np.array(star.map.amp * star.map.y)
 
     # Add photon noise & optionally normalize
@@ -160,13 +162,6 @@ def generate(**kwargs):
 
     # Return a dict
     data = dict(
-        t=t,
-        flux0=flux0,
-        flux=flux,
-        ferr=ferr,
-        period=period,
-        incs=incs,
-        images=images,
-        y=y,
+        t=t, flux0=flux0, flux=flux, ferr=ferr, period=period, incs=incs, y=y,
     )
     return data

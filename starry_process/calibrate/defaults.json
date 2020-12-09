@@ -49,7 +49,7 @@
         "fit_bm": false,
         "fit_bv": false,
         "bm": 0,
-        "bv": -15,
+        "blv": -15,
         "apply_jac": true,
         "sampler": "NestedSampler",
         "sampler_kwargs": {},

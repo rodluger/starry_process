@@ -3,11 +3,10 @@ import numpy as np
 import pytest
 
 
-@pytest.mark.xfail
 def test_variance():
 
-    sp = StarryProcess()
-    cov = sp.cov([0.0, 0.1])
-    var = sp.cov([0.0])
+    sp = StarryProcess(normalized=False)
+    cov = sp.cov([0.0, 0.1]).eval()
+    var = sp.cov([0.0]).eval()
 
     assert np.allclose(cov[0, 0], var)

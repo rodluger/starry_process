@@ -31,7 +31,7 @@ def sample(data, clobber=False, **kwargs):
     fit_bm = sample_kwargs["fit_bm"]
     fit_bv = sample_kwargs["fit_bv"]
     bm = sample_kwargs["bm"]
-    bv = sample_kwargs["bv"]
+    blv = sample_kwargs["blv"]
     sampler = sample_kwargs["sampler"]
     sampler_kwargs = sample_kwargs["sampler_kwargs"]
     run_nested_kwargs = sample_kwargs["run_nested_kwargs"]
@@ -47,7 +47,7 @@ def sample(data, clobber=False, **kwargs):
         ferr,
         period,
         ydeg=ydeg,
-        baseline_log_var=None if fit_bv else bv,
+        baseline_log_var=None if fit_bv else blv,
         baseline_mean=None if fit_bm else bm,
         apply_jac=apply_jac,
         normalized=normalized,
