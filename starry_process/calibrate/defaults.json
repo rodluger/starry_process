@@ -11,6 +11,10 @@
         "tmax": 4.0,
         "period": 1.0,
         "ferr": 1e-3,
+        "u": [
+            0.0,
+            0.0
+        ],
         "nspots": {
             "mu": 20,
             "sigma": 0,
@@ -44,17 +48,21 @@
         "nmin": 1,
         "bmmin": -0.2,
         "bmmax": 0.2,
-        "bvmin": -15,
-        "bvmax": 0,
+        "blvmin": -15,
+        "blvmax": 0,
         "fit_bm": false,
-        "fit_bv": false,
+        "fit_blv": false,
         "bm": 0,
         "blv": -15,
         "apply_jac": true,
         "sampler": "NestedSampler",
         "sampler_kwargs": {},
         "run_nested_kwargs": {},
-        "compute_inclination_pdf": true
+        "compute_inclination_pdf": true,
+        "u": [
+            0.0,
+            0.0
+        ]
     },
     "plot": {
         "vmin": 0.73,

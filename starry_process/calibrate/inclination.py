@@ -36,7 +36,7 @@ def compute_inclination_pdf(data, results, **kwargs):
         baseline_mean = None
     else:
         baseline_mean = sample_kwargs["bm"]
-    if sample_kwargs["fit_bv"]:
+    if sample_kwargs["fit_blv"]:
         baseline_log_var = None
     else:
         baseline_log_var = sample_kwargs["blv"]

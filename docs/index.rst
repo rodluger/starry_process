@@ -8,8 +8,10 @@ Welcome to the :py:mod:`starry_process` documentation.
    :caption: Contents:
 
     Installation <install>
+    Examples <examples>
     API <api>
-
+    Live demo <http://starry-process.flatironinstitute.org>
+    GitHub <https://github.com/rodluger/starry_process>
 
 Indices and tables
 ==================

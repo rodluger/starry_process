@@ -6,7 +6,13 @@ from tqdm import tqdm
 
 class Star(object):
     def __init__(
-        self, nlon=300, ydeg=30, linear=True, smoothing=0.1, eps=1e-12
+        self,
+        nlon=300,
+        ydeg=30,
+        linear=True,
+        smoothing=0.1,
+        eps=1e-12,
+        u=[0.0, 0.0],
     ):
         # Generate a uniform intensity grid
         self.nlon = nlon
@@ -18,7 +24,8 @@ class Star(object):
         self.linear = linear
 
         # Instantiate a starry map
-        self.map = starry.Map(ydeg, lazy=False)
+        self.map = starry.Map(ydeg=ydeg, udeg=2, lazy=False)
+        self.map[1:] = u
 
         # cos(lat)-weighted SHT
         w = np.cos(self.lat.flatten() * np.pi / 180)
@@ -77,6 +84,7 @@ def generate(**kwargs):
     normalization_method = gen_kwargs["normalization_method"]
     nlon = gen_kwargs["nlon"]
     ydeg = gen_kwargs["ydeg"]
+    u = gen_kwargs["u"]
     smoothing = gen_kwargs["smoothing"]
     nlc = gen_kwargs["nlc"]
     npts = gen_kwargs["npts"]
@@ -132,6 +140,7 @@ def generate(**kwargs):
         ydeg=ydeg,
         linear=gen_kwargs["nspots"]["linear"],
         smoothing=smoothing,
+        u=u,
     )
     for k in tqdm(range(nlc)):
 

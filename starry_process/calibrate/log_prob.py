@@ -17,6 +17,7 @@ def get_log_prob(
     apply_jac=True,
     normalized=True,
     marginalize_over_inclination=True,
+    u=[0.0, 0.0],
 ):
     # Dimensions
     K = len(t)
@@ -42,6 +43,7 @@ def get_log_prob(
         b=b,
         c=c,
         n=n,
+        u=u,
         normalized=normalized,
         marginalize_over_inclination=marginalize_over_inclination,
         covpts=len(t) - 1,

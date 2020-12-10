@@ -40,7 +40,7 @@ clean:
 
 # Generate all figures
 figures/%.pdf: figures/%.py
-	cd $(<D); python $(<F) 2>&1
+	cd $(<D); MAKEFILE=1 python $(<F) 2>&1
 
 # Run all tests
 tests/test_%.tex: tests/test_%.py

@@ -26,16 +26,17 @@ def sample(data, clobber=False, **kwargs):
     nmax = sample_kwargs["nmax"]
     bmmin = sample_kwargs["bmmin"]
     bmmax = sample_kwargs["bmmax"]
-    bvmin = sample_kwargs["bvmin"]
-    bvmax = sample_kwargs["bvmax"]
+    blvmin = sample_kwargs["blvmin"]
+    blvmax = sample_kwargs["blvmax"]
     fit_bm = sample_kwargs["fit_bm"]
-    fit_bv = sample_kwargs["fit_bv"]
+    fit_blv = sample_kwargs["fit_blv"]
     bm = sample_kwargs["bm"]
     blv = sample_kwargs["blv"]
     sampler = sample_kwargs["sampler"]
     sampler_kwargs = sample_kwargs["sampler_kwargs"]
     run_nested_kwargs = sample_kwargs["run_nested_kwargs"]
     apply_jac = sample_kwargs["apply_jac"]
+    u = sample_kwargs["u"]
 
     # Get the log prob function for the dataset
     t = data["t"]
@@ -47,20 +48,21 @@ def sample(data, clobber=False, **kwargs):
         ferr,
         period,
         ydeg=ydeg,
-        baseline_log_var=None if fit_bv else blv,
+        baseline_log_var=None if fit_blv else blv,
         baseline_mean=None if fit_bm else bm,
         apply_jac=apply_jac,
         normalized=normalized,
         marginalize_over_inclination=True,
+        u=u,
     )
 
     # Extra stuff if we're solving for the baseline
-    if fit_bm and fit_bv:
+    if fit_bm and fit_blv:
         ndim = 7
 
         def baseline_ptform(u, x):
             x[5] = bmmin + u[5] * (bmmax - bmmin)
-            x[6] = bvmin + u[6] * (bvmax - bvmin)
+            x[6] = blvmin + u[6] * (blvmax - blvmin)
 
     elif fit_bm:
         ndim = 6
@@ -68,11 +70,11 @@ def sample(data, clobber=False, **kwargs):
         def baseline_ptform(u, x):
             x[5] = bmmin + u[5] * (bmmax - bmmin)
 
-    elif fit_bv:
+    elif fit_blv:
         ndim = 6
 
         def baseline_ptform(u, x):
-            x[5] = bvmin + u[5] * (bvmax - bvmin)
+            x[5] = blvmin + u[5] * (blvmax - blvmin)
 
     else:
         ndim = 5
