@@ -41,4 +41,9 @@ def test_norm(ftol=0.05):
 
     # Fractional error
     error = np.abs((cov_norm - cov_norm_num) / cov_norm)
-    assert np.all(error < ftol)
+    try:
+        assert np.all(error < ftol)
+    except AssertionError as e:
+        print(cov_norm)
+        print(cov_norm_num)
+        raise e

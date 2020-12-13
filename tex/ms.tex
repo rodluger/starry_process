@@ -157,21 +157,21 @@ Among a vast number of kernels are a few that are commonly used
 in modeling stellar variability: the squared exponential kernel,
 %
 \begin{align}
-    k_\mathrm{E^2}(\Delta t) = \sigma^2 e^{-\frac{\Delta t}{2\tau}}
+    k_\mathrm{E^2}(\Delta t) = \sigma^2 \exp\left(-\frac{\Delta t}{2\tau}\right)
     \quad,
 \end{align}
 %
 the Mat\'ern-3/2 kernel,
 %
 \begin{align}
-    k_\mathrm{M^\frac{3}{2}}(\Delta t) = \sigma^2 \left( 1 + \frac{\sqrt{3}\Delta t}{\tau} \right) e^{-\frac{\sqrt{3}\Delta t}{\tau}}
+    k_\mathrm{M^\frac{3}{2}}(\Delta t) = \sigma^2 \left( 1 + \frac{\sqrt{3}\Delta t}{\tau} \right) \exp\left(-\frac{\sqrt{3}\Delta t}{\tau}\right)
     \quad,
 \end{align}
 %
 the exponential sine squared kernel,
 %
 \begin{align}
-    k_\mathrm{S^2}(\Delta t) = \sigma^2 e^{-\Gamma\sin^2\left( \frac{\pi \Delta t}{P} \right)}
+    k_\mathrm{S^2}(\Delta t) = \sigma^2 \exp\left[-\Gamma\sin^2\left( \frac{\pi \Delta t}{P} \right)\right]
     \quad,
 \end{align}
 %
@@ -1906,22 +1906,22 @@ The first moment of the radius distribution is (Equation~\ref{eq:e1})
 %
 Using the equations from the previous section, its components may be written
 %
-\begin{align}
+\begin{proof}{test_erho}
     (e_\rho)^l_m
-     & =
+    & =
     \frac{\delta_{m,0}}{2\Delta}
     \int_{r - \Delta}^{r+ \Delta}
     \tilde{s}_{l}(\rho) \,
     \mathrm{d}\rho
     \nonumber \\
-     & =
+    & =
     \frac{\delta_{m,0}}{2\Delta}
     \sum_{k=0}^{K-1} B^+_{l,k}
     \int_{r - \Delta}^{r + \Delta}
     b_{k}(\rho)
     \mathrm{d}\rho
     \nonumber \\
-     & =
+    & =
     \frac{\delta_{m,0} s}{2\Delta}
     \sum_{k=0}^{K-1} B^+_{l,k}
     \ln
@@ -1934,17 +1934,17 @@ Using the equations from the previous section, its components may be written
     }
     \right)
     \quad.
-\end{align}
+\end{proof}
 %
 In the limit $\Delta \rightarrow 0$,
 %
-\begin{align}
+\begin{proof}{test_erho}
     \lim_{\Delta \rightarrow 0}
     \mathbf{e}_\rho
-     & =
+    & =
     \mathbf{B}^+ \mathbf{b}(r)
     \quad.
-\end{align}
+\end{proof}
 %
 
 \subsubsection{Second moment}
@@ -1972,16 +1972,16 @@ The second moment of the radius distribution is (Equation~\ref{eq:E1})
 As before, its components may be written
 %
 %
-\begin{align}
+\begin{proof}{test_bigErho}
     (E_\rho)^{l,l'}_{m,m'}
-     & =
+    & =
     \frac{\delta_{m,0}\delta_{m',0}}{2\Delta}
     \int_{r - \Delta}^{r + \Delta}
     \tilde{s}^l_{m}(\rho) \,
     \tilde{s}^{l'}_{m'}(\rho) \,
     \mathrm{d}\rho
     \nonumber \\
-     & =
+    & =
     \frac{\delta_{m,0}\delta_{m',0}}{2\Delta}
     \sum_{k=0}^{K-1} B^+_{l,k}
     \sum_{k'=0}^{K-1} B^+_{l',k'}
@@ -1990,57 +1990,72 @@ As before, its components may be written
     b_{k'}(\rho)
     \mathrm{d}\rho
     \nonumber \\
-     & =
+    & =
     \frac{\delta_{m,0}\delta_{m',0}s}{2\Delta}
     \sum_{k=0}^{K-1} B^+_{l,k}
     \sum_{k'=0}^{K-1} B^+_{l',k'}
     C_{k,k'}(r,\Delta)
     \quad,
-\end{align}
+\end{proof}
 %
-where
+where \xxx{[typeset this better!]}
 %
-\begin{align}
+\begin{proof}{test_bigErho}
     C_{k,k'}(r,\Delta)
-     & \equiv
-    \frac{
-        \exp\left(\frac{\vartheta_{k} - \vartheta_{k'}}{s}\right)
-        \ln
-        \left(
+    & \equiv
+    \begin{cases}
         \frac{
-            1+\exp\left(\frac{r -\Delta -\vartheta_{k}}{s}\right)
+            \exp\left(\frac{\vartheta_{k} - \vartheta_{k'}}{s}\right)
+            \ln
+            \left(
+            \frac{
+                1+\exp\left(\frac{r -\Delta -\vartheta_{k}}{s}\right)
+            }
+            {
+                1+\exp\left(\frac{r + \Delta -\vartheta_{k}}{s}\right)
+            }
+            \right)
+            -
+            \ln
+            \left(
+            \frac{
+                1+\exp\left(\frac{r -\Delta -\vartheta_{k'}}{s}\right)
+            }
+            {
+                1+\exp\left(\frac{r + \Delta -\vartheta_{k'}}{s}\right)
+            }
+            \right)
+        }{
+            1
+            -
+            \exp\left(\frac{\vartheta_{k} - \vartheta_{k'}}{s}\right)
         }
-        {
-            1+\exp\left(\frac{r + \Delta -\vartheta_{k}}{s}\right)
-        }
-        \right)
+         & k \ne k'
+        \\
+        \frac{1}{1 + \exp\left( \frac{r + \Delta - \vartheta_k}{s} \right)}
+        +
+        \frac{1}{1 + \exp\left( \frac{-r + \Delta + \vartheta_k}{s} \right)}
         -
-        \ln
-        \left(
-        \frac{
-            1+\exp\left(\frac{r -\Delta -\vartheta_{k'}}{s}\right)
-        }
-        {
-            1+\exp\left(\frac{r + \Delta -\vartheta_{k'}}{s}\right)
-        }
-        \right)
-    }{
-        1
-        -
-        \exp\left(\frac{\vartheta_{k} - \vartheta_{k'}}{s}\right)
-    }
+        \ln\left( \frac{
+            \exp\left( \frac{r - \Delta}{s} \right) + \exp \left(\frac{\vartheta_k}{s}\right)
+        }{
+            \exp\left( \frac{r + \Delta}{s} \right) + \exp \left(\frac{\vartheta_k}{s}\right)
+        } \right)
+        - 1
+         & k = k'
+    \end{cases}
     \quad.
-\end{align}
+\end{proof}
 %
 In the limit $\Delta \rightarrow 0$,
 %
-\begin{align}
+\begin{proof}{test_bigErho}
     \lim_{\Delta \rightarrow 0}
     \mathbf{E}_\rho
-     & =
+    & =
     \mathbf{B}^+ \mathbf{b}(r) \mathbf{b}^\top(r) {\mathbf{B}^+}^\top
     \quad.
-\end{align}
+\end{proof}
 %
 
 \subsection{The Latitude Integrals}
