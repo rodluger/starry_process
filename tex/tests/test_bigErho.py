@@ -41,23 +41,27 @@ def bigErho_dzero(r, s=0.0033 * 180 / np.pi, **kwargs):
 
 def bigErho(r, d, s=0.0033 * 180 / np.pi, **kwargs):
     theta = np.linspace(0, np.pi, kwargs.get("K", 1000)).reshape(-1, 1)
-    num = 1 + np.exp((r - d - theta) / s)
-    den = 1 + np.exp((r + d - theta) / s)
+    chim = np.exp((r - d - theta) / s)
+    chip = np.exp((r + d - theta) / s)
     exp = np.exp((theta - theta.T) / s)
-    C = (exp * np.log(num / den) - np.log(num / den).T) / (1 - exp)
+    C = (
+        exp * np.log((1 + chim) / (1 + chip))
+        - np.log((1 + chim) / (1 + chip)).T
+    ) / (1 - exp)
 
     # When k = kp, we must take the limit, given below
     C[np.diag_indices_from(C)] = (
-        (1 + np.exp((r + d - theta) / s)) ** -1
-        + (1 + np.exp((d - r + theta) / s)) ** -1
-        - np.log(
-            (np.exp((r - d) / s) + np.exp(theta / s))
-            / (np.exp((r + d) / s) + np.exp(theta / s))
-        )
+        1 / (1 + chip)
+        + chim / (1 + chim)
+        - np.log((1 + chim) / (1 + chip))
         - 1
     ).flatten()
+
+    # Normalization
+    C *= s / (2 * d)
+
     Bp = get_Bp(**kwargs)
-    return (s / (2 * d)) * Bp @ C @ Bp.T
+    return Bp @ C @ Bp.T
 
 
 def bigErho_numerical(r, d, **kwargs):

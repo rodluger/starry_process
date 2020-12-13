@@ -26,6 +26,7 @@ def test_norm(ftol=0.05):
     M = 100000
 
     # Random covariance matrix
+    np.random.seed(0)
     L = 0.1 * np.tril(0.25 * np.random.randn(K, K) + np.eye(K))
     cov = L @ L.T
 
@@ -33,7 +34,6 @@ def test_norm(ftol=0.05):
     cov_norm = StarryProcess()._normalize(mu, cov).eval()
 
     # Compute it by sampling
-    np.random.seed(0)
     u = np.random.randn(K, M)
     x = mu + L @ u
     xnorm = x / np.mean(x, axis=0).reshape(1, -1)

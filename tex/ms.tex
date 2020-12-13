@@ -23,7 +23,8 @@
 % Title
 \title{%
     \textbf{
-        Interpretable Gaussian Processes for Stellar Variability
+        Interpretable Gaussian Processes for Stellar Variability\\
+        I: Static Surfaces
     }
 }
 
@@ -1781,8 +1782,24 @@ the spot, $\mathbf{s}(\rho)$, by
     \quad,
 \end{align}
 %
-where $\delta$ is the Kronecker delta function.
-To find the coefficients $\tilde{\mathbf{s}}(\rho)$, we solve the (linear) inverse problem,
+or, in vector form,
+%
+\begin{align}
+    \mathbf{s}(\rho) = \pmb{\mathcal{I}} \, \tilde{\mathbf{s}}(\rho)
+\end{align}
+%
+where $\pmb{\mathcal{I}}$ is a rectangular
+$\left( \left(l_\mathrm{max} + 1\right)^2 \times \left(l_\mathrm{max} + 1\right) \right)$
+identity-like matrix with components
+%
+\begin{align}
+    \mathcal{I}_{n, l} = \delta_{n, l^2 + l}
+    \quad,
+\end{align}
+%
+and $\delta$ is the Kronecker delta function.
+To find the coefficients $\tilde{\mathbf{s}}(\rho)$
+(and hence $\mathbf{s}(\rho)$), we solve the (linear) inverse problem,
 %
 \begin{align}
     \tilde{\mathbf{s}}(\rho) & = \mathbf{B}^+ \, \mathbf{b}(\rho)
@@ -1922,26 +1939,52 @@ Using the equations from the previous section, its components may be written
     \mathrm{d}\rho
     \nonumber \\
     & =
-    \frac{\delta_{m,0} s}{2\Delta}
+    \delta_{m,0}
     \sum_{k=0}^{K-1} B^+_{l,k}
+    c_k(r, \Delta)
+\end{proof}
+%
+where
+%
+\begin{proof}{test_erho}
+    c_k(r, \Delta) & =
+    \frac{s}{2\Delta}
     \ln
     \left(
     \frac{
-        1+\exp\left(\frac{r -\Delta -\vartheta_k}{s}\right)
-    }
-    {
-        1+\exp\left(\frac{r + \Delta -\vartheta_k}{s}\right)
-    }
+            1+\chi_k^-(r, \Delta)
+        }
+        {
+            1+\chi_k^+(r, \Delta)
+        }
     \right)
+\end{proof}
+%
+and
+\begin{proof}{test_erho}
+    \chi_k^-(r, \Delta) & \equiv \exp\left(\frac{r -\Delta -\vartheta_k}{s}\right)
+    \nonumber                                                              \\
+    \chi_k^+(r, \Delta) & \equiv \exp\left(\frac{r +\Delta -\vartheta_k}{s}\right)
     \quad.
 \end{proof}
 %
-In the limit $\Delta \rightarrow 0$,
+In vector form, we may simply write
+%
+\begin{proof}{test_erho}
+    \mathbf{e}_\rho
+    & =
+    \pmb{\mathcal{I}} \,
+    \mathbf{B}^+ \, \mathbf{c}(r, \Delta)
+    \quad.
+\end{proof}
+%
+Note, finally, that in the limit $\Delta \rightarrow 0$,
 %
 \begin{proof}{test_erho}
     \lim_{\Delta \rightarrow 0}
     \mathbf{e}_\rho
     & =
+    \pmb{\mathcal{I}} \,
     \mathbf{B}^+ \mathbf{b}(r)
     \quad.
 \end{proof}
@@ -1991,38 +2034,40 @@ As before, its components may be written
     \mathrm{d}\rho
     \nonumber \\
     & =
-    \frac{\delta_{m,0}\delta_{m',0}s}{2\Delta}
+    \delta_{m,0}\delta_{m',0}
     \sum_{k=0}^{K-1} B^+_{l,k}
     \sum_{k'=0}^{K-1} B^+_{l',k'}
     C_{k,k'}(r,\Delta)
     \quad,
 \end{proof}
 %
-where \xxx{[typeset this better!]}
+where
 %
 \begin{proof}{test_bigErho}
     C_{k,k'}(r,\Delta)
     & \equiv
+    \frac{s}{2\Delta}
     \begin{cases}
+        \displaystyle
         \frac{
             \exp\left(\frac{\vartheta_{k} - \vartheta_{k'}}{s}\right)
             \ln
             \left(
             \frac{
-                1+\exp\left(\frac{r -\Delta -\vartheta_{k}}{s}\right)
+                1+\chi_k^-
             }
             {
-                1+\exp\left(\frac{r + \Delta -\vartheta_{k}}{s}\right)
+                1+\chi_k^+
             }
             \right)
             -
             \ln
             \left(
             \frac{
-                1+\exp\left(\frac{r -\Delta -\vartheta_{k'}}{s}\right)
+                1+\chi_{k'}^-
             }
             {
-                1+\exp\left(\frac{r + \Delta -\vartheta_{k'}}{s}\right)
+                1+\chi_{k'}^+
             }
             \right)
         }{
@@ -2031,29 +2076,42 @@ where \xxx{[typeset this better!]}
             \exp\left(\frac{\vartheta_{k} - \vartheta_{k'}}{s}\right)
         }
          & k \ne k'
-        \\
-        \frac{1}{1 + \exp\left( \frac{r + \Delta - \vartheta_k}{s} \right)}
+        \\[0.5em]
+        \frac{1}{1 + \chi_k^+}
         +
-        \frac{1}{1 + \exp\left( \frac{-r + \Delta + \vartheta_k}{s} \right)}
+        \frac{\chi_k^-}{1 + \chi_k^-}
         -
         \ln\left( \frac{
-            \exp\left( \frac{r - \Delta}{s} \right) + \exp \left(\frac{\vartheta_k}{s}\right)
+            1 + \chi_k^-
         }{
-            \exp\left( \frac{r + \Delta}{s} \right) + \exp \left(\frac{\vartheta_k}{s}\right)
+            1 + \chi_k^+
         } \right)
         - 1
          & k = k'
+        \quad.
     \end{cases}
+\end{proof}
+%
+In vector form, this may be written
+%
+\begin{proof}{test_bigErho}
+    \mathbf{E}_\rho
+    &=
+    \pmb{\mathcal{I}} \,
+    \mathbf{B}^+ \mathbf{C} (r, \Delta) {\mathbf{B}^+}^\top
+    \pmb{\mathcal{I}}^\top
     \quad.
 \end{proof}
 %
-In the limit $\Delta \rightarrow 0$,
+Finally, in the limit $\Delta \rightarrow 0$,
 %
 \begin{proof}{test_bigErho}
     \lim_{\Delta \rightarrow 0}
     \mathbf{E}_\rho
     & =
+    \pmb{\mathcal{I}} \,
     \mathbf{B}^+ \mathbf{b}(r) \mathbf{b}^\top(r) {\mathbf{B}^+}^\top
+    \pmb{\mathcal{I}}^\top
     \quad.
 \end{proof}
 %
