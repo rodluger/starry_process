@@ -17,6 +17,9 @@ tectonic: ms.tex bib.bib $(FIGURES) $(TESTS)
 	# Generate links to current git commit
 	python gen_links.py
 
+	# Tally test results
+	cd tests; python tally.py; cd ..
+
 	# Compile the paper
 	tectonic ms.tex --print --keep-logs
 
@@ -25,6 +28,9 @@ pdflatex: ms.tex bib.bib $(FIGURES) $(TESTS)
 
 	# Generate links to current git commit
 	python gen_links.py
+
+	# Tally test results
+	cd tests; python tally.py; cd ..
 
 	# Compile the paper
 	${LATEX} ms.tex
@@ -37,6 +43,7 @@ clean:
 	$(RM_TMP)
 	rm -rf $(FIGURES)
 	rm -rf $(TESTS)
+	rm -f tests/tally.tex
 
 # Generate all figures
 figures/%.pdf: figures/%.py

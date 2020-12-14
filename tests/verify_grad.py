@@ -148,9 +148,21 @@ def verify_grad(
         # Since `tensor_pt` is a list, `analytic_grad` should be one too.
         assert isinstance(analytic_grad, list)
 
-        max_arg, max_err_pos, max_abs_err, max_rel_err = num_grad.max_err(
-            analytic_grad, abs_tol, rel_tol
-        )
+        try:
+
+            max_arg, max_err_pos, max_abs_err, max_rel_err = num_grad.max_err(
+                analytic_grad, abs_tol, rel_tol
+            )
+
+        except ValueError:
+
+            # usually b/c NaNs
+
+            raise_error(
+                "Numerical: {}\nAnalytic: {}".format(
+                    num_grad.gf, analytic_grad
+                )
+            )
 
         if max_abs_err > abs_tol and max_rel_err > rel_tol:
 

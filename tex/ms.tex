@@ -37,7 +37,7 @@
 
 \keywords{methods: analytic}
 
-\features{open-source figures \codeicon; equation unit tests \testpassicon}
+\features{open-source figures \codeicon; unit tests: \input{tests/tally}}
 
 \begin{abstract}
     The use of Gaussian processes (GPs) in stellar light curve modeling has recently
@@ -2542,7 +2542,7 @@ the gamma function and the hypergeometric function.
 %
 Similarly as before, let us write the second moment integral as
 %
-\begin{proof}{}
+\begin{proof}{test_bigEphi}
     \label{eq:Ephi}
     \mathbf{E}_\phi
     & \equiv
@@ -2571,7 +2571,7 @@ Similarly as before, let us write the second moment integral as
 %
 where
 %
-\begin{proof}{}
+\begin{proof}{test_bigEphi}
     \mathbf{E}_\phi^{l,l'}
     & =
     \int
@@ -2646,7 +2646,7 @@ closed form. Let us write the terms of $\mathbf{P}^{l,l'}_\phi$ as
 %
 where, similarly to before,
 %
-\begin{proof}{}
+\begin{proof}{test_bigEphi}
     {({Q^{l,l'}_\phi})_{}}_{i,i'}(\pmb{\theta}_{\phi})
     & \equiv
     \frac{1}{2}
@@ -2686,7 +2686,7 @@ where, similarly to before,
 %
 We may again express this integral in closed form:
 %
-\begin{proof}{}
+\begin{proof}{test_bigEphi}
     %
     \label{eq:Qlphiij}
     {({Q^{l,l'}_\phi})_{}}_{i,i'}(\pmb{\theta}_{\phi})
@@ -2739,7 +2739,7 @@ To compute $\mu_\phi$, we differentiate Equation~(\ref{eq:phi-pdf}) with respect
 to $\phi$, set the expression equal to zero, and solve
 for $\phi$ to obtain
 %
-\begin{proof}{}
+\begin{proof}{test_lat_transforms}
     \mu_\phi &= 2 \tan^{-1}
     \left(
     \sqrt{
@@ -2771,7 +2771,7 @@ We therefore twice differentiate the log of Equation~(\ref{eq:phi-pdf}), negate 
 take the reciprocal, and evaluate it at $\phi = \mu_\phi$ to obtain a local
 approximation to the standard deviation of the distribution at the mode:
 %
-\begin{proof}{}
+\begin{proof}{test_lat_transforms}
     \sigma_\phi &= \frac{\sin\mu_\phi}{
         \sqrt{1
             - \alpha
@@ -2783,7 +2783,7 @@ approximation to the standard deviation of the distribution at the mode:
 %
 For completeness, the inverse transform also has a closed form:
 %
-\begin{proof}{}
+\begin{proof}{test_lat_transforms}
     \alpha &= \frac{2 + 4 \sigma_\phi^2 + (3 + 8 \sigma_\phi^2) \cos\mu_\phi + 2 \cos\left( 2\mu_\phi \right) + \cos\left( 3\mu_\phi \right)}{16 \sigma_\phi^2 \cos\left( \frac{\mu_\phi}{2} \right)^4} \\
     \beta &= \frac{\cos\mu_\phi + 2 \sigma_\phi^2 (3 + \cos\left( 2\mu_\phi \right)) - \cos\left( 3\mu_\phi \right)}{16 \sigma_\phi^2 \cos\left( \frac{\mu_\phi}{2} \right)^4}
     \quad.
@@ -2794,7 +2794,7 @@ $b$ to constraints on the mode and approximate variance of the distribution
 of spot latitudes. Importantly, they also allow us to compute the Jacobian
 of the transform, given by
 %
-\begin{proof}{}
+\begin{proof}{test_lat_jac}
     J &=
     \frac{\partial{\mu_\phi}}{\partial{a}}
     \frac{\partial{\sigma_\phi}}{\partial{b}} -
@@ -2805,6 +2805,7 @@ of the transform, given by
     %
     &=\resizebox{.925\hsize}{!}{$
             \frac{
+                \left(K_{10} - K_{00}\right) \left(K_{11} - K_{10}\right)
                 \alpha \beta \left(1 + \cos\mu_\phi\right)^3
                 \sin\left(2\mu_\phi\right)^3
             }{

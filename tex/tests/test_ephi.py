@@ -68,7 +68,7 @@ def qli(l, i, alpha, beta):
         return 0.0
 
 
-def rholm(l, m, alpha, beta, elr):
+def plm(l, m, alpha, beta, elr):
     term1 = 0
     for mu in range(-l, l + 1):
         term2 = 0
@@ -78,16 +78,16 @@ def rholm(l, m, alpha, beta, elr):
     return term1 / B(alpha, beta)
 
 
-def rhol(l, alpha, beta, elr):
-    rho = np.zeros(2 * l + 1, dtype="complex128")
+def pl(l, alpha, beta, elr):
+    p = np.zeros(2 * l + 1, dtype="complex128")
     for m in range(-l, l + 1):
-        rho[l + m] = rholm(l, m, alpha, beta, elr)
-    return rho
+        p[l + m] = plm(l, m, alpha, beta, elr)
+    return p
 
 
 def elphi(l, alpha, beta, elr):
     U = Ul(l)
-    return np.linalg.inv(U) @ rhol(l, alpha, beta, U @ elr)
+    return np.linalg.inv(U) @ pl(l, alpha, beta, U @ elr)
 
 
 def ephi(alpha, beta, er):

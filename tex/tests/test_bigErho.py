@@ -3,7 +3,7 @@ from scipy.integrate import quad
 from scipy.special import legendre as P
 
 
-def b(rho, K=1000, s=0.0033 * 180 / np.pi, **kwargs):
+def b(rho, K=1000, s=0.0033, **kwargs):
     """
     The sigmoid spot profile.
 
@@ -34,32 +34,44 @@ def get_Bp(K=1000, lmax=5, eps=1e-9, sigma=15, **kwargs):
     return BInv
 
 
-def bigErho_dzero(r, s=0.0033 * 180 / np.pi, **kwargs):
+def bigErho_dzero(r, s=0.0033, **kwargs):
     L = (get_Bp(**kwargs) @ b(r)).reshape(-1, 1)
     return L @ L.T
 
 
-def bigErho(r, d, s=0.0033 * 180 / np.pi, **kwargs):
-    theta = np.linspace(0, np.pi, kwargs.get("K", 1000)).reshape(-1, 1)
-    chim = np.exp((r - d - theta) / s)
-    chip = np.exp((r + d - theta) / s)
-    exp = np.exp((theta - theta.T) / s)
-    C = (
-        exp * np.log((1 + chim) / (1 + chip))
-        - np.log((1 + chim) / (1 + chip)).T
-    ) / (1 - exp)
+def bigErho(r, d, s=0.0033, cutoff=1.5, **kwargs):
+    # Theta array
+    # NOTE: For theta > r + d, the `C` matrix drops
+    # to zero VERY quickly. In practice we get better
+    # numerical stability if we just set those elements
+    # to zero without evaluating them, especially since
+    # we can get NaNs from operations involving the extremely
+    # large dynamic range between the `exp` and `ln` terms.
+    # TODO: It's likely we can find a more numerically stable
+    # expression for `C`...
+    K = kwargs.get("K", 1000)
+    theta = np.linspace(0, np.pi, K).reshape(-1, 1)
+    kmax = np.argmax(theta / (r + d) > cutoff)
+
+    chim = np.exp((r - d - theta[:kmax]) / s)
+    chip = np.exp((r + d - theta[:kmax]) / s)
+    exp = np.exp((theta[:kmax] - theta[:kmax].T) / s)
+    term = np.log((1 + chim) / (1 + chip))
+    C0 = (exp * term - term.T) / (1 - exp)
 
     # When k = kp, we must take the limit, given below
-    C[np.diag_indices_from(C)] = (
-        1 / (1 + chip)
-        + chim / (1 + chim)
-        - np.log((1 + chim) / (1 + chip))
-        - 1
+    C0[np.diag_indices_from(C0)] = (
+        1 / (1 + chip) + chim / (1 + chim) - term - 1
     ).flatten()
 
     # Normalization
-    C *= s / (2 * d)
+    C0 *= s / (2 * d)
 
+    # Fill in the full matrix
+    C = np.zeros((K, K))
+    C[:kmax, :kmax] = C0
+
+    # Rotate into ylm space
     Bp = get_Bp(**kwargs)
     return Bp @ C @ Bp.T
 
