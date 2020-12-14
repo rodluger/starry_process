@@ -16,7 +16,7 @@ def clmmpi(l, m, mp, i):
     """The Wigner-d matrix coefficients c^l_{m, m', i}."""
     if (m - mp - i) % 2 == 0:
         return (
-            (-1) ** ((2 * l + 3 * m + mp - i) / 2)
+            (-1) ** ((2 * l - m + mp - i) / 2)
             * np.sqrt(
                 factorial(l - m)
                 * factorial(l + m)
@@ -60,14 +60,14 @@ def dlmmp_sympy(l, m, mp, beta):
     return np.float(re(Rotation.d(l, m, mp, -beta).doit().evalf()))
 
 
-def test_dlmmp(lmax=3, nbeta=3):
+def test_dlmmp(lmax=3, nbeta=10):
     """
     Compare our expression to the one in `sympy` up to degree `lmax`
     for a few different values of `beta`.
     """
     np.random.seed(0)
     for n in tqdm(range(nbeta)):
-        beta = np.random.uniform(-0.5 * np.pi, 0.5 * np.pi)
+        beta = np.random.uniform(-np.pi, np.pi)
         for l in range(lmax + 1):
             for m in range(-l, l + 1):
                 for mp in range(-l, l + 1):

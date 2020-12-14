@@ -13,7 +13,14 @@ __all__ = ["EighOp"]
 
 
 def _numpy_eigh(x, neig):
-    eigvals, eigvecs = np.linalg.eigh(x)
+    try:
+        eigvals, eigvecs = np.linalg.eigh(x)
+    except np.linalg.LinAlgError:
+        # Fail silently
+        return (
+            np.ones(neig) * np.nan,
+            np.ones((x.shape[0], neig)) * np.nan,
+        )
     return (
         np.ascontiguousarray(eigvals[-neig:]),
         np.ascontiguousarray(eigvecs[:, -neig:]),

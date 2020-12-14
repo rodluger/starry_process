@@ -37,22 +37,22 @@ def Ul(l):
     return U
 
 
-def clmmpi(l, m, mu, i):
-    if (m - mu - i) % 2 == 0:
+def clmmpi(l, m, mp, i):
+    if (m - mp - i) % 2 == 0:
         return (
-            (-1) ** ((2 * l + 3 * m + mu - i) / 2)
+            (-1) ** ((2 * l - m + mp - i) / 2)
             * np.sqrt(
                 factorial(l - m)
                 * factorial(l + m)
-                * factorial(l - mu)
-                * factorial(l + mu)
+                * factorial(l - mp)
+                * factorial(l + mp)
             )
             / (
                 2 ** l
-                * factorial((i - m - mu) / 2)
-                * factorial((i + m + mu) / 2)
-                * factorial((2 * l - i - m + mu) / 2)
-                * factorial((2 * l - i + m - mu) / 2)
+                * factorial((i - m - mp) / 2)
+                * factorial((i + m + mp) / 2)
+                * factorial((2 * l - i - m + mp) / 2)
+                * factorial((2 * l - i + m - mp) / 2)
             )
         )
     else:

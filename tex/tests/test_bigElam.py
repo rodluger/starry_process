@@ -1,9 +1,7 @@
 import numpy as np
 from scipy.special import gamma as Gamma
-from scipy.special import beta as B
 from scipy.special import hyp2f1
 from scipy.integrate import quad
-from scipy.stats import beta as Beta
 from wigner import R
 from tqdm.auto import tqdm
 
@@ -60,16 +58,20 @@ def clmmpi(l, m, mp, i):
         return 0.0
 
 
-def Qllpiip(l, lp, i, ip, alpha, beta):
+def Qllpiip(l, lp, i, ip):
     if (i + ip) % 2 == 0:
-        return B(alpha, l + lp + beta - (i + ip) / 2) * hyp2f1(
-            -(i + ip) / 2, alpha, l + lp + alpha + beta - (i + ip) / 2, -1
+        return (
+            2 ** (l + lp)
+            / np.pi
+            * Gamma(0.5 * (1 + i + ip))
+            * Gamma(l + lp + 0.5 * (1 - i - ip))
+            / Gamma(l + lp + 1)
         )
     else:
         return 0.0
 
 
-def Pllpmmp(l, lp, m, mp, alpha, beta, Ellpr):
+def Pllpmmp(l, lp, m, mp, Ellpphi):
     term1 = 0
     for mu in range(-l, l + 1):
         for mup in range(-lp, lp + 1):
@@ -79,73 +81,70 @@ def Pllpmmp(l, lp, m, mp, alpha, beta, Ellpr):
                     term2 += (
                         clmmpi(l, m, mu, i)
                         * clmmpi(lp, mp, mup, ip)
-                        * Qllpiip(l, lp, i, ip, alpha, beta)
+                        * Qllpiip(l, lp, i, ip)
                     )
-            term1 += (
-                Ellpr[l + mu, lp + mup]
-                * np.exp(1j * np.pi / 2 * (m - mu + mp - mup))
-                * term2
-            )
-    return term1 / B(alpha, beta)
+            term1 += Ellpphi[l + mu, lp + mup] * term2
+    return term1
 
 
-def Pllp(l, lp, alpha, beta, Ellpr):
+def Pllp(l, lp, Ellpphi):
     P = np.zeros((2 * l + 1, 2 * lp + 1), dtype="complex128")
     for m in range(-l, l + 1):
         for mp in range(-lp, lp + 1):
-            P[l + m, lp + mp] = Pllpmmp(l, lp, m, mp, alpha, beta, Ellpr)
+            P[l + m, lp + mp] = Pllpmmp(l, lp, m, mp, Ellpphi)
     return P
 
 
-def Ellpphi(l, lp, alpha, beta, Ellpr):
+def Ellplam(l, lp, Ellpphi):
     return (
         np.linalg.inv(Ul(l))
-        @ Pllp(l, lp, alpha, beta, Ul(l) @ Ellpr @ Ul(lp).T)
+        @ Pllp(l, lp, Ul(l) @ Ellpphi @ Ul(lp).T)
         @ np.linalg.inv(Ul(lp)).T
     )
 
 
-def bigEphi(alpha, beta, Er):
-    lmax = int(np.sqrt(Er.shape[0]) - 1)
+def bigElam(Ephi):
+    lmax = int(np.sqrt(Ephi.shape[0]) - 1)
     N = (lmax + 1) ** 2
     E = np.zeros((N, N), dtype="complex128")
     for l in tqdm(range(lmax + 1)):
         for lp in range(lmax + 1):
             i = slice(l ** 2, (l + 1) ** 2)
             j = slice(lp ** 2, (lp + 1) ** 2)
-            E[i, j] = Ellpphi(l, lp, alpha, beta, Er[i, j])
+            E[i, j] = Ellplam(l, lp, Ephi[i, j])
     assert np.max(np.abs(E.imag)) < 1e-15
     return E.real
 
 
-def bigEphi_numerical(alpha, beta, Er):
-    lmax = int(np.sqrt(Er.shape[0]) - 1)
+def bigElam_numerical(Ephi):
+    lmax = int(np.sqrt(Ephi.shape[0]) - 1)
     N = (lmax + 1) ** 2
     E = np.zeros((N, N))
     for n1 in tqdm(range(N)):
         for n2 in range(N):
 
-            def func(phi):
-                Rl = R(lmax, 0.5 * np.pi, phi, -0.5 * np.pi)
+            def func(lam):
+                Rl = R(lmax, 0, lam, 0)
                 Rs = np.zeros((N, N))
                 for l in range(lmax + 1):
                     for lp in range(lmax + 1):
                         i = slice(l ** 2, (l + 1) ** 2)
                         j = slice(lp ** 2, (lp + 1) ** 2)
-                        Rs[i, j] = Rl[l] @ Er[i, j] @ Rl[lp].T
-                jac = 0.5 * np.abs(np.sin(phi))
-                return Rs[n1, n2] * jac * Beta.pdf(np.cos(phi), alpha, beta)
+                        Rs[i, j] = Rl[l] @ Ephi[i, j] @ Rl[lp].T
+                return Rs[n1, n2] / (2 * np.pi)
 
-            E[n1, n2] = quad(func, -np.pi / 2, np.pi / 2)[0]
+            E[n1, n2] = quad(func, -np.pi, np.pi)[0]
 
     return E
 
 
-def test_bigEphi(lmax=3, alpha=2.0, beta=5.0):
+def test_bigElam(lmax=2):
     np.random.seed(0)
-    Er = np.random.randn((lmax + 1) ** 2, (lmax + 1) ** 2)
-    Er = Er + Er.T
-    Ephi1 = bigEphi(alpha, beta, Er)
-    Ephi2 = bigEphi_numerical(alpha, beta, Er)
-    assert np.allclose(Ephi1, Ephi2)
+    Ephi = np.random.randn((lmax + 1) ** 2, (lmax + 1) ** 2)
+    Ephi = Ephi + Ephi.T
+
+    Elam1 = bigElam(Ephi)
+    Elam2 = bigElam_numerical(Ephi)
+
+    assert np.allclose(Elam1, Elam2)
 

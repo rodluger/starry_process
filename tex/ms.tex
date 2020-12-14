@@ -2206,7 +2206,7 @@ where
     \resizebox{.75\hsize}{!}{$
             \begin{cases}
                 \dfrac{
-                \left(-1\right)^{\frac{2l + 3m + m' - i}{2}}
+                \left(-1\right)^{\frac{2l - m + m' - i}{2}}
                 \sqrt{\left(l - m\right)!
                     \left(l + m\right)!
                     \left(l - m'\right)!
@@ -2621,7 +2621,7 @@ closed form. Let us write the terms of $\mathbf{P}^{l,l'}_\phi$ as
     \sum\limits_{{\mu'}=-l'}^{l'}
     {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(\phi) \,
     {(\bar{E}^{l,l'}_r)_{}}_{\mu,{\mu'}} \,
-    {({D^{l'}_{\hat{\mathbf{x}}}})_{}}_{{\mu'},m'}(\phi) \,
+    {({D^{l'}_{\hat{\mathbf{x}}}})_{}}_{m',{\mu'}}(\phi) \,
     p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
     \mathrm{d}\phi
     %
@@ -2633,11 +2633,11 @@ closed form. Let us write the terms of $\mathbf{P}^{l,l'}_\phi$ as
         \sum\limits_{\mu=-l}^l
         \sum\limits_{{\mu'}=-l'}^{l'}
         {(\bar{E}^{l,l'}_r)_{}}_{\mu,{\mu'}} \,
-        \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu + {\mu'} - m')}
+        \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu + m' - {\mu'})}
         \sum\limits_{i=0}^{2l}
         \sum\limits_{i'=0}^{2l'}
         c_{m,\mu,i}^{l}
-        c_{{\mu'},m',i'}^{l'}
+        c_{m',{\mu'},i'}^{l'}
         \,
         {({Q^{l,l'}_\phi})_{}}_{i,i'}(\pmb{\theta}_{\phi})
     $}
@@ -3068,7 +3068,7 @@ for efficiency.
 %
 We write the second moment integral as
 %
-\begin{proof}{}
+\begin{proof}{test_bigElam}
     \mathbf{E}_\lambda
     & \equiv
     \int
@@ -3096,7 +3096,7 @@ We write the second moment integral as
 %
 where
 %
-\begin{proof}{}
+\begin{proof}{test_bigElam}
     \mathbf{E}_\lambda^{l,l'}
     & =
     \int
@@ -3145,7 +3145,7 @@ We then express the terms of $\mathbf{P}^{l,l'}_\lambda$ as
     \sum\limits_{{\mu'}=-l'}^{l'}
     ({D^l_{\hat{\mathbf{x}}}})_{m,\mu}(\lambda) \,
     (\bar{E}^{l,l'}_\phi)_{\mu,{\mu'}} \,
-    ({D^{l'}_{\hat{\mathbf{x}}}})_{{\mu'},m'}(\lambda) \,
+    ({D^{l'}_{\hat{\mathbf{x}}}})_{m',{\mu'}}(\lambda) \,
     p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
     \mathrm{d}\lambda
     %
@@ -3158,7 +3158,7 @@ We then express the terms of $\mathbf{P}^{l,l'}_\lambda$ as
     \sum\limits_{i=0}^{2l}
     \sum\limits_{i'=0}^{2l'}
     c_{m,\mu,i}^{l}
-    c_{{\mu'},m',i'}^{l'}
+    c_{m',{\mu'},i'}^{l'}
     \,
     (Q^{l,l'}_\lambda)_{i,i'}
     \quad,
@@ -3166,7 +3166,7 @@ We then express the terms of $\mathbf{P}^{l,l'}_\lambda$ as
 %
 where
 %
-\begin{proof}{}
+\begin{proof}{test_bigElam}
     (Q^{l,l'}_\lambda)_{i,i'}
     & \equiv
     \frac{1}{2\pi}
