@@ -3316,23 +3316,23 @@ for $I \in [0, \frac{\pi}{2}]$.
 \label{sec:inc-mom1}
 The expression for the first moment is
 %
-\begin{proof}{}
+\begin{align}
     \mathbf{e}_I
-    & \equiv
+     & \equiv
     \int
     \pmb{\mathcal{A}}(I, \bar{\pmb{\theta}}_\star) \,
     \mathbf{e}_y \,
     p(I) \,
     \mathrm{d}I
-\end{proof}
+\end{align}
 %
 where
 %
-\begin{proof}{}
+\begin{align}
     \mathbf{e}_y
-    & \equiv
+     & \equiv
     \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
-\end{proof}
+\end{align}
 %
 is the first moment of the GP in the spherical harmonic basis
 (Equation~\ref{eq:exp_y}). We can use Equations~(\ref{eq:Arows})
@@ -3384,26 +3384,26 @@ in the light curve. The rotation about $\hat{\mathbf{z}}$ (i.e., the
 rotational axis of the star) therefore cannot change the expectation
 of $\mathbf{y}$, so
 %
-\begin{proof}{}
+\begin{align}
     \left(\mathbf{e}_{y'}\right)_k
-    &=
+     & =
     \left(\mathbf{e}_{y'}\right)_0
-    \nonumber \\
-    &=
+    \nonumber                 \\
+     & =
     \mathbf{R}_{\hat{\mathbf{x}}}\left(\frac{\pi}{2}\right) \,
     \mathbf{e}_y
-    \nonumber \\
-    &\equiv \mathbf{e}_{y'}
+    \nonumber                 \\
+     & \equiv \mathbf{e}_{y'}
     \quad.
-\end{proof}
+\end{align}
 %
 We therefore have
 %
-\begin{proof}{}
+\begin{align}
     \mathbf{e}_I
-    & \equiv
+     & \equiv
     e_I \, \mathbf{1}
-\end{proof}
+\end{align}
 %
 where
 %
@@ -3415,7 +3415,7 @@ where
     \mathbf{e}_{y''}
 \end{align}
 %
-where
+and
 %
 \begin{align}
     \mathbf{e}_{y''}
@@ -3447,7 +3447,7 @@ is the expectation of $\mathbf{y}$ in the observer's frame,
 and as before we explicitly separate it out by spherical harmonic degree.
 As in \S\ref{sec:lat}, we may write
 %
-\begin{proof}{}
+\begin{proof}{test_eI}
     \mathbf{e}_{y''}^l
     & =
     \int
@@ -3485,9 +3485,9 @@ and we define
 The integral $\mathbf{p}^l_I$ defined above has a closed-form solution.
 To show this, we write the terms of $\mathbf{p}^l_I$ as
 %
-\begin{align}
+\begin{proof}{test_eI}
     {({p^l_I})_{}}_m
-     & =
+    & =
     \int
     \sum\limits_{\mu=-l}^l
     {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(-I) \,
@@ -3497,7 +3497,7 @@ To show this, we write the terms of $\mathbf{p}^l_I$ as
     %
     \nonumber \\[0.5em]
     %
-     & =
+    & =
     \sum\limits_{\mu=-l}^l
     {({\bar{e}}^l_{y'})_{}}_{\mu}
     \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu)}
@@ -3505,11 +3505,11 @@ To show this, we write the terms of $\mathbf{p}^l_I$ as
     \,
     {({q^l_I})_{}}_i
     \quad,
-\end{align}
+\end{proof}
 %
 where
 %
-\begin{proof}{}
+\begin{proof}{test_eI}
     {({q^l_I})_{}}_i
     & \equiv
     \int_{0}^{\frac{\pi}{2}}
@@ -3525,7 +3525,7 @@ where
     %
     & =
     %
-    (-1)^{i + 1}
+    (-1)^{i}
     \displaystyle\int_{0}^{1}
     %
     (1 - x)^{\frac{2l - i}{2}}
@@ -3534,7 +3534,7 @@ where
     \mathrm{d}x
     \nonumber \\[0.5em]
     &=
-    \frac{(-1)^{i+1}}{l-\frac{i}{2}+1}
+    \frac{(-1)^{i}}{l-\frac{i}{2}+1}
     \,
     {_2F_1}\left(
     1, -\frac{i}{2}; 2 + l - \frac{i}{2}; -1
@@ -3553,24 +3553,24 @@ depend on any user inputs.
 %
 The expression for the second moment is
 %
-\begin{proof}{}
+\begin{align}
     \mathbf{E}_I
-    & \equiv
+     & \equiv
     \int
     \pmb{\mathcal{A}}(I, \bar{\pmb{\theta}}_\star) \,
     \mathbf{E}_y \,
     \pmb{\mathcal{A}}^\top(I, \bar{\pmb{\theta}}_\star) \,
     p(I) \,
     \mathrm{d}I
-\end{proof}
+\end{align}
 %
 where
 %
-\begin{proof}{}
+\begin{align}
     \mathbf{E}_y
-    & \equiv
+     & \equiv
     \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
-\end{proof}
+\end{align}
 %
 is the second moment of the GP in the spherical harmonic basis
 (Equation~\ref{eq:exp_yy}). We can use Equations~(\ref{eq:Arows})
@@ -3752,7 +3752,7 @@ where, similarly to before,
     %
     & =
     %
-    (-1)^{i+i'+1}
+    (-1)^{i+i'}
     \int_{0}^{\frac{\pi}{2}}
     %
     (1 - x)^{l + l' - \frac{i+i'}{2}}
@@ -3764,7 +3764,7 @@ where, similarly to before,
     %
     &=
     %
-    \frac{(-1)^{i+i'+1}}{l+l'-\frac{i+i'}{2}+1}
+    \frac{(-1)^{i+i'}}{l+l'-\frac{i+i'}{2}+1}
     \,
     {_2F_1}\left(
     1, -\frac{i+i'}{2}; 2 + l + l' - \frac{i+i'}{2}; -1
