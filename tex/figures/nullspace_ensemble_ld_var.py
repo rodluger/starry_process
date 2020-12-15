@@ -7,6 +7,8 @@ import os
 # Settings
 ntheta = 50
 ydeg = 15
+u_mu = np.array([0.5, 0.25])
+u_sigma = np.array([0.05, 0.025])
 ydeg_pad = 3
 L = 1e9
 C = 1
@@ -15,9 +17,11 @@ kpn = 300
 clobber = False
 
 # Compute
-DATA_FILE = os.path.abspath(os.path.join("data", "nullspace_ensemble.npz"))
+DATA_FILE = os.path.abspath(
+    os.path.join("data", "nullspace_ensemble_ld_var.npz")
+)
 if clobber or not os.path.exists(DATA_FILE):
-    map = starry.Map(ydeg + ydeg_pad, lazy=False)
+    map = starry.Map(ydeg=ydeg + ydeg_pad, udeg=len(u_mu), lazy=False)
     theta = np.linspace(0, 360, ntheta, endpoint=False)
     S = np.empty((len(ninc), kpn, map.Ny))
     np.random.seed(0)
@@ -26,6 +30,7 @@ if clobber or not os.path.exists(DATA_FILE):
             A = np.empty((0, map.Ny))
             for _ in range(ninc[n]):
                 map.inc = 180 / np.pi * np.arccos(np.random.uniform(0, 1))
+                map[1:] = u_mu + np.random.randn(2) * u_sigma
                 A = np.vstack((A, map.design_matrix(theta=theta)))
             cho_C = starry.linalg.solve(
                 design_matrix=A,
@@ -74,5 +79,4 @@ print(
     np.mean(S[:, :, : (ydeg + 1) ** 2], axis=(1, 2)),
 )
 
-# Save
 fig.savefig(__file__.replace("py", "pdf"), bbox_inches="tight", dpi=300)

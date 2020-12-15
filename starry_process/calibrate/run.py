@@ -30,7 +30,12 @@ def run(
             open(os.path.join(path, "kwargs.json"), "w"),
         )
     else:
-        kwargs = json.load(open(os.path.join(path, "kwargs.json"), "r"))
+        input_kwargs = defaults.update_with_defaults(**kwargs)
+        saved_kwargs = json.load(open(os.path.join(path, "kwargs.json"), "r"))
+        assert (
+            input_kwargs == saved_kwargs
+        ), "Input kwargs don't match saved kwargs for this run."
+        kwargs = saved_kwargs
 
     # Generate
     if clobber or not os.path.exists(os.path.join(path, "data.npz")):
@@ -41,8 +46,9 @@ def run(
 
     # Plot the data
     if plot_all or plot_data:
-        fig = plot.plot_data(data, **kwargs)
-        fig.savefig(os.path.join(path, "data.pdf"), bbox_inches="tight")
+        if clobber or not os.path.exists(os.path.join(path, "data.pdf")):
+            fig = plot.plot_data(data, **kwargs)
+            fig.savefig(os.path.join(path, "data.pdf"), bbox_inches="tight")
 
     # Sample
     if clobber or not os.path.exists(os.path.join(path, "results.pkl")):
@@ -69,36 +75,53 @@ def run(
         inc_results = None
 
     # Transform latitude params and store posterior mean and cov
-    samples = np.array(results.samples)
-    samples[:, 1], samples[:, 2] = beta2gauss(samples[:, 1], samples[:, 2])
-    try:
-        weights = np.exp(results["logwt"] - results["logz"][-1])
-    except:
-        weights = results["weights"]
-    mean, cov = dyfunc.mean_and_cov(samples, weights)
-    np.savez(os.path.join(path, "mean_and_cov.npz"), mean=mean, cov=cov)
+    if clobber or not os.path.exists(os.path.join(path, "mean_and_cov.npz")):
+        samples = np.array(results.samples)
+        samples[:, 1], samples[:, 2] = beta2gauss(samples[:, 1], samples[:, 2])
+        try:
+            weights = np.exp(results["logwt"] - results["logz"][-1])
+        except:
+            weights = results["weights"]
+        mean, cov = dyfunc.mean_and_cov(samples, weights)
+        np.savez(os.path.join(path, "mean_and_cov.npz"), mean=mean, cov=cov)
+    else:
+        mean_and_cov = np.load(os.path.join(path, "mean_and_cov.npz"))
+        mean = mean_and_cov["mean"]
+        cov = mean_and_cov["cov"]
 
     # Plot the results
     if plot_all or plot_latitude_pdf:
-        fig = plot.plot_latitude_pdf(results, **kwargs)
-        fig.savefig(os.path.join(path, "latitude.pdf"), bbox_inches="tight")
+        if clobber or not os.path.exists(os.path.join(path, "latitude.pdf")):
+            fig = plot.plot_latitude_pdf(results, **kwargs)
+            fig.savefig(
+                os.path.join(path, "latitude.pdf"), bbox_inches="tight"
+            )
 
     if plot_all or plot_trace:
-        fig = plot.plot_trace(results, **kwargs)
-        fig.savefig(os.path.join(path, "trace.pdf"), bbox_inches="tight")
+        if clobber or not os.path.exists(os.path.join(path, "trace.pdf")):
+            fig = plot.plot_trace(results, **kwargs)
+            fig.savefig(os.path.join(path, "trace.pdf"), bbox_inches="tight")
 
     if plot_all or plot_corner:
-        fig = plot.plot_corner(results, transform_beta=False, **kwargs)
-        fig.savefig(os.path.join(path, "corner.pdf"), bbox_inches="tight")
+        if clobber or not os.path.exists(os.path.join(path, "corner.pdf")):
+            fig = plot.plot_corner(results, transform_beta=False, **kwargs)
+            fig.savefig(os.path.join(path, "corner.pdf"), bbox_inches="tight")
 
     if plot_all or plot_corner_transformed:
-        fig = plot.plot_corner(results, transform_beta=True, **kwargs)
-        fig.savefig(
-            os.path.join(path, "corner_transformed.pdf"), bbox_inches="tight"
-        )
+        if clobber or not os.path.exists(
+            os.path.join(path, "corner_transformed.pdf")
+        ):
+            fig = plot.plot_corner(results, transform_beta=True, **kwargs)
+            fig.savefig(
+                os.path.join(path, "corner_transformed.pdf"),
+                bbox_inches="tight",
+            )
 
     if (plot_all or plot_inclination_pdf) and (compute_inclination_pdf):
-        fig = plot.plot_inclination_pdf(data, inc_results, **kwargs)
-        fig.savefig(
-            os.path.join(path, "inclination.pdf"), bbox_inches="tight",
-        )
+        if clobber or not os.path.exists(
+            os.path.join(path, "inclination.pdf")
+        ):
+            fig = plot.plot_inclination_pdf(data, inc_results, **kwargs)
+            fig.savefig(
+                os.path.join(path, "inclination.pdf"), bbox_inches="tight",
+            )

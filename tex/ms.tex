@@ -37,7 +37,7 @@
 
 \keywords{methods: analytic}
 
-\features{open-source figures \codeicon; unit tests: \input{tests/tally}}
+\features{open-source figures \codeicon; equation unit tests: \input{tests/tally}}
 
 \begin{abstract}
     The use of Gaussian processes (GPs) in stellar light curve modeling has recently
@@ -290,6 +290,7 @@ GPs, with the added benefit of direct physical interpretability of its
 hyperparameters.
 %
 
+\xxx{Brief paper outline here.}
 
 \section{A Gaussian Process for Star Spots}
 \label{sec:main}
@@ -1048,7 +1049,7 @@ implementation of the algorithm in a user-friendly \Python package.
 \section{Discussion}
 \label{sec:discussion}
 
-\subsection{Ensemble Analyses}
+\subsection{Ensemble analyses}
 \label{sec:ensemble}
 
 Figure~\ref{fig:nullspace_ensemble} shows the posterior shrinkage
@@ -1084,9 +1085,9 @@ unconstraining, $R$ will tend to zero.
         \oscaption{nullspace_ensemble}{%
             Posterior shrinkage as a function of spherical harmonic degree
             for a hypothetical scenario in which an observer can measure a
-            stellar light curve at a single random inclination (thin blue curves),
-            at 3 random inclinations (thin orange curves), and at 10 random
-            inclinations (thin green curves). The thicker curves correspond to
+            stellar light curve at 1 (thin blue curves),
+            3 (thin orange curves), 10 (thin green curves), and 30 (thin red
+            curves) random inclinations. The thicker curves correspond to
             the mean shrinkage for each experiment.
             The information content in the light curve of a star observed
             from a single vantage point approaches zero as $l$
@@ -1153,6 +1154,33 @@ However, it is certainly the case that we can observe \emph{many} stars
 at a wide range of inclinations. Those stars certainly have different
 surface intensity distributions, but what if we restricted ourselves to
 light curves of ``similar'' stars?
+
+\subsection{Limb darkening}
+
+See Figures~\ref{fig:nullspace_ensemble_ld} and \ref{fig:nullspace_ensemble_ld_var}.
+
+\begin{figure}[ht!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/nullspace_ensemble_ld.pdf}
+        \oscaption{nullspace_ensemble_ld}{%
+            Same as Figure~\ref{fig:nullspace_ensemble}, but for limb-darkened
+            stars with coefficients $u_1 = 0.5$ and $u_2 = 0.25$.
+            \label{fig:nullspace_ensemble_ld}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[ht!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/nullspace_ensemble_ld_var.pdf}
+        \oscaption{nullspace_ensemble_ld_var}{%
+            Same as Figure~\ref{fig:nullspace_ensemble_ld}, but allowing for
+            a 10\% variation in each of the two limb darkening coefficients
+            across different observations.
+            \label{fig:nullspace_ensemble_ld_var}
+        }
+    \end{centering}
+\end{figure}
 
 \subsection{Caveats}
 \label{sec:caveats}
@@ -3642,7 +3670,7 @@ improve the computational scaling of marginalizing over the inclination.
 Let us write Equation~(\ref{eq:Eyppkkp}) in terms of its spherical harmonic
 components:
 %
-\begin{proof}{}
+\begin{proof}{test_bigEI}
     \resizebox{.85\hsize}{!}{$
             \left(\mathbf{E}_{y''}\right)_{k,k'}
             =
@@ -3661,7 +3689,7 @@ components:
 %
 where
 %
-\begin{proof}{}
+\begin{proof}{test_bigEI}
     \left(\mathbf{E}_{y''}^{l,l'}\right)_{k,k'}
     & =
     \int
@@ -3723,11 +3751,11 @@ closed form. Let us write its terms as
         \sum\limits_{\mu=-l}^l
         \sum\limits_{{\mu'}=-l'}^{l'}
         \left[{\left({\bar{E}^{l,l'}_{y'}}\right)_{}}_{k,k'}\right]_{\mu,\mu'}
-        \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu + {\mu'} - m')}
+        \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu + m' - {\mu'})}
         \sum\limits_{i=0}^{2l}
         \sum\limits_{i'=0}^{2l'}
         c_{m,\mu,i}^{l}
-        c_{{\mu'},m',i'}^{l'}
+        c_{m',{\mu'},i'}^{l'}
         \,
         {({Q^{l,l'}_I})_{}}_{i,i'}
     $}
@@ -3736,15 +3764,15 @@ closed form. Let us write its terms as
 %
 where, similarly to before,
 %
-\begin{proof}{}
+\begin{proof}{test_bigEI}
     \label{eq:QllpIiip}
     {({Q^{l,l'}_I})_{}}_{i,i'}
     & \equiv
     \int_{0}^{\frac{\pi}{2}}
     %
     (-1)^{i+i'}
-    (1 - \cos\phi)^{l + l' - \frac{i+i'}{2}}
-    (1 + \cos\phi)^\frac{i+i'}{2}
+    (1 - \cos I)^{l + l' - \frac{i+i'}{2}}
+    (1 + \cos I)^\frac{i+i'}{2}
     \sin I
     %
     \,
@@ -3754,13 +3782,13 @@ where, similarly to before,
     & =
     %
     (-1)^{i+i'}
-    \int_{0}^{\frac{\pi}{2}}
+    \int_{0}^{1}
     %
     (1 - x)^{l + l' - \frac{i+i'}{2}}
     (1 + x)^\frac{i+i'}{2}
     %
     \,
-    \mathrm{d}I
+    \mathrm{d}x
     \nonumber \\[0.5em]
     %
     &=

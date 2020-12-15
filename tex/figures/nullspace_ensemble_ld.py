@@ -7,6 +7,7 @@ import os
 # Settings
 ntheta = 50
 ydeg = 15
+u = [0.5, 0.25]
 ydeg_pad = 3
 L = 1e9
 C = 1
@@ -15,9 +16,10 @@ kpn = 300
 clobber = False
 
 # Compute
-DATA_FILE = os.path.abspath(os.path.join("data", "nullspace_ensemble.npz"))
+DATA_FILE = os.path.abspath(os.path.join("data", "nullspace_ensemble_ld.npz"))
 if clobber or not os.path.exists(DATA_FILE):
-    map = starry.Map(ydeg + ydeg_pad, lazy=False)
+    map = starry.Map(ydeg=ydeg + ydeg_pad, udeg=len(u), lazy=False)
+    map[1:] = u
     theta = np.linspace(0, 360, ntheta, endpoint=False)
     S = np.empty((len(ninc), kpn, map.Ny))
     np.random.seed(0)
@@ -74,5 +76,4 @@ print(
     np.mean(S[:, :, : (ydeg + 1) ** 2], axis=(1, 2)),
 )
 
-# Save
 fig.savefig(__file__.replace("py", "pdf"), bbox_inches="tight", dpi=300)
