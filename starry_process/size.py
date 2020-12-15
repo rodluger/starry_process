@@ -101,29 +101,32 @@ class SizeIntegral(MomentIntegral):
         set up the transform and rotation operators.
 
         """
-        # Ingest it
-        self._r = CheckBoundsOp(name="r", lower=0, upper=0.5 * np.pi)(
-            r * self._angle_fac
-        )
-        self._d = CheckBoundsOp(name="d", lower=0, upper=0.5 * np.pi)(
-            d * self._angle_fac
-        )
-        self._params = [self._r, self._d]
-
         # Set up the spot operator
         self._spot = Spot(ydeg=self._ydeg, **kwargs)
 
-        # Compute the moments
-        self._q = ifelse(
-            tt.eq(self._d, 0),
-            self._spot.get_y(self._r),
-            self._spot.get_e(self._r, self._d),
+        # Ingest params
+        self._r = CheckBoundsOp(name="r", lower=0, upper=0.5 * np.pi)(
+            r * self._angle_fac
         )
-        self._eigQ = ifelse(
-            tt.eq(self._d, 0),
-            tt.set_subtensor(tt.zeros((self._nylm, 2))[:, 0], self._q),
-            self._spot.get_eigE(self._r, self._d),
-        )
+
+        # Different behavior depending on whether we're
+        # modeling a delta function or a uniform prior
+        if d is None:
+
+            # delta function
+            self._params = [self._r]
+            self._q = self._spot.get_y(self._r)
+            self._eigQ = tt.reshape(self._q, (-1, 1))
+
+        else:
+
+            # uniform
+            self._d = CheckBoundsOp(name="d", lower=0, upper=0.5 * np.pi)(
+                d * self._angle_fac
+            )
+            self._params = [self._r, self._d]
+            self._q = self._spot.get_e(self._r, self._d)
+            self._eigQ = self._spot.get_eigE(self._r, self._d)
 
     def _compute(self):
         pass
