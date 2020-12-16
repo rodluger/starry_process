@@ -2,8 +2,9 @@ from starry_process import calibrate
 import numpy as np
 import os
 
-# TODO: Not yet ready for Azure runs
-if not bool(os.getenv("MAKEFILE", False)):
+
+# TODO: Not yet ready for CI runs
+if not bool(os.getenv("CI", False)):
 
     # Default run
     calibrate.run(path="data/default")

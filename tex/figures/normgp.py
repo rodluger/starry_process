@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from starry_process import StarryProcess, gauss2beta
-
+import os
 
 # GP settings
 r = 15  # spot radius in degrees
@@ -47,4 +47,6 @@ for axis in ax:
     axis.set_yticks([])
 
 # We're done
-fig.savefig(__file__.replace(".py", ".pdf"), bbox_inches="tight")
+fig.savefig(
+    os.path.abspath(__file__).replace(".py", ".pdf"), bbox_inches="tight"
+)

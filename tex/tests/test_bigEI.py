@@ -6,6 +6,7 @@ from wigner import R
 from starry_process.ops import rTA1Op
 import starry
 from tqdm.auto import tqdm
+import os
 
 
 def factorial(n):
@@ -60,18 +61,6 @@ def clmmpi(l, m, mp, i):
 
 def Qllpiip(l, lp, i, ip):
     """Return the scalar (Q_I^{l,l'})_{i,i'}."""
-    """
-    # DEBUG
-    l += lp
-    i += ip
-    f = (
-        lambda x: (-1) ** i
-        * (1 - np.cos(x)) ** (l - i / 2)
-        * (1 + np.cos(x)) ** (i / 2)
-        * np.sin(x)
-    )
-    return quad(f, 0, 0.5 * np.pi)[0]
-    """
     return (
         (-1) ** (i + ip)
         / (l + lp - 0.5 * (i + ip) + 1)
@@ -127,7 +116,7 @@ def bigEI(Ey, t, P=1):
     Rx = R(lmax, 0.5 * np.pi, 0.5 * np.pi, -0.5 * np.pi)
     bigEI = np.zeros(K, dtype="complex128")
     kp = 0
-    for k in tqdm(range(K)):
+    for k in tqdm(range(K), disable=bool(int(os.getenv("NOTQDM", "0")))):
         Rzk = R(lmax, 2 * np.pi / P * t[k], 0, 0)
         Rzkp = R(lmax, 2 * np.pi / P * t[kp], 0, 0)
         for l in range(lmax + 1):
@@ -153,7 +142,7 @@ def bigEI_numerical(Ey, t, P=1):
 
     bigEI = np.zeros(K)
     kp = 0
-    for k in tqdm(range(K)):
+    for k in tqdm(range(K), disable=bool(int(os.getenv("NOTQDM", "0")))):
 
         def integrand(I):
             map.inc = I * 180 / np.pi

@@ -1,5 +1,6 @@
 # Misc
 *.gif
+*.pdf
 *.o
 *.dSYM
 *.blg
@@ -14,17 +15,19 @@ docs/_generate
 *.vscode
 docs/.doxyxml
 docs/.build
-*.pdf
-tex/tests/*.tex
 *.dat
 pip-wheel-metadata/
-starry_process/starry_process_version.py
 metadata.json
-tex/figures/static/scratch/
+
+# Project-specific
+starry_process/starry_process_version.py
 scratch/
+
+# TeX
 *latexindent*
 *.aux
 *.bbl
+tex/tests/*.tex
 gitlinks.tex
 
 # Byte-compiled / optimized / DLL files

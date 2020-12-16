@@ -104,7 +104,9 @@ def run_batch(
         from .plot import plot_batch
         from tqdm.auto import tqdm
 
-        for k in tqdm(range(datasets)):
+        for k in tqdm(
+            range(datasets), disable=bool(int(os.getenv("NOTQDM", "0")))
+        ):
             run(
                 path="{}/{}".format(path, k), seed=k, clobber=clobber, **kwargs
             )

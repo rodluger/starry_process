@@ -514,21 +514,20 @@ conditioned on a specific value of $\pmb{\theta}_\bullet$ (and $\pmb{\theta}_\st
 %
 \begin{align}
     \label{eq:log-like}
-    \resizebox{.9\hsize}{!}{$
-        \ln \mathcal{L}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
-        =
-        -\frac{1}{2}
-        \mathbf{r}_m^\top\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
-        \mathbf{K}_m^{-1}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
-        \mathbf{r}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
-        -
-        \frac{1}{2}
-        \ln \Big| \mathbf{K}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right) \Big|
-        -
-        \frac{K_m}{2}
-        \ln \left( 2 \pi \right)
-        \quad,
-    $}
+    \ln \mathcal{L}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    =
+     & -\frac{1}{2}
+    \mathbf{r}_m^\top\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \mathbf{K}_m^{-1}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \mathbf{r}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \nonumber       \\[0.75em]
+     & -
+    \frac{1}{2}
+    \ln \Big| \mathbf{K}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right) \Big|
+    -
+    \frac{K_m}{2}
+    \ln \left( 2 \pi \right)
+    \quad,
 \end{align}
 %
 where
@@ -1045,6 +1044,19 @@ It is therefore possible to evaluate $\tilde{\pmb{\Sigma}}$ in an extremely
 efficient manner. In \S\ref{sec:implementation} we discuss our
 implementation of the algorithm in a user-friendly \Python package.
 
+\subsection{Examples}
+\label{sec:examples}
+
+Examples.
+
+\section{Calibration}
+\label{sec:calibration}
+
+In the previous section we derived a closed form solution to the (best possible)
+Gaussian approximation to the marginal likelihood function for stellar
+light curves conditioned on a vector $\pmb{\theta}_\bullet$
+of spot hyperparameters. The true likelihood, however, is certainly \emph{not}
+Gaussian.
 
 \section{Discussion}
 \label{sec:discussion}

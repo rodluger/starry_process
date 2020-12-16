@@ -5,6 +5,7 @@ from scipy.special import hyp2f1
 from sympy.physics.quantum.spin import Rotation
 from sympy import re
 from tqdm import tqdm
+import os
 
 
 def factorial(n):
@@ -66,7 +67,7 @@ def test_dlmmp(lmax=3, nbeta=10):
     for a few different values of `beta`.
     """
     np.random.seed(0)
-    for n in tqdm(range(nbeta)):
+    for n in tqdm(range(nbeta), disable=bool(int(os.getenv("NOTQDM", "0")))):
         beta = np.random.uniform(-np.pi, np.pi)
         for l in range(lmax + 1):
             for m in range(-l, l + 1):

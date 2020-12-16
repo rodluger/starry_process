@@ -142,7 +142,7 @@ def plot_data(data, **kwargs):
     xe = (1 - eps) * xe
     ye = (1 - 0.5 * eps) * ye
     map = starry.Map(kwargs["generate"]["ydeg"], lazy=False)
-    for k in tqdm(range(nlc)):
+    for k in tqdm(range(nlc), disable=bool(int(os.getenv("NOTQDM", "0")))):
         map[:, :] = y[k]
         image = 1.0 + map.render(projection="moll", res=300)
         im = axtop[k].imshow(
@@ -518,7 +518,9 @@ def plot_batch(path):
     files = glob.glob(os.path.join(path, "*", "results.pkl"))
     samples = [None for k in range(len(files))]
     ranges = [None for k in range(len(files))]
-    for k in tqdm(range(len(files))):
+    for k in tqdm(
+        range(len(files)), disable=bool(int(os.getenv("NOTQDM", "0")))
+    ):
 
         # Get the samples (w/o baseline mean and var)
         with open(files[k], "rb") as f:
@@ -550,7 +552,9 @@ def plot_batch(path):
         ("0" + hex(int(alpha * 256)).split("0x")[-1])[-2:],
     )
     fig = None
-    for k in tqdm(range(len(mean))):
+    for k in tqdm(
+        range(len(mean)), disable=bool(int(os.getenv("NOTQDM", "0")))
+    ):
 
         # Plot the 2d hist
         fig = corner(
@@ -617,7 +621,9 @@ def plot_batch(path):
         deltas = []
 
         # Compute the "posterior error" histogram
-        for k in tqdm(range(len(inc_files))):
+        for k in tqdm(
+            range(len(inc_files)), disable=bool(int(os.getenv("NOTQDM", "0")))
+        ):
             data = np.load(data_files[k])
             results = np.load(inc_files[k])
             truths = data["incs"]

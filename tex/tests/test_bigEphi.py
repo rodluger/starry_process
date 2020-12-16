@@ -6,6 +6,7 @@ from scipy.integrate import quad
 from scipy.stats import beta as Beta
 from wigner import R
 from tqdm.auto import tqdm
+import os
 
 
 def factorial(n):
@@ -109,7 +110,9 @@ def bigEphi(alpha, beta, Er):
     lmax = int(np.sqrt(Er.shape[0]) - 1)
     N = (lmax + 1) ** 2
     E = np.zeros((N, N), dtype="complex128")
-    for l in tqdm(range(lmax + 1)):
+    for l in tqdm(
+        range(lmax + 1), disable=bool(int(os.getenv("NOTQDM", "0")))
+    ):
         for lp in range(lmax + 1):
             i = slice(l ** 2, (l + 1) ** 2)
             j = slice(lp ** 2, (lp + 1) ** 2)
@@ -122,7 +125,7 @@ def bigEphi_numerical(alpha, beta, Er):
     lmax = int(np.sqrt(Er.shape[0]) - 1)
     N = (lmax + 1) ** 2
     E = np.zeros((N, N))
-    for n1 in tqdm(range(N)):
+    for n1 in tqdm(range(N), disable=bool(int(os.getenv("NOTQDM", "0")))):
         for n2 in range(N):
 
             def func(phi):

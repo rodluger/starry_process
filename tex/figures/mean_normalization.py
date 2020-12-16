@@ -2,6 +2,7 @@ import starry
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 import numpy as np
+import os
 
 
 class Star(object):
@@ -102,4 +103,6 @@ ax2b.plot([0, 1], [0.5, 0.5], "C1--", lw=3)
 ax2b.axis("off")
 
 # We're done
-fig.savefig(__file__.replace("py", "pdf"), bbox_inches="tight")
+fig.savefig(
+    os.path.abspath(__file__).replace(".py", ".pdf"), bbox_inches="tight"
+)

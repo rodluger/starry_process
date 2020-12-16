@@ -3,6 +3,7 @@ from .log_prob import get_log_prob
 import numpy as np
 from tqdm.auto import tqdm
 from dynesty import utils as dyfunc
+import os
 
 
 def compute_inclination_pdf(data, results, **kwargs):
@@ -62,7 +63,7 @@ def compute_inclination_pdf(data, results, **kwargs):
     samples = dyfunc.resample_equal(samples, weights)
 
     # Compute the posteriors
-    for n in tqdm(range(nlc)):
+    for n in tqdm(range(nlc), disable=bool(int(os.getenv("NOTQDM", "0")))):
         for j in range(ninc_samples):
             idx = np.random.randint(len(samples))
             lp[n, j] = np.array(

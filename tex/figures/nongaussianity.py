@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 import starry
 from corner import corner as _corner
 import os
 from scipy.linalg import cho_factor
+from tqdm import tqdm
 
 
 def corner(*args, **kwargs):
@@ -126,14 +126,18 @@ y_inds = np.array([1, 48, 120, 168, 225])
 seed = 0
 clobber = False
 
-DATA_FILE = os.path.abspath(os.path.join("data", "nongaussianity.npz"))
+DATA_FILE = (
+    os.path.abspath(__file__)
+    .replace("figures", "figures/data")
+    .replace(".py", ".npz")
+)
 if clobber or not os.path.exists(DATA_FILE):
 
     # Sample `nmaps` sph harm vectors
     np.random.seed(0)
     y = np.zeros((nmaps, (ydeg + 1) ** 2))
     star = Star(ydeg=ydeg)
-    for k in tqdm(range(nmaps)):
+    for k in tqdm(range(nmaps), disable=bool(int(os.getenv("NOTQDM", "0")))):
         star.reset()
         for n in range(nspots):
             star.add_spot(longitude(), latitude(), radius(), contrast())
@@ -202,4 +206,9 @@ for ax in np.array(fig.axes).flatten():
         c.set_rasterized(True)
 
 # We're done
-fig.savefig(__file__.replace(".py", ".pdf"), bbox_inches="tight", dpi=300)
+fig.savefig(
+    os.path.abspath(__file__).replace(".py", ".pdf"),
+    bbox_inches="tight",
+    dpi=300,
+)
+

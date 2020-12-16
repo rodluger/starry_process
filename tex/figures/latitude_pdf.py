@@ -4,7 +4,7 @@ from starry_process import StarryProcess, gauss2beta, beta2gauss
 import theano
 import theano.tensor as tt
 from scipy.stats import norm
-
+import os
 
 phi = np.linspace(-90, 90, 1000)
 a = tt.dscalar()
@@ -86,4 +86,6 @@ for axis in ax.flatten():
 fig.align_ylabels(ax[:, 0])
 
 # We're done
-fig.savefig(__file__.replace(".py", ".pdf"), bbox_inches="tight")
+fig.savefig(
+    os.path.abspath(__file__).replace(".py", ".pdf"), bbox_inches="tight"
+)

@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.special import legendre as P
+import os
 
 
 def BBp(ydeg=15, npts=1000, eps=1e-9, sigma=15, **kwargs):
@@ -71,4 +72,6 @@ ax.set_xticks(xticks)
 ax.set_xticklabels([r"{}$^\circ$".format(abs(tick)) for tick in xticks])
 ax.set_ylabel("intensity")
 
-fig.savefig(__file__.replace("py", "pdf"), bbox_inches="tight")
+fig.savefig(
+    os.path.abspath(__file__).replace(".py", ".pdf"), bbox_inches="tight"
+)

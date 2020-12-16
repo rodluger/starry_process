@@ -1,8 +1,8 @@
 import starry
 import matplotlib.pyplot as plt
 import numpy as np
-from tqdm import tqdm
 import os
+from tqdm import tqdm
 
 # Settings
 ntheta = 50
@@ -15,13 +15,19 @@ kpn = 300
 clobber = False
 
 # Compute
-DATA_FILE = os.path.abspath(os.path.join("data", "nullspace_ensemble.npz"))
+DATA_FILE = (
+    os.path.abspath(__file__)
+    .replace("figures", "figures/data")
+    .replace(".py", ".npz")
+)
 if clobber or not os.path.exists(DATA_FILE):
     map = starry.Map(ydeg + ydeg_pad, lazy=False)
     theta = np.linspace(0, 360, ntheta, endpoint=False)
     S = np.empty((len(ninc), kpn, map.Ny))
     np.random.seed(0)
-    for n in tqdm(range(len(ninc))):
+    for n in tqdm(
+        range(len(ninc)), disable=bool(int(os.getenv("NOTQDM", "0")))
+    ):
         for k in range(kpn):
             A = np.empty((0, map.Ny))
             for _ in range(ninc[n]):
@@ -42,7 +48,7 @@ else:
 
 # Plot
 fig, ax = plt.subplots(1)
-for n in tqdm(range(len(ninc))):
+for n in tqdm(range(len(ninc)), disable=bool(int(os.getenv("NOTQDM", "0")))):
     for k in range(kpn):
         ax.plot(S[n, k], color="C{}".format(n), lw=0.75, alpha=0.01, zorder=-1)
     ax.plot(
@@ -75,4 +81,8 @@ print(
 )
 
 # Save
-fig.savefig(__file__.replace("py", "pdf"), bbox_inches="tight", dpi=300)
+fig.savefig(
+    os.path.abspath(__file__).replace(".py", ".pdf"),
+    bbox_inches="tight",
+    dpi=300,
+)

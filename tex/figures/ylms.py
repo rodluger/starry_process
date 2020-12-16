@@ -1,6 +1,7 @@
 import starry
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 # Settings
 lmax = 5
@@ -62,4 +63,8 @@ for i, l in enumerate(range(lmax + 1)):
         ax[i, j].set_rasterization_zorder(1)
 
 # We're done
-fig.savefig(__file__.replace(".py", ".pdf"), bbox_inches="tight", dpi=300)
+fig.savefig(
+    os.path.abspath(__file__).replace(".py", ".pdf"),
+    bbox_inches="tight",
+    dpi=300,
+)

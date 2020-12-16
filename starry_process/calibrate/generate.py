@@ -2,6 +2,7 @@ from .defaults import update_with_defaults
 import starry
 import numpy as np
 from tqdm import tqdm
+import os
 
 
 class Star(object):
@@ -142,7 +143,7 @@ def generate(**kwargs):
         smoothing=smoothing,
         u=u,
     )
-    for k in tqdm(range(nlc)):
+    for k in tqdm(range(nlc), disable=bool(int(os.getenv("NOTQDM", "0")))):
 
         # Generate the stellar map
         star.reset()
@@ -157,7 +158,7 @@ def generate(**kwargs):
         y[k] = np.array(star.map.amp * star.map.y)
 
     # Add photon noise & optionally normalize
-    for k in tqdm(range(nlc)):
+    for k in tqdm(range(nlc), disable=bool(int(os.getenv("NOTQDM", "0")))):
 
         if normalized:
 
