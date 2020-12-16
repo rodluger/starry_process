@@ -337,16 +337,16 @@ coefficient vector $\mathbf{y}$, the flux is given by
 %
 \begin{align}
     \label{eq:fAy}
-    \mathbf{f} = \mathbf{1} + \pmb{\mathcal{A}} \, \mathbf{y}
+    \mathbf{f} = \mathbf{1} + \pmb{\mathcal{A}}(I, P, \mathbf{u}) \, \mathbf{y}
     \quad,
 \end{align}
 %
 where $\mathbf{1}$ is the ones vector and
 $\pmb{\mathcal{A}}$ is the \starry
 design matrix, a purely linear operator that transforms from the spherical
-harmonic basis to the flux basis; it is implicitly
+harmonic basis to the flux basis; it is
 a function of the stellar inclination $I$, the stellar
-rotation period $P$, the stellar limb darkening coefficients, etc.
+rotation period $P$, and the stellar limb darkening coefficients $\mathbf{u}$
 (see Appendix~\ref{sec:starry} for details).
 
 \subsection{Computing the GP}
@@ -359,17 +359,16 @@ denote a vector of $K$ flux measurements at times
 $\mathbf{t} = \left( t_0 \,  t_1 \,  \cdots \, t_{K-1} \right)^\top$,
 defined in units such that a star with no spots on it will have
 $\mathbf{f} = \mathbf{1}$.
-Conditioned on certain physical properties of the
-star
-(such as its inclination, rotation period, etc.), $\pmb{\theta}_\star$,
-and on certain properties of the  star spots
-(such as their sizes, positions, etc.), $\pmb{\theta}_\bullet$,
-we wish to compute the mean $\pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$ and
-covariance $\pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$
+Conditioned on the stellar inclination $I$, the rotational period $P$,
+a set of limb darkening coefficients $\mathbf{u}$, and
+on certain properties of the star spots $\pmb{\theta}_\bullet$
+(including their number, sizes, positions, and contrasts),
+we wish to compute the mean $\pmb{\mu}(I, P, \mathbf{u}, \pmb{\theta}_\bullet)$ and
+covariance $\pmb{\Sigma}(I, P, \mathbf{u}, \pmb{\theta}_\bullet)$
 of $\mathbf{f}$. Together, these specify a multidimensional Gaussian
 distribution, which we assume fully describes%
 \footnote{The \emph{true} distribution of stellar light curves conditioned
-    on $\pmb{\theta}_\star$ and $\pmb{\theta}_\bullet$ is not Gaussian, so our
+    on $I$, $P$, $\mathbf{u}$, and $\pmb{\theta}_\bullet$ is not Gaussian, so our
     assumption is formally wrong. But, as the saying goes, \emph{all models are
         wrong; some are useful}. As we will show later, this turns out to be
     an extremely useful assumption.}
@@ -377,11 +376,11 @@ how our flux measurements
 are distributed:
 %
 \begin{align}
-    \mathbf{f}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right) \sim
+    \mathbf{f}\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right) \sim
     \mathcal{N}\Big(
-    \pmb{\mu}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right),
+    \pmb{\mu}\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right),
     \,
-    \pmb{\Sigma}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \pmb{\Sigma}\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
     \Big)
 \end{align}
 %
@@ -391,12 +390,12 @@ $\mathbf{f}\,\mathbf{f}^\top$, respectively:
 %
 \begin{align}
     \label{eq:mean}
-    \pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
-     & = \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \pmb{\theta}_\star, \pmb{\theta}_\bullet \Big]
+    \pmb{\mu}(I, P, \mathbf{u}, \pmb{\theta}_\bullet)
+     & = \mathrm{E} \Big[ \mathbf{f} \, \Big| \, I, P, \mathbf{u}, \pmb{\theta}_\bullet \Big]
     \\
     \label{eq:cov}
-    \pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
-     & = \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \pmb{\theta}_\star, \pmb{\theta}_\bullet \Big] - \pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet) \pmb{\mu}^\top(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
+    \pmb{\Sigma}(I, P, \mathbf{u}, \pmb{\theta}_\bullet)
+     & = \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, I, P, \mathbf{u}, \pmb{\theta}_\bullet \Big] - \pmb{\mu}(I, P, \mathbf{u}, \pmb{\theta}_\bullet) \pmb{\mu}^\top(I, P, \mathbf{u}, \pmb{\theta}_\bullet)
     \quad.
 \end{align}
 %
@@ -406,12 +405,12 @@ we may write the mean and covariance of our flux GP as
 %
 \begin{align}
     \label{eq:mean_f}
-    \pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
-     & = \mathbf{1} + \pmb{\mathcal{A}}(\pmb{\theta}_\star) \, \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet)
+    \pmb{\mu}(P, \mathbf{u}, \pmb{\theta}_\bullet)
+     & = \mathbf{1} + \pmb{\mathcal{A}}(I, P, \mathbf{u}) \, \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet)
     \\
     \label{eq:cov_f}
-    \pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)
-     & = \pmb{\mathcal{A}}(\pmb{\theta}_\star) \, \pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta}_\bullet) \, \pmb{\mathcal{A}}^\top(\pmb{\theta}_\star)
+    \pmb{\Sigma}(P, \mathbf{u}, \pmb{\theta}_\bullet)
+     & = \pmb{\mathcal{A}}(I, P, \mathbf{u}) \, \pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta}_\bullet) \, \pmb{\mathcal{A}}^\top(I, P, \mathbf{u})
     \quad,
 \end{align}
 %
@@ -510,20 +509,21 @@ in the sample. Fortunately, however, the Gaussian process we constructed
 does just that. Specifically, given the mean and covariance of the process,
 we are able to directly evaluate the log marginal likelihood of the $m^\mathrm{th}$
 dataset
-conditioned on a specific value of $\pmb{\theta}_\bullet$ (and $\pmb{\theta}_\star$):
+conditioned on a specific value of $\pmb{\theta}_\bullet$ (as well as $I$,
+$P$, and $\mathbf{u}$):
 %
 \begin{align}
     \label{eq:log-like}
-    \ln \mathcal{L}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \ln \mathcal{L}_m\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
     =
      & -\frac{1}{2}
-    \mathbf{r}_m^\top\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
-    \mathbf{K}_m^{-1}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
-    \mathbf{r}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \mathbf{r}_m^\top\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
+    \mathbf{K}_m^{-1}\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
+    \mathbf{r}_m\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
     \nonumber       \\[0.75em]
      & -
     \frac{1}{2}
-    \ln \Big| \mathbf{K}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right) \Big|
+    \ln \Big| \mathbf{K}_m\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right) \Big|
     -
     \frac{K_m}{2}
     \ln \left( 2 \pi \right)
@@ -533,17 +533,17 @@ conditioned on a specific value of $\pmb{\theta}_\bullet$ (and $\pmb{\theta}_\st
 where
 %
 \begin{align}
-    \mathbf{r}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \mathbf{r}_m\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
      & \equiv
-    \mathbf{f}_m - \pmb{\mu}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \mathbf{f}_m - \pmb{\mu}\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
 \end{align}
 %
 is the residual vector,
 %
 \begin{align}
-    \mathbf{K}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \mathbf{K}_m\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
      & \equiv
-    \pmb{\Sigma}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \pmb{\Sigma}\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
     +
     \mathbf{C}_m
 \end{align}
@@ -557,9 +557,9 @@ In an ensemble analysis, the joint marginal likelihood of all datasets is
 simply the product of the individual likelihoods, so in log space we have
 %
 \begin{align}
-    \ln \mathcal{L}\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \ln \mathcal{L}\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
      & =
-    \sum_{m} \ln \mathcal{L}_m\left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \sum_{m} \ln \mathcal{L}_m\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
     \quad.
 \end{align}
 %
@@ -578,40 +578,26 @@ from light curves with minimal bias.
 As we mentioned in the previous section,
 the equations for the mean and covariance of the flux GP
 (Equations~\ref{eq:mean_f} and \ref{eq:cov_f}, respectively) are conditioned
-on specific values of the stellar properties $\pmb{\theta}_\star$ and the
-spot properties $\pmb{\theta}_\bullet$. To obtain the posterior distribution
+on specific values of the stellar and spot properties. To obtain the posterior distribution
 for these parameters, we must typically resort to numerical sampling techniques,
 which often scale steeply with the number of parameters. It is therefore generally
 desirable to keep the total number of parameters small, especially when
 employing the GP in an ensemble setting.
-In such a setting, we might have light curves from $N_\star$ stars, all of which
+In such a setting, we might have light curves from $M$ stars, all of which
 we believe to have similar spot properties (perhaps because they have
 similar spectral types and rotation periods, for example).
 The total number of parameters in our problem is therefore
 %
 \begin{align}
-    N_\theta = N_\star \, \mathrm{dim}(\pmb{\theta}_\star) + 5
+    N_\theta = 4 M + 5
     \quad,
 \end{align}
 %
-since each of the stars will have their own set of stellar properties
-$\pmb{\theta}_\star$ but will all share the same 5 spot properties
+since each of the stars will have their own set of 4 stellar properties
+(an inclination, a period, and usually two limb darkening coefficients)
+but will all share the same 5 spot properties
 $\pmb{\theta}_\bullet$ (by assumption).
-In a typical problem, the stellar parameters might be
-%
-\begin{align}
-    \pmb{\theta}_\star =
-    \left(
-    I \,\,\,
-    P \,\,\,
-    u_1 \,\,\,
-    u_2
-    \right)^\top
-    \quad,
-\end{align}
-%
-i.e., the inclination, the rotational period, and some (usually two) limb
-darkening coefficients. Thus, for a reasonably sized ensemble of $N_\star=100$
+For a reasonably sized ensemble of $M=100$
 stars, we would have to sample over $N_\theta = 405$ parameters.
 While large, this number is certainly not absurd, especially by modern standards.
 However, it does pose
@@ -624,7 +610,7 @@ Monte Carlo and Nested Sampling may in principle be able to deal with these
 issues, in practice it can be very difficult to obtain convergence in a
 reasonable amount of time.
 
-One workaround is to fix the values of $\pmb{\theta}_\star$. This could be done,
+One workaround is to fix the values of the stellar parameters. This could be done,
 for instance, to the rotational period $P$, which can often be estimated with
 fairly good accuracy from a periodogram. The limb darkening coefficients could
 be fixed at theoretical values, or perhaps their values could be shared among
@@ -632,84 +618,63 @@ all stars (and sampled over), given the similarity assumption above.
 
 The inclination, however, is a different matter. Absent prior information
 for a particular star (such as a measurement of its projected rotational
-velocity $v\sin i$ or the knowledge that it hosts a transiting planet), it
+velocity $v\sin I$ or the knowledge that it hosts a transiting planet), it
 is simply not possible to reliably estimate the inclination in a
 pre-processing step. Any light curve statistic one might argue should scale
 with inclination---such as the amplitude of the variability---is invariably
 degenerate with the spot parameters $\pmb{\theta}_\bullet$. If one knew
-$\pmb{\theta}_\bullet$, then perhaps a decent point estimate of $i$ could
+$\pmb{\theta}_\bullet$, then perhaps a decent point estimate of $I$ could
 be obtained, but in that case the analysis wouldn't be needed in the first place!
 %
 
 Fortunately, there is a better way to reduce the number of parameters in
 the problem: we can explicitly marginalize over the stellar inclination.
-Let
+That is, we may write the mean and covariance of our GP as
+%
 %
 \begin{align}
-    \label{eq:thetastarbar}
-    \bar{\pmb{\theta}}_\star = \left(
-    P \,\,\,
-    u_1 \,\,\,
-    u_2
-    \right)^\top
-    \quad,
+    \label{eq:mu_marg}
+    \pmb{\mu}(P, \mathbf{u}, \pmb{\theta}_\bullet)
+     & = \mathrm{E} \Big[ \mathbf{f} \, \Big| \, P, \mathbf{u}, \pmb{\theta}_\bullet \Big]
+    \nonumber                                                                                                                                                                                                      \\
+     & = \mathbf{1} + \mathbf{e}_I
+    \\[0.5em]
+    \label{eq:cov_marg}
+    \pmb{\Sigma}(P, \mathbf{u}, \pmb{\theta}_\bullet)
+     & = \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, P, \mathbf{u}, \pmb{\theta}_\bullet \Big] - \pmb{\mu}(P, \mathbf{u}, \pmb{\theta}_\bullet) \pmb{\mu}^\top(P, \mathbf{u}, \pmb{\theta}_\bullet)
+    \nonumber                                                                                                                                                                                                      \\
+     & =
+    \mathbf{E}_I
+    -
+    \mathbf{e}_I \,
+    \mathbf{e}_I^\top
 \end{align}
 %
-be the vector of all stellar parameters \emph{except}
-the inclination, where perhaps $P$ is fixed for each star and the limb darkening coefficients
-are shared among all stars, as described above.
-Then we can write the first two moments of our flux GP as
-%
-\begin{align}
-    \label{eq:einc}
-    \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
-     & =
-    \mathrm{E} \Big[ \mathbf{1} + \pmb{\mathcal{A}} \, \mathbf{y} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
-    \nonumber \\[0.5em]
-     & =
-    \mathbf{1} + \mathbf{e}_I
-\end{align}
-%
-where we define the first moment integral
+where we define the inclination first moment integral
 %
 \begin{align}
     \label{eq:eI}
     \mathbf{e}_I
      & \equiv
-    \mathrm{E} \Big[ \pmb{\mathcal{A}} \, \mathbf{y} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
+    \mathrm{E} \Big[ \pmb{\mathcal{A}} \, \mathbf{y} \, \Big| \, P, \mathbf{u}, \pmb{\theta}_\bullet \Big]
     \nonumber \\[0.5em]
      & =
     \int
-    \pmb{\mathcal{A}}(I, \bar{\pmb{\theta}}_\star) \,
+    \pmb{\mathcal{A}}(I, P, \mathbf{u}) \,
     \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
     p(I) \, \mathrm{d}I
 \end{align}
 %
-and
-%
-\begin{align}
-    \label{eq:Einc}
-    \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
-     & =
-    \mathrm{E} \Big[ \left(\mathbf{1} + \pmb{\mathcal{A}} \, \mathbf{y}\right) \left(\mathbf{1} + \pmb{\mathcal{A}} \, \mathbf{y}\right)^\top  \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
-    \nonumber \\[0.5em]
-     & =
-    \mathbf{1} \, \mathbf{1}^\top +
-    \mathbf{1} \, \mathbf{e}_I^\top +
-    \mathbf{e}_I \, \mathbf{1}^\top +
-    \mathbf{E}_I
-\end{align}
-%
-where we define the second moment integral
+and the inclination second moment integral
 %
 \begin{align}
     \label{eq:EI}
     \mathbf{E}_I
      & \equiv
     \int
-    \pmb{\mathcal{A}}(I, \bar{\pmb{\theta}}_\star) \,
+    \pmb{\mathcal{A}}(I, P, \mathbf{u}) \,
     \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] \,
-    \pmb{\mathcal{A}}^\top(I, \bar{\pmb{\theta}}_\star)
+    \pmb{\mathcal{A}}^\top(I, P, \mathbf{u})
     p(I) \, \mathrm{d}I
     \quad.
 \end{align}
@@ -717,7 +682,8 @@ where we define the second moment integral
 The expectations inside the integrals in the expressions for
 $\mathbf{e}_I$ and $\mathbf{E}_I$
 are given by
-Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), respectively.
+Equations~(\ref{eq:exp_y}) and (\ref{eq:exp_yy}), respectively, and
+are computed in Appendix~\ref{sec:integrals}.
 %
 If we are able to perform the integrals in those expressions,
 we can \emph{dramatically} reduce the number of
@@ -726,35 +692,22 @@ parameters in our ensemble problem.
 As we show in Appendix~\ref{sec:inclination}, if we assume that stellar
 inclinations are distributed isotropically, these integrals
 do in fact have closed-form solutions.
+
 %
-We may then replace our expressions for the GP mean and covariance with
+Finally, for future reference, it is useful to note that the mean of the GP
+is constant:
 %
 \begin{align}
-    \label{eq:mu_marg}
-    \pmb{\mu}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
-     & = \mathrm{E} \Big[ \mathbf{f} \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big]
-    \nonumber                                                                                                                                                                                                                                       \\
-     & = \mathbf{1} + \mathbf{e}_I
-    \nonumber                                                                                                                                                                                                                                       \\
-     & = \mu \, \mathbf{1}
-    \\[0.5em]
-    \label{eq:cov_marg}
-    \pmb{\Sigma}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
-     & = \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, \bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet \Big] - \pmb{\mu}(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet) \pmb{\mu}^\top(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet)
-    \nonumber
-    \\
-     & =
-    \mathbf{E}_I
-    -
-    \mathbf{e}_I \,
-    \mathbf{e}_I^\top
+    \pmb{\mu}(P, \mathbf{u}, \pmb{\theta}_\bullet)
+     & =  (1 + e_I)\mathbf{1}
+    \nonumber                 \\
+     & \equiv
+    \mu \, \mathbf{1}
+    \quad,
 \end{align}
 %
-and use these to compute the marginal likelihood instead. Note that in the
-expression for the mean we made explicit use of the fact that the longitudinal
-isotropy of the process results in $\mathbf{e}_I = e_I \, \mathbf{1}$ being
-constant (see Appendix~\ref{sec:inc-mom1}), so the process mean is likewise
-constant, with $\mu = 1 + e_I$.
+since by construction our GP is longitudinally isotropic
+(see Appendix~\ref{sec:inc-mom1}).
 
 \subsection{The baseline problem}
 \label{sec:baseline}
@@ -768,10 +721,9 @@ $\pmb{\mu}$ and covariance matrix $\pmb{\Sigma}$. However, in the context of
 relative photometry, the mean $\pmb{\mu}$ is typically \emph{unobservable}.
 %
 To understand why, consider what
-$\pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$ actually represents:
+$\pmb{\mu}(P, \mathbf{u}, \pmb{\theta}_\bullet)$ actually represents:
 it is the expected value
-of the flux
-for a star with certain properties $\pmb{\theta}_\star$ and $\pmb{\theta}_\bullet$,
+of the flux,
 \emph{in units of the flux one would measure if the star had no spots}.
 We do not observe in these units: rather, we observe in units of counts on
 the detector, which depend on the luminosity of the star, the distance to
@@ -799,7 +751,7 @@ While this is a formally perfect degeneracy for a single light curve, we can
 again resort to ensemble statistics across many light curves to break it;
 we discuss this further in \S\ref{sec:breaking_baseline_degeneracy}.
 
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/mean_normalization.pdf}
         \oscaption{mean_normalization}{%
@@ -835,12 +787,12 @@ we discuss this further in \S\ref{sec:breaking_baseline_degeneracy}.
 
 The second point is of more immediate concern, since we must correct our
 expression for the covariance matrix
-$\pmb{\Sigma}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$ if we are to
+$\pmb{\Sigma}(P, \mathbf{u}, \pmb{\theta}_\bullet)$ if we are to
 use our GP to model normalized light curves. For definiteness, let us
 consider only mean-normalized light curves.%
 \footnote{In practice, the expressions derived below also work well
     for median-normalized light curves, since the distribution of the GP sample median
-    is usually close to the distribution of sample mean.}%
+    is usually close to the distribution of sample mean.}
 Since we are dividing the
 flux by the mean, one might imagine that we could simply divide the
 covariance matrix by the square of the mean and call it a day. However,
@@ -859,7 +811,7 @@ $\mathbf{f}$ is the measured light curve (in detector counts), and
 $\left<f\right>$ is the \emph{sample} mean: i.e., the average value of
 a given star's light curve (which we model as a sample from our GP).
 This may be close to but is in general different from the \emph{process} mean,
-$\pmb{\mu}(\pmb{\theta}_\star, \pmb{\theta}_\bullet)$, since the mean of
+$\pmb{\mu}(P, \mathbf{u}, \pmb{\theta}_\bullet)$, since the mean of
 a draw from the GP is itself normally distributed with a variance that scales
 with the GP variance.
 
@@ -936,16 +888,16 @@ from a Gaussian process:
 %
 \begin{align}
     \tilde{\mathbf{f}\hspace{0.2em}}
-    \left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \left(P, \mathbf{u}, \pmb{\theta}_\bullet\right)
     \sim
     \mathcal{N}\left(
     \mathbf{1},
-    \tilde{\pmb{\Sigma}} \left(\pmb{\theta}_\star, \pmb{\theta}_\bullet\right)
+    \tilde{\pmb{\Sigma}} \left(P, \mathbf{u}, \pmb{\theta}_\bullet\right)
     \right)
     \quad.
 \end{align}
 %
-This is appropriate as long as the quantity $z \ll 1$, for which the true
+This is appropriate as long as $z \ll 1$, for which the true
 distribution of $\tilde{\mathbf{f}\hspace{0.2em}}$ is approximately Gaussian. In practice,
 we recommend employing this trick only for $z \lesssim 0.02$, for which the
 error in the approximation to the covariance is less than $10^{-6}$.
@@ -953,7 +905,7 @@ In cases where the light curve variability exceeds a few percent, we recommend
 modeling the baseline in each light curve as a latent variable, as discussed
 above.
 
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/normgp.pdf}
         \oscaption{normgp}{%
@@ -990,18 +942,17 @@ We model the mean-normalized flux $\tilde{\mathbf{f}\hspace{0.2em}}$
 %
 \begin{align}
     \tilde{\mathbf{f}\hspace{0.2em}}
-    \left(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet\right)
+    \left(P, \mathbf{u}, \pmb{\theta}_\bullet\right)
     \sim
     \mathcal{N}\left(
     \mathbf{1},
-    \tilde{\pmb{\Sigma}} \left(\bar{\pmb{\theta}}_\star, \pmb{\theta}_\bullet\right)
+    \tilde{\pmb{\Sigma}} \left(P, \mathbf{u}, \pmb{\theta}_\bullet\right)
     \right)
     \quad,
 \end{align}
 %
-where $\bar{\pmb{\theta}}_\star$ are hyperparameters describing the star, such
-as the rotation period and limb darkening coefficients
-(Equation~\ref{eq:thetastarbar}),
+where $P$ is the stellar rotation period, $\mathbf{u}$ are its limb darkening
+coefficients,
 $\pmb{\theta}_\bullet$ are the hyperparameters describing the star spot
 distribution, including the number of spots, their contrast, parameters
 describing their latitudinal distribution, and parameters describing their
@@ -1009,7 +960,7 @@ radius distribution (Equation~\ref{eq:thetaspot}),
 and $\tilde{\pmb{\Sigma}}$ is the covariance of the normalized process
 (Equation~\ref{eq:SigmaTilde}). This covariance is a straightforward correction to the
 true covariance of the process, which accounts for
-changes of scale and phase dependence introduced by the common process of
+changes in scale and phase introduced by the common process of
 normalizing light curves to a mean of unity. It depends on the
 true (constant) mean $\mu$
 and true covariance $\pmb{\Sigma}$,
@@ -1047,7 +998,17 @@ implementation of the algorithm in a user-friendly \Python package.
 \subsection{Examples}
 \label{sec:examples}
 
-Examples.
+Examples. Figure~\ref{fig:samples}.
+
+\begin{figure}[t!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/samples.pdf}
+        \oscaption{samples}{%
+            Samples.
+            \label{fig:samples}
+        }
+    \end{centering}
+\end{figure}
 
 \section{Calibration}
 \label{sec:calibration}
@@ -1168,6 +1129,7 @@ surface intensity distributions, but what if we restricted ourselves to
 light curves of ``similar'' stars?
 
 \subsection{Limb darkening}
+\label{sec:limbdark}
 
 See Figures~\ref{fig:nullspace_ensemble_ld} and \ref{fig:nullspace_ensemble_ld_var}.
 
@@ -1194,6 +1156,15 @@ See Figures~\ref{fig:nullspace_ensemble_ld} and \ref{fig:nullspace_ensemble_ld_v
     \end{centering}
 \end{figure}
 
+\subsection{Small spots}
+\label{sec:tinyspots}
+
+\subsection{The baseline degeneracy}
+\label{sec:breaking_baseline_degeneracy}
+
+\subsection{The number-contrast degeneracy}
+\label{sec:cN-degeneracy}
+
 \subsection{Caveats}
 \label{sec:caveats}
 The true process is not Gaussian. See Figure~\ref{fig:nongaussianity}.
@@ -1218,6 +1189,9 @@ The true process is not Gaussian. See Figure~\ref{fig:nongaussianity}.
         }
     \end{centering}
 \end{figure}
+
+\section{Implementation}
+\label{sec:implementation}
 
 %
 %
@@ -1899,7 +1873,7 @@ insufficient to correctly model the spot, as can be seen from the
 $\rho = 5^\circ$ profile (dashed curve). Expansions to higher spherical harmonic
 degree allow one to model spots with radii smaller than $10^\circ$, although
 at increased computational cost and potential numerical stability issues;
-we discuss this point at length in \S\ref{sec:tiny-spots}.
+we discuss this point at length in \S\ref{sec:tinyspots}.
 
 
 \subsubsection{Probability density function}
@@ -3361,7 +3335,7 @@ The expression for the first moment is
     \mathbf{e}_I
      & \equiv
     \int
-    \pmb{\mathcal{A}}(I, \bar{\pmb{\theta}}_\star) \,
+    \pmb{\mathcal{A}}(I, P, \mathbf{u}) \,
     \mathbf{e}_y \,
     p(I) \,
     \mathrm{d}I
@@ -3598,9 +3572,9 @@ The expression for the second moment is
     \mathbf{E}_I
      & \equiv
     \int
-    \pmb{\mathcal{A}}(I, \bar{\pmb{\theta}}_\star) \,
+    \pmb{\mathcal{A}}(I, P, \mathbf{u}) \,
     \mathbf{E}_y \,
-    \pmb{\mathcal{A}}^\top(I, \bar{\pmb{\theta}}_\star) \,
+    \pmb{\mathcal{A}}^\top(I, P, \mathbf{u}) \,
     p(I) \,
     \mathrm{d}I
 \end{align}
@@ -3816,7 +3790,7 @@ where, similarly to before,
 which may again be computed recursively in a pre-processing step.
 
 \subsection{Speeding up the computation}
-\label{sec:speedup}
+\label{sec:inc-speedup}
 %
 The expressions in the previous section are a bit of a nightmare,
 particularly because of the dimensionality of some of the linear

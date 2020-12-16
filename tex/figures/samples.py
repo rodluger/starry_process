@@ -54,7 +54,7 @@ for n in range(len(kwargs)):
         for i, inc in enumerate(incs):
             map.inc = inc
             flux = map.flux(theta=360.0 * t)
-            flux -= np.median(flux)
+            flux -= np.mean(flux)
             flux *= 1e3
             ax[n, 1, k].plot(t, flux, color=color(i), lw=0.75)
 
@@ -94,6 +94,7 @@ for n in range(len(kwargs)):
     ax[n, 1, -1].axis("off")
 
     ax[n, 1, 0].get_shared_y_axes().join(*ax[n, 1, :])
+    ax[n, 1, 0].get_shared_x_axes().join(*ax[n, 1, :])
 
 # We're done
 fig.savefig(
