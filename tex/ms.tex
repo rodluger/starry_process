@@ -948,17 +948,40 @@ We model the mean-normalized flux $\tilde{\mathbf{f}\hspace{0.2em}}$
     \mathbf{1},
     \tilde{\pmb{\Sigma}} \left(P, \mathbf{u}, \pmb{\theta}_\bullet\right)
     \right)
+    \quad.
+\end{align}
+%
+The hyperparameters of the GP are
+the stellar rotation period $P$,
+the vector of limb darkening
+coefficients $\mathbf{u}$, and the vector of parameters describing the
+spot distribution
+%
+\begin{align}
+    \pmb{\theta}_\bullet
+     & =
+    \left(
+    N
+    \,\,\,
+    c
+    \,\,\,
+    a
+    \,\,\,
+    b
+    \,\,\,
+    r
+    \,\,\,
+    \Delta
+    \right)^\top
     \quad,
 \end{align}
 %
-where $P$ is the stellar rotation period, $\mathbf{u}$ are its limb darkening
-coefficients,
-$\pmb{\theta}_\bullet$ are the hyperparameters describing the star spot
-distribution, including the number of spots, their contrast, parameters
-describing their latitudinal distribution, and parameters describing their
-radius distribution (Equation~\ref{eq:thetaspot}),
-and $\tilde{\pmb{\Sigma}}$ is the covariance of the normalized process
-(Equation~\ref{eq:SigmaTilde}). This covariance is a straightforward correction to the
+consisting of the number of spots $N$, their contrast $c$,
+the shape parameters of the latitude distribution $a$ and $b$, and
+the mean $r$ and half-width $\Delta$ of the spot radius
+distribution.
+The quantity $\tilde{\pmb{\Sigma}}$ is the covariance of the (normalized) process
+(Equation~\ref{eq:SigmaTilde}), which is a straightforward correction to the
 true covariance of the process, which accounts for
 changes in scale and phase introduced by the common process of
 normalizing light curves to a mean of unity. It depends on the
@@ -995,29 +1018,203 @@ It is therefore possible to evaluate $\tilde{\pmb{\Sigma}}$ in an extremely
 efficient manner. In \S\ref{sec:implementation} we discuss our
 implementation of the algorithm in a user-friendly \Python package.
 
-\subsection{Examples}
+\subsection{An example}
 \label{sec:examples}
-
-Examples. Figure~\ref{fig:samples}.
 
 \begin{figure}[t!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/samples.pdf}
         \oscaption{samples}{%
-            Samples.
+            Five random samples from the GP prior (columns) conditioned
+            on four different values of $\pmb{\theta}_\bullet$ (rows).
+            The samples are shown on the surface of
+            the star in a Mollweide projection (upper panels) alongside
+            their corresponding light curves viewed over four rotation
+            cycles at several different inclinations (lower panels).
+            From top to bottom, the GP corresponds to a star with
+            (a) small mid-latitude spots; (b) small circumpolar spots;
+            (c) large equatorial spots; and (d) small isotropic spots.
+            See text for details.
             \label{fig:samples}
         }
     \end{centering}
 \end{figure}
 
+A concrete example of the GP derived above is presented in Figure~\ref{fig:samples},
+where we show random samples from the process
+evaluated up to spherical harmonic degree $l_\mathrm{max} = 15$ and
+conditioned on different values
+of the hyperparameter vector $\pmb{\theta}_\bullet$.
+Each column corresponds to a different random draw from the GP, while each
+row corresponds to a different value of $\pmb{\theta}_\bullet$.
+The images are intensity maps of the stellar surface seen in an equal-area
+Mollweide projection, in units such that a spotless star would have intensity
+equal to 1 everywhere. Below them are the corresponding light curves (in units of
+parts per thousand deviation from the mean) over four
+rotation cycles, seen at inclinations varying from $15^\circ$ (yellow) to
+$90^\circ$ (dark blue), and assuming no limb darkening (i.e., $\mathbf{u} = \mathbf{0}$).
+From top to bottom, the hyperparameter vectors $\pmb{\theta}_\bullet$
+for each row are
+%
+\begin{subequations}
+    \begin{align}
+        \left( N \,\,\, c \,\,\, a \,\,\, b \,\,\, r \,\,\, \Delta \right)^\top
+         & =\left( 10 \,\,\,\,\,\,\,\,\, 0.10 \,\,\,\,\,\,\,\,\, 0.40 \,\,\,\,\,\,\,\,\, 0.27 \,\,\,\,\,\,\,\,\, 10.0 \,\,\,\,\,\,\,\,\, 0.00 \right)^\top \\
+         & =\left( 10 \,\,\,\,\,\,\,\,\, 0.10 \,\,\,\,\,\,\,\,\, 0.31 \,\,\,\,\,\,\,\,\, 0.36 \,\,\,\,\,\,\,\,\, 10.0 \,\,\,\,\,\,\,\,\, 0.00 \right)^\top \\
+         & =\left( 10 \,\,\,\,\,\,\,\,\, 0.05 \,\,\,\,\,\,\,\,\, 0.28 \,\,\,\,\,\,\,\,\, 0.00 \,\,\,\,\,\,\,\,\, 30.0 \,\,\,\,\,\,\,\,\, 0.00 \right)^\top \\
+         & =\left( 20 \,\,\,\,\,\,\,\,\, 0.10 \,\,\,\,\,\,\,\,\, 0.06 \,\,\,\,\,\,\,\,\, 0.00 \,\,\,\,\,\,\,\,\, 10.0 \,\,\,\,\,\,\,\,\, 0.00 \right)^\top
+        \quad.
+    \end{align}
+\end{subequations}
+%
+These correspond to
+(a) 10 spots of radius $10^\circ$ centered at
+$30^\circ \pm 5^\circ$ latitude with a contrast of $10\%$;
+(b) 10 spots of radius $10^\circ$ centered at
+$60^\circ \pm 5^\circ$ latitude with a contrast of $10\%$;
+(c) 10 spots of radius $30^\circ$ centered at
+$0^\circ \pm 5^\circ$ latitude with a contrast of $5\%$;
+and
+(d) 20 spots of radius $10^\circ$ centered at
+$30^\circ \pm 5^\circ$ latitude with a contrast of $10\%$.
+Note that the conversion between the shape parameters $a$ and $b$ and
+the more intuitive mean $\mu_\phi$ and standard deviation $\sigma_\phi$
+of the spot latitude distribution is given in \S\ref{sec:lat-transform}.
+
+The surface maps in the figure show dark, compact features of roughly the expected
+size and contrast and at the expected latitudes. However, there are important
+differences between these maps and what we would obtain by procedurally adding discrete
+circular spots to a gridded stellar surface:
+%
+\begin{enumerate}
+    \item \textbf{The spots are not circular.} This is most evident in row (c),
+          where some spots are distinctly asymmetric.
+    \item \textbf{There is significant variance in contrast from one spot to another}
+          even though our model
+          implicitly treats $c$ as constant. Within spots, the contrast is also
+          not constant, even though (again) our model implictly treats it as such.
+    \item \textbf{There is ringing in the background.} This is apparent to some extent in
+          row (b), where there are small fluctuations in the brightness at low
+          latitudes where no spots are present.
+    \item \textbf{There aren't exactly 10 (or 20) spots in those maps.} This is
+          most obvious in row (c), where only a few large distinct spots,
+          plus maybe (?) a few smaller ones, are visible.
+    \item \textbf{There are bright spots in addition to dark spots.} This may be
+          the most glaring issue. We explicitly model spots as being dark, and yet
+          there are (almost) just as many bright spots, particularly in row (d).
+          While bright spots (such as plages) certainly exist in reality, we did not
+          explicitly ask for them here!
+\end{enumerate}
+%
+While these may appear to be critical shortcomings of our model, it is
+important to keep in mind that a model consisting of discrete, circular, constant
+contrast spots is likely just as far (or perhaps even farther) from the truth. In fact,
+points (1) and (2) above suggest our model is more flexible than the discrete
+spot model and thus (potentially) better suited to modeling real stellar surfaces.
+Points (3), (4), and (5), on the other hand, are more concerning, since they are due,
+respectively, to truncation error in the spherical harmonic expansion,
+to an intrinsic limitation of our Gaussian approximation,
+and to the fact that Gaussian distributions are symmetric about the mean: a positive
+deviation is just as likely as a negative deviation of the same magnitude.%
+\footnote{
+    Even still, the model favors dark spots over bright spots because the GP mean
+    itself is lower than unity, in practice making
+    positive deviations \emph{from unity} less likely than negative
+    deviations. This is why there are usually more dark spots than bright spots in
+    the samples shown in the figure.
+}
+However, as we have argued before, the true power of the GP is in its
+applicability to inference problems. In other words, while our GP has some
+undesirable features when used as a prior sampling distribution, the real test
+of the GP is when it is faced with data in an inference setting.
+As long as the data is sufficiently informative, it does not matter that the
+prior has finite support for unphysical configurations, as those
+will be confidently rejected.
+
+In \S\ref{sec:calibration} below, we exhaustively test the performance of our
+GP as an inference tool when used to model synthetic light curves. We will
+show that, despite the issues raised above, the GP is in general unbiased and
+correctly estimates the posterior variance when used to infer the spot
+properties $\pmb{\theta}_\bullet$.
+
+But before we dive in, it is worth pausing for a moment to take another
+look at Figure~\ref{fig:samples}. While we focused on the shortcomings of
+the GP as a prior in the discussion above, it is important to appreciate
+that it even works in the first place! Despite some issues, the fact that
+the surface map samples \emph{actually look like maps of spotted stellar surfaces}
+is fairly amazing. A Gaussian process, after all, is a non-parameteric
+\emph{process} describing a smooth and continuous function only via its
+covariance structure. The GP knows nothing about the existence of discrete
+spots---only how any two points on the surface are correlated.
+Because spherical harmonics are smooth functions with support over the
+entire sphere, the GP also does not know about features restricted
+to certain latitudes; in fact, in most applications of GPs to mapping
+problems in astronomy \citep[such as in models of the cosmic microwave
+    background][]{?}, the process is assumed to be isotropic,
+with no preferred angular direction.
+The fact that we are able to construct a GP that captures discrete
+features restricted to certain regions on the surface (albeit with
+some issues) is remarkable.
+
 \section{Calibration}
 \label{sec:calibration}
 
+\subsection{Why we need calibration tests}
+\label{sec:why-calibrate}
+
 In the previous section we derived a closed form solution to the (best possible)
-Gaussian approximation to the marginal likelihood function for stellar
-light curves conditioned on a vector $\pmb{\theta}_\bullet$
-of spot hyperparameters. The true likelihood, however, is certainly \emph{not}
-Gaussian.
+Gaussian approximation to the distribution of stellar surfaces (and their corresponding
+light curves) conditioned on a vector $\pmb{\theta}_\bullet$
+of spot hyperparameters. As we mentioned, the real test of this GP is
+in how well it performs as a likelihood function for stellar light curves.
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/nongaussianity.pdf}
+        \oscaption{nongaussianity}{%
+            Corner plot showing the joint distributions of select spherical
+            harmonic coefficients corresponding to the $l=15$ expansion of
+            $5\times 10^{4}$ stellar surface maps drawn from a certain
+            star spot distribution (black points and contours).
+            At $l=15$ there are 256 coefficients in total;
+            we chose five of the coefficients with the most odd-looking
+            distributions to illustrate the non-Gaussianity of the process.
+            In addition to non-linear correlations, skewness, and the
+            existence of points of very high curvature, some of the distributions
+            are also multi-modal.
+            The orange contours show slices of the Gaussian approximation to
+            the joint distribution; this is the approximation adopted in
+            this paper.
+            \label{fig:nongaussianity}
+        }
+    \end{centering}
+\end{figure}
+
+It is not immediately obvious that the GP approach should work, because the
+true marginal likelihood function
+%
+$p ( \tilde{\mathbf{f}\hspace{0.2em}} \, \big| \, P, \mathbf{u}, \pmb{\theta}_\bullet )$
+%
+is certainly \emph{not} Gaussian. To see why, let us generate $10^{4}$ stellar
+surfaces sampled from the true distribution we are trying to model: that is,
+a surface with $N$ discrete circular spots of fixed, uniform contrast $c$
+and radius $r \pm \Delta$ at latitudes $\mu_\phi \pm \sigma_\phi$.
+Let us then expand each surface in spherical harmonics and visualize the
+distribution of coefficients $y^l_m$. Figure~\ref{fig:nongaussianity}
+shows the joint distribution for five of the coefficients with the most
+non-Gaussian marginal distributions (selected by eye). Different slices
+through this distribution
+(in black) are skewed, strongly peaked, non-linearly correlated, and even bimodal.
+Our approach in this paper is to model this distribution as a Gaussian
+(orange contours). While this may be a good approximation in certain regions
+of parameter space, it is certainly a poor approximation in others.
+In all fairness, the vast majority of the spherical harmonic coefficients
+have marginal distributions that \emph{look} to be very Gaussian; however,
+those that do not could in principle lead to errors and biases when using
+the Gaussian approximation to the likelihood function.
+
+
+
 
 \section{Discussion}
 \label{sec:discussion}
@@ -1052,7 +1249,7 @@ a particular mode can be learned exactly from a dataset, the posterior
 shrinkage is defined to be unity. Conversely, if the data is completely
 unconstraining, $R$ will tend to zero.
 
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/nullspace_ensemble.pdf}
         \oscaption{nullspace_ensemble}{%
@@ -1133,7 +1330,7 @@ light curves of ``similar'' stars?
 
 See Figures~\ref{fig:nullspace_ensemble_ld} and \ref{fig:nullspace_ensemble_ld_var}.
 
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/nullspace_ensemble_ld.pdf}
         \oscaption{nullspace_ensemble_ld}{%
@@ -1144,7 +1341,7 @@ See Figures~\ref{fig:nullspace_ensemble_ld} and \ref{fig:nullspace_ensemble_ld_v
     \end{centering}
 \end{figure}
 
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/nullspace_ensemble_ld_var.pdf}
         \oscaption{nullspace_ensemble_ld_var}{%
@@ -1165,30 +1362,6 @@ See Figures~\ref{fig:nullspace_ensemble_ld} and \ref{fig:nullspace_ensemble_ld_v
 \subsection{The number-contrast degeneracy}
 \label{sec:cN-degeneracy}
 
-\subsection{Caveats}
-\label{sec:caveats}
-The true process is not Gaussian. See Figure~\ref{fig:nongaussianity}.
-\begin{figure}[ht!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/nongaussianity.pdf}
-        \oscaption{nongaussianity}{%
-            Corner plot showing the joint distributions of select spherical
-            harmonic coefficients corresponding to the $l=15$ expansion of
-            $5\times 10^{4}$ stellar surface maps drawn from a certain
-            star spot distribution (black points and contours).
-            At $l=15$ there are 256 coefficients in total;
-            we chose five of the coefficients with the most odd-looking
-            distributions to illustrate the non-Gaussianity of the process.
-            In addition to non-linear correlations, skewness, and the
-            existence of points of very high curvature, some of the distributions
-            are also multi-modal.
-            The orange contours show slices of the Gaussian approximation to
-            the joint distribution; this is the approximation adopted in
-            this paper.
-            \label{fig:nongaussianity}
-        }
-    \end{centering}
-\end{figure}
 
 \section{Implementation}
 \label{sec:implementation}
@@ -2849,7 +3022,7 @@ prior on the latitude parameters introduced by our particular choice of
 parametrization, enforcing instead a uniform prior on the quantities $\mu_\phi$
 and $\sigma_\phi$.
 
-\begin{figure}[ht!]
+\begin{figure}[t!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/latitude_pdf.pdf}
         \oscaption{latitude_pdf}{%

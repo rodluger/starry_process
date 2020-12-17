@@ -17,7 +17,7 @@ kwargs = [
     dict(r=10, a=0.40, b=0.27, c=0.1, N=10, seed=0),
     dict(r=10, a=0.31, b=0.36, c=0.1, N=10, seed=1),
     dict(r=30, a=0.28, b=0.0, c=0.05, N=10, seed=2),
-    dict(r=10, a=0.06, b=0.0, c=0.2, N=20, seed=3),
+    dict(r=10, a=0.06, b=0.0, c=0.1, N=20, seed=3),
 ]
 
 map = starry.Map(15, lazy=False)
@@ -51,6 +51,7 @@ for n in range(len(kwargs)):
         map[:, :] = y[k]
         map.show(ax=ax[n, 0, k], projection="moll", norm=norm)
         ax[n, 0, k].set_ylim(-1.5, 2.25)
+        ax[n, 0, k].set_rasterization_zorder(1)
         for i, inc in enumerate(incs):
             map.inc = inc
             flux = map.flux(theta=360.0 * t)
@@ -73,6 +74,18 @@ for n in range(len(kwargs)):
         else:
             ax[n, 1, k].axis("off")
 
+    ax[n, 0, 0].annotate(
+        ["(a)", "(b)", "(c)", "(d)"][n],
+        xy=(0, 0.5),
+        xytext=(-10, -7),
+        xycoords="axes fraction",
+        textcoords="offset points",
+        fontsize=12,
+        ha="right",
+        va="center",
+        clip_on=False,
+    )
+
     cax = inset_axes(
         ax[n, 0, -1], width="70%", height="50%", loc="lower center",
     )
@@ -93,10 +106,13 @@ for n in range(len(kwargs)):
     lax.axis("off")
     ax[n, 1, -1].axis("off")
 
-    ax[n, 1, 0].get_shared_y_axes().join(*ax[n, 1, :])
-    ax[n, 1, 0].get_shared_x_axes().join(*ax[n, 1, :])
+    dy = max([max(np.abs(ax[n, 1, k].get_ylim())) for k in range(nsamples)])
+    for k in range(nsamples):
+        ax[n, 1, 0].set_ylim(-dy, dy)
 
 # We're done
 fig.savefig(
-    os.path.abspath(__file__).replace(".py", ".pdf"), bbox_inches="tight"
+    os.path.abspath(__file__).replace(".py", ".pdf"),
+    bbox_inches="tight",
+    dpi=300,
 )
