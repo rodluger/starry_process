@@ -324,6 +324,17 @@ class FluxIntegral:
         rTA1 = tt.tile(self._rTA1, (theta.shape[0], 1))
         return self._right_project(rTA1, theta, i)
 
+    def kernel(self, t, i, p):
+        if self._marginalize_over_inclination:
+            mom2 = self._special_tensordotRz(
+                self._T,
+                self._Ez,
+                2 * np.pi * tt.mod(tt.reshape(t, (-1,)) / p, 1.0),
+            )
+            return mom2 - self._mean ** 2
+        else:
+            return self.cov(t, i, p)[0]
+
     def mean(self, t, i, p):
 
         # Note that the mean doesn't actually depend on the period!
