@@ -1213,7 +1213,155 @@ have marginal distributions that \emph{look} to be very Gaussian; however,
 those that do not could in principle lead to errors and biases when using
 the Gaussian approximation to the likelihood function.
 
-\xxx{An example using the 1d Beta distribution.}
+\subsection{Setup}
+\label{sec:calibration-setup}
+
+\begin{table}[t!]
+    \begin{center}
+        \begin{longtable}{W{c}{1cm} W{l}{6cm} W{l}{2cm}}
+            \label{tab:synthetic}
+            \\
+            %
+            \toprule
+            \multicolumn{1}{c}{\textbf{Symbol}}
+             &
+            \multicolumn{1}{c}{\textbf{Description}}
+             &
+            \multicolumn{1}{c}{\textbf{Value}}
+            \\
+            \midrule
+            \endhead
+            \bottomrule                                 \\
+            %
+            \caption{%
+                Default parameters used to generate synthetic light curves in
+                the calibration tests.
+            }
+            \endfoot
+            %
+            %
+            $N$
+             & number of spots
+             & $\sim\mathcal{N}(20, 0^2)$
+            %
+            \\
+            %
+            $c$
+             & spot contrast
+             & $\sim\mathcal{N}(0.05, 0^2)$
+            %
+            \\
+            %
+            $\phi$
+             & spot latitude
+             & $\sim\mathcal{N}(30^\circ, {5^\circ}^2)$
+            %
+            \\
+            $\lambda$
+             & spot longitude
+             & $\sim\mathcal{U}(0^\circ, 360^\circ)$
+            %
+            \\
+            %
+            $r$
+             & spot radius
+             & $\sim\mathcal{N}(15^\circ, {0^\circ}^2)$
+            %
+            \\
+            %
+            $I$
+             & stellar inclination
+             & $\sim\sin$
+            %
+            \\
+            %
+            $P$
+             & rotational period
+             & $1$ day
+            %
+            \\
+            %
+            $\mathbf{u}$
+             & limb darkening coefficients
+             & $\left( 0 \,\,\,\, 0 \right)^\top$
+            %
+            \\
+            %
+            $\sigma_f$
+             & photometric uncertainty
+             & $10^{-3}$
+            %
+            \\
+            %
+            $K$
+             & number of cadences per light curve
+             & $10^3$
+            %
+            \\
+            %
+            $\Delta t$
+             & time baseline
+             & $4$ days
+            %
+            \\
+            %
+            $M$
+             & number of light curves in ensemble
+             & $50$
+            %
+            \\
+            %
+        \end{longtable}
+    \end{center}
+\end{table}
+
+We seek to demonstrate that our model is correctly calibrated by testing it
+on synthetic data, which we generate as follows. For each of $M$ synthetic
+light curves in a given ensemble,
+we create a rectangular
+$(150 \times 300)$ latitude-longitude grid of surface intensity values, all
+intialized
+to zero. We then add $N$ spots to this grid, each of fractional contrast
+$c$ and radius $r$ centered at latitude $\phi$ and longitude $\lambda$,
+by decreasing the intensity at all points within an angular distance $r$
+(measured along the surface of the sphere) by an amount $c$.
+In order to compute the corresponding light curve, we expand the surface
+in spherical harmonics, although at much higher degree
+($l_\mathrm{max}^{(0)} = 30$)
+than the degree we will use in the inference step ($l_\mathrm{max} = 15$)
+to minimize potential ringing effects or other artefacts in the synthetic
+data. For reference, the chosen degree $l_\mathrm{max} = 30$ is large
+enough to resolve features on the order of
+$\nicefrac{180^\circ}{30} = 6^\circ$ across, but small enough that
+the algorithm for computing the light curve is numerically stable. We
+compute the light curve at $K$ points equally spaced over a baseline $\Delta t$
+using the \starry algorithm
+(Appendix \ref{sec:starry}), assuming an inclination $I$, a rotational period $P$,
+and limb darkening coefficients $\mathbf{u}$. Finally, we divide the
+light curve by the mean and add Gaussian noise with standard deviation $\sigma_f$
+to emulate photon noise.%
+\footnote{
+    In theory, we should do this in the reverse order: i.e., we should add photon
+    noise and \emph{then} normalize the light curve to the mean, since that is the order in which
+    those steps occur in reality. However, if we did that, we would have to normalize $\sigma_f$
+    in our inference step, such that the variance of each of the normalized light curves
+    in the ensemble would be different, requiring us to invert a different matrix for
+    each light curve when computing the log likelihood (see Equation~\ref{eq:log-like}).
+    This would significantly increase the computational cost of our tests. Fortunately, in
+    practice, the difference between these two approaches has negligible effect on
+    our inference results, so we opt for the faster of the two methods. Note, of course,
+    that when applying our GP to real data, we won't have this choice!
+}
+The default values of each of the parameters mentioned above are given in
+Table~\ref{tab:synthetic}. Some, like the number of spots, their contrast,
+etc., are drawn from fiducial distributions, while others, like the
+photometric uncertainty, the rotational period, and the limb darkening
+coefficients,
+are fixed across all $M$ light curves in an ensemble. These fixed values
+are not realistic, but they greatly speed up the inference step, since they
+allow us to invert a single covariance matrix for all light curves when computing
+the log likelihood.
+
 
 
 \section{Discussion}
@@ -1602,7 +1750,7 @@ a map of degree $l_\mathrm{max} = 1$ and the linear limb darkening law
 ($n_\mathrm{max} = 1$) with coefficient vector $\mathbf{u} = ( u_1 )$.
 The transformation matrix from $\mathbf{y}$ to $\mathbf{y'}$ is
 %
-\begin{proof}{}
+\begin{proof}{test_ld}
     \label{eq:ld:L}
     \setstackgap{L}{1.5\baselineskip}
     \mathbf{L}(\mathbf{u}) =

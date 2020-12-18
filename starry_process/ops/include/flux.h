@@ -278,6 +278,21 @@ inline void computeA1(int deg, Eigen::SparseMatrix<Scalar> &A1) {
   A1.setFromTriplets(coeffs.begin(), coeffs.end());
 }
 
+template <typename Scalar>
+inline void computeA1Inv(int deg, const Eigen::SparseMatrix<Scalar> &A1,
+                         Eigen::SparseMatrix<Scalar> &A1Inv) {
+  int N = (deg + 1) * (deg + 1);
+  Eigen::SparseLU<Eigen::SparseMatrix<Scalar>> solver;
+  solver.compute(A1);
+
+  if (solver.info() != Eigen::Success)
+    throw std::runtime_error(
+        "Error computing the change of basis matrix `A1Inv`.");
+  Eigen::SparseMatrix<Scalar> I =
+      RowMatrix<Scalar, Dynamic, Dynamic>::Identity(N, N).sparseView();
+  A1Inv = solver.solve(I);
+}
+
 /**
 Compute the starry flux operator `rTA1`.
 
@@ -300,6 +315,7 @@ template <typename Scalar> class LimbDark {
 public:
   RowVector<Scalar, Dynamic> rT;
   Eigen::SparseMatrix<Scalar> A1;
+  Eigen::SparseMatrix<Scalar> A1Inv;
   Eigen::SparseMatrix<Scalar> A1NbyN;
   Eigen::SparseMatrix<Scalar> U1;
   Vector<Scalar, Dynamic> p;
@@ -392,11 +408,6 @@ public:
 
   /**
   Compute the limb darkening operator in the polynomial basis.
-  This is equal to
-
-    Lp = A1^-1 . L . A1
-
-  where `L` is the limb darkening operator in the spherical harmonic basis.
 
   */
   inline void computeLp() {
@@ -473,6 +484,7 @@ public:
       // Pre-compute a bunch of stuff
       computerT(SP__LUMAX, rT);
       computeA1(SP__LUMAX, A1);
+      computeA1Inv(SP__LUMAX, A1, A1Inv);
       computeU1();
       A1NbyN = A1.topLeftCorner(SP__N, SP__N);
       computeDDp();
@@ -502,7 +514,7 @@ public:
     // Compute the limb darkening operator `L` in the polynomial basis
     computeLp();
 
-    // Recall that `Lp = A1^-1 . L . A1`
+    // Change of basis
     rTA1L = (rT * Lp) * A1NbyN;
   }
 
@@ -536,6 +548,36 @@ public:
         M_PI * norm * U1 -
         p * rT.template head<(SP__UMAX + 1) * (SP__UMAX + 1)>() * U1 * norm;
     bu = (bp * DpDu).template tail<SP__UMAX>();
+  }
+
+  /**
+  Compute the limb darkening operator `L` (ylm -> ylm).
+
+  This is not currently used in the code, but is made available
+  for reference.
+
+  */
+  template <typename ROWMATRIX>
+  void computeL(const Vector<Scalar, SP__UMAX> &u, ROWMATRIX &L) {
+
+    if (SP__UMAX == 0) {
+      throw std::runtime_error("Limb darkening is currently disabled.");
+    }
+
+    // Compute the limb darkening polynomial
+    Vector<Scalar, SP__UMAX + 1> u_;
+    u_(0) = -1.0;
+    u_.template tail<SP__UMAX>() = u;
+    p = U1 * u_;
+    Scalar norm = Scalar(1.0) /
+                  rT.template head<(SP__UMAX + 1) * (SP__UMAX + 1)>().dot(p);
+    p *= norm * M_PI;
+
+    // Compute the limb darkening operator `Lp` in the polynomial basis
+    computeLp();
+
+    // Change of basis
+    L = (A1Inv * Lp) * A1NbyN;
   }
 };
 
