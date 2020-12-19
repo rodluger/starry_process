@@ -2,12 +2,22 @@ from starry_process import calibrate
 import numpy as np
 import os
 
+# Utility funcs to move figures to this directory
+abspath = lambda *args: os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), *args
+)
+move = lambda name, src, dest: os.rename(
+    abspath("data", name, src), abspath(dest)
+)
+
+
+# Default run
+calibrate.run(path=abspath("data/default"))
+move("default", "data.pdf", "calibration_default_data.pdf")
+
 
 # TODO: Not yet ready for CI runs
-if not bool(os.getenv("CI", False)):
-
-    # Default run
-    calibrate.run(path="data/default")
+if not int(os.getenv("CI", 0)):
 
     # Equatorial spots
     calibrate.run(

@@ -157,14 +157,17 @@ def plot_data(data, **kwargs):
         axtop[k].plot(xe, -ye, "k-", lw=1, clip_on=False)
         axtop[k].plot(0, lat2y(90 - incs[k]), "kx", ms=3)
         axtop[k].axis("off")
+        axtop[k].set_ylim(-1.01, 2.0)
         axbot[k].plot(
             t, 1e3 * (flux[k] - np.median(flux[k])), "k.", alpha=0.3, ms=1
         )
         axbot[k].plot(t, 1e3 * (flux0[k] - np.median(flux0[k])), "C0-", lw=1)
         axbot[k].set_ylim(ymin, ymax)
         if k < nrows:
-            div = make_axes_locatable(axtop[nlc - k - 1])
-            cax = div.append_axes("right", size="7%", pad="10%")
+            axins = axtop[nlc - k - 1].inset_axes([0, 0, 1, 0.67])
+            axins.axis("off")
+            div = make_axes_locatable(axins)
+            cax = div.append_axes("right", size="7%", pad="50%")
             cbar = fig.colorbar(im, cax=cax, orientation="vertical")
             cbar.set_label("intensity", fontsize=8)
             cbar.set_ticks([0.75, 1])
@@ -417,8 +420,12 @@ def plot_inclination_pdf(data, inc_results, **kwargs):
             ax[n].spines["right"].set_visible(False)
             ax[n].set_xlabel("inclination", fontsize=10)
             ax[n].set_ylabel("probability", fontsize=10)
-            ax[n].set_xticks([0, 30, 60, 90])
+            xticks = [0, 30, 60, 90]
+            ax[n].set_xticks(xticks)
+            ax[n].set_xticklabels([r"{}$^\circ$".format(xt) for xt in xticks])
             ax[n].set_yticks([])
+            for tick in ax[n].xaxis.get_major_ticks():
+                tick.label.set_fontsize(6)
         else:
             ax[n].axis("off")
     return fig
