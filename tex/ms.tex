@@ -86,20 +86,31 @@ Despite whatever mystique the words ``Gaussian process'' may evoke, a GP
 is nothing but a Gaussian distribution in many (formally infinite)
 dimensions. Specifically, it is a Gaussian distribution over
 \emph{functions} spanning a continuous domain (in our case, the time domain).
-Like a multivariate
-Gaussian, a GP is fully specified by a $(K \times 1)$ vector $\pmb{\mu}$ characterizing
+Similar to a multivariate Gaussian, which is described by
+a $(K \times 1)$ vector $\pmb{\mu}$ characterizing
 the mean of the process and a $(K \times K)$
-covariance matrix $\pmb{\Sigma}$ characterizing how the data points
-are correlated with each other. To say that a measurement $\mathbf{f}$ is
-``distributed as a GP'' means that we may write
+matrix $\pmb{\Sigma}$ describing its covariance,
+a GP is fully specified by a mean
+function $m(t)$ and a kernel function $k(t, t')$.
+To say that a random vector-valued variable $\mathbbb{f}$
+defined on a $(K \times 1)$ time array $\mathbf{t}$
+is ``distributed as a GP'' means that we may write
 %
 \begin{align}
-    \mathbf{f} \sim \mathcal{N}\left( \pmb{\mu}, \pmb{\Sigma} \right)
+    \mathbbb{f} \sim \mathcal{N}\left( \pmb{\mu}, \pmb{\Sigma} \right)
     \quad,
 \end{align}
 %
-i.e., the measurement is modeled as a random draw from a multivariate Gaussian.
-GPs are therefore extremely easy to sample from.%
+where the elements of the mean and covariance are given by
+$\mu_i = m(t_i)$ and $\Sigma_{i,j} = k(t_i, t_j)$, respectively.%
+\footnote{%
+    In this paper, we will use blackboard font (i.e., $\mathbbb{f}$) to
+    denote random variables and serif font (i.e., $\mathbf{f}$) to denote
+    particular realizations of those variables.
+    See Appendix~\ref{sec:notation} for a detailed explanation of our notation.
+}
+Because of this relationship to multivariate Gaussians,
+GPs are extremely easy to sample from.%
 \footnote{Given a 1-d array \texttt{mean} and a 2-d array \texttt{cov} in \Python,
     sampling from the corresponding GP (if it exists)
     can be done in a single line of code by calling
@@ -121,20 +132,13 @@ for a reasonably-sized dataset (i.e., $K \lesssim 10^5$ datapoints).
 
 Another big advantage of GPs is their flexibility. GPs are often dubbed
 a class of ``non-parametric'' models, given that nowhere in the specification
-of the GP is there an explicit functional form for $\mathbf{f}$. Rather, a GP
+of the GP is there an explicit functional form for $\mathbbb{f}$. Rather, a GP
 is a stochastic
 process whose draws can in principle take on \emph{any} functional form,
 subject, however, to certain smoothness and correlation criteria
 of tunable strictness
 that are fully
-encoded in the covariance $\pmb{\Sigma}$. Importantly, the covariance
-$\pmb{\Sigma}$ of a GP is assembled via a continuous \emph{kernel function} $k(t_i, t_j)$
-that specifies the covariance between points at times $t = t_i$ and $t = t_j$:
-%
-\begin{align}
-    \Sigma_{i,j} = k(t_i, t_j)
-    \quad.
-\end{align}
+encoded in the covariance $\pmb{\Sigma}$.
 %
 In many applications, particularly when modeling stellar light curves,
 it is customary to restrict the problem by
@@ -226,9 +230,9 @@ case of star spot-induced variability, one must construct a physical model
 for the stellar surface and for how it projects into the light curve as the
 star rotates. This might entail directly modeling the star spots,
 with free parameters controling the spot size, contrast, position,
-and temporal evolution of each of the $N$ spots, where $N$ is also
+and temporal evolution of each of the $n$ spots, where $n$ is also
 a free parameter. In addition to this being a numerically challenging
-problem for all but the smallest values of $N$, the problem is
+problem for all but the smallest values of $n$, the problem is
 intrinsically ill-posed, meaning there are strong degeneracies at play
 that formally preclude a unique solution to the stellar map.
 After all, a stellar light curve is a one-dimensional representation of a
@@ -327,7 +331,7 @@ describe star spot distributions%
     small star spots. We discuss this point at length in \S\ref{sec:tinyspots},
     where we show that our model is useful even when applied to stars with spots
     smaller than the effective resolution of the GP.}, as they will allow us to compute
-moments of the intensity distribution analytically. And of more immediate concern,
+moments of the intensity distribution analytically. Of more immediate concern,
 \citet{Luger2019} showed that there is a linear relationship between the
 spherical harmonic expansion of a stellar surface and the total disk-integrated
 flux $\mathbf{f}$ (i.e., the light curve)
@@ -354,18 +358,18 @@ rotation period $P$, and the stellar limb darkening coefficients $\mathbf{u}$
 %
 
 Let
-$\mathbf{f} = \left( f_0 \, f_1 \, \cdots \,  f_{K-1} \right)^\top$
-denote a vector of $K$ flux measurements at times
-$\mathbf{t} = \left( t_0 \,  t_1 \,  \cdots \, t_{K-1} \right)^\top$,
+$\mathbbb{f} = \left( \mathbb{f}_0 \,\, \mathbb{f}_1 \,\, \cdots \,\,  \mathbb{f}_{K-1} \right)^\top$
+denote a random vector of $K$ flux measurements at times
+$\mathbf{t} = \left( t_0 \,\,  t_1 \,\,  \cdots \,\, t_{K-1} \right)^\top$,
 defined in units such that a star with no spots on it will have
-$\mathbf{f} = \mathbf{1}$.
+unit flux.
 Conditioned on the stellar inclination $I$, the rotational period $P$,
 a set of limb darkening coefficients $\mathbf{u}$, and
 on certain properties of the star spots $\pmb{\theta}_\bullet$
 (including their number, sizes, positions, and contrasts),
 we wish to compute the mean $\pmb{\mu}(I, P, \mathbf{u}, \pmb{\theta}_\bullet)$ and
 covariance $\pmb{\Sigma}(I, P, \mathbf{u}, \pmb{\theta}_\bullet)$
-of $\mathbf{f}$. Together, these specify a multidimensional Gaussian
+of $\mathbbb{f}$. Together, these specify a multidimensional Gaussian
 distribution, which we assume fully describes%
 \footnote{The \emph{true} distribution of stellar light curves conditioned
     on $I$, $P$, $\mathbf{u}$, and $\pmb{\theta}_\bullet$ is not Gaussian, so our
@@ -376,7 +380,7 @@ how our flux measurements
 are distributed:
 %
 \begin{align}
-    \mathbf{f}\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right) \sim
+    \mathbbb{f}\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right) \sim
     \mathcal{N}\Big(
     \pmb{\mu}\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right),
     \,
@@ -385,17 +389,17 @@ are distributed:
 \end{align}
 %
 As with any random variable, the mean and covariance may be computed from
-the expectation values of $\mathbf{f}$ and
-$\mathbf{f}\,\mathbf{f}^\top$, respectively:
+the expectation values of $\mathbbb{f}$ and
+$\mathbbb{f}\,\mathbbb{f}^\top$, respectively:
 %
 \begin{align}
     \label{eq:mean}
     \pmb{\mu}(I, P, \mathbf{u}, \pmb{\theta}_\bullet)
-     & = \mathrm{E} \Big[ \mathbf{f} \, \Big| \, I, P, \mathbf{u}, \pmb{\theta}_\bullet \Big]
+     & = \mathrm{E} \Big[ \mathbbb{f} \, \Big| \, I, P, \mathbf{u}, \pmb{\theta}_\bullet \Big]
     \\
     \label{eq:cov}
     \pmb{\Sigma}(I, P, \mathbf{u}, \pmb{\theta}_\bullet)
-     & = \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, I, P, \mathbf{u}, \pmb{\theta}_\bullet \Big] - \pmb{\mu}(I, P, \mathbf{u}, \pmb{\theta}_\bullet) \pmb{\mu}^\top(I, P, \mathbf{u}, \pmb{\theta}_\bullet)
+     & = \mathrm{E} \Big[ \mathbbb{f} \, \mathbbb{f}^\top \, \Big| \, I, P, \mathbf{u}, \pmb{\theta}_\bullet \Big] - \pmb{\mu}(I, P, \mathbf{u}, \pmb{\theta}_\bullet) \pmb{\mu}^\top(I, P, \mathbf{u}, \pmb{\theta}_\bullet)
     \quad.
 \end{align}
 %
@@ -419,11 +423,11 @@ where
 \begin{align}
     \label{eq:mean_y}
     \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet)
-     & = \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
+     & = \mathrm{E} \Big[ \mathbbb{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
     \\
     \label{eq:cov_y}
     \pmb{\Sigma}_{\mathbf{y}}(\pmb{\theta}_\bullet)
-     & = \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] - \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet) \pmb{\mu}_{\mathbf{y}}^\top(\pmb{\theta}_\bullet)
+     & = \mathrm{E} \Big[ \mathbbb{y} \, \mathbbb{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] - \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet) \pmb{\mu}_{\mathbf{y}}^\top(\pmb{\theta}_\bullet)
 \end{align}
 %
 are the mean and covariance of the GP in the spherical harmonics basis.
@@ -434,71 +438,69 @@ are given by the integrals
 %
 \begin{align}
     \label{eq:exp_y}
-    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
+    \mathrm{E} \Big[ \mathbbb{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
      & =
-    \int \mathbf{y}(\mathbf{x} ) \, p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)\mathrm{d}\mathbf{x}
+    \int \mathbbb{y}(\mathbbb{x} ) \, p(\mathbbb{x} \, \big| \, \pmb{\theta}_\bullet)\mathrm{d}\mathbbb{x}
     \\
     \label{eq:exp_yy}
-    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
+    \mathrm{E} \Big[ \mathbbb{y} \, \mathbbb{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
      & =
-    \int \mathbf{y}(\mathbf{x} ) \mathbf{y}^\top(\mathbf{x} ) \, p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)\mathrm{d}\mathbf{x}
+    \int \mathbbb{y}(\mathbbb{x} ) \mathbbb{y}^\top(\mathbbb{x} ) \, p(\mathbbb{x} \, \big| \, \pmb{\theta}_\bullet)\mathrm{d}\mathbbb{x}
     \quad,
 \end{align}
 %
-where $\mathbf{x}$ is a random vector-valued variable corresponding to a particular
+where $\mathbbb{x}$ is a random vector-valued variable corresponding to a particular
 distribution of features on the surface
-and $p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$ is its probability density
+and $p(\mathbbb{x} \, \big| \, \pmb{\theta}_\bullet)$ is its probability density
 function (PDF).
 %
 In the Appendix we show that for suitable choices of $\pmb{\theta}_\bullet$,
-$\mathbf{y}(\mathbf{x})$,
-and $p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$, the integrals in the expressions
+$\mathbbb{y}(\mathbbb{x})$,
+and $p(\mathbbb{x} \, \big| \, \pmb{\theta}_\bullet)$, the integrals in the expressions
 above have closed form solutions that may be evaluated quickly.
 %
-In particular, we let the spot hyperparameters of our GP be
+While we present a few different ways of specifying $\pmb{\theta}_\bullet$,
+our default representation of the GP hyperparameters is
 %
 \begin{align}
     \label{eq:thetaspot}
     \pmb{\theta}_\bullet
      & =
     \left(
-    N
+    n
     \,\,\,
     c
     \,\,\,
-    a
+    \mu_\phi
     \,\,\,
-    b
+    \sigma_\phi
     \,\,\,
     r
-    \,\,\,
-    \Delta
     \right)^\top
     \quad,
 \end{align}
 %
-where $N$ is the number of star spots, $c$ is their contrast,
-$a$ and $b$ describe the latitudinal
-distribution of the spots, and $r$ and $\Delta$ are the mean and
-half-width, respectively, of the distribution of spot radii.
+where $n$ is the number of star spots, $c$ is their contrast,
+$\mu$ and $\sigma$ are parameters describing the
+distribution of the spots in latitude, and $r$ is the radius
+of the spots.
 %
-The PDF for the radius is a uniform distribution
-between $r - \Delta$ and $r + \Delta$ (Appendix \ref{sec:size}),
+The PDFs for the spot radius, the spot contrast, and the number
+of spots are delta functions centered at $r$, $c$, and $n$, respectively
+(Appendices \ref{sec:size} and \ref{sec:contrast}),
 while
 the PDF for the latitude $\phi$ of the spots is a Beta distribution in
 $\cos\phi$ with (normalized) shape parameters $a$ and $b$,
-which have a one-to-one correspondence to the mean $\mu_\phi$ and
+which have a one-to-one correspondence to the mode $\mu_\phi$ and
 standard deviation $\sigma_\phi$ of the distribution in $\phi$
-(Appendix \ref{sec:lat-transform}).
-The spot longitude is assumed to be uniformly distributed
-(Appendix \ref{sec:lon}). Finally,
-the PDFs for the spot contrast and the number of spots are delta functions
-centered at $c$ and $N$, respectively (Appendix \ref{sec:contrast}).
+(Appendix \ref{sec:lat}). Finally,
+the spot longitude is assumed to be uniformly distributed
+(Appendix \ref{sec:lon}).
 
 In this paper, we assume that the parameters $\pmb{\theta}_\bullet$
 described above are the \emph{physically interesting} ones. That is,
 given a set of $M$ light curves
-$\left( \mathbf{f}_0 \, \mathbf{f}_1 \, \cdots \,  \mathbf{f}_{M-1} \right)^\top$,
+$\left( \mathbf{f}_0 \,\, \mathbf{f}_1 \,\, \cdots \,\,  \mathbf{f}_{M-1} \right)^\top$,
 we wish to infer the statistical properties of the star spots, encoded in
 the entries of the vector $\pmb{\theta}_\bullet$.
 %
@@ -604,7 +606,7 @@ However, it does pose
 a problem when considering how complex the posterior distribution for the
 spot mapping problem can be. In addition to strong nonlinear degeneracies
 between some of the parameters (such as the contrast $c$ and the
-number of spots $N$), the posterior is often multimodal, especially in the
+number of spots $n$), the posterior is often multimodal, especially in the
 stellar inclinations. While modern sampling schemes such as Hamiltonian
 Monte Carlo and Nested Sampling may in principle be able to deal with these
 issues, in practice it can be very difficult to obtain convergence in a
@@ -635,14 +637,14 @@ That is, we may write the mean and covariance of our GP as
 \begin{align}
     \label{eq:mu_marg}
     \pmb{\mu}(P, \mathbf{u}, \pmb{\theta}_\bullet)
-     & = \mathrm{E} \Big[ \mathbf{f} \, \Big| \, P, \mathbf{u}, \pmb{\theta}_\bullet \Big]
-    \nonumber                                                                                                                                                                                                      \\
+     & = \mathrm{E} \Big[ \mathbbb{f} \, \Big| \, P, \mathbf{u}, \pmb{\theta}_\bullet \Big]
+    \nonumber                                                                                                                                                                                                        \\
      & = \mathbf{1} + \mathbf{e}_I
     \\[0.5em]
     \label{eq:cov_marg}
     \pmb{\Sigma}(P, \mathbf{u}, \pmb{\theta}_\bullet)
-     & = \mathrm{E} \Big[ \mathbf{f} \, \mathbf{f}^\top \, \Big| \, P, \mathbf{u}, \pmb{\theta}_\bullet \Big] - \pmb{\mu}(P, \mathbf{u}, \pmb{\theta}_\bullet) \pmb{\mu}^\top(P, \mathbf{u}, \pmb{\theta}_\bullet)
-    \nonumber                                                                                                                                                                                                      \\
+     & = \mathrm{E} \Big[ \mathbbb{f} \, \mathbbb{f}^\top \, \Big| \, P, \mathbf{u}, \pmb{\theta}_\bullet \Big] - \pmb{\mu}(P, \mathbf{u}, \pmb{\theta}_\bullet) \pmb{\mu}^\top(P, \mathbf{u}, \pmb{\theta}_\bullet)
+    \nonumber                                                                                                                                                                                                        \\
      & =
     \mathbf{E}_I
     -
@@ -656,13 +658,10 @@ where we define the inclination first moment integral
     \label{eq:eI}
     \mathbf{e}_I
      & \equiv
-    \mathrm{E} \Big[ \pmb{\mathcal{A}} \, \mathbf{y} \, \Big| \, P, \mathbf{u}, \pmb{\theta}_\bullet \Big]
-    \nonumber \\[0.5em]
-     & =
     \int
-    \pmb{\mathcal{A}}(I, P, \mathbf{u}) \,
-    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
-    p(I) \, \mathrm{d}I
+    \pmb{\mathcal{A}}(\mathbb{I}, P, \mathbf{u}) \,
+    \mathbf{E} \Big[ \mathbbb{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
+    p(\mathbb{I}) \, \mathrm{d}\mathbb{I}
 \end{align}
 %
 and the inclination second moment integral
@@ -672,10 +671,10 @@ and the inclination second moment integral
     \mathbf{E}_I
      & \equiv
     \int
-    \pmb{\mathcal{A}}(I, P, \mathbf{u}) \,
-    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] \,
-    \pmb{\mathcal{A}}^\top(I, P, \mathbf{u})
-    p(I) \, \mathrm{d}I
+    \pmb{\mathcal{A}}(\mathbb{I}, P, \mathbf{u}) \,
+    \mathbf{E} \Big[ \mathbbb{y} \, \mathbbb{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] \,
+    \pmb{\mathcal{A}}^\top(\mathbb{I}, P, \mathbf{u})
+    p(\mathbb{I}) \, \mathrm{d}\mathbb{I}
     \quad.
 \end{align}
 %
@@ -715,7 +714,7 @@ since by construction our GP is longitudinally isotropic
 There is one final subtle---but extremely important---point that remains to
 be discussed in our derivation of a Gaussian process for stellar
 rotation. Thus far we have cast the light curve problem in a typical GP inference
-setting: we model our observations $\mathbf{f}$ as
+setting: we model our observations $\mathbbb{f}$ as
 a multidimensional random variable distributed as a multivariate Gaussian with mean vector
 $\pmb{\mu}$ and covariance matrix $\pmb{\Sigma}$. However, in the context of
 relative photometry, the mean $\pmb{\mu}$ is typically \emph{unobservable}.
@@ -802,13 +801,13 @@ curve by the mean, the operation we perform is
 %
 \begin{align}
     \label{eq:ftilde}
-    \tilde{\mathbf{f}\hspace{0.2em}} & = \frac{\mathbf{f}}{\left<f\right>}
+    \tilde{\mathbbb{f}\hspace{0.2em}} & = \frac{\mathbbb{f}}{\left<\mathbb{f}\right>}
     \quad,
 \end{align}
 %
-where $\tilde{\mathbf{f}\hspace{0.2em}}$ is the normalized, unit-mean light curve,
-$\mathbf{f}$ is the measured light curve (in detector counts), and
-$\left<f\right>$ is the \emph{sample} mean: i.e., the average value of
+where $\tilde{\mathbbb{f}\hspace{0.2em}}$ is the normalized, unit-mean light curve,
+$\mathbbb{f}$ is the measured light curve (in detector counts), and
+$\left<\mathbb{f}\right>$ is the \emph{sample} mean: i.e., the average value of
 a given star's light curve (which we model as a sample from our GP).
 This may be close to but is in general different from the \emph{process} mean,
 $\pmb{\mu}(P, \mathbf{u}, \pmb{\theta}_\bullet)$, since the mean of
@@ -817,7 +816,7 @@ with the GP variance.
 
 Computing the covariance of the normalized process is tricky, especially
 because the normalized process is \emph{not} strictly Gaussian: the distribution
-has heavy tails due to the fact that $\tilde{\mathbf{f}\hspace{0.2em}}$ diverges as
+has heavy tails due to the fact that $\tilde{\mathbbb{f}\hspace{0.2em}}$ diverges as
 the sample mean approaches zero. In fact, because of these tails, the covariance
 of the normalized process is formally \emph{infinite}, since the probability of
 drawing a sample whose mean is arbitrarily close to zero is finite.
@@ -863,21 +862,21 @@ given by the optimally-truncated diverging series
     \label{eq:baseline_alpha}
     A
      & \equiv
-    \sum\limits_{n=0}^N
-    \frac{(2n + 1)!}{2^n \, n!}
-    z^n
+    \sum\limits_{i=0}^{i_\mathrm{max}}
+    \frac{(2i + 1)!}{2^i \, i!}
+    z^i
     \\[1em]
     \label{eq:baseline_beta}
     B
      & \equiv
-    \sum\limits_{n=0}^N
-    \frac{2n(2n + 1)!}{2^n \, n!}
-    z^n
+    \sum\limits_{i=0}^{i_\mathrm{max}}
+    \frac{2i(2i + 1)!}{2^i \, i!}
+    z^i
     \quad,
 \end{align}
 %
-where $N$ is the largest value for which the series coefficient at $N$ is
-smaller than the coefficient at $N - 1$. In the expressions above, it is
+where $i_\mathrm{max}$ is the largest value for which the series coefficient at $i_\mathrm{max}$ is
+smaller than the coefficient at $i_\mathrm{max} - 1$. In the expressions above, it is
 assumed that the mean $\pmb{\mu}$ is constant, i.e., $\pmb{\mu} = \mu\, \mathbf{1}$.
 Since our Gaussian process is azimuthally isotropic (i.e., no preferred
 longitude), that is the case throughout this paper.
@@ -887,7 +886,7 @@ the unknown baseline by modeling the \emph{normalized} flux as a draw
 from a Gaussian process:
 %
 \begin{align}
-    \tilde{\mathbf{f}\hspace{0.2em}}
+    \tilde{\mathbbb{f}\hspace{0.2em}}
     \left(P, \mathbf{u}, \pmb{\theta}_\bullet\right)
     \sim
     \mathcal{N}\left(
@@ -898,7 +897,7 @@ from a Gaussian process:
 \end{align}
 %
 This is appropriate as long as $z \ll 1$, for which the true
-distribution of $\tilde{\mathbf{f}\hspace{0.2em}}$ is approximately Gaussian. In practice,
+distribution of $\tilde{\mathbbb{f}\hspace{0.2em}}$ is approximately Gaussian. In practice,
 we recommend employing this trick only for $z \lesssim 0.02$, for which the
 error in the approximation to the covariance is less than $10^{-6}$.
 In cases where the light curve variability exceeds a few percent, we recommend
@@ -937,11 +936,11 @@ over the inclination (\S\ref{sec:inclination}) and the light curves are
 normalized to their means (\S\ref{sec:baseline}), which is likely to be the primary
 use case for our algorithm.
 
-We model the mean-normalized flux $\tilde{\mathbf{f}\hspace{0.2em}}$
+We model the mean-normalized flux $\tilde{\mathbbb{f}\hspace{0.2em}}$
 (Equation~\ref{eq:ftilde}) as a Gaussian process:
 %
 \begin{align}
-    \tilde{\mathbf{f}\hspace{0.2em}}
+    \tilde{\mathbbb{f}\hspace{0.2em}}
     \left(P, \mathbf{u}, \pmb{\theta}_\bullet\right)
     \sim
     \mathcal{N}\left(
@@ -961,25 +960,22 @@ spot distribution
     \pmb{\theta}_\bullet
      & =
     \left(
-    N
+    n
     \,\,\,
     c
     \,\,\,
-    a
+    \mu_\phi
     \,\,\,
-    b
+    \sigma_\phi
     \,\,\,
     r
-    \,\,\,
-    \Delta
     \right)^\top
     \quad,
 \end{align}
 %
-consisting of the number of spots $N$, their contrast $c$,
-the shape parameters of the latitude distribution $a$ and $b$, and
-the mean $r$ and half-width $\Delta$ of the spot radius
-distribution.
+consisting of the number of spots $n$, their contrast $c$,
+the mode $\mu_\phi$ and standard deviation $\sigma_\phi$ of the latitude
+distribution, and the radius of the spots $r$.
 The quantity $\tilde{\pmb{\Sigma}}$ is the covariance of the (normalized) process
 (Equation~\ref{eq:SigmaTilde}), which is a straightforward correction to the
 true covariance of the process, which accounts for
@@ -993,9 +989,9 @@ Those expressions in turn depend on the inclination expectation integrals
 $e_I$ (Appendix~\ref{sec:inc-mom1}) and $\mathbf{E}_I$
 (Appendix~\ref{sec:inc-mom2}). Those, in turn, depend on the first and
 second moments of the distribution of spherical harmonic coefficient vectors,
-$\mathrm{E}\left[ \mathbf{y} \big| \pmb{\theta}_\bullet \right]$
+$\mathbf{E}\left[ \mathbbb{y} \, \big| \, \pmb{\theta}_\bullet \right]$
 and
-$\mathrm{E}\left[ \mathbf{y} \, \mathbf{y}^\top \big| \pmb{\theta}_\bullet \right]$,
+$\mathbf{E}\left[ \mathbbb{y} \, \mathbbb{y}^\top \, \big| \, \pmb{\theta}_\bullet \right]$,
 given by Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), respectively.
 To compute those, we must evaluate four nested integrals
 (Equations~\ref{eq:e1}--\ref{eq:e4} for the first moment
@@ -1058,11 +1054,11 @@ for each row are
 %
 \begin{subequations}
     \begin{align}
-        \left( N \,\,\, c \,\,\, a \,\,\, b \,\,\, r \,\,\, \Delta \right)^\top
-         & =\left( 10 \,\,\,\,\,\,\,\,\, 0.10 \,\,\,\,\,\,\,\,\, 0.40 \,\,\,\,\,\,\,\,\, 0.27 \,\,\,\,\,\,\,\,\, 10.0 \,\,\,\,\,\,\,\,\, 0.00 \right)^\top \\
-         & =\left( 10 \,\,\,\,\,\,\,\,\, 0.10 \,\,\,\,\,\,\,\,\, 0.31 \,\,\,\,\,\,\,\,\, 0.36 \,\,\,\,\,\,\,\,\, 10.0 \,\,\,\,\,\,\,\,\, 0.00 \right)^\top \\
-         & =\left( 10 \,\,\,\,\,\,\,\,\, 0.05 \,\,\,\,\,\,\,\,\, 0.28 \,\,\,\,\,\,\,\,\, 0.00 \,\,\,\,\,\,\,\,\, 30.0 \,\,\,\,\,\,\,\,\, 0.00 \right)^\top \\
-         & =\left( 20 \,\,\,\,\,\,\,\,\, 0.10 \,\,\,\,\,\,\,\,\, 0.06 \,\,\,\,\,\,\,\,\, 0.00 \,\,\,\,\,\,\,\,\, 10.0 \,\,\,\,\,\,\,\,\, 0.00 \right)^\top
+        \left( n \,\,\, c \,\,\, \mu_\phi \,\,\, \sigma_\phi \,\,\, r\right)^\top
+         & =\left( 10.0 \,\,\,\,\,\,\,\,\, 0.10 \,\,\,\,\,\,\,\,\, 30.0 \,\,\,\,\,\,\,\,\, 5.00 \,\,\,\,\,\,\,\,\, 10.0 \right)^\top \\
+         & =\left( 10.0 \,\,\,\,\,\,\,\,\, 0.10 \,\,\,\,\,\,\,\,\, 60.0 \,\,\,\,\,\,\,\,\, 5.00 \,\,\,\,\,\,\,\,\, 10.0 \right)^\top \\
+         & =\left( 10.0 \,\,\,\,\,\,\,\,\, 0.05 \,\,\,\,\,\,\,\,\, 0.00 \,\,\,\,\,\,\,\,\, 5.00 \,\,\,\,\,\,\,\,\, 30.0 \right)^\top \\
+         & =\left( 20.0 \,\,\,\,\,\,\,\,\, 0.10 \,\,\,\,\,\,\,\,\, 0.00 \,\,\,\,\,\,\,\,\, 40.0 \,\,\,\,\,\,\,\,\, 10.0 \right)^\top
         \quad.
     \end{align}
 \end{subequations}
@@ -1076,10 +1072,8 @@ $60^\circ \pm 5^\circ$ latitude with a contrast of $10\%$;
 $0^\circ \pm 5^\circ$ latitude with a contrast of $5\%$;
 and
 (d) 20 spots of radius $10^\circ$ centered at
-$30^\circ \pm 5^\circ$ latitude with a contrast of $10\%$.
-Note that the conversion between the shape parameters $a$ and $b$ and
-the more intuitive mean $\mu_\phi$ and standard deviation $\sigma_\phi$
-of the spot latitude distribution is given in \S\ref{sec:lat-transform}.
+$0^\circ \pm 40^\circ$ latitude (a good approximation to a perfectly
+isotropic distribution; see Appendix~\ref{sec:lat}) with a contrast of $10\%$.
 
 The surface maps in the figure show dark, compact features of roughly the expected
 size and contrast and at the expected latitudes. However, there are important
@@ -1193,14 +1187,14 @@ in how well it performs as a likelihood function for stellar light curves.
 It is not immediately obvious that the GP approach should work, because the
 true marginal likelihood function
 %
-$p ( \tilde{\mathbf{f}\hspace{0.2em}} \, \big| \, P, \mathbf{u}, \pmb{\theta}_\bullet )$
+$p ( \tilde{\mathbbb{f}\hspace{0.2em}} \, \big| \, P, \mathbf{u}, \pmb{\theta}_\bullet )$
 %
 is certainly \emph{not} Gaussian. To see why, let us generate $10^{4}$ stellar
 surfaces sampled from the true distribution we are trying to model: that is,
-a surface with $N$ discrete circular spots of fixed, uniform contrast $c$
-and radius $r \pm \Delta$ at latitudes $\mu_\phi \pm \sigma_\phi$.
+a surface with $n=5$ discrete circular spots of fixed, uniform contrast $c=0.1$
+and radius $r=20^\circ$ at latitudes $\mu_\phi \pm \sigma_\phi = 30^\circ \pm 5^\circ$.
 Let us then expand each surface in spherical harmonics and visualize the
-distribution of coefficients $y^l_m$. Figure~\ref{fig:nongaussianity}
+distribution of coefficients $\mathbbb{y}$. Figure~\ref{fig:nongaussianity}
 shows the joint distribution for five of the coefficients with the most
 non-Gaussian marginal distributions (selected by eye). Different slices
 through this distribution
@@ -1240,36 +1234,36 @@ the Gaussian approximation to the likelihood function.
             \endfoot
             %
             %
-            $N$
+            $\mathbb{n}$
              & number of spots
              & $\sim\mathcal{N}(20, 0^2)$
             %
             \\
             %
-            $c$
+            $\mathbb{c}$
              & spot contrast
              & $\sim\mathcal{N}(0.05, 0^2)$
             %
             \\
             %
-            $\phi$
+            $\bbphi$
              & spot latitude
              & $\sim\mathcal{N}(30^\circ, {5^\circ}^2)$
             %
             \\
-            $\lambda$
+            $\bblambda$
              & spot longitude
              & $\sim\mathcal{U}(0^\circ, 360^\circ)$
             %
             \\
             %
-            $r$
+            $\mathbb{r}$
              & spot radius
              & $\sim\mathcal{N}(15^\circ, {0^\circ}^2)$
             %
             \\
             %
-            $I$
+            $\mathbb{I}$
              & stellar inclination
              & $\sim\sin$
             %
@@ -1321,10 +1315,10 @@ light curves in a given ensemble,
 we create a rectangular
 $(150 \times 300)$ latitude-longitude grid of surface intensity values, all
 intialized
-to zero. We then add $N$ spots to this grid, each of fractional contrast
-$c$ and radius $r$ centered at latitude $\phi$ and longitude $\lambda$,
-by decreasing the intensity at all points within an angular distance $r$
-(measured along the surface of the sphere) by an amount $c$.
+to zero. We then add $\mathbb{n}$ spots to this grid, each of fractional contrast
+$\mathbb{c}$ and radius $\mathbb{r}$ centered at latitude $\bbphi$ and longitude $\bblambda$,
+by decreasing the intensity at all points within an angular distance $\mathbb{r}$
+(measured along the surface of the sphere) by an amount $\mathbb{c}$.
 In order to compute the corresponding light curve, we expand the surface
 in spherical harmonics, although at much higher degree
 ($l_\mathrm{max}^{(0)} = 30$)
@@ -1336,20 +1330,20 @@ $\nicefrac{180^\circ}{30} = 6^\circ$ across, but small enough that
 the algorithm for computing the light curve is numerically stable. We
 compute the light curve at $K$ points equally spaced over a baseline $\Delta t$
 using the \starry algorithm
-(Appendix \ref{sec:starry}), assuming an inclination $I$, a rotational period $P$,
+(Appendix \ref{sec:starry}), assuming an inclination $\mathbb{I}$, a rotational period $P$,
 and limb darkening coefficients $\mathbf{u}$. Finally, we divide the
 light curve by the mean and add Gaussian noise with standard deviation $\sigma_f$
 to emulate photon noise.%
 \footnote{
-    In theory, we should do this in the reverse order: i.e., we should add photon
-    noise and \emph{then} normalize the light curve to the mean, since that is the order in which
+    In theory, we should do this in the reverse order: we should add photon
+    noise and \emph{then} normalize the light curve to the mean, as that is the order in which
     those steps occur in reality. However, if we did that, we would have to normalize $\sigma_f$
     in our inference step, such that the variance of each of the normalized light curves
     in the ensemble would be different, requiring us to invert a different matrix for
     each light curve when computing the log likelihood (see Equation~\ref{eq:log-like}).
     This would significantly increase the computational cost of our tests. Fortunately, in
     practice, the difference between these two approaches has negligible effect on
-    our inference results, so we opt for the faster of the two methods. Note, of course,
+    our results, so we opt for the faster of the two methods. Note, of course,
     that when applying our GP to real data, we won't have this choice!
 }
 The default values of each of the parameters mentioned above are given in
@@ -1466,7 +1460,7 @@ when viewed from any orientation. Absent structure to break these symmetries
 (see \S\ref{sec:limbdark}), we simply cannot learn anything about these modes from
 stellar light curves. If we average over the shrinkage for all modes up to $l=15$,
 we find that a single light curve measurement can only tell us $\sim 9\%$
-of the information about the surface.
+of the information about the surface on those scales.
 
 The orange curves correspond to the scenario in which we can collect light curves
 from a star viewed at three different random inclinations. This is obviously
@@ -1537,6 +1531,13 @@ See Figures~\ref{fig:nullspace_ensemble_ld} and \ref{fig:nullspace_ensemble_ld_v
 \subsection{The number-contrast degeneracy}
 \label{sec:cN-degeneracy}
 
+\section{Caveats}
+\label{sec:caveats}
+The latitude distribution is not Gaussian. The number of spots does not have to be an integer.
+
+\subsection{Other distributions}
+\label{sec:other-dist}
+Uniform spot radius distribution.
 
 \section{Implementation}
 \label{sec:implementation}
@@ -1558,7 +1559,7 @@ See Figures~\ref{fig:nullspace_ensemble_ld} and \ref{fig:nullspace_ensemble_ld_v
 %
 Unless otherwise noted, we adopt
 the following conventions throughout this paper:
-integers are represented by italic uppercase letters (i.e., $N$),
+integers are represented by italic uppercase letters (i.e., $K$),
 scalars are represented by italic lowercase
 letters (i.e., $x$), column vectors are
 represented by boldface lowercase letters
@@ -1572,8 +1573,20 @@ a component of a higher-dimensional (in this case, 4-dimensional) linear
 operator. Thus, lowercase bold symbols \emph{always} represent vectors, and
 uppercase bold symbols \emph{always} represent matrices.
 
-The exception to our indexing notation is if the vector or matrix
-represents a quantity in the spherical harmonic basis, in which case we use
+We also make an explicit distinction
+between numerical quantities and random variables. The former are typeset
+in serif font (as above), while the latter are typeset in blackboard font.
+For example, the quantity $\mathbb{x}$ denotes a scalar random variable,
+while $x$ denotes a particular realization of that variable. The same
+applies to vector-valued ($\mathbf{x}$ is a realization of $\mathbbb{x}$)
+and matrix-valued random variables
+($\mathbf{X}$ is a realization of $\mathbbb{X}$).
+
+Much of the math in this paper involves vectors representing
+coefficients in the spherical harmonic basis, which are
+customarily indexed by two integers $l$ and $m$.
+We therefore make an exception to our indexing notation for
+quantities in the spherical harmonic basis: we use
 \emph{two} indices to represent a scalar vector element, $x^l_m$, and \emph{four}
 indices to represent a scalar matrix element, $X^{l,l'}_{m,m'}$.
 %
@@ -1623,7 +1636,7 @@ while a matrix $\mathbf{X}$ in the same basis has components given by
     }\quad.
 \end{align}
 %
-For completeness, the element of a spherical harmonic vector $\mathbf{x}$ with
+For completeness, the element of a spherical harmonic vector $\mathbbb{x}$ with
 degree $l$ and order $m$ is at (flattened) index
 %
 \begin{align}
@@ -1701,7 +1714,7 @@ may be computed from
 \end{align}
 %
 To understand the expression above, let us proceed from right to left,
-starting with the spherical harmonic vector $\mathbf{y}$, which we assume
+starting with the spherical harmonic vector $\mathbbb{y}$, which we assume
 describes the surface intensity of the star at time $t = 0$
 in a frame where $\hat{\mathbf{x}}$
 points to the right, $\hat{\mathbf{y}}$ points up, and $\hat{\mathbf{z}}$
@@ -1770,12 +1783,12 @@ which is itself a linear combination of spherical harmonics.
 Thus, given a limb darkening law
 of degree $n_\mathrm{max}$ with coefficients $\mathbf{u}$,
 we can construct a matrix $\mathbf{L}(\mathbf{u})$
-that transforms a spherical harmonic vector $\mathbf{y}$ of degree
+that transforms a spherical harmonic vector $\mathbbb{y}$ of degree
 $l_\mathrm{max}$ to a limb-darkened spherical harmonic vector $\mathbf{y'}$
 of degree $l_\mathrm{max} + n_\mathrm{max}$. As an example, consider
 a map of degree $l_\mathrm{max} = 1$ and the linear limb darkening law
 ($n_\mathrm{max} = 1$) with coefficient vector $\mathbf{u} = ( u_1 )$.
-The transformation matrix from $\mathbf{y}$ to $\mathbf{y'}$ is
+The transformation matrix from $\mathbbb{y}$ to $\mathbf{y'}$ is
 %
 \begin{proof}{test_ld}
     \label{eq:ld:L}
@@ -1822,27 +1835,27 @@ for a given limb darkening coefficient vector $\mathbf{u}$.
 
 Our goal in this section is to find closed-form solutions to the
 first and second moments of the spherical harmonic representation of the
-stellar surface $\mathbf{y}$,
+stellar surface $\mathbbb{y}$,
 %
 \begin{align}
     \label{eq:exp_y_app}
-    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
+    \mathrm{E} \Big[ \mathbbb{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
      & =
-    \int \mathbf{y}(\mathbf{x} ) \, p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)\mathrm{d}\mathbf{x}
+    \int \mathbbb{y}(\mathbbb{x} ) \, p(\mathbbb{x} \, \big| \, \pmb{\theta}_\bullet)\mathrm{d}\mathbbb{x}
     \\
     \label{eq:exp_yy_app}
-    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
+    \mathrm{E} \Big[ \mathbbb{y} \, \mathbbb{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
      & =
-    \int \mathbf{y}(\mathbf{x} ) \mathbf{y}^\top(\mathbf{x} ) \, p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)\mathrm{d}\mathbf{x}
+    \int \mathbbb{y}(\mathbbb{x} ) \mathbbb{y}^\top(\mathbbb{x} ) \, p(\mathbbb{x} \, \big| \, \pmb{\theta}_\bullet)\mathrm{d}\mathbbb{x}
     \quad,
 \end{align}
 %
 which are linearly related to the mean and the covariance of our GP in flux
 (\S\ref{sec:gp}).
 %
-Recall that $\mathbf{x}$ is a vector of parameters describing the particular
+Recall that $\mathbbb{x}$ is a vector of parameters describing the exact
 configuration of features on the surface of a star, and
-$p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$ is its probability
+$p(\mathbbb{x} \, \big| \, \pmb{\theta}_\bullet)$ is its probability
 density function conditioned on hyperparameters $\pmb{\theta}_\bullet$,
 which describe the \emph{distribution} of the features on the surface
 of one or many stars.
@@ -1851,13 +1864,13 @@ As we are specifically interested in modeling the effect of star spots
 on stellar light curves, we let
 %
 \begin{align}
-    \mathbf{x} =
+    \mathbbb{x} =
     \left(
-    \eta \,\,\,\,
-    \xi_0 \,\, \cdots \,\, \xi_{\eta-1} \,\,\,\,
-    \lambda_0 \,\, \cdots \,\, \lambda_{\eta-1} \,\,\,\,
-    \phi_0 \,\, \cdots \,\, \phi_{\eta-1} \,\,\,\,
-    \rho_0 \,\, \cdots \,\, \rho_{\eta-1}
+    \mathbb{n} \,\,\,\,
+    \mathbb{c}_0 \,\, \cdots \,\, \mathbb{c}_{\mathbb{n}-1} \,\,\,\,
+    \bblambda_0 \,\, \cdots \,\, \bblambda_{\mathbb{n}-1} \,\,\,\,
+    \bbphi_0 \,\, \cdots \,\, \bbphi_{\mathbb{n}-1} \,\,\,\,
+    \mathbb{r}_0 \,\, \cdots \,\, \mathbb{r}_{\mathbb{n}-1}
     \right)^\top
 \end{align}
 %
@@ -1865,53 +1878,53 @@ and
 %
 \begin{align}
     \label{eq:RRs}
-    \mathbf{y}(\mathbf{x}) =
-    \sum_{n=0}^{\eta-1}
-    \xi_n
+    \mathbbb{y}(\mathbbb{x}) =
+    \sum_{i=0}^{\mathbb{n}-1}
+    \mathbb{c}_i
     \,
-    \mathbf{R}_{\hat{\mathbf{y}}}(\lambda_n)
+    \mathbf{R}_{\hat{\mathbf{y}}}(\bblambda_i)
     \,
-    \mathbf{R}_{\hat{\mathbf{x}}}(\phi_n)
+    \mathbf{R}_{\hat{\mathbf{x}}}(\bbphi_i)
     \,
-    \mathbf{s}(\rho_n)
+    \mathbf{s}(\mathbb{r}_i)
     \quad,
 \end{align}
 %
-where $\eta$ is the total number of spots,
-$\xi_n$ is the contrast of the $n^\mathrm{th}$ spot,
-$\lambda_n$ is its longitude, $\phi_n$ is its latitude,
-and $\rho_n$ is its radius.
-The vector function $\mathbf{s}(r_n)$
+where $\mathbb{n}$ is the total number of spots,
+$\mathbb{c}_i$ is the contrast of the $i^\mathrm{th}$ spot,
+$\bblambda_i$ is its longitude, $\bbphi_i$ is its latitude,
+and $\mathbb{r}_i$ is its radius.
+The vector function $\mathbf{s}(\mathbb{r}_i)$
 returns the spherical harmonic expansion of a negative unit brightness
-circular spot of radius $r_n$ at $\lambda = \phi = 0$,
-$\mathbf{R}_{\hat{\mathbf{x}}}(\phi_n)$ is the Wigner matrix that rotates the
+circular spot of radius $\mathbb{r}_i$ at $\bblambda = \bbphi = 0$,
+$\mathbf{R}_{\hat{\mathbf{x}}}(\bbphi_i)$ is the Wigner matrix that rotates the
 expansion about $\hat{\mathbf{x}}$ such that the spot is centered at a
-latitude $\phi_n$, and $\mathbf{R}_{\hat{\mathbf{y}}}(\lambda_n)$ is the Wigner
+latitude $\bbphi_i$, and $\mathbf{R}_{\hat{\mathbf{y}}}(\bblambda_i)$ is the Wigner
 matrix that then rotates the
 expansion about $\hat{\mathbf{y}}$ such that the spot is centered at a
-longitude $\lambda_n$; these three functions are detailed in the sections below.
+longitude $\bblambda_i$; these three functions are detailed in the sections below.
 %
 Equation~(\ref{eq:RRs}) thus provides a way of converting a random variable
-$\mathbf{x}$ describing the size, brightness, and position of spots to the
+$\mathbbb{x}$ describing the size, brightness, and position of spots to the
 corresponding representation in terms of spherical harmonics.
 %
 Regarding this equation,
-two things should be noted. First, we define $\mathbf{y}$ relative to
+two things should be noted. First, we define $\mathbbb{y}$ relative to
 a baseline of zero: i.e., a star with no spots on it will have
 $\mathbf{y} = \mathbf{0}$. Second, and more importantly,
 we are not interested in any specific value of
-$\mathbf{y}$; rather, we would like to know its expectation value under
-the probability distribution governing the different spot properties $\mathbf{x}$,
-i.e., $p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$.
+$\mathbbb{y}$; rather, we would like to know its expectation value under
+the probability distribution governing the different spot properties $\mathbbb{x}$,
+i.e., $p(\mathbbb{x} \, \big| \, \pmb{\theta}_\bullet)$.
 %
 
 For simplicity, we assume that
-the total number of spots is fixed to a value $N$, i.e.,
+the total number of spots is fixed to a value $n$, i.e.,
 %
 \begin{align}
-    p(\eta \, \big| \, \pmb{\theta}_\bullet)
+    p(\mathbb{n} \, \big| \, \pmb{\theta}_\bullet)
      & =
-    \delta(\eta - N)
+    \delta(\mathbb{n} - n)
     \quad,
 \end{align}
 %
@@ -1919,27 +1932,27 @@ where $\delta$ is the delta function.%
 \footnote{%
     When modeling a single star using the GP, this assumption is justified by
     definition. It is less justified when the GP is used to model an ensemble of
-    stars, where each star may have a different total number of spots $\eta$.
-    However, as we argue in the text, $\eta$ is extremely difficult to constrain
+    stars, where each star may have a different total number of spots $\mathbb{n}$.
+    However, as we argue in the text, $\mathbb{n}$ is extremely difficult to constrain
     from light curves, in particular because of how degenerate it is with
     the spot contrast. In practice, we find that assuming that all stars in the
-    ensemble have the same number of spots $N$ leads to higher variance in the
-    estimate of $N$, but it does not lead to noticeable bias in $N$ or in any of
+    ensemble have the same number of spots $n$ leads to higher variance in the
+    estimate of $n$, but it does not lead to noticeable bias in $n$ or in any of
     the other hyperparameters.
 }
 We further asume that
-$p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)$
+$p(\mathbbb{x} \, \big| \, \pmb{\theta}_\bullet)$
 is separable in each of the four other spot properties, and that all of the spots
 are drawn from the same distribution:
 %
 \begin{align}
-    p(\mathbf{x} \, \big| \, \pmb{\theta}_\bullet)
+    p(\mathbbb{x} \, \big| \, \pmb{\theta}_\bullet)
     =
-    \prod_{n=0}^{N-1}
-    p(\xi_n \, \big| \, \pmb{\theta}_{\xi}) \,
-    p(\lambda_n \, \big| \, \pmb{\theta}_{\lambda}) \,
-    p(\phi_n \, \big| \, \pmb{\theta}_{\phi})\,
-    p(\rho_n \, \big| \, \pmb{\theta}_{\rho})
+    \prod_{i=0}^{n-1}
+    p(\mathbb{c}_i \, \big| \, \pmb{\theta}_{c}) \,
+    p(\bblambda_i \, \big| \, \pmb{\theta}_{\lambda}) \,
+    p(\bbphi_i \, \big| \, \pmb{\theta}_{\phi})\,
+    p(\mathbb{r}_i \, \big| \, \pmb{\theta}_{r})
     \quad,
 \end{align}
 %
@@ -1947,44 +1960,44 @@ where
 %
 \begin{align}
     \pmb{\theta}_\bullet = \left(
-    N \, \,
-    \pmb{\theta}_{\xi} \, \,
+    n \, \,
+    \pmb{\theta}_{c} \, \,
     \pmb{\theta}_{\lambda} \, \,
     \pmb{\theta}_{\phi} \, \,
-    \pmb{\theta}_{\rho} \right)^\top
+    \pmb{\theta}_{r} \right)^\top
 \end{align}
 %
 is the vector of hyperparameters describing the process and
-$\pmb{\theta}_{\xi}$,
+$\pmb{\theta}_{c}$,
 $\pmb{\theta}_{\lambda}$,
 $\pmb{\theta}_{\phi}$, and
-$\pmb{\theta}_{\rho}$ are yet to be specified.
+$\pmb{\theta}_{r}$ are yet to be specified.
 %
 This allows us to rewrite the expectation integrals (\ref{eq:exp_y_app})
 and (\ref{eq:exp_yy_app}) as
 %
 \begin{align}
     \label{eq:exp_y_sep}
-    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
+    \mathrm{E} \Big[ \mathbbb{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
      & =
-    N \mathbf{e}_\xi
+    n \, \mathbf{e}_c
     \\[1em]
     \label{eq:exp_yy_sep}
-    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
+    \mathrm{E} \Big[ \mathbbb{y} \, \mathbbb{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
      & =
-    N \mathbf{E}_\xi
+    n \, \mathbf{E}_c
 \end{align}
 %
 where we define the first moment integrals
 %
 \begin{align}
     \label{eq:e1}
-    \mathbf{e}_\rho
+    \mathbf{e}_r
      & \equiv
     \int
-    \mathbf{s}(\rho) \,
-    p(\rho \, \big| \, \pmb{\theta}_{\rho}) \,
-    \mathrm{d}\rho
+    \mathbf{s}(\mathbb{r}) \,
+    p(\mathbb{r} \, \big| \, \pmb{\theta}_{r}) \,
+    \mathrm{d}\mathbb{r}
     %
     \\[1em]
     %
@@ -1992,10 +2005,10 @@ where we define the first moment integrals
     \mathbf{e}_\phi
      & \equiv
     \int
-    \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{e}_\rho \,
-    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
-    \mathrm{d}\phi
+    \mathbf{R}_{\hat{\mathbf{x}}}(\bbphi) \,
+    \mathbf{e}_r \,
+    p(\bbphi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\bbphi
     %
     \\[1em]
     %
@@ -2003,19 +2016,19 @@ where we define the first moment integrals
     \mathbf{e}_\lambda
      & \equiv
     \int
-    \mathbf{R}_{\hat{\mathbf{y}}}(\lambda) \,
+    \mathbf{R}_{\hat{\mathbf{y}}}(\bblambda) \,
     \mathbf{e}_\phi \,
-    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
-    \mathrm{d}\lambda
+    p(\bblambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\bblambda
     \\[1em]
     \label{eq:e4}
-    \mathbf{e}_\xi
+    \mathbf{e}_c
      & \equiv
     \int
-    \xi \,
+    \mathbb{c} \,
     \mathbf{e}_\lambda \,
-    p(\xi \, \big| \, \pmb{\theta}_{\xi}) \,
-    \mathrm{d}\xi
+    p(\mathbb{c} \, \big| \, \pmb{\theta}_{c}) \,
+    \mathrm{d}\mathbb{c}
     %
 \end{align}
 %
@@ -2023,12 +2036,12 @@ and the second moment integrals
 %
 \begin{align}
     \label{eq:E1}
-    \mathbf{E}_\rho
+    \mathbf{E}_r
      & \equiv
     \int
-    \mathbf{s}(\rho) \, \mathbf{s}^\top(\rho) \,
-    p(\rho \, \big| \, \pmb{\theta}_{\rho}) \,
-    \mathrm{d}\rho
+    \mathbf{s}(\mathbb{r}) \, \mathbf{s}^\top(\mathbb{r}) \,
+    p(\mathbb{r} \, \big| \, \pmb{\theta}_{r}) \,
+    \mathrm{d}\mathbb{r}
     %
     \\[1em]
     %
@@ -2036,11 +2049,11 @@ and the second moment integrals
     \mathbf{E}_\phi
      & \equiv
     \int
-    \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{E}_\rho \,
-    \mathbf{R}_{\hat{\mathbf{x}}}^\top(\phi) \,
-    p(\phi \, \big| \, \pmb{\theta}_{\phi})
-    \mathrm{d}\phi
+    \mathbf{R}_{\hat{\mathbf{x}}}(\bbphi) \,
+    \mathbf{E}_r \,
+    \mathbf{R}_{\hat{\mathbf{x}}}^\top(\bbphi) \,
+    p(\bbphi \, \big| \, \pmb{\theta}_{\phi})
+    \mathrm{d}\bbphi
     %
     \\[1em]
     %
@@ -2048,28 +2061,28 @@ and the second moment integrals
     \mathbf{E}_\lambda
      & \equiv
     \int
-    \mathbf{R}_{\hat{\mathbf{y}}}(\lambda) \,
+    \mathbf{R}_{\hat{\mathbf{y}}}(\bblambda) \,
     \mathbf{E}_\phi \,
-    \mathbf{R}_{\hat{\mathbf{y}}}^\top(\lambda) \,
-    p(\lambda \, \big| \, \pmb{\theta}_{\lambda})
-    \mathrm{d}\phi
+    \mathbf{R}_{\hat{\mathbf{y}}}^\top(\bblambda) \,
+    p(\bblambda \, \big| \, \pmb{\theta}_{\lambda})
+    \mathrm{d}\bbphi
     \\[1em]
     %
     \label{eq:E4}
-    \mathbf{E}_\xi
+    \mathbf{E}_c
      & \equiv
     \int
-    \xi^2 \,
+    \mathbb{c}^2 \,
     \mathbf{E}_\lambda \,
-    p(\xi \, \big| \, \pmb{\theta}_\xi)
-    \mathrm{d}\xi
+    p(\mathbb{c} \, \big| \, \pmb{\theta}_c)
+    \mathrm{d}\mathbb{c}
     %
     \quad.
 \end{align}
 %
 In Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), we used the fact
-that both the mean and the variance of the sum of $N$
-independent, identically-distributed random variables are equal to $N$
+that both the mean and the variance of the sum of $n$
+independent, identically-distributed random variables are equal to $n$
 times the individual mean and the variance, respectively.
 
 We devote the remainder of this section to the computation of these eight
@@ -2079,25 +2092,25 @@ integrals.
 \label{sec:size}
 %
 Below we compute the first and second moments
-of the radius distribution ($\mathbf{e}_\rho$, $\mathbf{E}_\rho$) under
-a suitable spherical harmonic expansion $\mathbf{s}(\rho)$ of the spot profile
+of the radius distribution ($\mathbf{e}_r$, $\mathbf{E}_r$) under
+a suitable spherical harmonic expansion $\mathbf{s}(\mathbb{r})$ of the spot profile
 and a suitable probability distribution function for the spot radius,
-$p(\rho \, \big| \, \pmb{\theta}_{\rho})$.
+$p(\mathbb{r} \, \big| \, \pmb{\theta}_{r})$.
 
 \subsubsection{Spot profile}
 %
 We model the brightness $b$ an angle $\vartheta$ away from the
-center of a spot of negative unit intensity and radius $\rho$ as
+center of a spot of negative unit intensity and radius $\mathbb{r}$ as
 %
 \begin{align}
     \label{eq:brvartheta}
-    b(\rho; \vartheta) & = \frac{1}{1 + \exp\left(\dfrac{\rho-\vartheta}{s}\right)} - 1
+    b(r; \vartheta) & = \frac{1}{1 + \exp\left(\dfrac{r-\vartheta}{s}\right)} - 1
 \end{align}
 %
 for some (constant) shape parameter $s$. In the limit $s \rightarrow 0$, $b$ approaches an
-inverted top-hat function with half-width equal to $\rho$,
+inverted top-hat function with half-width equal to $r$,
 corresponding to a circular spot of uniform intensity. For $s > 0$, each half
-of $b$ is a sigmoid with half-width at half-minimum equal to $\rho$.
+of $b$ is a sigmoid with half-width at half-minimum equal to $r$.
 In our implementation of the algorithm we choose $s = 0.2^\circ$,
 which is small compared to features of interest but not too small as to
 create numerical issues when computing model gradients (which would be
@@ -2122,11 +2135,11 @@ We wish to model the brightness evaluated at each $\vartheta_k$
 as a weighted combination of Legendre polynomials,
 %
 \begin{align}
-    \mathbf{B} \, \tilde{\mathbf{s}}(\rho) = \mathbf{b}(\rho)
+    \mathbf{B} \, \tilde{\mathbf{s}}(r) = \mathbf{b}(r)
 \end{align}
 %
 %
-where $\mathbf{b}(\rho)$ is computed by evaluating Equation~(\ref{eq:brvartheta})
+where $\mathbf{b}(r)$ is computed by evaluating Equation~(\ref{eq:brvartheta})
 at each of the $\vartheta_k$,
 $\mathbf{B}$ is a design matrix whose columns are
 the weighted Legendre polynomials,
@@ -2136,19 +2149,19 @@ the weighted Legendre polynomials,
     \quad,
 \end{align}
 %
-and $\tilde{\mathbf{s}}(\rho)$ are the coefficients of the expansion.
+and $\tilde{\mathbf{s}}(r)$ are the coefficients of the expansion.
 These are related to the full vector of spherical harmonic coefficients describing
-the spot, $\mathbf{s}(\rho)$, by
+the spot, $\mathbf{s}(r)$, by
 %
 \begin{align}
-    s^l_m(\rho) = \tilde{s}_l(\rho) \delta_{m,0}
+    s^l_m(r) = \tilde{s}_l(r) \delta_{m,0}
     \quad,
 \end{align}
 %
 or, in vector form,
 %
 \begin{align}
-    \mathbf{s}(\rho) = \pmb{\mathcal{I}} \, \tilde{\mathbf{s}}(\rho)
+    \mathbf{s}(r) = \pmb{\mathcal{I}} \, \tilde{\mathbf{s}}(r)
 \end{align}
 %
 where $\pmb{\mathcal{I}}$ is a rectangular
@@ -2161,11 +2174,11 @@ identity-like matrix with components
 \end{align}
 %
 and $\delta$ is the Kronecker delta function.
-To find the coefficients $\tilde{\mathbf{s}}(\rho)$
-(and hence $\mathbf{s}(\rho)$), we solve the (linear) inverse problem,
+To find the coefficients $\tilde{\mathbf{s}}(r)$
+(and hence $\mathbf{s}(r)$), we solve the (linear) inverse problem,
 %
 \begin{align}
-    \tilde{\mathbf{s}}(\rho) & = \mathbf{B}^+ \, \mathbf{b}(\rho)
+    \tilde{\mathbf{s}}(r) & = \mathbf{B}^+ \, \mathbf{b}(r)
 \end{align}
 %
 %
@@ -2198,9 +2211,9 @@ and $\sigma \approx 15$.
         \includegraphics[width=\linewidth]{figures/spot_profile.pdf}
         \oscaption{spot_profile}{%
             Intensity profiles for spots with different
-            radii $\rho$ computed at spherical harmonic
+            radii $r$ computed at spherical harmonic
             degree $l_{\mathrm{max}} = \LMAX$.
-            For $\rho \gtrsim 10^\circ$, the spherical harmonic expansion
+            For $r \gtrsim 10^\circ$, the spherical harmonic expansion
             captures the spot shape and intensity reasonably well,
             albeit with some ringing due to the truncated expansion.
             \label{fig:spot_profile}
@@ -2216,9 +2229,9 @@ equal to the spot radii, as expected.
 The effect of ringing due to the truncated spherical harmonic expansion is
 evident, although it is strongly suppressed compared to an expansion
 without the smoothing term (i.e., $\sigma = \infty$). However, for
-$\rho \lesssim 10^\circ$, an expansion to $l_{\mathrm{max}} = \LMAX$ is
+$r \lesssim 10^\circ$, an expansion to $l_{\mathrm{max}} = \LMAX$ is
 insufficient to correctly model the spot, as can be seen from the
-$\rho = 5^\circ$ profile (dashed curve). Expansions to higher spherical harmonic
+$r = 5^\circ$ profile (dashed curve). Expansions to higher spherical harmonic
 degree allow one to model spots with radii smaller than $10^\circ$, although
 at increased computational cost and potential numerical stability issues;
 we discuss this point at length in \S\ref{sec:tinyspots}.
@@ -2227,15 +2240,15 @@ we discuss this point at length in \S\ref{sec:tinyspots}.
 \subsubsection{Probability density function}
 %
 For simplicity, we will adopt a uniform probability distribution for the
-spot radius, characterized by a mean radius $r$ and a half-width $\Delta$:
+spot radius, characterized by a mean radius $r$ and a half-width $\Delta r$:
 %
 \begin{align}
-    p(\rho \, \big| \, \pmb{\theta}_{\rho})
+    p(\mathbb{r} \, \big| \, \pmb{\theta}_{r})
      & =
     \begin{cases}
-        \frac{1}{2\Delta} & r - \Delta \leq r \leq r + \Delta
+        \frac{1}{2\Delta r} & r - \Delta r \leq r \leq r + \Delta r
         \\
-        0                 & \mathrm{otherwise}
+        0                   & \mathrm{otherwise}
         \quad,
     \end{cases}
 \end{align}
@@ -2243,21 +2256,21 @@ spot radius, characterized by a mean radius $r$ and a half-width $\Delta$:
 where the hyperparameters of the distribution are
 %
 \begin{align}
-    \pmb{\theta}_\rho = \left(
+    \pmb{\theta}_\mathbb{r} = \left(
     r \, \, \, \,
-    \Delta \right)^\top
+    \Delta r \right)^\top
     \quad.
 \end{align}
 %
 As we argue in the text, in practice it is often difficult to constrain the
 moments of the radius distribution above the first (the mean). It is
 therefore useful to also consider the limiting case of the radius distribution
-as $\Delta \rightarrow 0$, in which case the PDF becomes
+as $\Delta r \rightarrow 0$, in which case the PDF becomes
 %
 \begin{align}
-    p(\rho \, \big| \, \pmb{\theta}_{\rho}, \Delta = 0)
+    p(\mathbb{r} \, \big| \, \pmb{\theta}_{r}, \Delta r = 0)
      & =
-    \delta(\rho - r)
+    \delta(\mathbb{r} - r)
     \quad,
 \end{align}
 %
@@ -2269,83 +2282,83 @@ where $\delta$ is the delta function.
 The first moment of the radius distribution is (Equation~\ref{eq:e1})
 %
 \begin{align}
-    \mathbf{e}_\rho
+    \mathbf{e}_r
      & \equiv
     \int
-    \mathbf{s}(\rho) \,
-    p(\rho \, \big| \, \pmb{\theta}_{\rho}) \,
-    \mathrm{d}\rho
+    \mathbf{s}(\mathbb{r}) \,
+    p(\mathbb{r} \, \big| \, \pmb{\theta}_{r}) \,
+    \mathrm{d}\mathbb{r}
     \nonumber \\
      & =
-    \frac{1}{2\Delta}
-    \int_{r_0 - \Delta}^{r_0 + \Delta}
-    \mathbf{s}(\rho) \,
-    \mathrm{d}\rho
+    \frac{1}{2\Delta r}
+    \int_{r_0 - \Delta r}^{r_0 + \Delta r}
+    \mathbf{s}(\mathbb{r}) \,
+    \mathrm{d}\mathbb{r}
     \quad.
 \end{align}
 %
 Using the equations from the previous section, its components may be written
 %
 \begin{proof}{test_erho}
-    (e_\rho)^l_m
+    (e_\mathbb{r})^l_m
     & =
-    \frac{\delta_{m,0}}{2\Delta}
-    \int_{r - \Delta}^{r+ \Delta}
-    \tilde{s}_{l}(\rho) \,
-    \mathrm{d}\rho
+    \frac{\delta_{m,0}}{2\Delta r}
+    \int_{r - \Delta r}^{r+ \Delta r}
+    \tilde{s}_{l}(\mathbb{r}) \,
+    \mathrm{d}\mathbb{r}
     \nonumber \\
     & =
-    \frac{\delta_{m,0}}{2\Delta}
+    \frac{\delta_{m,0}}{2\Delta r}
     \sum_{k=0}^{K-1} B^+_{l,k}
-    \int_{r - \Delta}^{r + \Delta}
-    b_{k}(\rho)
-    \mathrm{d}\rho
+    \int_{r - \Delta r}^{r + \Delta r}
+    b_{k}(\mathbb{r})
+    \mathrm{d}\mathbb{r}
     \nonumber \\
     & =
     \delta_{m,0}
     \sum_{k=0}^{K-1} B^+_{l,k}
-    c_k(r, \Delta)
+    c_k(r, \Delta r)
 \end{proof}
 %
 where
 %
 \begin{proof}{test_erho}
-    c_k(r, \Delta) & =
-    \frac{s}{2\Delta}
+    c_k(r, \Delta r) & =
+    \frac{s}{2\Delta r}
     \ln
     \left(
     \frac{
-            1+\chi_k^-(r, \Delta)
+            1+\chi_k^-(r, \Delta r)
         }
         {
-            1+\chi_k^+(r, \Delta)
+            1+\chi_k^+(r, \Delta r)
         }
     \right)
 \end{proof}
 %
 and
 \begin{proof}{test_erho}
-    \chi_k^-(r, \Delta) & \equiv \exp\left(\frac{r -\Delta -\vartheta_k}{s}\right)
+    \chi_k^-(r, \Delta r) & \equiv \exp\left(\frac{r -\Delta r -\vartheta_k}{s}\right)
     \nonumber                                                              \\
-    \chi_k^+(r, \Delta) & \equiv \exp\left(\frac{r +\Delta -\vartheta_k}{s}\right)
+    \chi_k^+(r, \Delta r) & \equiv \exp\left(\frac{r +\Delta r -\vartheta_k}{s}\right)
     \quad.
 \end{proof}
 %
 In vector form, we may simply write
 %
 \begin{proof}{test_erho}
-    \mathbf{e}_\rho
+    \mathbf{e}_r
     & =
     \pmb{\mathcal{I}} \,
-    \mathbf{B}^+ \, \mathbf{c}(r, \Delta)
+    \mathbf{B}^+ \, \mathbf{c}(r, \Delta r)
     \quad.
 \end{proof}
 %
-Note, finally, that in the limit $\Delta \rightarrow 0$,
+Note, finally, that in the limit $\Delta r \rightarrow 0$,
 %
 \begin{proof}{test_erho}
-    \lim_{\Delta \rightarrow 0}
-    \mathbf{e}_\rho
+    \lim_{\Delta r \rightarrow 0}
+    \mathbf{e}_r
     & =
     \pmb{\mathcal{I}} \,
     \mathbf{B}^+ \mathbf{b}(r)
@@ -2358,20 +2371,20 @@ Note, finally, that in the limit $\Delta \rightarrow 0$,
 The second moment of the radius distribution is (Equation~\ref{eq:E1})
 %
 \begin{align}
-    \mathbf{E}_\rho
+    \mathbf{E}_r
      & \equiv
     \int
-    \mathbf{s}(\rho) \,
-    \mathbf{s}^\top(\rho) \,
-    p(\rho \, \big| \, \pmb{\theta}_{\rho}) \,
-    \mathrm{d}\rho
+    \mathbf{s}(\mathbb{r}) \,
+    \mathbf{s}^\top(\mathbb{r}) \,
+    p(\mathbb{r} \, \big| \, \pmb{\theta}_{r}) \,
+    \mathrm{d}\mathbb{r}
     \nonumber \\
      & =
-    \frac{1}{2\Delta}
-    \int_{r - \Delta}^{r + \Delta}
-    \mathbf{s}(\rho) \,
-    \mathbf{s}^\top(\rho) \,
-    \mathrm{d}\rho
+    \frac{1}{2\Delta r}
+    \int_{r - \Delta r}^{r + \Delta r}
+    \mathbf{s}(\mathbb{r}) \,
+    \mathbf{s}^\top(\mathbb{r}) \,
+    \mathrm{d}\mathbb{r}
     \quad.
 \end{align}
 %
@@ -2379,37 +2392,37 @@ As before, its components may be written
 %
 %
 \begin{proof}{test_bigErho}
-    (E_\rho)^{l,l'}_{m,m'}
+    (E_\mathbb{r})^{l,l'}_{m,m'}
     & =
-    \frac{\delta_{m,0}\delta_{m',0}}{2\Delta}
-    \int_{r - \Delta}^{r + \Delta}
-    \tilde{s}^l_{m}(\rho) \,
-    \tilde{s}^{l'}_{m'}(\rho) \,
-    \mathrm{d}\rho
+    \frac{\delta_{m,0}\delta_{m',0}}{2\Delta r}
+    \int_{r - \Delta r}^{r + \Delta r}
+    \tilde{s}^l_{m}(\mathbb{r}) \,
+    \tilde{s}^{l'}_{m'}(\mathbb{r}) \,
+    \mathrm{d}\mathbb{r}
     \nonumber \\
     & =
-    \frac{\delta_{m,0}\delta_{m',0}}{2\Delta}
+    \frac{\delta_{m,0}\delta_{m',0}}{2\Delta r}
     \sum_{k=0}^{K-1} B^+_{l,k}
     \sum_{k'=0}^{K-1} B^+_{l',k'}
-    \int_{r - \Delta}^{r + \Delta}
-    b_{k}(\rho)
-    b_{k'}(\rho)
-    \mathrm{d}\rho
+    \int_{r - \Delta r}^{r + \Delta r}
+    b_{k}(\mathbb{r})
+    b_{k'}(\mathbb{r})
+    \mathrm{d}\mathbb{r}
     \nonumber \\
     & =
     \delta_{m,0}\delta_{m',0}
     \sum_{k=0}^{K-1} B^+_{l,k}
     \sum_{k'=0}^{K-1} B^+_{l',k'}
-    C_{k,k'}(r,\Delta)
+    C_{k,k'}(r,\Delta r)
     \quad,
 \end{proof}
 %
 where
 %
 \begin{proof}{test_bigErho}
-    C_{k,k'}(r,\Delta)
+    C_{k,k'}(r,\Delta r)
     & \equiv
-    \frac{s}{2\Delta}
+    \frac{s}{2\Delta r}
     \begin{cases}
         \displaystyle
         \frac{
@@ -2438,7 +2451,7 @@ where
             -
             \exp\left(\frac{\vartheta_{k} - \vartheta_{k'}}{s}\right)
         }
-         & k \ne k'
+         & \hspace{-2em} k \ne k'
         \\[0.5em]
         \frac{1}{1 + \chi_k^+}
         +
@@ -2450,7 +2463,7 @@ where
             1 + \chi_k^+
         } \right)
         - 1
-         & k = k'
+         & \hspace{-2em} k = k'
         \quad.
     \end{cases}
 \end{proof}
@@ -2458,19 +2471,19 @@ where
 In vector form, this may be written
 %
 \begin{proof}{test_bigErho}
-    \mathbf{E}_\rho
+    \mathbf{E}_r
     &=
     \pmb{\mathcal{I}} \,
-    \mathbf{B}^+ \mathbf{C} (r, \Delta) {\mathbf{B}^+}^\top
+    \mathbf{B}^+ \mathbf{C} (r, \Delta r) {\mathbf{B}^+}^\top
     \pmb{\mathcal{I}}^\top
     \quad.
 \end{proof}
 %
-Finally, in the limit $\Delta \rightarrow 0$,
+Finally, in the limit $\Delta r \rightarrow 0$,
 %
 \begin{proof}{test_bigErho}
-    \lim_{\Delta \rightarrow 0}
-    \mathbf{E}_\rho
+    \lim_{\Delta r \rightarrow 0}
+    \mathbf{E}_r
     & =
     \pmb{\mathcal{I}} \,
     \mathbf{B}^+ \mathbf{b}(r) \mathbf{b}^\top(r) {\mathbf{B}^+}^\top
@@ -2541,25 +2554,25 @@ and $\mathbf{D}$ is the Wigner matrix for complex spherical harmonics,
 whose terms are given by the expression
 %
 \begin{align}
-    D_{m,m'}^l(\alpha, \beta, \gamma) = \mathrm{e}^{-\imag m' \alpha}
-    d_{m,m'}^l(\beta) \mathrm{e}^{-\imag m \gamma}
+    D_{m,m'}^l(\upalpha, \upbeta, \upgamma) = \exp\left({-\imag m' \upalpha}\right)
+    d_{m,m'}^l(\upbeta) \exp\left({-\imag m \upgamma}\right)
 \end{align}
 %
-where $\alpha$, $\beta$, and $\gamma$ are the Euler angles describing
+where $\upalpha$, $\upbeta$, and $\upgamma$ are the Euler angles describing
 the rotation in the
 $\hat{\mathbf{z}}{-}\hat{\mathbf{y}}{-}\hat{\mathbf{z}}$ convention
 and $\imag$ is the imaginary unit. The terms of the $d$-matrix
-depend on powers of $\sin\left(\nicefrac{\beta}{2}\right)$
-and $\cos\left(\nicefrac{\beta}{2}\right)$
+depend on powers of $\sin\left(\nicefrac{\upbeta}{2}\right)$
+and $\cos\left(\nicefrac{\upbeta}{2}\right)$
 \citep[c.f. Equation C15 in][]{Luger2019}, but it is convenient to use
 the half-angle formula to express these terms instead as
 %
 \begin{proof}{test_dlmmp}
-    d_{m,m'}^l(\beta) =
+    d_{m,m'}^l(\upbeta) =
     \sum\limits_{i=0}^{2l} c_{m,m',i}^{l}
-    \mathrm{sgn}(\sin\beta)^{i}
-    (1 - \cos\beta)^{\frac{2l - i}{2}}
-    (1 + \cos\beta)^\frac{i}{2}
+    \mathrm{sgn}(\sin\upbeta)^{i}
+    (1 - \cos\upbeta)^{\frac{2l - i}{2}}
+    (1 + \cos\upbeta)^\frac{i}{2}
 \end{proof}
 %
 where
@@ -2582,12 +2595,12 @@ where
                 \left(\frac{2l - i + m - m'}{2}\right)!
                 }
                 %
-                 & m - m' - i \,\, \mathrm{even}
+                 & \hspace{-2em} m - m' - i \,\, \mathrm{even}
                 %
                 \\[0.5em]
                 0
                 %
-                 & m - m' - i \,\, \mathrm{odd}
+                 & \hspace{-2em} m - m' - i \,\, \mathrm{odd}
             \end{cases}
         $}
 \end{proof}
@@ -2596,67 +2609,67 @@ where
 \subsubsection{Probability density function}
 %
 The latitude integrals (Equations~\ref{eq:e2} and \ref{eq:E2}) involve
-rotations by an angle $\phi$ about $\hat{\mathbf{x}}$, which
+rotations by an angle $\bbphi$ about $\hat{\mathbf{x}}$, which
 may be accomplished by choosing
-Euler angles $\alpha = \nicefrac{\pi}{2}$, $\beta = \phi$, and
-$\gamma = -\nicefrac{\pi}{2}$, such that
+Euler angles $\upalpha = \nicefrac{\pi}{2}$, $\upbeta = \bbphi$, and
+$\upgamma = -\nicefrac{\pi}{2}$, such that
 %
 \begin{align}
-    \mathbf{R}^l_{\hat{\mathbf{x}}}(\phi)
+    \mathbf{R}^l_{\hat{\mathbf{x}}}(\bbphi)
      & =
-    {\mathbf{U}^l}^{-1} \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi) \mathbf{U}^l
+    {\mathbf{U}^l}^{-1} \mathbf{D}^l_{\hat{\mathbf{x}}}(\bbphi) \mathbf{U}^l
 \end{align}
 %
 with
 \begin{align}
-    \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi)
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(\bbphi)
      & =
-    \mathbf{D}^l\left(\frac{\pi}{2}, \phi, -\frac{\pi}{2}\right)
+    \mathbf{D}^l\left(\frac{\pi}{2}, \bbphi, -\frac{\pi}{2}\right)
     \quad.
 \end{align}
 %
 From the expressions above, it is clear that all terms in
-$\mathbf{R}_{\hat{\mathbf{x}}}(\phi)$ are equal to (weighted) sums of powers
-of $(1 \pm \cos\phi)$.
+$\mathbf{R}_{\hat{\mathbf{x}}}(\bbphi)$ are equal to (weighted) sums of powers
+of $(1 \pm \cos\bbphi)$.
 %
 Since our goal is to compute integrals of these terms multiplied by
 a probability density function, it is convenient to model
-$\cos\phi$ as a Beta-distributed variable. As we will see, this
+$\cos\bbphi$ as a Beta-distributed variable. As we will see, this
 choice will allow us to
 analytically compute the first two moments of the distribution of
-$\phi$ conditioned on $\pmb{\theta}_\phi$.
+$\bbphi$ conditioned on $\pmb{\theta}_\phi$.
 
 %
-The Beta distribution in $\cos\phi$ has hyperparameters $\alpha$ and $\beta$
-and PDF given by
+The Beta distribution in $\cos\bbphi$ has hyperparameters $\alpha$ and $\beta$
+(not to be confused with the Euler angles $\upalpha$ and $\upbeta$) and PDF given by
 %
 \begin{align}
     \label{eq:cosphi-pdf}
-    p \big(\cos\phi \, \big| \, \alpha, \beta \big)
+    p \big(\cos\bbphi \, \big| \, \alpha, \beta \big)
      & =
     \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
-    (\cos\phi)^{\alpha - 1}
-    (1 - \cos\phi)^{\beta - 1}
+    (\cos\bbphi)^{\alpha - 1}
+    (1 - \cos\bbphi)^{\beta - 1}
     \quad,
 \end{align}
 %
-where $\Gamma$ is the Gamma function. The implied distribution for $\phi$
+where $\Gamma$ is the Gamma function. The implied distribution for $\bbphi$
 may be computed by a straightforward change of variable:
 %
 \begin{proof}{test_beta_transform}
     \label{eq:phi-pdf}
-    p \big(\phi \, \big| \, \alpha, \beta \big)
+    p \big(\bbphi \, \big| \, \alpha, \beta \big)
     & =
     \dfrac{\Gamma(\alpha + \beta)}{2\Gamma(\alpha)\Gamma(\beta)}
     \big|
-    \sin\phi
+    \sin\bbphi
     \big|
-    (\cos\phi)^{\alpha - 1}
-    (1 - \cos\phi)^{\beta - 1}
+    (\cos\bbphi)^{\alpha - 1}
+    (1 - \cos\bbphi)^{\beta - 1}
     \quad,
 \end{proof}
 %
-for $\phi \in \left[ -\frac{\pi}{2}, \frac{\pi}{2} \right]$.
+for $\bbphi \in \left[ -\frac{\pi}{2}, \frac{\pi}{2} \right]$.
 %
 Both $\alpha$ and $\beta$ are restricted to $(0, \infty)$.
 However, in practice it is necessary to limit the values of these parameters
@@ -2676,9 +2689,9 @@ with inverse transform
 %
 \begin{align}
     \label{eq:beta2gauss}
-    \alpha & = e^{K_{00} + (K_{10} - K_{00})a}
-    \nonumber                                  \\
-    \beta  & = e^{K_{10} + (K_{11} - K_{10})b}
+    \alpha & = \exp\left({K_{00} + (K_{10} - K_{00})a}\right)
+    \nonumber                                                 \\
+    \beta  & = \exp\left({K_{10} + (K_{11} - K_{10})b}\right)
     \quad,
 \end{align}
 %
@@ -2703,393 +2716,32 @@ and $b$ are restricted to the domain $(0, 1)$, and together comprise the
 hyperparameter vector
 %
 \begin{align}
+    \label{eq:ab}
     \pmb{\theta}_\phi = \left(
     a \, \, \, \,
     b \right)^\top
     \quad.
 \end{align}
 %
-
-Although we use $a$ and $b$ as the inputs to our algorithm, below
-we derive expressions for the moments of the distribution in terms
-of $\alpha$ and $\beta$, as this is somewhat more convenient. Note that
-this requires us to explicitly add a Jacobian term to the likelihood
-when doing posterior inference to account for the change in volume due
-to the transformation from $\alpha, \beta$ to $a, b$. In practice, however,
-$\alpha$ and $\beta$ are no more natural a set of parameters to sample in,
-since they do not \emph{obviously} relate to physical quantities of interest.
-It is therefore desirable to introduce one final transform, from $\alpha, \beta$
-to parameters controlling the mean (or mode) $\mu_\phi$ and
-standard deviation  $\sigma_\phi$ of the
-distribution of spot latitudes, which \emph{are} of physical interest.
-We introduce this transform, and the associated Jacobian for the complete
-transform $\mu_\phi, \sigma_\phi \rightarrow a, b$,
-in \S\ref{sec:lat-transform} below.
-
-\subsubsection{First moment}
+Because of their trivial domain, these parameters are convenient to sample
+in when doing inference (provided we account for their implied prior on
+the spot latitudes; see below). However, $a$ and $b$ do not intuitively
+relate to physical quantities of interest. In many cases it is more
+desirable to parametrize the latitude distribution in terms of a parameter
+$\mu_\phi$ controlling the central latitude and a parameter $\sigma_\phi$
+controlling the dispersion in latitude among the spots.
+In this case, we may choose instead
 %
-Since the Wigner matrices are block diagonal, we may evaluate the moments of the
-distribution one spherical harmonic degree at a time. To that end, let us
-write the first moment integral as
-%
-\begin{proof}{test_ephi}
-    \mathbf{e}_\phi
-    & \equiv
-    \int
-    \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{e}_r \,
-    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
-    \mathrm{d}\phi
-    \nonumber
-    \\
-    %
-    & =
-    %
-    \left(
-    \mathbf{e}_\phi^0
-    \,\,\,
-    \mathbf{e}_\phi^1
-    \,\,\,
-    \mathbf{e}_\phi^2
-    \,\,\,
-    \cdots
-    \,\,\,
-    \mathbf{e}_\phi^{l_{\mathrm{max}}}
-    \right)^\top
-    \quad,
-\end{proof}
-%
-where
-%
-\begin{proof}{test_ephi}
-    \mathbf{e}_\phi^l
-    & =
-    \int
-    \mathbf{R}^l_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{e}^l_r \,
-    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
-    \mathrm{d}\phi
-    \nonumber \\
-    %
-    & =
-    %
-    {\mathbf{U}^l}^{-1}
-    \mathbf{p}^l_\phi
-    \quad,
-\end{proof}
-%
-and we define
-%
-\begin{align}
-    \label{eq:plphi}
-    \mathbf{p}^l_\phi
-     & \equiv
-    \int
-    \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi) \,
-    \bar{\mathbf{e}}^l_r \,
-    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
-    \mathrm{d}\phi
-    \\
-    \bar{\mathbf{e}}^l_r
-     & \equiv
-    \mathbf{U}^l
-    \mathbf{e}^l_r
+\begin{align*}
+    \tag{\ref*{eq:ab}*}
+    \pmb{\theta}_\phi = \left(
+    \mu_\phi \, \, \, \,
+    \sigma_\phi \right)^\top
     \quad.
-\end{align}
+\end{align*}
 %
-The integral $\mathbf{p}_\phi^l$ defined above has a closed-form solution.
-To show this, we write the terms of $\mathbf{p}^l_\phi$ as
-%
-\begin{align}
-    {({p^l_\phi})_{}}_m
-     & =
-    \int
-    \sum\limits_{\mu=-l}^l
-    {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(\phi) \,
-    {({\bar{e}}^l_r)_{}}_{\mu} \,
-    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
-    \mathrm{d}\phi
-    %
-    \nonumber \\[0.5em]
-    %
-     & =
-    \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
-    \sum\limits_{\mu=-l}^l
-    {({\bar{e}}^l_r)_{}}_{\mu}
-    \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu)}
-    \sum\limits_{i=0}^{2l} c_{m,\mu,i}^{l}
-    \,
-    {({q^l_\phi})_{}}_i(\pmb{\theta}_{\phi})
-    \quad,
-\end{align}
-%
-where
-%
-\begin{proof}{test_qlphii}
-    {({q^l_\phi})_{}}_i(\pmb{\theta}_{\phi})
-    & \equiv
-    \frac{1}{2}
-    \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}
-    %
-    \mathrm{sgn}(\sin\phi)^{i}
-    \big| \sin\phi \big|
-    (\cos\phi)^{\alpha - 1}
-    (1 - \cos\phi)^{l + \beta - \frac{i}{2} - 1}
-    (1 + \cos\phi)^\frac{i}{2}
-    %
-    \,
-    \mathrm{d}\phi
-    \nonumber \\[0.5em]
-    %
-    & =
-    %
-    \begin{cases}
-        \displaystyle\int_{0}^{1}
-        %
-        x^{\alpha - 1}
-        (1 - x)^{l + \beta - \frac{i}{2} - 1 }
-        (1 + x)^\frac{i}{2}
-        %
-        \,
-        \mathrm{d}x
-        %
-         & i \,\, \mathrm{even}
-        %
-        \\
-        %
-        0
-        %
-         & i \,\, \mathrm{odd} \quad,
-    \end{cases}
-\end{proof}
-%
-and in the last line we made use of the transformation $x = \cos\phi$.
-%
-The integral in the expression above has a closed-form solution in terms
-of the hypergeometric function $_2F_1$:
-%
-\begin{proof}{test_qlphii}
-    %
-    \label{eq:qlphii}
-    {({q^l_\phi})_{}}_i(\pmb{\theta}_{\phi})
-    & =
-    \resizebox{.75\hsize}{!}{$
-            \begin{cases}
-                \dfrac{\Gamma(\alpha)\Gamma(l + \beta - \frac{i}{2})}{\Gamma(l + \alpha + \beta - \frac{i}{2})}
-                \,
-                _2F_1\Big(
-                -\frac{i}{2},
-                \alpha;
-                l + \alpha + \beta - \frac{i}{2};
-                -1
-                \Big)
-                %
-                 & i \,\, \mathrm{even}
-                %
-                \\
-                %
-                0
-                %
-                 & i \,\, \mathrm{odd} \quad.
-            \end{cases}
-        $}
-\end{proof}
-%
-In order to compute the integral $\mathbf{e}_\phi$
-(Equation~\ref{eq:e2}) we must evaluate Equation~(\ref{eq:qlphii})
-for all $0 \leq l \leq l_{\mathrm{max}}$, $0 \leq i \leq 2l$,
-which can be done efficiently via upward recursion relations for both
-the gamma function and the hypergeometric function.
-
-\subsubsection{Second moment}
-%
-Similarly as before, let us write the second moment integral as
-%
-\begin{proof}{test_bigEphi}
-    \label{eq:Ephi}
-    \mathbf{E}_\phi
-    & \equiv
-    \int
-    \mathbf{R}_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{E}_r \,
-    \mathbf{R}_{\hat{\mathbf{x}}}^\top(\phi) \,
-    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
-    \mathrm{d}\phi
-    \nonumber
-    \\
-    %
-    & =
-    %
-    \setstackgap{L}{1.25\baselineskip}
-    \fixTABwidth{T}
-    \parenMatrixstack{
-    \mathbf{E}_\phi^{0,0} & \mathbf{E}_\phi^{0,1} & \mathbf{E}_\phi^{0,2} & \cdots & \mathbf{E}_\phi^{0,l_{\mathrm{max}}} \\
-    \mathbf{E}_\phi^{1,0} & \mathbf{E}_\phi^{1,1} & \mathbf{E}_\phi^{1,2} & \cdots & \mathbf{E}_\phi^{1,l_{\mathrm{max}}} \\
-    \mathbf{E}_\phi^{2,0} & \mathbf{E}_\phi^{2,1} & \mathbf{E}_\phi^{2,2} & \cdots & \mathbf{E}_\phi^{2,l_{\mathrm{max}}} \\
-    \vdots & \vdots & \vdots & \ddots & \vdots \\
-    \mathbf{E}_\phi^{l_{\mathrm{max}},0} & \mathbf{E}_\phi^{l_{\mathrm{max}},1} & \mathbf{E}_\phi^{l_{\mathrm{max}},2} & \cdots & \mathbf{E}_\phi^{l_{\mathrm{max}},l_{\mathrm{max}}}
-    }
-    \quad,
-\end{proof}
-%
-where
-%
-\begin{proof}{test_bigEphi}
-    \mathbf{E}_\phi^{l,l'}
-    & =
-    \int
-    \mathbf{R}^l_{\hat{\mathbf{x}}}(\phi) \,
-    \mathbf{E}^{l,l'}_r \,
-    {\mathbf{R}^{l'}_{\hat{\mathbf{x}}}}^\top(\phi) \,
-    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
-    \mathrm{d}\phi
-    \nonumber \\
-    %
-    & =
-    %
-    {\mathbf{U}^l}^{-1}
-    \mathbf{P}^{l,l'}_\phi
-    {{\mathbf{U}^{l'}}^{-1}}^\top
-\end{proof}
-%
-and we define
-%
-\begin{align}
-    \label{eq:Plphi}
-    \mathbf{P}^{l,l'}_\phi
-     & \equiv
-    \int
-    \mathbf{D}^l_{\hat{\mathbf{x}}}(\phi) \,
-    \bar{\mathbf{E}}^{l,l'}_r \,
-    {\mathbf{D}^{l'}_{\hat{\mathbf{x}}}}^\top(\phi) \,
-    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
-    \mathrm{d}\phi
-    \\
-    \bar{\mathbf{E}}^{l,l'}_r
-     & \equiv
-    \mathbf{U}^l
-    \mathbf{E}^{l,l'}_r
-    {\mathbf{U}^{l'}}^\top
-    \quad.
-\end{align}
-%
-As before, we may express the solution to the integral $\mathbf{P}^{l,l'}_\phi$ in
-closed form. Let us write the terms of $\mathbf{P}^{l,l'}_\phi$ as
-%
-\begin{align}
-    {({P^{l,l'}_\phi})_{}}_{m,m'}
-     & =
-    \int
-    \sum\limits_{\mu=-l}^l
-    \sum\limits_{{\mu'}=-l'}^{l'}
-    {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(\phi) \,
-    {(\bar{E}^{l,l'}_r)_{}}_{\mu,{\mu'}} \,
-    {({D^{l'}_{\hat{\mathbf{x}}}})_{}}_{m',{\mu'}}(\phi) \,
-    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
-    \mathrm{d}\phi
-    %
-    \nonumber \\[0.5em]
-    %
-     & =
-    \resizebox{.75\hsize}{!}{$
-        \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
-        \sum\limits_{\mu=-l}^l
-        \sum\limits_{{\mu'}=-l'}^{l'}
-        {(\bar{E}^{l,l'}_r)_{}}_{\mu,{\mu'}} \,
-        \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu + m' - {\mu'})}
-        \sum\limits_{i=0}^{2l}
-        \sum\limits_{i'=0}^{2l'}
-        c_{m,\mu,i}^{l}
-        c_{m',{\mu'},i'}^{l'}
-        \,
-        {({Q^{l,l'}_\phi})_{}}_{i,i'}(\pmb{\theta}_{\phi})
-    $}
-    \quad,
-\end{align}
-%
-where, similarly to before,
-%
-\begin{proof}{test_bigEphi}
-    {({Q^{l,l'}_\phi})_{}}_{i,i'}(\pmb{\theta}_{\phi})
-    & \equiv
-    \frac{1}{2}
-    \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}
-    %
-    \mathrm{sgn}(\sin\phi)^{i+i'}
-    \big| \sin\phi \big|
-    (\cos\phi)^{\alpha - 1}
-    (1 - \cos\phi)^{l + l' + \beta - \frac{i+i'}{2} - 1}
-    (1 + \cos\phi)^\frac{i+i'}{2}
-    %
-    \,
-    \mathrm{d}\phi
-    \nonumber \\[0.5em]
-    %
-    & =
-    %
-    \begin{cases}
-        \displaystyle\int_{0}^{1}
-        %
-        x^{\alpha - 1}
-        (1 - x)^{l + l' + \beta - \frac{i+i'}{2} - 1 }
-        (1 + x)^\frac{i+i'}{2}
-        %
-        \,
-        \mathrm{d}x
-        %
-         & i+i' \,\, \mathrm{even}
-        %
-        \\
-        %
-        0
-        %
-         & i+i' \,\, \mathrm{odd} \quad.
-    \end{cases}
-\end{proof}
-%
-We may again express this integral in closed form:
-%
-\begin{proof}{test_bigEphi}
-    %
-    \label{eq:Qlphiij}
-    {({Q^{l,l'}_\phi})_{}}_{i,i'}(\pmb{\theta}_{\phi})
-    & =
-    \resizebox{.75\hsize}{!}{$
-            \begin{cases}
-                \dfrac{\Gamma(\alpha)\Gamma(l + l' + \beta - \frac{i+i'}{2})}{\Gamma(l + l' + \alpha + \beta - \frac{i+i'}{2})}
-                \,
-                _2F_1\Big(
-                -\frac{i+i'}{2},
-                \alpha;
-                l + l' + \alpha + \beta - \frac{i+i'}{2};
-                -1
-                \Big)
-                %
-                 & i+i' \,\, \mathrm{even}
-                %
-                \\
-                %
-                0
-                %
-                 & i+i' \,\, \mathrm{odd} \quad.
-            \end{cases}
-        $}
-\end{proof}
-%
-As before, this integral may be evaluated recursively to efficiently compute all
-of the terms in $\mathbf{E}_\phi$.
-
-\subsubsection{Variable transforms}
-\label{sec:lat-transform}
-
-As we mentioned earlier,
-although we adopt $a$ and $b$ as the actual inputs to our Gaussian process
-(i.e., as elements of the input vector $\pmb{\theta}_\bullet$), these
-parameters are not themselves ``interpretable'', as they do not directly
-correspond to physical
-quantities of interest such as the mean and standard deviation of the spot
-latitude distribution. However, over most of the parameter space in $a$ and $b$,
-the spot latitude distribution is well approximated
+Over most of the parameter space in $a$ and $b$,
+the spot latitude distribution defined above is well approximated
 by a bimodal Gaussian. In particular, there exists
 a one-to-one relationship between $a$ and $b$ and the mean $\mu_\phi$
 and standard deviation $\sigma_\phi$ of a normal approximation to the
@@ -3117,10 +2769,8 @@ for $\phi$ to obtain
         }
     }
     \right)
+    \quad.
 \end{proof}
-%
-where $\alpha$ and $\beta$ may be computed from $a$ and $b$ via
-Equation~(\ref{eq:beta2gauss}).
 %
 To compute $\sigma_\phi$, we note that the variance of a Gaussian distribution
 $\varphi(\phi)$
@@ -3151,51 +2801,6 @@ For completeness, the inverse transform also has a closed form:
     \beta &= \frac{\cos\mu_\phi + 2 \sigma_\phi^2 (3 + \cos\left( 2\mu_\phi \right)) - \cos\left( 3\mu_\phi \right)}{16 \sigma_\phi^2 \cos\left( \frac{\mu_\phi}{2} \right)^4}
     \quad.
 \end{proof}
-
-These transformations allow one to easily transform constraints on $a$ and
-$b$ to constraints on the mode and approximate variance of the distribution
-of spot latitudes. Importantly, they also allow us to compute the Jacobian
-of the transform, given by
-%
-\begin{proof}{test_lat_jac}
-    J &=
-    \frac{\partial{\mu_\phi}}{\partial{a}}
-    \frac{\partial{\sigma_\phi}}{\partial{b}} -
-    \frac{\partial{\mu_\phi}}{\partial{b}}
-    \frac{\partial{\sigma_\phi}}{\partial{a}}
-    %
-    \\
-    %
-    &=\resizebox{.925\hsize}{!}{$
-            \frac{
-                \left(K_{10} - K_{00}\right) \left(K_{11} - K_{10}\right)
-                \alpha \beta \left(1 + \cos\mu_\phi\right)^3
-                \sin\left(2\mu_\phi\right)^3
-            }{
-                \sigma_\phi
-                \left(
-                2 \alpha + \beta - 3 +
-                \left(2 \alpha + \beta - 1\right) \cos\mu_\phi
-                \right)
-                \left(
-                2 \left( \alpha + \beta - 1\right) +
-                3 (\beta - 1) \cos\mu_\phi
-                - 2 \left( \alpha - \beta - 1 \right) \cos\left( 2\mu_\phi \right)
-                + \left( \beta - 1\right) \cos\left( 3\mu_\phi \right)
-                \right)^2
-            }
-        $}
-    \nonumber
-\end{proof}
-%
-While one could sample in $\mu_\phi$ and $\sigma_\phi$ directly, we instead
-recommend sampling in the quantities $a$ and $b$ under a uniform prior on
-$(0, 1)$ for both of them, then correcting for the implied prior on
-$\mu_\phi$ and $\sigma_\phi$ by adding the log of the absolute value of $J$ to the log
-likelihood. This corrects for the \emph{ad hoc}
-prior on the latitude parameters introduced by our particular choice of
-parametrization, enforcing instead a uniform prior on the quantities $\mu_\phi$
-and $\sigma_\phi$.
 
 \begin{figure}[t!]
     \begin{centering}
@@ -3236,10 +2841,423 @@ The shaded panel at the lower left is a special case of the distribution
 $a \approx 0.06$, $b = 0$), which is approximately isotropic in latitude. In
 this panel, the orange curve instead corresponds to an isotropic (cosine)
 distribution in $\phi$; note the excellent agreement.
-
+%
 Thus, in addition to having closed-form moments, the Beta distribution is
 quite flexible and, via the transforms outlined above, intuitive in how
 it affects the distribution of spots on the surface of a star.
+
+In the following sections we derive expressions
+for the moments of the distribution in terms
+of $\alpha$ and $\beta$, as this is somewhat more convenient; these
+can easily be transformed into expressions involving either $\mu_\phi$ and $\sigma_\phi$
+or $a$ and $b$ via the equations above. The former parametrization is convenient
+when these properties are known and can be fixed; i.e., when using the GP as
+a restrictive prior for the light curve of a star whose spot distribution is
+already understood.
+However, for the purposes of posterior inference---that is, when trying to
+constrain the hyperparameters of the GP---we recommend sampling in the
+shape parameters $a$ and $b$, since their domains are trivial,
+with uncorrelated boundaries. Posterior constraints on these quantities may
+easily be transformed into constraints on $\mu_\phi$ and $\sigma_\phi$
+via the equations above. Note, importantly, that this
+requires us to explicitly add a Jacobian term to the likelihood
+to account for the prior implied by sampling uniformly in $a$ and $b$
+in the range $(0, 1)$.
+The Jacobian is given by
+%
+\begin{proof}{test_lat_jac}
+    J &=
+    \frac{\partial{\mu_\phi}}{\partial{a}}
+    \frac{\partial{\sigma_\phi}}{\partial{b}} -
+    \frac{\partial{\mu_\phi}}{\partial{b}}
+    \frac{\partial{\sigma_\phi}}{\partial{a}}
+    %
+    \\
+    %
+    &=\resizebox{.925\hsize}{!}{$
+            \frac{
+                \left(K_{10} - K_{00}\right) \left(K_{11} - K_{10}\right)
+                \alpha \beta \left(1 + \cos\mu_\phi\right)^3
+                \sin\left(2\mu_\phi\right)^3
+            }{
+                \sigma_\phi
+                \left(
+                2 \alpha + \beta - 3 +
+                \left(2 \alpha + \beta - 1\right) \cos\mu_\phi
+                \right)
+                \left(
+                2 \left( \alpha + \beta - 1\right) +
+                3 (\beta - 1) \cos\mu_\phi
+                - 2 \left( \alpha - \beta - 1 \right) \cos\left( 2\mu_\phi \right)
+                + \left( \beta - 1\right) \cos\left( 3\mu_\phi \right)
+                \right)^2
+            }
+        $}
+    \nonumber
+\end{proof}
+%
+Adding the log of the absolute value of $J$ to the log likelihood
+corrects for the \emph{ad hoc}
+prior on the latitude parameters introduced by our particular choice of
+parametrization, enforcing instead a uniform prior on the quantities $\mu_\phi$
+and $\sigma_\phi$.
+
+\subsubsection{First moment}
+%
+Since the Wigner matrices are block diagonal, we may evaluate the moments of the
+distribution one spherical harmonic degree at a time. To that end, let us
+write the first moment integral as
+%
+\begin{proof}{test_ephi}
+    \mathbf{e}_\phi
+    & \equiv
+    \int
+    \mathbf{R}_{\hat{\mathbf{x}}}(\bbphi) \,
+    \mathbf{e}_r \,
+    p(\bbphi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\bbphi
+    \nonumber
+    \\
+    %
+    & =
+    %
+    \left(
+    \mathbf{e}_\phi^0
+    \,\,\,
+    \mathbf{e}_\phi^1
+    \,\,\,
+    \mathbf{e}_\phi^2
+    \,\,\,
+    \cdots
+    \,\,\,
+    \mathbf{e}_\phi^{l_{\mathrm{max}}}
+    \right)^\top
+    \quad,
+\end{proof}
+%
+where
+%
+\begin{proof}{test_ephi}
+    \mathbf{e}_\phi^l
+    & =
+    \int
+    \mathbf{R}^l_{\hat{\mathbf{x}}}(\bbphi) \,
+    \mathbf{e}^l_r \,
+    p(\bbphi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\bbphi
+    \nonumber \\
+    %
+    & =
+    %
+    {\mathbf{U}^l}^{-1}
+    \mathbf{p}^l_\phi
+    \quad,
+\end{proof}
+%
+and we define
+%
+\begin{align}
+    \label{eq:plphi}
+    \mathbf{p}^l_\phi
+     & \equiv
+    \int
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(\bbphi) \,
+    \bar{\mathbf{e}}^l_r \,
+    p(\phi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\bbphi
+    \\
+    \bar{\mathbf{e}}^l_r
+     & \equiv
+    \mathbf{U}^l
+    \mathbf{e}^l_r
+    \quad.
+\end{align}
+%
+The integral $\mathbf{p}_\phi^l$ defined above has a closed-form solution.
+To show this, we write the terms of $\mathbf{p}^l_\phi$ as
+%
+\begin{align}
+    {({p^l_\phi})_{}}_m
+     & =
+    \int
+    \sum\limits_{\mu=-l}^l
+    {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(\bbphi) \,
+    {({\bar{e}}^l_r)_{}}_{\mu} \,
+    p(\bbphi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\bbphi
+    %
+    \nonumber \\[0.5em]
+    %
+     & =
+    \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+    \sum\limits_{\mu=-l}^l
+    {({\bar{e}}^l_r)_{}}_{\mu}
+    \exp\left[{\frac{\imag \pi}{2}(m - \mu)}\right]
+    \sum\limits_{i=0}^{2l} c_{m,\mu,i}^{l}
+    \,
+    {({q^l_\phi})_{}}_i(\pmb{\theta}_{\phi})
+    \quad,
+\end{align}
+%
+where
+%
+\begin{proof}{test_qlphii}
+    {({q^l_\phi})_{}}_i(\pmb{\theta}_{\phi})
+    & \equiv
+    \frac{1}{2}
+    \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}
+    %
+    \mathrm{sgn}(\sin\bbphi)^{i}
+    \big| \sin\bbphi \big|
+    (\cos\bbphi)^{\alpha - 1}
+    (1 - \cos\bbphi)^{l + \beta - \frac{i}{2} - 1}
+    (1 + \cos\bbphi)^\frac{i}{2}
+    %
+    \,
+    \mathrm{d}\bbphi
+    \nonumber \\[0.5em]
+    %
+    & =
+    %
+    \begin{cases}
+        \displaystyle\int_{0}^{1}
+        %
+        \mathbb{x}^{\alpha - 1}
+        (1 - \mathbb{x})^{l + \beta - \frac{i}{2} - 1 }
+        (1 + \mathbb{x})^\frac{i}{2}
+        %
+        \,
+        \mathrm{d}\mathbb{x}
+        %
+         & i \,\, \mathrm{even}
+        %
+        \\
+        %
+        0
+        %
+         & i \,\, \mathrm{odd} \quad,
+    \end{cases}
+\end{proof}
+%
+and in the last line we made use of the transformation $\mathbb{x} = \cos\bbphi$.
+%
+The integral in the expression above has a closed-form solution in terms
+of the hypergeometric function $_2F_1$:
+%
+\begin{proof}{test_qlphii}
+    %
+    \label{eq:qlphii}
+    {({q^l_\phi})_{}}_i(\pmb{\theta}_{\phi})
+    & =
+    \resizebox{.72\hsize}{!}{$
+            \begin{cases}
+                \dfrac{\Gamma(\alpha)\Gamma(l + \beta - \frac{i}{2})}{\Gamma(l + \alpha + \beta - \frac{i}{2})}
+                \,
+                _2F_1\Big(
+                -\frac{i}{2},
+                \alpha;
+                l + \alpha + \beta - \frac{i}{2};
+                -1
+                \Big)
+                %
+                 & \hspace{-3em} i \,\, \mathrm{even}
+                %
+                \\
+                %
+                0
+                %
+                 & \hspace{-3em} i \,\, \mathrm{odd} \quad.
+            \end{cases}
+        $}
+\end{proof}
+%
+In order to compute the integral $\mathbf{e}_\phi$
+(Equation~\ref{eq:e2}) we must evaluate Equation~(\ref{eq:qlphii})
+for all $0 \leq l \leq l_{\mathrm{max}}$, $0 \leq i \leq 2l$,
+which can be done efficiently via upward recursion relations for both
+the gamma function and the hypergeometric function.
+
+\subsubsection{Second moment}
+%
+Similarly as before, let us write the second moment integral as
+%
+\begin{proof}{test_bigEphi}
+    \label{eq:Ephi}
+    \mathbf{E}_\phi
+    & \equiv
+    \int
+    \mathbf{R}_{\hat{\mathbf{x}}}(\bbphi) \,
+    \mathbf{E}_r \,
+    \mathbf{R}_{\hat{\mathbf{x}}}^\top(\bbphi) \,
+    p(\bbphi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\bbphi
+    \nonumber
+    \\
+    %
+    & =
+    %
+    \setstackgap{L}{1.25\baselineskip}
+    \fixTABwidth{T}
+    \parenMatrixstack{
+    \mathbf{E}_\phi^{0,0} & \mathbf{E}_\phi^{0,1} & \mathbf{E}_\phi^{0,2} & \cdots & \mathbf{E}_\phi^{0,l_{\mathrm{max}}} \\
+    \mathbf{E}_\phi^{1,0} & \mathbf{E}_\phi^{1,1} & \mathbf{E}_\phi^{1,2} & \cdots & \mathbf{E}_\phi^{1,l_{\mathrm{max}}} \\
+    \mathbf{E}_\phi^{2,0} & \mathbf{E}_\phi^{2,1} & \mathbf{E}_\phi^{2,2} & \cdots & \mathbf{E}_\phi^{2,l_{\mathrm{max}}} \\
+    \vdots & \vdots & \vdots & \ddots & \vdots \\
+    \mathbf{E}_\phi^{l_{\mathrm{max}},0} & \mathbf{E}_\phi^{l_{\mathrm{max}},1} & \mathbf{E}_\phi^{l_{\mathrm{max}},2} & \cdots & \mathbf{E}_\phi^{l_{\mathrm{max}},l_{\mathrm{max}}}
+    }
+    \quad,
+\end{proof}
+%
+where
+%
+\begin{proof}{test_bigEphi}
+    \mathbf{E}_\phi^{l,l'}
+    & =
+    \int
+    \mathbf{R}^l_{\hat{\mathbf{x}}}(\bbphi) \,
+    \mathbf{E}^{l,l'}_r \,
+    {\mathbf{R}^{l'}_{\hat{\mathbf{x}}}}^\top(\bbphi) \,
+    p(\bbphi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\bbphi
+    \nonumber \\
+    %
+    & =
+    %
+    {\mathbf{U}^l}^{-1}
+    \mathbf{P}^{l,l'}_\phi
+    {{\mathbf{U}^{l'}}^{-1}}^\top
+\end{proof}
+%
+and we define
+%
+\begin{align}
+    \label{eq:Plphi}
+    \mathbf{P}^{l,l'}_\phi
+     & \equiv
+    \int
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(\bbphi) \,
+    \bar{\mathbf{E}}^{l,l'}_r \,
+    {\mathbf{D}^{l'}_{\hat{\mathbf{x}}}}^\top(\bbphi) \,
+    p(\bbphi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\bbphi
+    \\
+    \bar{\mathbf{E}}^{l,l'}_r
+     & \equiv
+    \mathbf{U}^l
+    \mathbf{E}^{l,l'}_r
+    {\mathbf{U}^{l'}}^\top
+    \quad.
+\end{align}
+%
+As before, we may express the solution to the integral $\mathbf{P}^{l,l'}_\phi$ in
+closed form. Let us write the terms of $\mathbf{P}^{l,l'}_\phi$ as
+%
+\begin{align}
+    {({P^{l,l'}_\phi})_{}}_{m,m'}
+     & =
+    \int
+    \sum\limits_{\mu=-l}^l
+    \sum\limits_{{\mu'}=-l'}^{l'}
+    {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(\bbphi) \,
+    {(\bar{E}^{l,l'}_r)_{}}_{\mu,{\mu'}} \,
+    {({D^{l'}_{\hat{\mathbf{x}}}})_{}}_{m',{\mu'}}(\bbphi) \,
+    p(\bbphi \, \big| \, \pmb{\theta}_{\phi}) \,
+    \mathrm{d}\bbphi
+    %
+    \\[0.5em]
+    %
+     & =
+    \resizebox{.75\hsize}{!}{$
+            \dfrac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}
+            \sum\limits_{\mu=-l}^l
+            \sum\limits_{{\mu'}=-l'}^{l'}
+            {(\bar{E}^{l,l'}_r)_{}}_{\mu,{\mu'}} \,
+            \exp\left[{\frac{\imag \pi}{2}(m - \mu + m' - {\mu'})}\right]
+            \sum\limits_{i=0}^{2l}
+            \sum\limits_{i'=0}^{2l'}
+            c_{m,\mu,i}^{l}
+            c_{m',{\mu'},i'}^{l'}
+            \,
+            {({Q^{l,l'}_\phi})_{}}_{i,i'}(\pmb{\theta}_{\phi})
+        $}
+    \quad,
+    \nonumber
+\end{align}
+%
+where, similarly to before,
+%
+\begin{proof}{test_bigEphi}
+    {({Q^{l,l'}_\phi})_{}}_{i,i'}(\pmb{\theta}_{\phi})
+    & \equiv
+    \resizebox{.8\hsize}{!}{$
+            \frac{1}{2}
+            \int_{-\frac{\pi}{2}}^{\frac{\pi}{2}}
+            %
+            \mathrm{sgn}(\sin\bbphi)^{i+i'}
+            \big| \sin\bbphi \big|
+            (\cos\bbphi)^{\alpha - 1}
+            (1 - \cos\bbphi)^{l + l' + \beta - \frac{i+i'}{2} - 1}
+            (1 + \cos\bbphi)^\frac{i+i'}{2}
+            %
+            \,
+            \mathrm{d}\bbphi
+        $}
+    \nonumber \\[0.5em]
+    %
+    & =
+    %
+    \begin{cases}
+        \displaystyle\int_{0}^{1}
+        %
+        \mathbb{x}^{\alpha - 1}
+        (1 - \mathbb{x})^{l + l' + \beta - \frac{i+i'}{2} - 1 }
+        (1 + \mathbb{x})^\frac{i+i'}{2}
+        %
+        \,
+        \mathrm{d}\mathbb{x}
+        %
+         & \hspace{-2em} i+i' \,\, \mathrm{even}
+        %
+        \\
+        %
+        0
+        %
+         & \hspace{-2em} i+i' \,\, \mathrm{odd} \quad.
+    \end{cases}
+\end{proof}
+%
+We may again express this integral in closed form:
+%
+\begin{proof}{test_bigEphi}
+    %
+    \label{eq:Qlphiij}
+    {({Q^{l,l'}_\phi})_{}}_{i,i'}(\pmb{\theta}_{\phi})
+    & =
+    \resizebox{.68\hsize}{!}{$
+            \begin{cases}
+                \dfrac{\Gamma(\alpha)\Gamma(l {+} l' {+} \beta {-} \frac{i+i'}{2})}{\Gamma(l {+} l' {+} \alpha {+} \beta {-} \frac{i+i'}{2})}
+                \,
+                _2F_1\Big(
+                -\frac{i+i'}{2},
+                \alpha;
+                l {+} l' {+} \alpha {+} \beta {-} \frac{i+i'}{2};
+                -1
+                \Big)
+                %
+                 & \hspace{-3em} i+i' \,\, \mathrm{even}
+                %
+                \\
+                %
+                0
+                %
+                 & \hspace{-3em} i+i' \,\, \mathrm{odd} \quad.
+            \end{cases}
+        $}
+\end{proof}
+%
+As before, this integral may be evaluated recursively to efficiently compute all
+of the terms in $\mathbf{E}_\phi$.
+
 
 \subsection{The Longitude Integrals}
 \label{sec:lon}
@@ -3254,34 +3272,34 @@ dealing with integrals of Wigner matrices (\S\ref{sec:wigner}).
 \subsubsection{Probability density function}
 %
 The longitude integrals (Equations~\ref{eq:e3} and \ref{eq:E3}) involve
-rotations by an angle $\lambda$ about $\hat{\mathbf{y}}$, which
+rotations by an angle $\bblambda$ about $\hat{\mathbf{y}}$, which
 may be accomplished by choosing
-Euler angles $\alpha = 0$, $\beta = \lambda$, and
-$\gamma = 0$, such that
+Euler angles $\upalpha = 0$, $\upbeta = \bblambda$, and
+$\upgamma = 0$, such that
 %
 \begin{align}
-    \mathbf{R}^l_{\hat{\mathbf{y}}}(\lambda)
+    \mathbf{R}^l_{\hat{\mathbf{y}}}(\bblambda)
      & =
-    {\mathbf{U}^l}^{-1} \mathbf{D}^l_{\hat{\mathbf{y}}}(\lambda) \mathbf{U}^l
+    {\mathbf{U}^l}^{-1} \mathbf{D}^l_{\hat{\mathbf{y}}}(\bblambda) \mathbf{U}^l
 \end{align}
 %
 with
 \begin{align}
-    \mathbf{D}^l_{\hat{\mathbf{y}}}(\lambda)
+    \mathbf{D}^l_{\hat{\mathbf{y}}}(\bblambda)
      & =
-    \mathbf{D}^l\left(0, \lambda, 0\right)
+    \mathbf{D}^l\left(0, \bblambda, 0\right)
     \quad.
 \end{align}
 %
 Since we expect the longitudinal distribution of features on the surfaces
 of stars to be (on average) isotropic, we will place a uniform prior on
-$\lambda \in [-\pi, \pi)$:
+$\bblambda \in [-\pi, \pi)$:
 %
 \begin{align}
-    p(\lambda \big| \pmb{\theta}_\lambda)
+    p(\bblambda \big| \pmb{\theta}_\lambda)
      & =
     \begin{cases}
-        \frac{1}{2\pi} & -\pi \leq \lambda < \pi
+        \frac{1}{2\pi} & -\pi \leq \bblambda < \pi
         \\
         0              & \mathrm{otherwise} \quad.
     \end{cases}
@@ -3305,10 +3323,10 @@ spherical harmonic degree at a time:
     \mathbf{e}_\lambda
     & \equiv
     \int
-    \mathbf{R}_{\hat{\mathbf{y}}}(\lambda) \,
+    \mathbf{R}_{\hat{\mathbf{y}}}(\bblambda) \,
     \mathbf{e}_\phi \,
-    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
-    \mathrm{d}\lambda
+    p(\bblambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\bblambda
     \nonumber
     \\
     %
@@ -3334,10 +3352,10 @@ where
     \mathbf{e}_\lambda^l
     & =
     \int
-    \mathbf{R}^l_{\hat{\mathbf{y}}}(\lambda) \,
+    \mathbf{R}^l_{\hat{\mathbf{y}}}(\bblambda) \,
     \mathbf{e}^l_\phi \,
-    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
-    \mathrm{d}\lambda
+    p(\bblambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\bblambda
     \nonumber \\
     %
     & =
@@ -3354,10 +3372,10 @@ and we define
     \mathbf{p}^l_\lambda
      & \equiv
     \int
-    \mathbf{D}^l_{\hat{\mathbf{x}}}(\lambda) \,
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(\bblambda) \,
     \bar{\mathbf{e}}^l_\phi \,
-    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
-    \mathrm{d}\lambda
+    p(\bblambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\bblambda
     \\
     \bar{\mathbf{e}}^l_\phi
      & \equiv
@@ -3374,10 +3392,10 @@ To show this, we write the terms of $\mathbf{p}^l_\lambda$ as
      & =
     \int
     \sum\limits_{\mu=-l}^l
-    {({D^l_{\hat{\mathbf{y}}}})_{}}_{m,\mu}(\lambda) \,
+    {({D^l_{\hat{\mathbf{y}}}})_{}}_{m,\mu}(\bblambda) \,
     {({\bar{e}^l_\phi})_{}}_{\mu} \,
-    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
-    \mathrm{d}\lambda
+    p(\bblambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\bblambda
     %
     \nonumber \\[0.5em]
     %
@@ -3398,12 +3416,12 @@ where
     \frac{1}{2\pi}
     \int_{-\pi}^{\pi}
     %
-    \mathrm{sgn}(\sin\lambda)^{i}
-    (1 - \cos\lambda)^{l - \frac{i}{2}}
-    (1 + \cos\lambda)^\frac{i}{2}
+    \mathrm{sgn}(\sin\bblambda)^{i}
+    (1 - \cos\bblambda)^{l - \frac{i}{2}}
+    (1 + \cos\bblambda)^\frac{i}{2}
     %
     \,
-    \mathrm{d}\lambda
+    \mathrm{d}\bblambda
     \nonumber \\[0.5em]
     %
     & =
@@ -3435,11 +3453,11 @@ We write the second moment integral as
     \mathbf{E}_\lambda
     & \equiv
     \int
-    \mathbf{R}_{\hat{\mathbf{y}}}(\lambda) \,
+    \mathbf{R}_{\hat{\mathbf{y}}}(\bblambda) \,
     \mathbf{E}_\phi \,
-    \mathbf{R}_{\hat{\mathbf{y}}}^\top(\lambda) \,
-    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
-    \mathrm{d}\lambda
+    \mathbf{R}_{\hat{\mathbf{y}}}^\top(\bblambda) \,
+    p(\bblambda \, \big| \, \pmb{\theta}_{\bblambda}) \,
+    \mathrm{d}\bblambda
     \nonumber
     \\
     %
@@ -3463,11 +3481,11 @@ where
     \mathbf{E}_\lambda^{l,l'}
     & =
     \int
-    \mathbf{R}^l_{\hat{\mathbf{y}}}(\lambda) \,
+    \mathbf{R}^l_{\hat{\mathbf{y}}}(\bblambda) \,
     \mathbf{E}^{l,l'}_\phi \,
-    {\mathbf{R}^{l'}_{\hat{\mathbf{y}}}}^\top(\lambda) \,
-    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
-    \mathrm{d}\lambda
+    {\mathbf{R}^{l'}_{\hat{\mathbf{y}}}}^\top(\bblambda) \,
+    p(\bblambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\bblambda
     \nonumber \\
     %
     & =
@@ -3484,11 +3502,11 @@ and we define
     \mathbf{P}^{l,l'}_\lambda
      & \equiv
     \int
-    \mathbf{D}^l_{\hat{\mathbf{x}}}(\lambda) \,
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(\bblambda) \,
     \bar{\mathbf{E}}^{l,l'}_\phi \,
-    {\mathbf{D}^{l'}_{\hat{\mathbf{x}}}}^\top(\lambda) \,
-    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
-    \mathrm{d}\lambda
+    {\mathbf{D}^{l'}_{\hat{\mathbf{x}}}}^\top(\bblambda) \,
+    p(\bblambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\bblambda
     \\
     \bar{\mathbf{E}}^{l,l'}_\phi
      & \equiv
@@ -3506,11 +3524,11 @@ We then express the terms of $\mathbf{P}^{l,l'}_\lambda$ as
     \int
     \sum\limits_{\mu=-l}^l
     \sum\limits_{{\mu'}=-l'}^{l'}
-    ({D^l_{\hat{\mathbf{x}}}})_{m,\mu}(\lambda) \,
+    ({D^l_{\hat{\mathbf{x}}}})_{m,\mu}(\bblambda) \,
     (\bar{E}^{l,l'}_\phi)_{\mu,{\mu'}} \,
-    ({D^{l'}_{\hat{\mathbf{x}}}})_{m',{\mu'}}(\lambda) \,
-    p(\lambda \, \big| \, \pmb{\theta}_{\lambda}) \,
-    \mathrm{d}\lambda
+    ({D^{l'}_{\hat{\mathbf{x}}}})_{m',{\mu'}}(\bblambda) \,
+    p(\bblambda \, \big| \, \pmb{\theta}_{\lambda}) \,
+    \mathrm{d}\bblambda
     %
     \nonumber \\[0.5em]
     %
@@ -3535,12 +3553,12 @@ where
     \frac{1}{2\pi}
     \int_{-\pi}^{\pi}
     %
-    \mathrm{sgn}(\sin\lambda)^{i+i'}
-    (1 - \cos\lambda)^{l + l' - \frac{i+i'}{2}}
-    (1 + \cos\lambda)^\frac{i+i'}{2}
+    \mathrm{sgn}(\sin\bblambda)^{i+i'}
+    (1 - \cos\bblambda)^{l + l' - \frac{i+i'}{2}}
+    (1 + \cos\bblambda)^\frac{i+i'}{2}
     %
     \,
-    \mathrm{d}\lambda
+    \mathrm{d}\bblambda
     \nonumber \\[0.5em]
     %
     & =
@@ -3567,10 +3585,10 @@ pre-processing step.
 \label{sec:contrast}
 %
 The final integrals we must take in our computation of
-$\mathrm{E} \big[ \mathbf{y} \, \big| \, \pmb{\theta}_\bullet \big]$
-and $\mathrm{E} \big[ \mathbf{y} \mathbf{y}^\top \, \big| \, \pmb{\theta}_\bullet \big]$
+$\mathrm{E} \big[ \mathbbb{y} \, \big| \, \pmb{\theta}_\bullet \big]$
+and $\mathrm{E} \big[ \mathbbb{y} \mathbbb{y}^\top \, \big| \, \pmb{\theta}_\bullet \big]$
 are the integrals over
-the spot contrast distribution, $\mathbf{e}_\xi$ and $\mathbf{E}_\xi$.
+the spot contrast distribution, $\mathbf{e}_c$ and $\mathbf{E}_c$.
 These are by far the easiest, since the spot contrast is a scalar
 multiplier of the spherical harmonic coefficient vector, so we can
 pull the terms $\mathbf{e}_\lambda$ and $\mathbf{E}_\lambda$ out
@@ -3578,15 +3596,15 @@ of the
 integrals in Equations (\ref{eq:e4}) and (\ref{eq:E4}) to write
 %
 \begin{align}
-    \mathbf{e}_\xi
+    \mathbf{e}_c
      & \equiv
     \mathbf{e}_\lambda \,
     \int
     \xi \,
-    p(\xi \, \big| \, \pmb{\theta}_{\xi}) \,
+    p(\xi \, \big| \, \pmb{\theta}_{c}) \,
     \mathrm{d}\xi
     \\
-    \mathbf{E}_\xi
+    \mathbf{E}_c
      & \equiv
     \mathbf{E}_\lambda \,
     \int
@@ -3611,7 +3629,7 @@ we therefore choose the simplest possible probability distribution,
 a delta function:
 %
 \begin{align}
-    p(\xi \, \big| \, \pmb{\theta}_{\xi}) = \delta(\xi - c)
+    p(\xi \, \big| \, \pmb{\theta}_{c}) = \delta(\xi - c)
 \end{align}
 %
 characterized by a single parameter, the contrast of the spots:
@@ -3624,9 +3642,9 @@ characterized by a single parameter, the contrast of the spots:
 The moment integrals are then trivial to evaluate:
 %
 \begin{align}
-    \mathbf{e}_\xi & = c \, \mathbf{e}_\lambda
+    \mathbf{e}_c & = c \, \mathbf{e}_\lambda
     \\
-    \mathbf{E}_\xi & = c^2 \mathbf{E}_\lambda
+    \mathbf{E}_c & = c^2 \mathbf{E}_\lambda
     \quad.
 \end{align}
 %
@@ -3646,22 +3664,22 @@ that describes the flux marginalized over all values of the inclination
 %
 Similar to the latitude integrals, the process of inclining a star relative to the
 observer (see Equation~\ref{eq:akT}) involves
-rotations by an angle $-I$ about $\hat{\mathbf{x}}$, which
+rotations by an angle $-\mathbb{I}$ about $\hat{\mathbf{x}}$, which
 may be accomplished by choosing
-Euler angles $\alpha = \nicefrac{\pi}{2}$, $\beta = -I$, and
-$\gamma = -\nicefrac{\pi}{2}$, such that
+Euler angles $\upalpha = \nicefrac{\pi}{2}$, $\upbeta = -\mathbb{I}$, and
+$\upgamma = -\nicefrac{\pi}{2}$, such that
 %
 \begin{align}
-    \mathbf{R}^l_{\hat{\mathbf{x}}}\left(-I\right)
+    \mathbf{R}^l_{\hat{\mathbf{x}}}\left(-\mathbb{I}\right)
      & =
-    {\mathbf{U}^l}^{-1} \mathbf{D}^l_{\hat{\mathbf{x}}}\left(-I\right) \mathbf{U}^l
+    {\mathbf{U}^l}^{-1} \mathbf{D}^l_{\hat{\mathbf{x}}}\left(-\mathbb{I}\right) \mathbf{U}^l
 \end{align}
 %
 with
 \begin{align}
-    \mathbf{D}^l_{\hat{\mathbf{x}}}\left(-I\right)
+    \mathbf{D}^l_{\hat{\mathbf{x}}}\left(-\mathbb{I}\right)
      & =
-    \mathbf{D}^l\left(\frac{\pi}{2}, -I, -\frac{\pi}{2}\right)
+    \mathbf{D}^l\left(\frac{\pi}{2}, -\mathbb{I}, -\frac{\pi}{2}\right)
     \quad.
 \end{align}
 %
@@ -3670,10 +3688,10 @@ prior constraints on individual stars), the prior probability density for
 the inclination $I$ is simply
 %
 \begin{align}
-    p(I) = \sin I
+    p(\mathbb{I}) = \sin \mathbb{I}
 \end{align}
 %
-for $I \in [0, \frac{\pi}{2}]$.
+for $\mathbb{I} \in [0, \frac{\pi}{2}]$.
 
 \subsection{First moment}
 \label{sec:inc-mom1}
@@ -3683,10 +3701,10 @@ The expression for the first moment is
     \mathbf{e}_I
      & \equiv
     \int
-    \pmb{\mathcal{A}}(I, P, \mathbf{u}) \,
+    \pmb{\mathcal{A}}(\mathbb{I}, P, \mathbf{u}) \,
     \mathbf{e}_y \,
-    p(I) \,
-    \mathrm{d}I
+    p(\mathbb{I}) \,
+    \mathrm{d}\mathbb{I}
 \end{align}
 %
 where
@@ -3694,7 +3712,7 @@ where
 \begin{align}
     \mathbf{e}_y
      & \equiv
-    \mathrm{E} \Big[ \mathbf{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
+    \mathrm{E} \Big[ \mathbbb{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
 \end{align}
 %
 is the first moment of the GP in the spherical harmonic basis
@@ -3708,20 +3726,20 @@ GP at time $t = t_k$) as
     \left(e_I\right)_k
      & =
     \int
-    \mathbf{a}_k^\top
+    \mathbf{a}_k^\top(\mathbb{I})
     \mathbf{e}_y \,
-    p(I) \,
-    \mathrm{d}I
+    p(\mathbb{I}) \,
+    \mathrm{d}\mathbb{I}
     \nonumber \\
      & =
     \mathbf{r}^\top \,
     \mathbf{A_1} \,
     \int
-    \mathbf{R}_{\hat{\mathbf{x}}}\left(-I\right) \,
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(-\mathbb{I}\right) \,
     \,
     \left(\mathbf{e}_{y'}\right)_k \,
-    p(I) \,
-    \mathrm{d}I
+    p(\mathbb{I}) \,
+    \mathrm{d}\mathbb{I}
     \quad,
 \end{align}
 %
@@ -3735,7 +3753,7 @@ where we define
     \mathbf{e}_y
 \end{align}
 %
-as the expectation of $\mathbf{y}$ in the polar frame at time $t = t_k$.%
+as the expectation of $\mathbbb{y}$ in the polar frame at time $t = t_k$.%
 \footnote{In the presence of limb darkening, we must include the limb
     darkening operator $\mathbf{L}(\mathbf{u})$ in Equation~(\ref{eq:eIk});
     see \S\ref{sec:ld}.}
@@ -3745,7 +3763,7 @@ is longitudinally isotropic: there is no preferred longitude on
 the surface of the star, or, equivalently, no preferred phase
 in the light curve. The rotation about $\hat{\mathbf{z}}$ (i.e., the
 rotational axis of the star) therefore cannot change the expectation
-of $\mathbf{y}$, so
+of $\mathbbb{y}$, so
 %
 \begin{align}
     \left(\mathbf{e}_{y'}\right)_k
@@ -3784,11 +3802,11 @@ and
     \mathbf{e}_{y''}
      & =
     \int
-    \mathbf{R}_{\hat{\mathbf{x}}}\left(-I\right) \,
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(-\mathbb{I}\right) \,
     \,
     \mathbf{e}_{y'} \,
-    p(I) \,
-    \mathrm{d}I
+    p(\mathbb{I}) \,
+    \mathrm{d}\mathbb{I}
     \nonumber \\
     %
      & =
@@ -3806,7 +3824,7 @@ and
     \right)^\top
 \end{align}
 %
-is the expectation of $\mathbf{y}$ in the observer's frame,
+is the expectation of $\mathbbb{y}$ in the observer's frame,
 and as before we explicitly separate it out by spherical harmonic degree.
 As in \S\ref{sec:lat}, we may write
 %
@@ -3814,10 +3832,10 @@ As in \S\ref{sec:lat}, we may write
     \mathbf{e}_{y''}^l
     & =
     \int
-    \mathbf{R}^l_{\hat{\mathbf{x}}}(-I) \,
+    \mathbf{R}^l_{\hat{\mathbf{x}}}(-\mathbb{I}) \,
     \mathbf{e}^l_{y'} \,
-    p(I) \,
-    \mathrm{d}I
+    p(\mathbb{I}) \,
+    \mathrm{d}\mathbb{I}
     \nonumber \\
     %
     & =
@@ -3833,10 +3851,10 @@ and we define
     \mathbf{p}^l_I
      & \equiv
     \int
-    \mathbf{D}^l_{\hat{\mathbf{x}}}(-I) \,
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(-\mathbb{I}) \,
     \bar{\mathbf{e}}^l_{y'} \,
-    p(I) \,
-    \mathrm{d}I
+    p(\mathbb{I}) \,
+    \mathrm{d}\mathbb{I}
     \\
     \bar{\mathbf{e}}^l_{y'}
      & \equiv
@@ -3853,17 +3871,17 @@ To show this, we write the terms of $\mathbf{p}^l_I$ as
     & =
     \int
     \sum\limits_{\mu=-l}^l
-    {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(-I) \,
+    {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(-\mathbb{I}) \,
     {({\bar{e}}^l_{y'})_{}}_{\mu} \,
-    p(I) \,
-    \mathrm{d}I
+    p(\mathbb{I}) \,
+    \mathrm{d}\mathbb{I}
     %
     \nonumber \\[0.5em]
     %
     & =
     \sum\limits_{\mu=-l}^l
     {({\bar{e}}^l_{y'})_{}}_{\mu}
-    \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu)}
+    \exp\left[{\frac{\imag \pi}{2}(m - \mu)}\right]
     \sum\limits_{i=0}^{2l} c_{m,\mu,i}^{l}
     \,
     {({q^l_I})_{}}_i
@@ -3878,12 +3896,12 @@ where
     \int_{0}^{\frac{\pi}{2}}
     %
     (-1)^{i}
-    (1 - \cos I)^{\frac{2l - i}{2}}
-    (1 + \cos I)^\frac{i}{2}
-    \sin I
+    (1 - \cos \mathbb{I})^{\frac{2l - i}{2}}
+    (1 + \cos \mathbb{I})^\frac{i}{2}
+    \sin \mathbb{I}
     %
     \,
-    \mathrm{d}I
+    \mathrm{d}\mathbb{I}
     \nonumber \\[0.5em]
     %
     & =
@@ -3891,10 +3909,10 @@ where
     (-1)^{i}
     \displaystyle\int_{0}^{1}
     %
-    (1 - x)^{\frac{2l - i}{2}}
-    (1 + x)^\frac{i}{2}
+    (1 - \mathbb{x})^{\frac{2l - i}{2}}
+    (1 + \mathbb{x})^\frac{i}{2}
     \,
-    \mathrm{d}x
+    \mathrm{d}\mathbb{x}
     \nonumber \\[0.5em]
     &=
     \frac{(-1)^{i}}{l-\frac{i}{2}+1}
@@ -3920,11 +3938,11 @@ The expression for the second moment is
     \mathbf{E}_I
      & \equiv
     \int
-    \pmb{\mathcal{A}}(I, P, \mathbf{u}) \,
+    \pmb{\mathcal{A}}(\mathbb{I}, P, \mathbf{u}) \,
     \mathbf{E}_y \,
     \pmb{\mathcal{A}}^\top(I, P, \mathbf{u}) \,
-    p(I) \,
-    \mathrm{d}I
+    p(\mathbb{I}) \,
+    \mathrm{d}\mathbb{I}
 \end{align}
 %
 where
@@ -3932,7 +3950,7 @@ where
 \begin{align}
     \mathbf{E}_y
      & \equiv
-    \mathrm{E} \Big[ \mathbf{y} \, \mathbf{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
+    \mathrm{E} \Big[ \mathbbb{y} \, \mathbbb{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
 \end{align}
 %
 is the second moment of the GP in the spherical harmonic basis
@@ -3946,11 +3964,11 @@ GP between times $t = t_k$ and $t' = t_{k'}$) as
     \left(E_I\right)_{k, k'}
      & =
     \int
-    \mathbf{a}_k^\top
+    \mathbf{a}_k^\top(\mathbb{I})
     \mathbf{E}_y \,
-    \mathbf{a}_{k'}
-    p(I) \,
-    \mathrm{d}I
+    \mathbf{a}_{k'}(\mathbb{I})
+    p(\mathbb{I}) \,
+    \mathrm{d}\mathbb{I}
     \nonumber \\
      & =
     \mathbf{r}^\top \,
@@ -3968,14 +3986,14 @@ where
     \left(\mathbf{E}_{y''}\right)_{k,k'}
      & =
     \int
-    \mathbf{R}_{\hat{\mathbf{x}}}\left(-I\right) \,
+    \mathbf{R}_{\hat{\mathbf{x}}}\left(-\mathbb{I}\right) \,
     \left(\mathbf{E}_{y'}\right)_{k,k'} \,
-    \mathbf{R}_{\hat{\mathbf{x}}}^\top\left(-I\right) \,
-    p(I) \,
-    \mathrm{d}I
+    \mathbf{R}_{\hat{\mathbf{x}}}^\top\left(-\mathbb{I}\right) \,
+    p(\mathbb{I}) \,
+    \mathrm{d}\mathbb{I}
 \end{align}
 %
-is the expectation of $\mathbf{y}\,\mathbf{y}^\top$ in the
+is the expectation of $\mathbbb{y}\,\mathbbb{y}^\top$ in the
 observer's frame at times $t = t_k$ and $t' = t_{k'}$
 and
 %
@@ -3989,7 +4007,7 @@ and
     \mathbf{R}_{\hat{\mathbf{z}}}^\top\left(\frac{2\pi}{P}t_{k'}\right)
 \end{align}
 %
-is the expectation of $\mathbf{y}\,\mathbf{y}^\top$ in the
+is the expectation of $\mathbbb{y}\,\mathbbb{y}^\top$ in the
 polar frame at times $t = t_k$ and $t' = t_{k'}$.
 %
 The rest of the computation follows what we did in \S\ref{sec:lat},
@@ -4005,7 +4023,7 @@ Let us write Equation~(\ref{eq:Eyppkkp}) in terms of its spherical harmonic
 components:
 %
 \begin{proof}{test_bigEI}
-    \resizebox{.85\hsize}{!}{$
+    \resizebox{.83\hsize}{!}{$
             \left(\mathbf{E}_{y''}\right)_{k,k'}
             =
             \setstackgap{L}{1.25\baselineskip}
@@ -4027,11 +4045,11 @@ where
     \left(\mathbf{E}_{y''}^{l,l'}\right)_{k,k'}
     & =
     \int
-    \mathbf{R}^l_{\hat{\mathbf{x}}}(-I) \,
+    \mathbf{R}^l_{\hat{\mathbf{x}}}(-\mathbb{I}) \,
     \left(\mathbf{E}_{y'}^{l,l'}\right)_{k,k'} \,
-    {\mathbf{R}^{l'}_{\hat{\mathbf{x}}}}^\top(-I) \,
-    p(I) \,
-    \mathrm{d}I
+    {\mathbf{R}^{l'}_{\hat{\mathbf{x}}}}^\top(-\mathbb{I}) \,
+    p(\mathbb{I}) \,
+    \mathrm{d}\mathbb{I}
     \nonumber \\
     %
     & =
@@ -4048,11 +4066,11 @@ and we define
     \left(\mathbf{P}^{l,l'}_I\right)_{k,k'}
      & \equiv
     \int
-    \mathbf{D}^l_{\hat{\mathbf{x}}}(-I) \,
+    \mathbf{D}^l_{\hat{\mathbf{x}}}(-\mathbb{I}) \,
     \left(\bar{\mathbf{E}}^{l,l'}_{y'}\right)_{k,k'} \,
-    {\mathbf{D}^{l'}_{\hat{\mathbf{x}}}}^\top(-I) \,
-    p(I) \,
-    \mathrm{d}I
+    {\mathbf{D}^{l'}_{\hat{\mathbf{x}}}}^\top(-\mathbb{I}) \,
+    p(\mathbb{I}) \,
+    \mathrm{d}\mathbb{I}
     \\
     \left(\bar{\mathbf{E}}^{l,l'}_{y'}\right)_{k,k'}
      & \equiv
@@ -4069,31 +4087,34 @@ closed form. Let us write its terms as
     \label{eq:nightmare}
     \left[{\left({P^{l,l'}_I}\right)_{}}_{k,k'}\right]_{m,m'}
      & =
-    \int
-    \sum\limits_{\mu=-l}^l
-    \sum\limits_{{\mu'}=-l}^l
-    {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(-I) \,
-    \left[{\left({\bar{E}^{l,l'}_{y'}}\right)_{}}_{k,k'}\right]_{\mu,\mu'}
-    {({D^{l'}_{\hat{\mathbf{x}}}})_{}}_{{\mu'},m'}(-I) \,
-    p(I) \,
-    \mathrm{d}I
+    \resizebox{.65\hsize}{!}{$
+        \int
+        \sum\limits_{\mu=-l}^l
+        \sum\limits_{{\mu'}=-l}^l
+        {({D^l_{\hat{\mathbf{x}}}})_{}}_{m,\mu}(-\mathbb{I}) \,
+        \left[{\left({\bar{E}^{l,l'}_{y'}}\right)_{}}_{k,k'}\right]_{\mu,\mu'}
+        {({D^{l'}_{\hat{\mathbf{x}}}})_{}}_{{\mu'},m'}(-\mathbb{I}) \,
+        p(\mathbb{I}) \,
+        \mathrm{d}\mathbb{I}
+    $}
     %
-    \nonumber \\[0.5em]
+    \\[0.5em]
     %
      & =
     \resizebox{.75\hsize}{!}{$
-        \sum\limits_{\mu=-l}^l
-        \sum\limits_{{\mu'}=-l'}^{l'}
-        \left[{\left({\bar{E}^{l,l'}_{y'}}\right)_{}}_{k,k'}\right]_{\mu,\mu'}
-        \mathrm{e}^{\frac{\imag \pi}{2}(m - \mu + m' - {\mu'})}
-        \sum\limits_{i=0}^{2l}
-        \sum\limits_{i'=0}^{2l'}
-        c_{m,\mu,i}^{l}
-        c_{m',{\mu'},i'}^{l'}
-        \,
-        {({Q^{l,l'}_I})_{}}_{i,i'}
-    $}
+            \sum\limits_{\mu=-l}^l
+            \sum\limits_{{\mu'}=-l'}^{l'}
+            \left[{\left({\bar{E}^{l,l'}_{y'}}\right)_{}}_{k,k'}\right]_{\mu,\mu'}
+            \exp\left[{\frac{\imag \pi}{2}(m - \mu + m' - {\mu'})}\right]
+            \sum\limits_{i=0}^{2l}
+            \sum\limits_{i'=0}^{2l'}
+            c_{m,\mu,i}^{l}
+            c_{m',{\mu'},i'}^{l'}
+            \,
+            {({Q^{l,l'}_I})_{}}_{i,i'}
+        $}
     \quad,
+    \nonumber
 \end{align}
 %
 where, similarly to before,
@@ -4105,12 +4126,12 @@ where, similarly to before,
     \int_{0}^{\frac{\pi}{2}}
     %
     (-1)^{i+i'}
-    (1 - \cos I)^{l + l' - \frac{i+i'}{2}}
-    (1 + \cos I)^\frac{i+i'}{2}
-    \sin I
+    (1 - \cos \mathbb{I})^{l + l' - \frac{i+i'}{2}}
+    (1 + \cos \mathbb{I})^\frac{i+i'}{2}
+    \sin \mathbb{I}
     %
     \,
-    \mathrm{d}I
+    \mathrm{d}\mathbb{I}
     \nonumber \\[0.5em]
     %
     & =
@@ -4118,11 +4139,11 @@ where, similarly to before,
     (-1)^{i+i'}
     \int_{0}^{1}
     %
-    (1 - x)^{l + l' - \frac{i+i'}{2}}
-    (1 + x)^\frac{i+i'}{2}
+    (1 - \mathbb{x})^{l + l' - \frac{i+i'}{2}}
+    (1 + \mathbb{x})^\frac{i+i'}{2}
     %
     \,
-    \mathrm{d}x
+    \mathrm{d}\mathbb{x}
     \nonumber \\[0.5em]
     %
     &=

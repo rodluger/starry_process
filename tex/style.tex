@@ -6,6 +6,7 @@
 \usepackage{upgreek}
 \usepackage[bbgreekl]{mathbbol}
 \usepackage{afterpage}
+\usepackage[bb=boondox]{mathalpha}
 
 % Misc. macros
 \newcommand{\LMAX}{15\xspace}
@@ -16,7 +17,6 @@
 % Special functions
 \newcommand{\sgn}{{\text{sgn}}}
 \newcommand{\atantwo}{{\text{arctan2}}}
-\newcommand{\imag}{{\ensuremath{\mathbb{i}}}}
 
 % Cartesian unit vectors
 \newcommand{\xhat}{\ensuremath{\pmb{\hat{x}}}\xspace}
@@ -33,3 +33,9 @@
                 \vbox{\kern7\p@\hbox{.}}\mkern2mu
                 \raise4\p@\hbox{.}\mkern2mu\raise7\p@\hbox{.}\mkern1mu}}
 \makeatother
+
+% Imaginary unit
+\DeclareFontFamily{U}{mathc}{}
+\DeclareFontShape{U}{mathc}{m}{it}{<->s*[1.03] mathc10}{}
+\DeclareMathAlphabet{\mathscr}{U}{mathc}{m}{it}
+\DeclareMathOperator{\imag}{\mathscr{i}}
