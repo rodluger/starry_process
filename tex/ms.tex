@@ -162,28 +162,16 @@ Among a vast number of kernels are a few that are commonly used
 in modeling stellar variability: the squared exponential kernel,
 %
 \begin{align}
-    k_\mathrm{E^2}(\Delta t) = \sigma^2 \exp\left(-\frac{\Delta t}{2\tau}\right)
-    \quad,
-\end{align}
-%
-the Mat\'ern-3/2 kernel,
-%
-\begin{align}
-    k_\mathrm{M^\frac{3}{2}}(\Delta t) = \sigma^2 \left( 1 + \frac{\sqrt{3}\Delta t}{\tau} \right) \exp\left(-\frac{\sqrt{3}\Delta t}{\tau}\right)
-    \quad,
-\end{align}
-%
-the exponential sine squared kernel,
-%
-\begin{align}
-    k_\mathrm{S^2}(\Delta t) = \sigma^2 \exp\left[-\Gamma\sin^2\left( \frac{\pi \Delta t}{P} \right)\right]
-    \quad,
-\end{align}
-%
-the cosine kernel,
-%
-\begin{align}
-    k_\mathrm{C}(\Delta t) = \sigma^2 \cos\left( \frac{2\pi \Delta t}{P} \right)
+    k_\mathrm{E^2}(\Delta t)           & = \sigma^2 \exp\left(-\frac{\Delta t}{2\tau}\right)
+    \quad,                                                                                                                                           \\
+    \intertext{the Mat\'ern-3/2 kernel,}
+    k_\mathrm{M^\frac{3}{2}}(\Delta t) & = \sigma^2 \left( 1 + \frac{\sqrt{3}\Delta t}{\tau} \right) \exp\left(-\frac{\sqrt{3}\Delta t}{\tau}\right)
+    \quad,                                                                                                                                           \\
+    \intertext{the exponential sine squared kernel,}
+    k_\mathrm{S^2}(\Delta t)           & = \sigma^2 \exp\left[-\Gamma\sin^2\left( \frac{\pi \Delta t}{P} \right)\right]
+    \quad,                                                                                                                                           \\
+    \intertext{the cosine kernel,}
+    k_\mathrm{C}(\Delta t)             & = \sigma^2 \cos\left( \frac{2\pi \Delta t}{P} \right)
     \quad,
 \end{align}
 %
@@ -481,7 +469,7 @@ our default representation of the GP hyperparameters is
 \end{align}
 %
 where $n$ is the number of star spots, $c$ is their contrast,
-$\mu$ and $\sigma$ are parameters describing the
+$\mu_\phi$ and $\sigma_\phi$ are parameters describing the
 distribution of the spots in latitude, and $r$ is the radius
 of the spots.
 %
@@ -591,7 +579,7 @@ similar spectral types and rotation periods, for example).
 The total number of parameters in our problem is therefore
 %
 \begin{align}
-    N_\theta = 4 M + 5
+    N = 4 M + 5
     \quad,
 \end{align}
 %
@@ -600,7 +588,7 @@ since each of the stars will have their own set of 4 stellar properties
 but will all share the same 5 spot properties
 $\pmb{\theta}_\bullet$ (by assumption).
 For a reasonably sized ensemble of $M=100$
-stars, we would have to sample over $N_\theta = 405$ parameters.
+stars, we would have to sample over $N = 405$ parameters.
 While large, this number is certainly not absurd, especially by modern standards.
 However, it does pose
 a problem when considering how complex the posterior distribution for the
@@ -742,7 +730,7 @@ in the modeling and (2) it can substantially change the covariance structure
 of the dataset.
 
 The first point is illustrated in the toy example in
-Figure~\ref{fig:mean_normalization}. As it has been pointed out before \xxx{(?)},
+Figure~\ref{fig:mean_normalization}. As it has been pointed out before \citep{?},
 we will not spend too much time discussing it, other than to say that the
 flux normalization introduces a degeneracy between the total spot coverage
 of a star and the contrast of any individual feature on the surface.
@@ -1003,8 +991,8 @@ While lengthy (and quite tedious), all of the computations described above rely
 on equations whose solutions have a closed form.%
 %
 \footnote{The exception to this is the
-    normalization correction (\S\ref{sec:baseline}), which depends on a rapidly
-    converging series and thus adds negligible overhead to the computation.}
+    normalization correction (\S\ref{sec:baseline}), which depends on a
+    fast-to-evaluate series and thus adds negligible overhead to the computation.}
 %
 Moreover, most of the terms in the expectation vectors and matrices may
 be computed recursively, and many may be pre-computed, as they do not
@@ -1346,7 +1334,7 @@ to emulate photon noise.%
     our results, so we opt for the faster of the two methods. Note, of course,
     that when applying our GP to real data, we won't have this choice!
 }
-The default values of each of the parameters mentioned above are given in
+The default values/distributions of each of the parameters mentioned above are given in
 Table~\ref{tab:synthetic}. Some, like the number of spots, their contrast,
 etc., are drawn from fiducial distributions, while others, like the
 photometric uncertainty, the rotational period, and the limb darkening
@@ -1383,7 +1371,172 @@ star, and attempt to infer the spot properties.
 
 \subsection{Inference}
 \label{sec:calibration-inference}
-\xxx{TODO.}
+We use our \Python-based implementation of the GP (\S\ref{sec:implementation})
+to perform inference on the synthetic datasets. For simplicity, we assume we
+know the value of the period $P$, which is fixed at unity for all stars, as well
+as the value of the limb darkening coefficients (fixed at zero for the default
+run). In practice these will not be known exactly; we discuss this further in
+\S\ref{sec:other-marg}. Since we explicitly marginalize over the inclinations
+of individual stars, the only quantities we must constrain are the five
+parameters in the spot parameter vector $\pmb{\theta}_\bullet$
+(Equation~\ref{eq:thetaspot}). We experimented with three different methods
+for doing posterior inference on our synthetic datasets: No-U Turn Sampling,
+a variant of Hamiltonian Monte Carlo
+\citep[NUTS;][]{?}, automatic differentiation
+variational inference \citep[ADVI;][]{?}, and nested sampling \citep{?}.
+We obtained the best performance using the nested sampling algorithm
+implemented in the \textsf{dynesty} package \citep{?}, so that is what
+we will use below.
+
+Our sampling parameters are the number of spots $n$, their contrast $c$,
+their radius $r$, and the shape parameters $a$ and $b$ describing their
+distribution in latitude. As we discuss in Appendix~\ref{sec:lat},
+the parameters $a$ and $b$ are easier to sample in than
+the mode $\mu_\phi$ and standard deviation $\sigma_\phi$, provided we
+account for the Jacobian of the transformation (Equation~\ref{eq:J})
+in our log probability function, which maps a uniform prior on $a$ and $b$
+to a uniform prior on $\mu_\phi$ and $\sigma_\phi$.
+
+We place uniform priors on all five quantities, with support in
+$1 \leq n \leq 50$, $0 < c \leq 1$,
+$10^\circ \leq r \leq 30^\circ$,
+$0 \leq a \leq 1$, and
+$0 \leq b \leq 1$. Note that while $n$ formally represents an integer,
+its effect on the GP is a scaling of the covariance (see Equation~\ref{eq:exp_yy_sep});
+as such, it has support over all real numbers within the bounds listed
+above. We \emph{could} restrict it to integer values, but this would make
+sampling quite tricky. Moreover, in practice it is useful to allow for
+noninteger values to add some flexibility to the model; we discuss this
+in more detail in \S\ref{sec:integerspots}
+
+We use Equation~(\ref{eq:log-like}) as our log likelihood
+term, adding the log of the absolute value of Equation~(\ref{eq:J}) to
+enforce a uniform prior on $\mu_\phi$ and $\sigma_\phi$. As we mentioned
+above, the fact that $P$, $\mathbf{u}$, and $\sigma_f$ are shared among
+all $M$ light curves means that $\mathbf{K}_m$ is the same for all
+of them, greatly speeding up the likelihood evaluation since we need
+only invert (or factorize) it a single time per sample. Our
+covariance is the covariance of the \emph{normalized} process,
+given by Equation~(\ref{eq:SigmaTilde}). Since we only consider light curves
+with variability limited to a few percent or less, the approximation for
+$\tilde{\pmb{\Sigma}}$ is always valid.
+
+We use the standard implementation of the nested sampler,
+\textsf{dynesty.NestedSampler}, with all arguments set to their
+default values
+(multi-ellipsoidal decomposition for bounds determination,
+uniform sampling within the bounds,
+500 live points,
+and no gradients), to perform our inference step.
+Convergence---defined as when the estimate of the remaining evidence $\Delta\ln \mathcal{Z}$ drops
+below $0.5$---is usually attained after $5{,}000$ to $10{,}000$ samples and
+within a couple hours on a typical machine for most of the trials we perform.
+
+\subsection{Default run}
+\label{sec:inference-default}
+
+\begin{figure}[t!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_default_corner.pdf}
+        \oscaption{calibration_default}{%
+            Posterior distributions for the spot parameters $\pmb{\theta}_\bullet$
+            (radius $r$ in degrees, latitude mode $\mu_\phi$ and standard deviation $\sigma_\phi$ in degrees,
+            fractional contrast $c$, and number of spots $n$)
+            for the default run (Table~\ref{tab:synthetic} and Figure~\ref{fig:calibration_default_data}).
+            The axes span the entire prior volume, and the blue lines and markers
+            indicate the true (input) values.
+            \label{fig:calibration_default_corner}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[t!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_default_latitude.pdf}
+        \oscaption{calibration_default}{%
+            Posterior distributions for the spot latitudes for the default run. Each blue curve corresponds
+            to the Beta distribution PDF (Equation~\ref{eq:phi-pdf}) for the spot latitude
+            with shape parameters drawn from the posterior in $\mu_\phi$ and $\sigma_\phi$
+            (Figure~\ref{fig:calibration_default_corner}); the (hyper)distribution of blue curves
+            quantifies our beliefs about how spots are distributed on any given star. The
+            orange curve is the true distribution used to generate the spots (see Table~\ref{tab:synthetic}).
+            \label{fig:calibration_default_latitude}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[t!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_default_inclination.pdf}
+        \oscaption{calibration_default}{%
+            Posterior distributions for the inclinations of individual stars; individual
+            panels correspond directly to those in Figure~\ref{fig:calibration_default_data}.
+            As in Figure~\ref{fig:calibration_default_latitude}, each blue curve is a sample
+            from the hyperdistribution of inclination PDFs, conditioned on a specific value
+            of $\pmb{\theta}_\bullet$ drawn from the posterior. The orange lines indicate the
+            true inclination of each star.
+            \label{fig:calibration_default_inclination}
+        }
+    \end{centering}
+\end{figure}
+
+The input parameters for the default run are shown in Table~\ref{tab:synthetic},
+and the corresponding light curves in Figure~\ref{fig:calibration_default_data}.
+We run the nested sampler as described in the previous section and transform
+the posteriors in $a$ and $b$ to posteriors in $\mu_\phi$ and $\sigma_\phi$ via
+Equations~(\ref{eq:beta2gauss}), (\ref{eq:muphi}), and (\ref{eq:sigmaphi}).
+The results are shown in Figure~\ref{fig:calibration_default_corner}, where
+we correctly infer all five parameters within $2-3$ standard deviations.
+Posterior distributions for the spot radius $r$, the central spot latitude $\mu_\phi$,
+and the spot contrast $c$ are fairly tight, while the distribution for
+the latitudinal scatter $\sigma_\phi$ has wider tails and the distribution for
+the number of spots $n$ is very poorly constrained. The latter, in particular, is
+degenerate with the spot contrast $c$; we discuss this at length in
+\S\ref{sec:cN-degeneracy}.
+
+Figure~\ref{fig:calibration_default_latitude} shows samples from the spot
+latitude posterior (hyper)distribution. Since the parameters $\mu_\phi$
+and $\sigma_\phi$ characterize a distribution over spot latitudes, uncertainty
+in their values translates to uncertainty in the actual shape of the spot
+latitude distribution. Thus, the ensemble of blue curves in
+Figure~\ref{fig:calibration_default_latitude} quantifies our knowledge of
+how spots are distributed on the surfaces of the stars in the dataset.
+These distributions are again consistent with the true distribution used
+to generate the spots (orange curve) within less than 2 standard deviations.
+
+Even though we explicitly marginalized over inclination, we can still
+derive posterior constraints on the inclinations of the individual stars in
+our sample by computing the log-likelihood as a function of $I$
+conditioned on the value of $\pmb{\theta}_\bullet$ from a particular draw from
+the posterior. We do this in Figure~\ref{fig:calibration_default_inclination},
+where blue curves again correspond to samples from the posterior hyperdistribution,
+and orange lines indicate the true inclination; the panels are arranged in the
+same order as those in Figure~\ref{fig:calibration_default_data}.
+In almost all cases, we are able to constrain the inclinations of individual
+stars to within about $10^\circ$, consistent with the truth at less than
+$2{-}3\sigma$.
+
+\xxx{TODO: discuss the batch calibration default run.}
+
+\subsection{Other runs}
+In this section we test the robustness of our model by changing one or
+more of the fiducial values listed in Table~\ref{tab:synthetic}.
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_midlat_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_midlat_latitude.pdf}
+        \oscaption{calibration_midlat}{%
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for
+            mid-latitude spots with $\mu_\phi = 45^\circ$.
+            \label{fig:calibration_midlat}
+        }
+    \end{centering}
+\end{figure}
+
+\xxx{TODO}
 
 \section{Discussion}
 \label{sec:discussion}
@@ -1538,6 +1691,14 @@ The latitude distribution is not Gaussian. The number of spots does not have to 
 \subsection{Other distributions}
 \label{sec:other-dist}
 Uniform spot radius distribution.
+
+\subsection{Gaussians all the way down}
+\label{sec:other-marg}
+We can also marginalize over period and limb darkening coefficients.
+
+\subsection{Miscellaneous}
+\label{sec:integerspots}
+Shrinkage prior on sigma. Inclination distribution is bimodal.
 
 \section{Implementation}
 \label{sec:implementation}
@@ -2755,6 +2916,7 @@ to $\phi$, set the expression equal to zero, and solve
 for $\phi$ to obtain
 %
 \begin{proof}{test_lat_transforms}
+    \label{eq:muphi}
     \mu_\phi &= 2 \tan^{-1}
     \left(
     \sqrt{
@@ -2773,11 +2935,11 @@ for $\phi$ to obtain
 \end{proof}
 %
 To compute $\sigma_\phi$, we note that the variance of a Gaussian distribution
-$\varphi(\phi)$
+$\varphi(\phi; \mu, \sigma^2)$
 is the negative reciprocal of its curvature in log space:
 %
 \begin{align}
-    \sigma^2 = -\left(\frac{\mathrm{d}^2 \ln \varphi(\phi)}{\mathrm{d}\phi^2}\right)^{-1}
+    \sigma^2 = -\left(\frac{\mathrm{d}^2 \ln \varphi(\phi; \mu, \sigma^2)}{\mathrm{d}\phi^2}\right)^{-1}
 \end{align}
 %
 We therefore twice differentiate the log of Equation~(\ref{eq:phi-pdf}), negate it,
@@ -2785,6 +2947,7 @@ take the reciprocal, and evaluate it at $\phi = \mu_\phi$ to obtain a local
 approximation to the standard deviation of the distribution at the mode:
 %
 \begin{proof}{test_lat_transforms}
+    \label{eq:sigmaphi}
     \sigma_\phi &= \frac{\sin\mu_\phi}{
         \sqrt{1
             - \alpha
@@ -2866,6 +3029,7 @@ in the range $(0, 1)$.
 The Jacobian is given by
 %
 \begin{proof}{test_lat_jac}
+    \label{eq:J}
     J &=
     \frac{\partial{\mu_\phi}}{\partial{a}}
     \frac{\partial{\sigma_\phi}}{\partial{b}} -

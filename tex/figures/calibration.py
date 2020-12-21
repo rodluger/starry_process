@@ -1,20 +1,15 @@
 from starry_process import calibrate
 import numpy as np
 import os
+import shutil
 
 # Utility funcs to move figures to this directory
 abspath = lambda *args: os.path.join(
     os.path.dirname(os.path.abspath(__file__)), *args
 )
-move = lambda name, src, dest: os.rename(
+copy = lambda name, src, dest: shutil.copyfile(
     abspath("data", name, src), abspath(dest)
 )
-
-
-# Default run
-calibrate.run(path=abspath("data/default"))
-move("default", "data.pdf", "calibration_default_data.pdf")
-
 
 # TODO: Not yet ready for CI runs
 if not int(os.getenv("CI", 0)):
@@ -22,11 +17,6 @@ if not int(os.getenv("CI", 0)):
     # Equatorial spots
     calibrate.run(
         path="data/equatorial", generate=dict(latitude=dict(mu=0)),
-    )
-
-    # Mid-latitude spots
-    calibrate.run(
-        path="data/midlat", generate=dict(latitude=dict(mu=45)),
     )
 
     # High latitude spots

@@ -40,7 +40,7 @@ def corner(*args, **kwargs):
         formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
         ax.yaxis.set_major_formatter(formatter)
         ax.set_ylabel(
-            ax.get_ylabel(), fontsize=kwargs.get("corner_label_size", 12)
+            ax.get_ylabel(), fontsize=kwargs.get("corner_label_size", 16)
         )
     for ax in axes[-1, :]:
         for tick in ax.xaxis.get_major_ticks():
@@ -48,7 +48,7 @@ def corner(*args, **kwargs):
         formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
         ax.xaxis.set_major_formatter(formatter)
         ax.set_xlabel(
-            ax.get_xlabel(), fontsize=kwargs.get("corner_label_size", 12)
+            ax.get_xlabel(), fontsize=kwargs.get("corner_label_size", 16)
         )
 
     # Pad the axes to always include the truths
@@ -190,6 +190,9 @@ def plot_data(data, **kwargs):
         axtop[k].axis("off")
         axbot[k].axis("off")
 
+    for axis in ax.flatten():
+        axis.set_rasterization_zorder(99)
+
     return fig
 
 
@@ -250,13 +253,14 @@ def plot_latitude_pdf(results, **kwargs):
     xticks = [-90, -75, -60, -45, -30, -15, 0, 15, 30, 45, 60, 75, 90]
     ax.set_xticks(xticks)
     ax.set_xticklabels(["{:d}$^\circ$".format(xt) for xt in xticks])
-    ax.set_xlabel("latitude")
-    ax.set_ylabel("probability")
+    ax.set_xlabel("latitude", fontsize=16)
+    ax.set_ylabel("probability", fontsize=16)
     # Constrain y lims?
     mx1 = np.max(pdf_true)
     mx2 = np.sort(pdf.flatten())[int(0.9 * len(pdf.flatten()))]
     mx = max(2.0 * mx1, 1.2 * mx2)
     ax.set_ylim(-0.1 * mx, mx)
+    ax.set_rasterization_zorder(1)
     return fig
 
 
@@ -353,8 +357,8 @@ def plot_corner(results, transform_beta=False, **kwargs):
         mu, sigma = beta2gauss(a, b)
         samples[:, 1] = mu
         samples[:, 2] = sigma
-        labels[1] = r"$\mu$"
-        labels[2] = r"$\sigma$"
+        labels[1] = r"$\mu_\phi$"
+        labels[2] = r"$\sigma_\phi$"
         if np.isfinite(gen_kwargs["latitude"]["sigma"]):
             truths[1] = gen_kwargs["latitude"]["mu"]
             truths[2] = gen_kwargs["latitude"]["sigma"]
@@ -425,7 +429,7 @@ def plot_inclination_pdf(data, inc_results, **kwargs):
             ax[n].set_xticklabels([r"{}$^\circ$".format(xt) for xt in xticks])
             ax[n].set_yticks([])
             for tick in ax[n].xaxis.get_major_ticks():
-                tick.label.set_fontsize(6)
+                tick.label.set_fontsize(8)
         else:
             ax[n].axis("off")
     return fig

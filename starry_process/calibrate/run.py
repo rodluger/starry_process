@@ -48,7 +48,9 @@ def run(
     if plot_all or plot_data:
         if clobber or not os.path.exists(os.path.join(path, "data.pdf")):
             fig = plot.plot_data(data, **kwargs)
-            fig.savefig(os.path.join(path, "data.pdf"), bbox_inches="tight")
+            fig.savefig(
+                os.path.join(path, "data.pdf"), bbox_inches="tight", dpi=300
+            )
 
     # Sample
     if clobber or not os.path.exists(os.path.join(path, "results.pkl")):
