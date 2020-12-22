@@ -8,9 +8,9 @@ def run_batch(
     path,
     datasets=100,
     clobber=False,
-    slurm_nodes=20,
+    slurm_nodes=10,
     slurm_queue="cca",
-    slurm_walltime=30,
+    slurm_walltime=60,
     slurm_email=None,
     **kwargs
 ):

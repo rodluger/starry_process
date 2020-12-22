@@ -1516,7 +1516,41 @@ In almost all cases, we are able to constrain the inclinations of individual
 stars to within about $10^\circ$, consistent with the truth at less than
 $2{-}3\sigma$.
 
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=0.85\linewidth]{figures/calibration_batch_default_corner.pdf}
+        \oscaption{calibration_batch_default}{%
+            Similar to Figure~\ref{fig:calibration_default_corner}, but
+            showing the posterior distribution for 100 different synthetic
+            datasets, all generated from the same default input parameters
+            (Table~\ref{tab:synthetic}). Each colored histogram corresponds to a single
+            run, with the corresponding $1\sigma$ contours shown as shaded ellipses for each pair
+            of parameters. The black histograms correspond to the distributions of all
+            samples from each of the 100 runs, and the black curves again indicate
+            $1\sigma$ contours in the joint posterior.
+            \label{fig:calibration_batch_default_corner}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=0.5\linewidth]{figures/calibration_batch_default_inclinations.pdf}
+        \oscaption{calibration_batch_default}{%
+            Distribution of stellar inclination residuals normalized to the posterior
+            standard deviation for all $5{,}000$ stars across the 100 trials in
+            Figure~\ref{fig:calibration_batch_default_corner} (blue). The
+            standard normal distribution is shown in orange for comparison.
+            The inclination posteriors inferred with our GP are largely unbiased and
+            have the expected variance.
+            \label{fig:calibration_batch_default_inclinations}
+        }
+    \end{centering}
+\end{figure}
+
 \xxx{TODO: discuss the batch calibration default run.}
+Stellar inclination residuals (posterior mean minus true value) normalized to the
+posterior standard deviation. Only \emph{marginally} overestimate the variance.
 
 \subsection{Other runs}
 In this section we test the robustness of our model by changing one or
@@ -1545,6 +1579,19 @@ more of the fiducial values listed in Table~\ref{tab:synthetic}.
             Same as Figure~\ref{fig:calibration_midlat}, but for
             high-latitude spots with $\mu_\phi = 60^\circ$.
             \label{fig:calibration_hilat}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_equatorial_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_equatorial_latitude.pdf}
+        \oscaption{calibration_equatorial}{%
+            Same as Figure~\ref{fig:calibration_midlat}, but for
+            equatorial spots with $\mu_\phi = 0^\circ$.
+            \label{fig:calibration_equatorial}
         }
     \end{centering}
 \end{figure}
@@ -1609,9 +1656,11 @@ unconstraining, $R$ will tend to zero.
             stars with coefficients $u_1 = 0.5$ and $u_2 = 0.25$. Odd
             modes can now be probed, at the expense of the even modes.
             \emph{Bottom:} Same as the middle panel, but allowing for
-            a 10\% variation in each of the two limb darkening coefficients
+            a 10\% variation in $u_1$ and $u_2$
             across different observations. For ${\gtrsim}30$ light curves,
             there is virtually no null space up to $l_\mathrm{max} = 15$.
+            \codelink{nullspace_ensemble_ld}
+            \codelink{nullspace_ensemble_ld_var}
             \label{fig:nullspace_ensemble}
         }
     \end{centering}

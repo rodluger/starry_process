@@ -184,9 +184,22 @@ def build_pdf():
     subprocess.check_output(["tectonic", "ms.tex", "--keep-logs"])
 
 
-if __name__ == "__main__":
+def build():
     generate_github_links()
     run_tests()
     download_data()
     build_figures()
     build_pdf()
+
+
+def clean(remove_data=False):
+    for file in glob.glob("figures/*.pdf"):
+        os.remove(file)
+    for file in glob.glob("tests/*.tex"):
+        os.remove(file)
+    for file in glob.glob("*/metadata.json"):
+        os.remove(file)
+
+
+if __name__ == "__main__":
+    build()

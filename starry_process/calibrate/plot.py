@@ -366,7 +366,7 @@ def plot_corner(results, transform_beta=False, **kwargs):
             truths[1] = np.nan
             truths[2] = np.nan
         span[1] = (0, 90)
-        span[2] = (0, 30)
+        span[2] = (0, 45)
 
     # Get sample weights
     try:
@@ -462,7 +462,7 @@ def plot_batch(path):
         kwargs["generate"]["contrast"]["mu"],
         kwargs["generate"]["nspots"]["mu"],
     ]
-    labels = [r"$r$", r"$\mu$", r"$\sigma$", r"$c$", r"$n$"]
+    labels = [r"$r$", r"$\mu_\phi$", r"$\sigma_\phi$", r"$c$", r"$n$"]
 
     # Misc plotting kwargs
     batch_bins = kwargs["plot"]["batch_bins"]
@@ -528,6 +528,7 @@ def plot_batch(path):
     # Now let's plot all of the posteriors on a corner plot
     files = glob.glob(os.path.join(path, "*", "results.pkl"))
     samples = [None for k in range(len(files))]
+    nsamp = 1e9
     ranges = [None for k in range(len(files))]
     for k in tqdm(
         range(len(files)), disable=bool(int(os.getenv("NOTQDM", "0")))
@@ -545,11 +546,18 @@ def plot_batch(path):
         except:
             weights = results["weights"]
         samples[k] = dyfunc.resample_equal(samples[k], weights)
+        np.random.shuffle(samples[k])
+        if len(samples[k]) < nsamp:
+            nsamp = len(samples[k])
 
         # Get the 4-sigma ranges
         mu = np.mean(samples[k], axis=0)
         std = np.std(samples[k], axis=0)
         ranges[k] = np.array([mu - batch_nsig * std, mu + batch_nsig * std]).T
+
+    # We need all runs to have the same number of samples
+    # so our normalizations are correct in the histograms
+    print("Keeping {} samples from each run.".format(nsamp))
 
     # Set plot limits to the maximum of the ranges
     ranges = np.array(ranges)
@@ -557,26 +565,35 @@ def plot_batch(path):
         [np.min(ranges[:, :, 0], axis=0), np.max(ranges[:, :, 1], axis=0)]
     ).T
 
+    span = [
+        (kwargs["sample"]["rmin"], kwargs["sample"]["rmax"]),
+        (0, 90),
+        (0, 45),
+        (kwargs["sample"]["cmin"], kwargs["sample"]["cmax"]),
+        (kwargs["sample"]["nmin"], kwargs["sample"]["nmax"]),
+    ]
+
     # Go!
     color = lambda i, alpha: "{}{}".format(
         colors.to_hex("C{}".format(i)),
         ("0" + hex(int(alpha * 256)).split("0x")[-1])[-2:],
     )
     fig = None
+    cum_samples = np.empty((0, 5))
     for k in tqdm(
         range(len(mean)), disable=bool(int(os.getenv("NOTQDM", "0")))
     ):
 
         # Plot the 2d hist
         fig = corner(
-            samples[k],
+            samples[k][:nsamp, :5],
             fig=fig,
             labels=labels,
             plot_datapoints=False,
             plot_density=False,
             fill_contours=True,
             no_fill_contours=True,
-            color=color(k, batch_alpha),
+            color=color(k, 0.1 * batch_alpha),
             contourf_kwargs=dict(),
             contour_kwargs=dict(alpha=0),
             bins=20,
@@ -593,7 +610,7 @@ def plot_batch(path):
         else:
             truths_ = None
         fig = corner(
-            samples[k][:, :5],
+            samples[k][:nsamp, :5],
             fig=fig,
             labels=labels,
             plot_datapoints=False,
@@ -607,14 +624,58 @@ def plot_batch(path):
             hist_kwargs=dict(alpha=0.5 * batch_alpha),
             range=ranges,
             truths=truths_,
-            truth_color="k",
+            truth_color="#4682b4",
         )
 
+        # Running list
+        cum_samples = np.vstack((cum_samples, samples[k][:nsamp, :5]))
+
+    # Plot the cumulative posterior
+    np.random.shuffle(cum_samples)
+    fig = corner(
+        cum_samples,
+        fig=fig,
+        labels=labels,
+        plot_datapoints=False,
+        plot_density=False,
+        fill_contours=False,
+        no_fill_contours=True,
+        color="k",
+        contourf_kwargs=dict(),
+        contour_kwargs=dict(linewidths=1),
+        bins=100,
+        hist_bin_factor=5,
+        smooth=1.0,
+        hist_kwargs=dict(alpha=0),
+        levels=(1.0 - np.exp(-0.5 * np.array([1.0]) ** 2)),
+        range=ranges,
+    )
+    fig = corner(
+        cum_samples[:nsamp],
+        fig=fig,
+        labels=labels,
+        plot_datapoints=False,
+        plot_density=False,
+        plot_contours=False,
+        fill_contours=False,
+        no_fill_contours=True,
+        color="k",
+        bins=500,
+        smooth1d=10.0,
+        hist_kwargs=dict(lw=1),
+        range=ranges,
+    )
+
     # Fix the axis limits
+    ax = np.array(fig.axes).reshape(5, 5)
     for k in range(5):
-        ax = fig.axes[6 * k]
-        ymax = np.max([line._y.max() for line in ax.lines])
-        ax.set_ylim(0, 1.1 * ymax)
+        axis = ax[k, k]
+        ymax = np.max([line._y.max() for line in axis.lines])
+        axis.set_ylim(0, 1.1 * ymax)
+        for axis in ax[:, k]:
+            axis.set_xlim(*span[k])
+        for axis in ax[k, :k]:
+            axis.set_ylim(*span[k])
 
     # We're done
     fig.savefig(
@@ -662,9 +723,9 @@ def plot_batch(path):
             density=True,
             label=r"$\mathcal{N}(0, 1)$",
         )
-        ax.legend(loc="upper right")
-        ax.set_xlabel("posterior error")
-        ax.set_yticks([])
+        ax.legend(loc="upper right", fontsize=10)
+        ax.set_xlabel("inclination posterior error")
+        ax.set_ylabel("density")
         fig.savefig(
             os.path.join(path, "inclinations.pdf"), bbox_inches="tight"
         )
