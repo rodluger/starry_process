@@ -14,16 +14,6 @@ copy = lambda name, src, dest: shutil.copyfile(
 # TODO: Not yet
 if False:
 
-    # Equatorial spots
-    calibrate.run(
-        path="data/equatorial", generate=dict(latitude=dict(mu=0)),
-    )
-
-    # Isotropic spots
-    calibrate.run(
-        path="data/isotropic", generate=dict(latitude=dict(sigma=np.inf)),
-    )
-
     # Tiny spots
     calibrate.run(
         path="data/tinyspots",
