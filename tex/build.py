@@ -5,6 +5,11 @@ import json
 from tqdm import tqdm
 import pytest
 import sys
+import requests
+import tarfile
+
+
+DATA_URL = "https://users.flatironinstitute.org/rluger/public_www/starry_process/data.tar.gz"
 
 
 def generate_github_links():
@@ -45,6 +50,23 @@ def generate_github_links():
         )
 
 
+def download_data(clobber=False):
+    if clobber or not os.path.exists("figures/data"):
+
+        # Download the tarball
+        response = requests.get(DATA_URL, stream=True)
+        if response.status_code == 200:
+            with open("figures/data.tar.gz", "wb") as f:
+                f.write(response.raw.read())
+
+        # Extract it
+        with tarfile.open("figures/data.tar.gz", "r:gz") as f:
+            f.extractall("figures/")
+
+        # Remove the tarball
+        os.remove("figures/data.tar.gz")
+
+
 def build_figures():
 
     # Get all figure scripts
@@ -68,7 +90,7 @@ def build_figures():
         stale = meta.get(name, {}).get("st_mtime", 0) != st_mtime
         missing = not all(
             [
-                os.path.exists("figures/".format(output))
+                os.path.exists(output)
                 for output in meta.get(name, {}).get("outputs", [])
             ]
         )
@@ -165,5 +187,6 @@ def build_pdf():
 if __name__ == "__main__":
     generate_github_links()
     run_tests()
+    download_data()
     build_figures()
     build_pdf()

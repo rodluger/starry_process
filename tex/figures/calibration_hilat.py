@@ -13,12 +13,12 @@ copy = lambda name, src, dest: shutil.copyfile(
 
 # Run
 calibrate.run(
-    path=abspath("data/midlat"),
-    generate=dict(latitude=dict(mu=45)),
+    path=abspath("data/hilat"),
+    generate=dict(latitude=dict(mu=60)),
     plot_data=False,
     plot_inclination_pdf=False,
 )
 
 # Copy output to this directory
-copy("midlat", "corner_transformed.pdf", "calibration_midlat_corner.pdf")
-copy("midlat", "latitude.pdf", "calibration_midlat_latitude.pdf")
+copy("hilat", "corner_transformed.pdf", "calibration_hilat_corner.pdf")
+copy("hilat", "latitude.pdf", "calibration_hilat_latitude.pdf")

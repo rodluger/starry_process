@@ -1383,9 +1383,9 @@ parameters in the spot parameter vector $\pmb{\theta}_\bullet$
 for doing posterior inference on our synthetic datasets: No-U Turn Sampling,
 a variant of Hamiltonian Monte Carlo
 \citep[NUTS;][]{?}, automatic differentiation
-variational inference \citep[ADVI;][]{?}, and nested sampling \citep{?}.
+variational inference \citep[ADVI;][]{?}, and nested sampling \citep{Skilling2004,Skilling2006}.
 We obtained the best performance using the nested sampling algorithm
-implemented in the \textsf{dynesty} package \citep{?}, so that is what
+implemented in the \textsf{dynesty} package \citep{Speagle2020}, so that is what
 we will use below.
 
 Our sampling parameters are the number of spots $n$, their contrast $c$,
@@ -1424,7 +1424,7 @@ $\tilde{\pmb{\Sigma}}$ is always valid.
 We use the standard implementation of the nested sampler,
 \textsf{dynesty.NestedSampler}, with all arguments set to their
 default values
-(multi-ellipsoidal decomposition for bounds determination,
+(multi-ellipsoidal decomposition for bounds determination \citep{Feroz2009},
 uniform sampling within the bounds,
 500 live points,
 and no gradients), to perform our inference step.
@@ -1536,6 +1536,19 @@ more of the fiducial values listed in Table~\ref{tab:synthetic}.
     \end{centering}
 \end{figure}
 
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_hilat_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_hilat_latitude.pdf}
+        \oscaption{calibration_hilat}{%
+            Same as Figure~\ref{fig:calibration_midlat}, but for
+            high-latitude spots with $\mu_\phi = 60^\circ$.
+            \label{fig:calibration_hilat}
+        }
+    \end{centering}
+\end{figure}
+
 \xxx{TODO}
 
 \section{Discussion}
@@ -1571,24 +1584,34 @@ a particular mode can be learned exactly from a dataset, the posterior
 shrinkage is defined to be unity. Conversely, if the data is completely
 unconstraining, $R$ will tend to zero.
 
-\begin{figure}[t!]
+\begin{figure}[p!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/nullspace_ensemble.pdf}
+        \\
+        \includegraphics[width=\linewidth]{figures/nullspace_ensemble_ld.pdf}
+        \\
+        \includegraphics[width=\linewidth]{figures/nullspace_ensemble_ld_var.pdf}
         \oscaption{nullspace_ensemble}{%
-            Posterior shrinkage as a function of spherical harmonic degree
+            \emph{Top:} Posterior shrinkage as a function of spherical harmonic degree
             for a hypothetical scenario in which an observer can measure a
-            stellar light curve at 1 (thin blue curves),
-            3 (thin orange curves), 10 (thin green curves), and 30 (thin red
-            curves) random inclinations. The thicker curves correspond to
+            stellar light curve at 1 (blue),
+            3 (orange), 10 (green), and 30 (red)
+            random inclinations. The thicker curves correspond to
             the mean shrinkage for each experiment.
             The information content in the light curve of a star observed
             from a single vantage point approaches zero as $l$
             increases. However, observing the star from many vantage points
             allows one to recover nearly all of the information in the
-            even spherical harmonic modes.
-            While this thought experiment is not possible in practice for
-            a single star, it is extremely relevant to ensemble analyses of statistically
-            similar stars.
+            even spherical harmonic modes. This is why ensemble analyses of
+            many similar stars at different inclinations allows us to infer
+            their surface properties.
+            \emph{Middle:} Same as the top panel, but for limb-darkened
+            stars with coefficients $u_1 = 0.5$ and $u_2 = 0.25$. Odd
+            modes can now be probed, at the expense of the even modes.
+            \emph{Bottom:} Same as the middle panel, but allowing for
+            a 10\% variation in each of the two limb darkening coefficients
+            across different observations. For ${\gtrsim}30$ light curves,
+            there is virtually no null space up to $l_\mathrm{max} = 15$.
             \label{fig:nullspace_ensemble}
         }
     \end{centering}
@@ -1647,33 +1670,6 @@ at a wide range of inclinations. Those stars certainly have different
 surface intensity distributions, but what if we restricted ourselves to
 light curves of ``similar'' stars?
 
-\subsection{Limb darkening}
-\label{sec:limbdark}
-
-See Figures~\ref{fig:nullspace_ensemble_ld} and \ref{fig:nullspace_ensemble_ld_var}.
-
-\begin{figure}[t!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/nullspace_ensemble_ld.pdf}
-        \oscaption{nullspace_ensemble_ld}{%
-            Same as Figure~\ref{fig:nullspace_ensemble}, but for limb-darkened
-            stars with coefficients $u_1 = 0.5$ and $u_2 = 0.25$.
-            \label{fig:nullspace_ensemble_ld}
-        }
-    \end{centering}
-\end{figure}
-
-\begin{figure}[t!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/nullspace_ensemble_ld_var.pdf}
-        \oscaption{nullspace_ensemble_ld_var}{%
-            Same as Figure~\ref{fig:nullspace_ensemble_ld}, but allowing for
-            a 10\% variation in each of the two limb darkening coefficients
-            across different observations.
-            \label{fig:nullspace_ensemble_ld_var}
-        }
-    \end{centering}
-\end{figure}
 
 \subsection{Small spots}
 \label{sec:tinyspots}
@@ -2722,7 +2718,8 @@ whose terms are given by the expression
 where $\upalpha$, $\upbeta$, and $\upgamma$ are the Euler angles describing
 the rotation in the
 $\hat{\mathbf{z}}{-}\hat{\mathbf{y}}{-}\hat{\mathbf{z}}$ convention
-and $\imag$ is the imaginary unit. The terms of the $d$-matrix
+and $\imag$ is the imaginary unit
+\citep{AlvarezCollado1989}. The terms of the $d$-matrix
 depend on powers of $\sin\left(\nicefrac{\upbeta}{2}\right)$
 and $\cos\left(\nicefrac{\upbeta}{2}\right)$
 \citep[c.f. Equation C15 in][]{Luger2019}, but it is convenient to use

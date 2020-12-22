@@ -18,10 +18,13 @@ docs/.build
 *.dat
 pip-wheel-metadata/
 metadata.json
+*.npz
+*.pkl
 
 # Project-specific
 starry_process/starry_process_version.py
 scratch/
+tex/figures/data
 
 # TeX
 *latexindent*

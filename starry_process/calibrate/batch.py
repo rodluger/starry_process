@@ -51,7 +51,7 @@ def run_batch(
                     """\n"""
                     """#DISBATCH BARRIER"""
                     """\n"""
-                    """python -c "from starry_process.calibrate import plot_batch; plot_batch('{}')"""
+                    """python -c "from starry_process.calibrate import plot_batch; plot_batch('{}')" """
                 ).format(datasets, path, clobber, kwargs, path, path),
                 file=f,
             )

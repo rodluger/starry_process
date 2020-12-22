@@ -11,17 +11,12 @@ copy = lambda name, src, dest: shutil.copyfile(
     abspath("data", name, src), abspath(dest)
 )
 
-# TODO: Not yet ready for CI runs
-if not int(os.getenv("CI", 0)):
+# TODO: Not yet
+if False:
 
     # Equatorial spots
     calibrate.run(
         path="data/equatorial", generate=dict(latitude=dict(mu=0)),
-    )
-
-    # High latitude spots
-    calibrate.run(
-        path="data/hilat", generate=dict(latitude=dict(mu=60)),
     )
 
     # Isotropic spots
