@@ -245,7 +245,7 @@ def plot_latitude_pdf(results, **kwargs):
     # Plot
     fig, ax = plt.subplots(1)
     for k in range(nlat_samples):
-        ax.plot(x, pdf[k], "C0-", lw=1, alpha=0.05)
+        ax.plot(x, pdf[k], "C0-", lw=1, alpha=0.05, zorder=-1)
     ax.plot(x, pdf_true, "C1-", label="truth")
     ax.plot(x, np.nan * x, "C0-", label="samples")
     ax.legend(loc="upper right")

@@ -202,8 +202,7 @@ fig = corner(
 [ax.set_ylim(*ylim) for ax, ylim in zip(np.array(fig.axes).flatten(), ylims)]
 
 for ax in np.array(fig.axes).flatten():
-    for c in ax.collections:
-        c.set_rasterized(True)
+    ax.set_rasterization_zorder(99)
 
 # We're done
 fig.savefig(

@@ -16,15 +16,12 @@ if not int(os.getenv("CI", 0)):
 
     # Run
     calibrate.run(
-        path=abspath("data/bigspots"),
-        generate=dict(radius=dict(mu=45, sigma=5), nspots=dict(mu=1)),
-        sample=dict(rmax=60),
+        path=abspath("data/unnorm"),
+        generate=dict(normalized=False),
         plot_data=False,
         plot_inclination_pdf=False,
     )
 
     # Copy output to this directory
-    copy(
-        "bigspots", "corner_transformed.pdf", "calibration_bigspots_corner.pdf"
-    )
-    copy("bigspots", "latitude.pdf", "calibration_bigspots_latitude.pdf")
+    copy("unnorm", "corner_transformed.pdf", "calibration_unnorm_corner.pdf")
+    copy("unnorm", "latitude.pdf", "calibration_unnorm_latitude.pdf")

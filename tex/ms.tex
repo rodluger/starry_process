@@ -1578,8 +1578,7 @@ more of the fiducial values listed in Table~\ref{tab:synthetic}.
         \\[1em]
         \includegraphics[width=\linewidth]{figures/calibration_hilat_latitude.pdf}
         \oscaption{calibration_hilat}{%
-            Same as Figures~\ref{fig:calibration_default_corner}
-            and \ref{fig:calibration_default_latitude}, but for
+            Same as Figure~\ref{fig:calibration_midlat}, but for
             high-latitude spots with $\mu_\phi = 60^\circ$.
             The radius and latitude parameters are again inferred correctly,
             although the model cannot rule out the presence of polar spots.
@@ -1594,8 +1593,7 @@ more of the fiducial values listed in Table~\ref{tab:synthetic}.
         \\[1em]
         \includegraphics[width=\linewidth]{figures/calibration_equatorial_latitude.pdf}
         \oscaption{calibration_equatorial}{%
-            Same as Figures~\ref{fig:calibration_default_corner}
-            and \ref{fig:calibration_default_latitude}, but for
+            Same as Figure~\ref{fig:calibration_midlat}, but for
             equatorial spots with $\mu_\phi = 0^\circ$. Even though the model
             favors a bimodal distribution at low latitudes, the
             posterior strongly supports the presence of equatorial spots.
@@ -1610,8 +1608,7 @@ more of the fiducial values listed in Table~\ref{tab:synthetic}.
         \\[1em]
         \includegraphics[width=\linewidth]{figures/calibration_isotropic_latitude.pdf}
         \oscaption{calibration_isotropic}{%
-            Same as Figures~\ref{fig:calibration_default_corner}
-            and \ref{fig:calibration_default_latitude}, but for
+            Same as Figure~\ref{fig:calibration_midlat}, but for
             isotropically-distributed spots. The posterior accurately
             captures the cosine-like distribution of spot latitudes.
             \label{fig:calibration_isotropic}
@@ -1677,7 +1674,11 @@ more of the fiducial values listed in Table~\ref{tab:synthetic}.
         \includegraphics[width=\linewidth]{figures/calibration_ld_latitude.pdf}
         \oscaption{calibration_ld}{%
             Same as Figures~\ref{fig:calibration_default_corner}
-            and \ref{fig:calibration_default_latitude}, but for \xxx{...}
+            and \ref{fig:calibration_default_latitude}, but for
+            stars with (assumed known) limb darkening coefficients
+            $u_1 = 0.50$ and $u_2 = 0.25$. Limb darkening makes it
+            much harder to infer the variance of the distribution of
+            star spot latitudes.
             \label{fig:calibration_ld}
         }
     \end{centering}
@@ -1689,8 +1690,10 @@ more of the fiducial values listed in Table~\ref{tab:synthetic}.
         \\[1em]
         \includegraphics[width=\linewidth]{figures/calibration_ld_1000_latitude.pdf}
         \oscaption{calibration_ld_1000}{%
-            Same as Figures~\ref{fig:calibration_default_corner}
-            and \ref{fig:calibration_default_latitude}, but for \xxx{...}
+            Same as Figure~\ref{fig:calibration_ld}, but for an ensemble
+            consisting of $M = 1{,}000$ light curves. For a
+            sufficiently large ensemble, it is possible to correctly infer the spot
+            radii and latitudes in the presence of limb darkening.
             \label{fig:calibration_ld_1000}
         }
     \end{centering}
@@ -1702,8 +1705,10 @@ more of the fiducial values listed in Table~\ref{tab:synthetic}.
         \\[1em]
         \includegraphics[width=\linewidth]{figures/calibration_ld_500_no_ld_latitude.pdf}
         \oscaption{calibration_ld_500_no_ld}{%
-            Same as Figures~\ref{fig:calibration_default_corner}
-            and \ref{fig:calibration_default_latitude}, but for \xxx{...}
+            Same as Figure~\ref{fig:calibration_ld}, but for $M = 500$
+            light curves and assuming no limb darkening when doing inference.
+            Neglecting limb darkening leads to significant bias in the inferred
+            spot radii and to a lesser extent in the mean spot latitude.
             \label{fig:calibration_ld_500_no_ld}
         }
     \end{centering}
