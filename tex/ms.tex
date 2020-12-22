@@ -1551,6 +1551,7 @@ $2{-}3\sigma$.
 \xxx{TODO: discuss the batch calibration default run.}
 Stellar inclination residuals (posterior mean minus true value) normalized to the
 posterior standard deviation. Only \emph{marginally} overestimate the variance.
+Tiny sunspots are about $70{,}000$ km across, comparable to large sunspots.
 
 \subsection{Other runs}
 In this section we test the robustness of our model by changing one or
@@ -1565,6 +1566,7 @@ more of the fiducial values listed in Table~\ref{tab:synthetic}.
             Same as Figures~\ref{fig:calibration_default_corner}
             and \ref{fig:calibration_default_latitude}, but for
             mid-latitude spots with $\mu_\phi = 45^\circ$.
+            The radius and latitude parameters are again inferred correctly.
             \label{fig:calibration_midlat}
         }
     \end{centering}
@@ -1576,8 +1578,11 @@ more of the fiducial values listed in Table~\ref{tab:synthetic}.
         \\[1em]
         \includegraphics[width=\linewidth]{figures/calibration_hilat_latitude.pdf}
         \oscaption{calibration_hilat}{%
-            Same as Figure~\ref{fig:calibration_midlat}, but for
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for
             high-latitude spots with $\mu_\phi = 60^\circ$.
+            The radius and latitude parameters are again inferred correctly,
+            although the model cannot rule out the presence of polar spots.
             \label{fig:calibration_hilat}
         }
     \end{centering}
@@ -1589,8 +1594,11 @@ more of the fiducial values listed in Table~\ref{tab:synthetic}.
         \\[1em]
         \includegraphics[width=\linewidth]{figures/calibration_equatorial_latitude.pdf}
         \oscaption{calibration_equatorial}{%
-            Same as Figure~\ref{fig:calibration_midlat}, but for
-            equatorial spots with $\mu_\phi = 0^\circ$.
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for
+            equatorial spots with $\mu_\phi = 0^\circ$. Even though the model
+            favors a bimodal distribution at low latitudes, the
+            posterior strongly supports the presence of equatorial spots.
             \label{fig:calibration_equatorial}
         }
     \end{centering}
@@ -1602,14 +1610,109 @@ more of the fiducial values listed in Table~\ref{tab:synthetic}.
         \\[1em]
         \includegraphics[width=\linewidth]{figures/calibration_isotropic_latitude.pdf}
         \oscaption{calibration_isotropic}{%
-            Same as Figure~\ref{fig:calibration_midlat}, but for
-            isotropically-distributed spots.
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for
+            isotropically-distributed spots. The posterior accurately
+            captures the cosine-like distribution of spot latitudes.
             \label{fig:calibration_isotropic}
         }
     \end{centering}
 \end{figure}
 
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_tinyspots_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_tinyspots_latitude.pdf}
+        \oscaption{calibration_tinyspots}{%
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for high contrast ($c = 1$)
+            small ($r = 3^\circ$) spots (significantly lower than the
+            effective resolution of the model).
+            The hatched regions in the posterior
+            plots for the radius ($r < 10^\circ$) are excluded by the prior, since
+            the model cannot capture features that small.
+            Despite this, the spot latitude distribution is still inferred correctly,
+            although the spot contrast is off by more than $10\sigma$.
+            \label{fig:calibration_tinyspots}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_default_1_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_default_1_latitude.pdf}
+        \oscaption{calibration_default_1}{%
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for
+            inference based on a single light curve ($M = 1$).
+            The constraints on all of the parameters are dramatically weaker.
+            \label{fig:calibration_default_1}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_default_1000_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_default_1000_latitude.pdf}
+        \oscaption{calibration_default_1000}{%
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for
+            inference based on one thousand light curves ($M = 1{,}000$).
+            The constraints on the radius and the latitude parameters are
+            dramatically tighter.
+            \label{fig:calibration_default_1000}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_ld_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_ld_latitude.pdf}
+        \oscaption{calibration_ld}{%
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for \xxx{...}
+            \label{fig:calibration_ld}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_ld_1000_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_ld_1000_latitude.pdf}
+        \oscaption{calibration_ld_1000}{%
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for \xxx{...}
+            \label{fig:calibration_ld_1000}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_ld_500_no_ld_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_ld_500_no_ld_latitude.pdf}
+        \oscaption{calibration_ld_500_no_ld}{%
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for \xxx{...}
+            \label{fig:calibration_ld_500_no_ld}
+        }
+    \end{centering}
+\end{figure}
+
 \xxx{TODO}
+
+\xxx{More runs: 1) Unnormalized (to show what we can learn if we know the baseline, as in
+    multi-band photometry. 2) Big spots. 3) Single spot. 4) Variance in everything.)}
 
 \section{Discussion}
 \label{sec:discussion}

@@ -7,6 +7,7 @@ import pytest
 import sys
 import requests
 import tarfile
+import shutil
 
 
 DATA_URL = "https://users.flatironinstitute.org/rluger/public_www/starry_process/data.tar.gz"
@@ -193,12 +194,29 @@ def build():
 
 
 def clean(remove_data=False):
+    # Remove figure output
     for file in glob.glob("figures/*.pdf"):
         os.remove(file)
+    # Remove test output
     for file in glob.glob("tests/*.tex"):
         os.remove(file)
+    # Remove all metadata
     for file in glob.glob("*/metadata.json"):
         os.remove(file)
+    # Remove TeX files and temporary files
+    for pattern in [
+        "*.pdf",
+        "*.bbl",
+        "*.blg",
+        "*.log",
+        "*.aux",
+        "gitlinks.tex",
+    ]:
+        for file in glob.glob(pattern):
+            os.remove(file)
+    # Remove cached data
+    if remove_data and os.path.exists("figures/data"):
+        shutil.rmtree("figures/data")
 
 
 if __name__ == "__main__":

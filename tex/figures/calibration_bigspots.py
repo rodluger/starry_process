@@ -17,7 +17,8 @@ if not int(os.getenv("CI", 0)):
     # Run
     calibrate.run(
         path=abspath("data/bigspots"),
-        generate=dict(radius=dict(mu=30, sigma=5), nspots=dict(mu=5)),
+        generate=dict(radius=dict(mu=45, sigma=5), nspots=dict(mu=1)),
+        sample=dict(rmax=60),
         plot_data=True,  # TODO
         plot_inclination_pdf=False,
     )
