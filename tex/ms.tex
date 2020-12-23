@@ -1522,7 +1522,7 @@ $2{-}3\sigma$.
 
 \begin{figure}[p!]
     \begin{centering}
-        \includegraphics[width=0.85\linewidth]{figures/calibration_batch_default_corner.pdf}
+        \includegraphics[width=0.85\linewidth]{figures/calibration_batch_default_corner.png}
         \oscaption{calibration_batch_default}{%
             Similar to Figure~\ref{fig:calibration_default_corner}, but
             showing the posterior distribution for 100 different synthetic
@@ -1895,8 +1895,8 @@ information about the surfaces of these objects.
         \item The latitude distribution is not Gaussian.
         \item The number of spots does not have to be an integer.
         \item Careful with light curves with large amplitudes, although
-        Figure~\ref{fig:calibration_hicontrast}
-        has max amplitudes of more than 10\% and works great.
+              Figure~\ref{fig:calibration_hicontrast}
+              has max amplitudes of more than 10\% and works great.
         \item No differential rotation / spot evolution yet!
     \end{enumerate}
 }
@@ -1920,7 +1920,7 @@ information about the surfaces of these objects.
 
 \section{Conclusions}
 \xxx{TODO: Summarize. Discuss future work, including differential rotation
-and spot evolution.}
+    and spot evolution.}
 
 %
 %
@@ -4754,8 +4754,15 @@ over the inclination, so this approach is still valid.
 
 \begin{figure}[p!]
     \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_unnorm_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_unnorm_latitude.pdf}
         \oscaption{calibration_unnorm}{%
-            \xxx{TODO: Unnormalized.}
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but assuming
+            the light curves are not normalized and the true baseline is
+            known. Knowledge of the baseline breaks the $c-N$ degeneracy
+            and allows us to infer the total number of spots.
             \label{fig:calibration_unnorm}
         }
     \end{centering}
@@ -4763,8 +4770,15 @@ over the inclination, so this approach is still valid.
 
 \begin{figure}[p!]
     \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_hicontrast_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_hicontrast_latitude.pdf}
         \oscaption{calibration_hicontrast}{%
-            \xxx{TODO: Two high contrast spots.}
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for stars with
+            $n = 2$ spots with high contrast $c = 0.5$. Our model correctly
+            captures the increased contrast, but it is still strongly degenerate
+            with the number of spots.
             \label{fig:calibration_hicontrast}
         }
     \end{centering}
@@ -4772,8 +4786,15 @@ over the inclination, so this approach is still valid.
 
 \begin{figure}[p!]
     \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_bigspots_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_bigspots_latitude.pdf}
         \oscaption{calibration_bigspots}{%
-            \xxx{TODO: Large single spot.}
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for a single ($n = 1$)
+            large ($r \sim \mathcal{N}(45^\circ, {5^\circ}^2)$) spot on each star.
+            Our model correctly infers the larger radius, and infers the
+            latitude within $3\sigma$, albeit with large uncertainty.
             \label{fig:calibration_bigspots}
         }
     \end{centering}
@@ -4782,7 +4803,15 @@ over the inclination, so this approach is still valid.
 \begin{figure}[p!]
     \begin{centering}
         \oscaption{calibration_variance}{%
-            \xxx{TODO: Variance in all input parameters.}
+            \xxx{
+                TODO: Same as Figures~\ref{fig:calibration_default_corner}
+                and \ref{fig:calibration_default_latitude}, but for stars
+                with variance in their number of spots,
+                $n \sim \mathcal{N}(20, 3^2)$,
+                the spot radii, $r \sim \mathcal{N}(15^\circ, {3^\circ}^2)$,
+                and the spot contrasts,
+                $c \sim \mathcal{N}(0.05, 0.01^2)$.
+            }
             \label{fig:calibration_variance}
         }
     \end{centering}

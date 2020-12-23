@@ -23,8 +23,8 @@ calibrate.run_batch(
 # Copy output to this directory
 copy(
     "batch_default",
-    "calibration_corner.pdf",
-    "calibration_batch_default_corner.pdf",
+    "calibration_corner.png",
+    "calibration_batch_default_corner.png",
 )
 copy(
     "batch_default",

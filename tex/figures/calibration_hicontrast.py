@@ -25,3 +25,4 @@ copy(
     "corner_transformed.pdf",
     "calibration_hicontrast_corner.pdf",
 )
+copy("hicontrast", "latitude.pdf", "calibration_hicontrast_latitude.pdf")

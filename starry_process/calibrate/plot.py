@@ -679,7 +679,9 @@ def plot_batch(path):
 
     # We're done
     fig.savefig(
-        os.path.join(path, "calibration_corner.pdf"), bbox_inches="tight"
+        os.path.join(path, "calibration_corner.png"),
+        bbox_inches="tight",
+        dpi=300,
     )
 
     # Get the inclination posterior means and covariances (if present)
