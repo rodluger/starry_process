@@ -282,7 +282,9 @@ GPs, with the added benefit of direct physical interpretability of its
 hyperparameters.
 %
 
-\xxx{Brief paper outline here.}
+\xxx{TODO: Brief paper outline here.}
+
+\xxx{TODO: Discuss our open-source figures and equation ``unit tests.''}
 
 \section{A Gaussian Process for Star Spots}
 \label{sec:main}
@@ -1144,7 +1146,7 @@ some issues) is remarkable.
 \subsection{Why we need calibration tests}
 \label{sec:why-calibrate}
 
-In the previous section we derived a closed form solution to the (best possible)
+In the previous section we derived a closed form solution to the
 Gaussian approximation to the distribution of stellar surfaces (and their corresponding
 light curves) conditioned on a vector $\pmb{\theta}_\bullet$
 of spot hyperparameters. As we mentioned, the real test of this GP is
@@ -1494,7 +1496,7 @@ and the spot contrast $c$ are fairly tight, while the distribution for
 the latitudinal scatter $\sigma_\phi$ has wider tails and the distribution for
 the number of spots $n$ is very poorly constrained. The latter, in particular, is
 degenerate with the spot contrast $c$; we discuss this at length in
-\S\ref{sec:cN-degeneracy}.
+\S\ref{sec:breaking_baseline_degeneracy}.
 
 Figure~\ref{fig:calibration_default_latitude} shows samples from the spot
 latitude posterior (hyper)distribution. Since the parameters $\mu_\phi$
@@ -1722,92 +1724,79 @@ and $u_2 = 0.25$ for all stars. From Figure~\ref{fig:calibration_ld}, in which w
 assume we know the limb darkening coefficients exactly, it is clear that
 the presence of limb darkening significantly degrades our ability to
 infer both the radii and latitudes of the spots. Limb darkening has a complicated
-effect on the mapping between surface features and disk-integrated flux, as it 
+effect on the mapping between surface features and disk-integrated flux, as it
 reveals information about odd harmonics at
 the expense of introducing strong degeneracies with the even harmonics
-(\S\ref{sec:limbdark}).
+(\S\ref{sec:limbdark}). In practice, this leads to higher uncertainty in
+the spot radii and latitudes relative to the same dataset without limb
+darkening (Figure~\ref{fig:calibration_default_corner}). Fortunately,
+this uncertainty can be dramatically reduced with more data, as evident
+in Figure~\ref{fig:calibration_ld_1000}, which shows the results of the
+same run but with $M=1{,}000$ light curves in the ensemble. The constraints
+on $r$, $\mu_\phi$, $\sigma_\phi$, and $c$ are now much tighter and in
+good agreement with the truth. \xxx{TODO: Is the radius biased high? Discuss the
+    result of the batch run on 1000 limb-darkened light curves.}
 
-Figure~\ref{fig:calibration_ld}
-Figure~\ref{fig:calibration_ld_1000}
-Figure~\ref{fig:calibration_ld_500_no_ld}
-Figure~\ref{fig:calibration_unnorm}
-Figure~\ref{fig:calibration_bigspots}
-Figure~\ref{fig:calibration_variance}
-
-
-\xxx{TODO}
+\xxx{TODO: Figure~\ref{fig:calibration_unnorm}, Figure~\ref{fig:calibration_hicontrast},
+    Figure~\ref{fig:calibration_bigspots}, Figure~\ref{fig:calibration_variance}.}
 
 \section{Discussion}
 \label{sec:discussion}
 
-\subsection{Ensemble analyses}
+\subsection{Why ensemble analyses work}
 \label{sec:ensemble}
 
-Figure~\ref{fig:nullspace_ensemble} shows the posterior shrinkage
-as a function of spherical harmonic degree for three different
-(purely hypothetical) scenarios: a single high signal-to-noise ratio (SNR)
-observation of a stellar light curve at a random
-observer inclination (thin blue curves), a set of three observations
-of the same star at three \emph{different} random inclinations (thin
-orange curves), and a set of ten observations at ten different
-random inclinations (thin green curves).
-The denser, opaque curves show the average for each scenario over 300 trials.
-The posterior shrinkage $R$ for a given
-spherical harmonic coefficient is computed from
+\xxx{TODO: A gentler introduction before diving in.}
+
+Let us define the \emph{posterior shrinkage} $R$ for a given
+spherical harmonic coefficient as
 %
 \begin{align}
     R \equiv 1 - \lim\limits_{\sigma_0^2 \rightarrow \infty}
     \frac{\sigma^2}{\sigma_0^2}
+    \quad,
 \end{align}
 %
 where $\sigma_0^2$ is the prior variance
 and $\sigma^2$ is the posterior variance.
-It is a measure of how informative a measurement is about a
-given mode on the surface in the limit of infinite SNR
+The posterior shrinkage is a measure of how informative a measurement is about a
+given mode on the surface in the limit of infinite signal-to-noise ratio (SNR)
 and is independent of what the stellar surface actually looks like.
 If, at infinite SNR and with a completely uninformative prior,
 a particular mode can be learned exactly from a dataset, the posterior
 shrinkage is defined to be unity. Conversely, if the data is completely
 unconstraining, $R$ will tend to zero.
 
-\begin{figure}[p!]
+\begin{figure}[t!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/nullspace_ensemble.pdf}
-        \\
-        \includegraphics[width=\linewidth]{figures/nullspace_ensemble_ld.pdf}
-        \\
-        \includegraphics[width=\linewidth]{figures/nullspace_ensemble_ld_var.pdf}
         \oscaption{nullspace_ensemble}{%
-            \emph{Top:} Posterior shrinkage as a function of spherical harmonic degree
-            for a hypothetical scenario in which an observer can measure a
-            stellar light curve at 1 (blue),
-            3 (orange), 10 (green), and 30 (red)
-            random inclinations. The thicker curves correspond to
+            Posterior shrinkage as a function of spherical harmonic degree
+            for a hypothetical scenario in which an observer can measure the light curves
+            of 1 (blue), 3 (orange), 10 (green), and 30 (red) \emph{identical} stars
+            viewed at random inclinations.
+            The thicker curves correspond to
             the mean shrinkage for each experiment.
             The information content in the light curve of a star observed
             from a single vantage point approaches zero as $l$
-            increases. However, observing the star from many vantage points
+            increases. However, observing many identical stars from different vantage points
             allows one to recover nearly all of the information in the
             even spherical harmonic modes. This is why ensemble analyses of
             many similar stars at different inclinations allows us to infer
             their surface properties.
-            \emph{Middle:} Same as the top panel, but for limb-darkened
-            stars with coefficients $u_1 = 0.5$ and $u_2 = 0.25$. Odd
-            modes can now be probed, at the expense of the even modes.
-            \emph{Bottom:} Same as the middle panel, but allowing for
-            a 10\% variation in $u_1$ and $u_2$
-            across different observations. For ${\gtrsim}30$ light curves,
-            there is virtually no null space up to $l_\mathrm{max} = 15$.
-            \codelink{nullspace_ensemble_ld}
-            \codelink{nullspace_ensemble_ld_var}
             \label{fig:nullspace_ensemble}
         }
     \end{centering}
 \end{figure}
 
+Figure~\ref{fig:nullspace_ensemble} shows the posterior shrinkage
+as a function of spherical harmonic degree for a few different hypothetical
+scenarios in which we observe one or more stellar light curves.
 Let us first consider the blue curves, in which a light curve is
-collected from a star viewed at a single random inclination (which, of course, is
+collected from a single star viewed at a single random inclination (which, of course, is
 all we can do from our fixed vantage point on Earth).
+Each thin blue curve corresponds to a particular random draw from the (isotropic)
+inclination distribution; the thick blue curve is the average over 300 trials.
 For some of the low-degree modes, the shrinkage is relatively high: it is
 fairly easy to constrain the dipole moment from a light curve, as this is
 usually the dominant sinusoidal signal. However, as the degree $l$
@@ -1821,14 +1810,19 @@ harmonics other than the dipole are in the null space \emph{regardless of
     inclination} \citep[e.g.,][]{Luger2019}. In other words, these spherical
 harmonics are perfectly antisymmetric in projection over the unit disk
 when viewed from any orientation. Absent structure to break these symmetries
-(see \S\ref{sec:limbdark}), we simply cannot learn anything about these modes from
+(see below), we simply cannot learn anything about these modes from
 stellar light curves. If we average over the shrinkage for all modes up to $l=15$,
 we find that a single light curve measurement can only tell us $\sim 9\%$
 of the information about the surface on those scales.
 
-The orange curves correspond to the scenario in which we can collect light curves
-from a star viewed at three different random inclinations. This is obviously
-impossible in practice, but it is still instructive as a thought experiment.
+In an ensemble analysis, we assume we observe the lightcurves of many stars
+that are ``similar'' in some statistical sense. As a thought experiment,
+let us consider an extreme version of ensemble analysis in which all the
+stars in our dataset happen to have \emph{identical} surfaces. We will
+still assume they are oriented at random inclinations, as we would expect for
+field stars. The orange curves in the top panel of the figure correspond to
+the case in which we analyze ensembles consisting of three identical stars
+viewed at three different random inclinations.
 Interestingly, the shrinkage increased at all even spherical harmonic degrees
 (the odd degrees, as we mentioned above, are always invisible).
 Note that since we are in the limit of infinite SNR, the fact that we have
@@ -1841,38 +1835,65 @@ at one inclination can actually project into the flux at a different inclination
 If we average over all modes, we obtain a total shrinkage of $\sim 24\%$
 for $l\leq15$ in this case.
 
-Finally, the green curves correspond to observations taken at ten random
-inclinations. In this scenario, the posterior shrinkage is nearly $100\%$
+Finally, the green and red curves correspond respectively to ensembles of ten and thirty
+identical stars observed at random inclinations.
+In these scenarios, the posterior shrinkage
+is nearly $100\%$
 for all even modes (it asymptotically approaches $100\%$ as the number
 of light curves increases further). The total shrinkage is $\sim 47\%$
 and approaches $50\%$ as both $l_\mathrm{max}$  and the number of light curves
-tend to infinity. Thus, if we were able to measure a light curve of a star
+tend to infinity. Thus, if we were able to measure light curves of identical stars
 from many different inclinations, the null space would consist \emph{only}
 of the odd modes, and our data would tell us exactly half of all the
-information about the surface.
-
-As we mentioned above, it is obviously not possible to observe a \emph{single}
-star from many different inclinations (at least not at present!).
-However, it is certainly the case that we can observe \emph{many} stars
-at a wide range of inclinations. Those stars certainly have different
-surface intensity distributions, but what if we restricted ourselves to
-light curves of ``similar'' stars?
+information about the surfaces of these objects.
 
 \subsection{Limb darkening}
 \label{sec:limbdark}
 
+\xxx{TODO: Discuss Figure~\ref{fig:nullspace_ensemble_ld} and how limb darkening
+    changes things.}
+
+\begin{figure}[t!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/nullspace_ensemble_ld.pdf}
+        \\
+        \includegraphics[width=\linewidth]{figures/nullspace_ensemble_ld_var.pdf}
+        \oscaption{nullspace_ensemble_ld}{%
+            \emph{Top:} Same as Figure~\ref{fig:nullspace_ensemble},
+            but for limb-darkened
+            stars with coefficients $u_1 = 0.5$ and $u_2 = 0.25$. Odd
+            modes can now be probed, at the expense of the even modes.
+            \emph{Bottom:} Same as the top panel, but allowing for
+            a 10\% variation in $u_1$ and $u_2$
+            across different observations. For ${\gtrsim}30$ light curves,
+            there is virtually no null space up to $l_\mathrm{max} = 15$.
+            \codelink{nullspace_ensemble_ld_var}
+            \label{fig:nullspace_ensemble_ld}
+        }
+    \end{centering}
+\end{figure}
+
 \subsection{Small spots}
 \label{sec:tinyspots}
+
+\xxx{TODO: Discuss what we should do about tiny spots.}
 
 \subsection{The baseline degeneracy}
 \label{sec:breaking_baseline_degeneracy}
 
-\subsection{The number-contrast degeneracy}
-\label{sec:cN-degeneracy}
+\xxx{TODO: Discuss the baseline degeneracy and how to break it. Discuss the
+    degeneracy between $c$ and $N$ and how to break it.}
+
 
 \section{Caveats}
 \label{sec:caveats}
-The latitude distribution is not Gaussian. The number of spots does not have to be an integer.
+\xxx{
+    \begin{enumerate}
+        \item The latitude distribution is not Gaussian.
+        \item The number of spots does not have to be an integer.
+    \end{enumerate}
+}
+
 
 \subsection{Other distributions}
 \label{sec:other-dist}
@@ -1888,6 +1909,9 @@ Shrinkage prior on sigma.
 
 \subsection{Miscellaneous}
 Inclination distribution is bimodal.
+Careful with light curves with large amplitudes, although
+Figure~\ref{fig:calibration_hicontrast}
+has max amplitudes of more than 10\% and works great.
 
 \section{Implementation}
 \label{sec:implementation}
@@ -3976,7 +4000,7 @@ However, in practice, it is quite difficult to constrain the
 spot contrast from light curves, let alone higher moments of its
 distribution; this is due largely to the fact that the contrast
 is extremely degenerate with the total number of spots
-(see \S\ref{sec:cN-degeneracy}).
+(see \S\ref{sec:breaking_baseline_degeneracy}).
 %
 In our implementation of the algorithm,
 we therefore choose the simplest possible probability distribution,
@@ -4725,6 +4749,15 @@ over the inclination, so this approach is still valid.
         \oscaption{calibration_unnorm}{%
             \xxx{TODO: Unnormalized.}
             \label{fig:calibration_unnorm}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \oscaption{calibration_hicontrast}{%
+            \xxx{TODO: Two high contrast spots.}
+            \label{fig:calibration_hicontrast}
         }
     \end{centering}
 \end{figure}

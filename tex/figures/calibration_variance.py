@@ -18,7 +18,9 @@ if not int(os.getenv("CI", 0)):
     calibrate.run(
         path=abspath("data/variance"),
         generate=dict(
-            nspots=dict(mu=5), radius=dict(mu=3), contrast=dict(mu=0.01)
+            nspots=dict(sigma=3),
+            radius=dict(sigma=3),
+            contrast=dict(sigma=0.01),
         ),
         plot_data=False,
         plot_inclination_pdf=False,

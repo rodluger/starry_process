@@ -97,7 +97,9 @@ def build_figures():
         )
         error = bool(len(meta.get(name, {}).get("stderr", "")))
         if stale or missing or error:
-            old_figures = set(glob.glob("figures/*.pdf"))
+            old_figures = set(
+                glob.glob("figures/*.pdf") + glob.glob("figures/*.png")
+            )
             try:
                 stdout = subprocess.check_output(
                     ["python", script],
@@ -109,7 +111,9 @@ def build_figures():
                 stdout = ""
                 stderr = e.output.decode("utf-8")
 
-            new_figures = set(glob.glob("figures/*.pdf"))
+            new_figures = set(
+                glob.glob("figures/*.pdf") + glob.glob("figures/*.png")
+            )
             outputs = list(new_figures - old_figures)
             meta[name] = dict(
                 st_mtime=st_mtime,
@@ -195,7 +199,7 @@ def build():
 
 def clean(remove_data=False):
     # Remove figure output
-    for file in glob.glob("figures/*.pdf"):
+    for file in glob.glob("figures/*.pdf") + glob.glob("figures/*.png"):
         os.remove(file)
     # Remove test output
     for file in glob.glob("tests/*.tex"):
@@ -206,6 +210,7 @@ def clean(remove_data=False):
     # Remove TeX files and temporary files
     for pattern in [
         "*.pdf",
+        "*.png",
         "*.bbl",
         "*.blg",
         "*.log",
