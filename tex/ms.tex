@@ -1548,176 +1548,102 @@ $2{-}3\sigma$.
     \end{centering}
 \end{figure}
 
-\xxx{TODO: discuss the batch calibration default run.}
-Stellar inclination residuals (posterior mean minus true value) normalized to the
-posterior standard deviation. Only \emph{marginally} overestimate the variance.
-Tiny sunspots are about $70{,}000$ km across, comparable to large sunspots.
+The results in
+Figures~\ref{fig:calibration_default_corner}---\ref{fig:calibration_default_inclination}
+are based on a single realization of the light curve ensemble conditioned on
+the properties of Table~\ref{tab:synthetic}. To properly gauge potential biases
+in our model, it is useful to re-run the experiment under many different realizations
+of the dataset. We therefore generate 100 ensembles of light curves in
+exactly the same way as above and run inference on each of them.
+Figure~\ref{fig:calibration_batch_default_corner} shows the marginal and joint
+posterior distributions for $\pmb{\theta}_\bullet$ for all 100 trials.
+Posteriors for individual trials are shown as the transluscent colored curves
+(in the marginal plots) and as ellipses bounding the $1\sigma$ posterior level
+(in the joint posterior plots). The black curves show the marginal distributions of all
+samples across all trials, and the black contours show the corresponding $1\sigma$
+levels in the joint posterior plots.
+
+If our model is truly unbiased, in the limit of an infinite number of realizations
+of the data, the expectation value of the distribution
+of samples across all ensembles (the mean of the black curves in the marginal
+posterior plots) should coincide with the true values (blue lines).
+This is the case with the spot size $r$ posterior: on average, the posterior
+distributions are centered on the correct value.
+However, this is not the case for
+the spot latitude parameters $\mu_\phi$ and $\sigma_\phi$, for which our
+posterior means are biased high. While the \emph{modes} of their
+posteriors are very close to the true values, the distributions have long
+tails extending to high latitudes and high variance, respectively.
+
+The reason for this bias has to do with the baseline degeneracy discussed in
+\S\ref{sec:baseline} and illustrated in Figure~\ref{fig:mean_normalization}:
+the total spottiness of a stellar surface cannot be probed in relative
+photometry. In particular, this means spots near the poles lie almost
+entirely in the null space. Applied to the problem at hand, this degeneracy
+makes it difficult to distinguish between stars with spots concentrated
+exclusively at mid-latitudes (in this case, the truth) and
+stars with spots centered closer to the poles but with large latitudinal
+variance. The latter configuration leads to many spots close to the poles,
+whose effect on the (relative) light curve is negligible, and some spots
+at mid-latitudes, whose effect on the light curve is similar to that of
+the former configuration.
+Thus, the data alone cannot be used to discriminate between these two
+scenarios, introducing the degeneracy we see in the posterior. In fact,
+it is clear that in the tails of the distribution, the mean spot latitude
+and the standard deviation of spot latitudes are positively correlated.
+The bias we see is therefore not a shortcoming of the model, but of the
+\emph{data} itself. To get around this, we either need to impose a
+shrinkage prior on $\sigma_\phi$ (\S\ref{sec:sigma-prior}),
+observe in a different mode that is sensitive to baseline information
+(\S\ref{sec:breaking_baseline_degeneracy}), or simply collect more data.
+As we will see below, the degeneracy described above is not perfect:
+for very large ($M \sim 1{,}000$) ensembles, high-variance polar spots
+can confidently be ruled out.
+
+Lastly, the posteriors for the contrast $c$ and the number of spots $n$
+are mostly unbiased. The contrast distribution has a bit of
+a tail; inspection of Figure~\ref{fig:calibration_batch_default_corner}
+reveals that it too is positively correlated with the mean spot latitude
+and therefore suffers from the same degeneracy as above. And while the
+mean of the spot number distribution is roughly correct, the posterior
+is nearly unchanged across all runs, and equally uninformative in all
+of them. This is yet another manifestation of the baseline degeneracy:
+the total number of spots is not an observable in relative photometry.
+
+There is one final distribution that is instructive to consider: the
+distribution of errors on the inferred stellar inclination.
+Figure~\ref{fig:calibration_batch_default_inclinations} shows a histogram
+of stellar inclination residuals (posterior mean minus true value)
+normalized to the posterior standard deviation for all stars across the
+100 trials described above. For a correctly calibrated model, this distribution
+should equal the standard normal $\mathcal{N}(0, 1^2)$ in the limit of
+infinite trials. This, in fact, is roughly what we find (compare to the
+orange histogram in the figure). Our posterior has marginally
+heavier tails, meaning we tend to \emph{slightly} underestimate the
+posterior variance, but in general it is an excellent estimator of
+individual stellar inclinations.
 
 \subsection{Other runs}
 In this section we test the robustness of our model by changing one or
 more of the fiducial values listed in Table~\ref{tab:synthetic}.
 
-\begin{figure}[p!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/calibration_midlat_corner.pdf}
-        \\[1em]
-        \includegraphics[width=\linewidth]{figures/calibration_midlat_latitude.pdf}
-        \oscaption{calibration_midlat}{%
-            Same as Figures~\ref{fig:calibration_default_corner}
-            and \ref{fig:calibration_default_latitude}, but for
-            mid-latitude spots with $\mu_\phi = 45^\circ$.
-            The radius and latitude parameters are again inferred correctly.
-            \label{fig:calibration_midlat}
-        }
-    \end{centering}
-\end{figure}
+Figure~\ref{fig:calibration_hilat}
+Figure~\ref{fig:calibration_equatorial}
+Figure~\ref{fig:calibration_isotropic}
+Figure~\ref{fig:calibration_tinyspots}
+Figure~\ref{fig:calibration_default_1}
+Figure~\ref{fig:calibration_default_1000}
+Figure~\ref{fig:calibration_ld}
+Figure~\ref{fig:calibration_ld_1000}
+Figure~\ref{fig:calibration_ld_500_no_ld}
+Figure~\ref{fig:calibration_unnorm}
+Figure~\ref{fig:calibration_bigspots}
+Figure~\ref{fig:calibration_variance}
+Figure~\ref{fig:calibration_batch_default_1000}
 
-\begin{figure}[p!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/calibration_hilat_corner.pdf}
-        \\[1em]
-        \includegraphics[width=\linewidth]{figures/calibration_hilat_latitude.pdf}
-        \oscaption{calibration_hilat}{%
-            Same as Figure~\ref{fig:calibration_midlat}, but for
-            high-latitude spots with $\mu_\phi = 60^\circ$.
-            The radius and latitude parameters are again inferred correctly,
-            although the model cannot rule out the presence of polar spots.
-            \label{fig:calibration_hilat}
-        }
-    \end{centering}
-\end{figure}
-
-\begin{figure}[p!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/calibration_equatorial_corner.pdf}
-        \\[1em]
-        \includegraphics[width=\linewidth]{figures/calibration_equatorial_latitude.pdf}
-        \oscaption{calibration_equatorial}{%
-            Same as Figure~\ref{fig:calibration_midlat}, but for
-            equatorial spots with $\mu_\phi = 0^\circ$. Even though the model
-            favors a bimodal distribution at low latitudes, the
-            posterior strongly supports the presence of equatorial spots.
-            \label{fig:calibration_equatorial}
-        }
-    \end{centering}
-\end{figure}
-
-\begin{figure}[p!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/calibration_isotropic_corner.pdf}
-        \\[1em]
-        \includegraphics[width=\linewidth]{figures/calibration_isotropic_latitude.pdf}
-        \oscaption{calibration_isotropic}{%
-            Same as Figure~\ref{fig:calibration_midlat}, but for
-            isotropically-distributed spots. The posterior accurately
-            captures the cosine-like distribution of spot latitudes.
-            \label{fig:calibration_isotropic}
-        }
-    \end{centering}
-\end{figure}
-
-\begin{figure}[p!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/calibration_tinyspots_corner.pdf}
-        \\[1em]
-        \includegraphics[width=\linewidth]{figures/calibration_tinyspots_latitude.pdf}
-        \oscaption{calibration_tinyspots}{%
-            Same as Figures~\ref{fig:calibration_default_corner}
-            and \ref{fig:calibration_default_latitude}, but for high contrast ($c = 1$)
-            small ($r = 3^\circ$) spots (significantly lower than the
-            effective resolution of the model).
-            The hatched regions in the posterior
-            plots for the radius ($r < 10^\circ$) are excluded by the prior, since
-            the model cannot capture features that small.
-            Despite this, the spot latitude distribution is still inferred correctly,
-            although the spot contrast is off by more than $10\sigma$.
-            \label{fig:calibration_tinyspots}
-        }
-    \end{centering}
-\end{figure}
-
-\begin{figure}[p!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/calibration_default_1_corner.pdf}
-        \\[1em]
-        \includegraphics[width=\linewidth]{figures/calibration_default_1_latitude.pdf}
-        \oscaption{calibration_default_1}{%
-            Same as Figures~\ref{fig:calibration_default_corner}
-            and \ref{fig:calibration_default_latitude}, but for
-            inference based on a single light curve ($M = 1$).
-            The constraints on all of the parameters are dramatically weaker.
-            \label{fig:calibration_default_1}
-        }
-    \end{centering}
-\end{figure}
-
-\begin{figure}[p!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/calibration_default_1000_corner.pdf}
-        \\[1em]
-        \includegraphics[width=\linewidth]{figures/calibration_default_1000_latitude.pdf}
-        \oscaption{calibration_default_1000}{%
-            Same as Figures~\ref{fig:calibration_default_corner}
-            and \ref{fig:calibration_default_latitude}, but for
-            inference based on one thousand light curves ($M = 1{,}000$).
-            The constraints on the radius and the latitude parameters are
-            dramatically tighter.
-            \label{fig:calibration_default_1000}
-        }
-    \end{centering}
-\end{figure}
-
-\begin{figure}[p!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/calibration_ld_corner.pdf}
-        \\[1em]
-        \includegraphics[width=\linewidth]{figures/calibration_ld_latitude.pdf}
-        \oscaption{calibration_ld}{%
-            Same as Figures~\ref{fig:calibration_default_corner}
-            and \ref{fig:calibration_default_latitude}, but for
-            stars with (assumed known) limb darkening coefficients
-            $u_1 = 0.50$ and $u_2 = 0.25$. Limb darkening makes it
-            much harder to infer the variance of the distribution of
-            star spot latitudes.
-            \label{fig:calibration_ld}
-        }
-    \end{centering}
-\end{figure}
-
-\begin{figure}[p!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/calibration_ld_1000_corner.pdf}
-        \\[1em]
-        \includegraphics[width=\linewidth]{figures/calibration_ld_1000_latitude.pdf}
-        \oscaption{calibration_ld_1000}{%
-            Same as Figure~\ref{fig:calibration_ld}, but for an ensemble
-            consisting of $M = 1{,}000$ light curves. For a
-            sufficiently large ensemble, it is possible to correctly infer the spot
-            radii and latitudes in the presence of limb darkening.
-            \label{fig:calibration_ld_1000}
-        }
-    \end{centering}
-\end{figure}
-
-\begin{figure}[p!]
-    \begin{centering}
-        \includegraphics[width=\linewidth]{figures/calibration_ld_500_no_ld_corner.pdf}
-        \\[1em]
-        \includegraphics[width=\linewidth]{figures/calibration_ld_500_no_ld_latitude.pdf}
-        \oscaption{calibration_ld_500_no_ld}{%
-            Same as Figure~\ref{fig:calibration_ld}, but for $M = 500$
-            light curves and assuming no limb darkening when doing inference.
-            Neglecting limb darkening leads to significant bias in the inferred
-            spot radii and to a lesser extent in the mean spot latitude.
-            \label{fig:calibration_ld_500_no_ld}
-        }
-    \end{centering}
-\end{figure}
+Tiny sunspots are about $70{,}000$ km across, comparable to large sunspots.
 
 \xxx{TODO}
-
-\xxx{More runs: 1) Unnormalized (to show what we can learn if we know the baseline, as in
-    multi-band photometry. 2) Big spots. 3) Single spot. 4) Variance in everything.)}
 
 \section{Discussion}
 \label{sec:discussion}
@@ -1862,9 +1788,12 @@ Uniform spot radius distribution.
 \label{sec:other-marg}
 We can also marginalize over period and limb darkening coefficients.
 
+\subsection{Prior on sigma}
+\label{sec:sigma-prior}
+Shrinkage prior on sigma.
+
 \subsection{Miscellaneous}
-\label{sec:integerspots}
-Shrinkage prior on sigma. Inclination distribution is bimodal.
+Inclination distribution is bimodal.
 
 \section{Implementation}
 \label{sec:implementation}
@@ -4535,6 +4464,201 @@ Note that even in the case where the flux is normalized
 (c.f. \S\ref{sec:baseline}), the non-stationary correction to the
 covariance is applied \emph{after} the step where we marginalize
 over the inclination, so this approach is still valid.
+
+\section{Supplementary Figures}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_midlat_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_midlat_latitude.pdf}
+        \oscaption{calibration_midlat}{%
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for
+            mid-latitude spots with $\mu_\phi = 45^\circ$.
+            The radius and latitude parameters are again inferred correctly.
+            \label{fig:calibration_midlat}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_hilat_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_hilat_latitude.pdf}
+        \oscaption{calibration_hilat}{%
+            Same as Figure~\ref{fig:calibration_midlat}, but for
+            high-latitude spots with $\mu_\phi = 60^\circ$.
+            The radius and latitude parameters are again inferred correctly,
+            although the model cannot rule out the presence of polar spots.
+            \label{fig:calibration_hilat}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_equatorial_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_equatorial_latitude.pdf}
+        \oscaption{calibration_equatorial}{%
+            Same as Figure~\ref{fig:calibration_midlat}, but for
+            equatorial spots with $\mu_\phi = 0^\circ$. Even though the model
+            favors a bimodal distribution at low latitudes, the
+            posterior strongly supports the presence of equatorial spots.
+            \label{fig:calibration_equatorial}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_isotropic_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_isotropic_latitude.pdf}
+        \oscaption{calibration_isotropic}{%
+            Same as Figure~\ref{fig:calibration_midlat}, but for
+            isotropically-distributed spots. The posterior accurately
+            captures the cosine-like distribution of spot latitudes.
+            \label{fig:calibration_isotropic}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_tinyspots_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_tinyspots_latitude.pdf}
+        \oscaption{calibration_tinyspots}{%
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for high contrast ($c = 1$)
+            small ($r = 3^\circ$) spots (significantly lower than the
+            effective resolution of the model).
+            The hatched regions in the posterior
+            plots for the radius ($r < 10^\circ$) are excluded by the prior, since
+            the model cannot capture features that small.
+            Despite this, the spot latitude distribution is still inferred correctly,
+            although the spot contrast is off by more than $10\sigma$.
+            \label{fig:calibration_tinyspots}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_default_1_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_default_1_latitude.pdf}
+        \oscaption{calibration_default_1}{%
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for
+            inference based on a single light curve ($M = 1$).
+            The constraints on all of the parameters are dramatically weaker.
+            \label{fig:calibration_default_1}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_default_1000_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_default_1000_latitude.pdf}
+        \oscaption{calibration_default_1000}{%
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for
+            inference based on one thousand light curves ($M = 1{,}000$).
+            The constraints on the radius and the latitude parameters are
+            dramatically tighter.
+            \label{fig:calibration_default_1000}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_ld_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_ld_latitude.pdf}
+        \oscaption{calibration_ld}{%
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for
+            stars with (assumed known) limb darkening coefficients
+            $u_1 = 0.50$ and $u_2 = 0.25$. Limb darkening makes it
+            much harder to infer the variance of the distribution of
+            star spot latitudes.
+            \label{fig:calibration_ld}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_ld_1000_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_ld_1000_latitude.pdf}
+        \oscaption{calibration_ld_1000}{%
+            Same as Figure~\ref{fig:calibration_ld}, but for an ensemble
+            consisting of $M = 1{,}000$ light curves. For a
+            sufficiently large ensemble, it is possible to correctly infer the spot
+            radii and latitudes in the presence of limb darkening.
+            \label{fig:calibration_ld_1000}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_ld_500_no_ld_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_ld_500_no_ld_latitude.pdf}
+        \oscaption{calibration_ld_500_no_ld}{%
+            Same as Figure~\ref{fig:calibration_ld}, but for $M = 500$
+            light curves and assuming no limb darkening when doing inference.
+            Neglecting limb darkening leads to significant bias in the inferred
+            spot radii and to a lesser extent in the mean spot latitude.
+            \label{fig:calibration_ld_500_no_ld}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \oscaption{calibration_unnorm}{%
+            \xxx{TODO: Unnormalized.}
+            \label{fig:calibration_unnorm}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \oscaption{calibration_bigspots}{%
+            \xxx{TODO: Large single spot.}
+            \label{fig:calibration_bigspots}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \oscaption{calibration_variance}{%
+            \xxx{TODO: Variance in all input parameters.}
+            \label{fig:calibration_variance}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \oscaption{calibration_batch_default_1000}{%
+            \xxx{TODO: Batch run with $M=1000$.}
+            \label{fig:calibration_batch_default_1000}
+        }
+    \end{centering}
+\end{figure}
 
 \bibliography{bib}
 \end{document}
