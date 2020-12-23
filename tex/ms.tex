@@ -1152,7 +1152,7 @@ in how well it performs as a likelihood function for stellar light curves.
 
 \begin{figure}[p!]
     \begin{centering}
-        \includegraphics[width=\linewidth]{figures/nongaussianity.pdf}
+        \includegraphics[width=\linewidth]{figures/nongaussianity.png}
         \oscaption{nongaussianity}{%
             Corner plot showing the joint distributions of select spherical
             harmonic coefficients corresponding to the $l=15$ expansion of
@@ -1419,7 +1419,9 @@ only invert (or factorize) it a single time per sample. Our
 covariance is the covariance of the \emph{normalized} process,
 given by Equation~(\ref{eq:SigmaTilde}). Since we only consider light curves
 with variability limited to a few percent or less, the approximation for
-$\tilde{\pmb{\Sigma}}$ is always valid.
+$\tilde{\pmb{\Sigma}}$ is always valid. Finally, we restrict our spherical
+harmonic expansion to $l_\mathrm{max} = 15$ as a compromise between
+resolution, computational speed, and numerical stability (see \S\ref{sec:implementation}).
 
 We use the standard implementation of the nested sampler,
 \textsf{dynesty.NestedSampler}, with all arguments set to their
@@ -1548,6 +1550,15 @@ $2{-}3\sigma$.
     \end{centering}
 \end{figure}
 
+\begin{figure}[p!]
+    \begin{centering}
+        \oscaption{calibration_batch_default_1000}{%
+        \xxx{TODO: Batch run with $M=1{,}000$.}
+        \label{fig:calibration_batch_default_1000}
+        }
+    \end{centering}
+\end{figure}
+
 The results in
 Figures~\ref{fig:calibration_default_corner}---\ref{fig:calibration_default_inclination}
 are based on a single realization of the light curve ensemble conditioned on
@@ -1600,7 +1611,7 @@ As we will see below, the degeneracy described above is not perfect:
 for very large ($M \sim 1{,}000$) ensembles, high-variance polar spots
 can confidently be ruled out.
 
-Lastly, the posteriors for the contrast $c$ and the number of spots $n$
+The posteriors for the contrast $c$ and the number of spots $n$
 are mostly unbiased. The contrast distribution has a bit of
 a tail; inspection of Figure~\ref{fig:calibration_batch_default_corner}
 reveals that it too is positively correlated with the mean spot latitude
@@ -1623,25 +1634,106 @@ heavier tails, meaning we tend to \emph{slightly} underestimate the
 posterior variance, but in general it is an excellent estimator of
 individual stellar inclinations.
 
+Finally, Figure~\ref{fig:calibration_batch_default_1000} shows
+the same posterior distributions as in Figure~\ref{fig:calibration_batch_default_corner},
+but for 100 trials each with $M=1{,}000$ light curves. \xxx{TODO.}
+
 \subsection{Other runs}
 In this section we test the robustness of our model by changing one or
 more of the fiducial values listed in Table~\ref{tab:synthetic}.
+Each of the runs below correspond to a single realization of the ensemble
+dataset, and the corresponding figures are presented at the end of the Appendix.
 
-Figure~\ref{fig:calibration_hilat}
-Figure~\ref{fig:calibration_equatorial}
-Figure~\ref{fig:calibration_isotropic}
-Figure~\ref{fig:calibration_tinyspots}
-Figure~\ref{fig:calibration_default_1}
-Figure~\ref{fig:calibration_default_1000}
+Figures~\ref{fig:calibration_midlat}---\ref{fig:calibration_isotropic}
+show the results for different latitudinal
+distributions, keeping all other values in Table~\ref{tab:synthetic} the same.
+Specifically, Figure~\ref{fig:calibration_midlat} corresponds to a trial
+with mid-latitude ($\mu_\phi = 45^\circ$ and $\sigma_\phi = 5^\circ$) spots,
+Figure~\ref{fig:calibration_hilat} to a trial with high-latitude
+($\mu_\phi = 60^\circ$ and $\sigma_\phi = 5^\circ$) spots,
+Figure~\ref{fig:calibration_equatorial} to a trial with equatorial
+($\mu_\phi = 0^\circ$ and $\sigma_\phi = 5^\circ$) spots, and
+Figure~\ref{fig:calibration_isotropic} to a trial with isotropically-distributed
+spots ($\phi \sim \cos$).
+The results are largely consistent with those of the default run: in all
+cases we infer the correct spot radius, the mean and standard deviation of
+the spot latitude, and the spot contrast within $2-3\sigma$; the number of
+spots is equally unconstrained in all runs.
+In Figure~\ref{fig:calibration_hilat} and to a lesser extent in
+Figure~\ref{fig:calibration_midlat}, the polar spot degeneracy discussed
+above is evident, particularly in the lower panels showing the latitudinal
+distribution of spots. Nevertheless, the distribution peaks near the correct
+latitude in both cases.
+Figures~\ref{fig:calibration_equatorial} and \ref{fig:calibration_isotropic}
+are interesting because, while the true latitude distribution is unimodal,
+most of the posterior samples are not. In the equatorial case, the posterior
+peaks at very low (but nonzero) latitudes and $\sigma_\phi$ appears to be
+inconsistent with the true value at many standard deviations; however, recall
+that $\sigma_\phi$ is a \emph{local} approximation the standard deviation of the
+PDF at the mode (Appendix~\ref{sec:lat}), which deviates from the true
+standard deviation (i.e., the
+square root of the variance, computed from the expectation of the second
+moment of the distribution) when the two modes are very closely spaced.
+In fact, the latitude PDF samples (lower panel in the figure) nearly span
+the true distribution, to the extent that our parametrization of the
+latitude distribution can approximate a zero-mean Gaussian. While the Beta
+distribution in $\cos\phi$ \emph{can} be unimodal in $\phi$ (see
+Equation~\ref{eq:phi-pdf} and the first
+column of Figure~\ref{fig:latitude_pdf}), this happens \emph{only} when
+$\beta = 0$, which occupies an infinitesimally thin hyperplane in
+parameter space. In practice, the majority of the posterior mass will be close
+to but not exactly at $\beta = 0$, leading to the bimodality in the figure.
+The same argument applies to Figure~\ref{fig:calibration_isotropic}.
+In both cases, the posterior approximates the true distribution as best it
+can given the constraints of the adopted PDF.
+
+Figures~\ref{fig:calibration_tinyspots} tests the performance of the model
+on light curves of stars with spots much smaller than the effective resolution
+of the GP. Our expansion to $l_\mathrm{max} = 15$ only allows us to model spots
+with radii $r \gtrsim 10^\circ$ (see Figure~\ref{fig:spot_profile}), so we
+place zero prior mass below this value. The figure shows the results of inference
+on a dataset generated from spots with $r = 3^\circ$ (and an increased
+contrast $c = 1$ to enforce a comparable signal-to-noise to the other trials).
+On the Sun, these would correspond to spots with diameters of about
+$70{,}000$ km---typical of the larger spots during solar maximum.
+While the radius posterior is biased (as it \emph{must} be, given our prior),
+the fact that it peaks at the lower bound of the prior suggests the presence
+of spots smaller than the model can capture. More importantly, however, the
+latitudinal parameters are inferred correctly and at fairly high precision:
+even though or model is biased against small spots, this does not affect
+inference about their latitudes. On the other hand, the spot contrast is wrong
+by many standard deviations, since the model must compensate for the fact
+that the radii are biased high with a lower contrast to match the variability
+amplitude of the light curves.
+
+Figures~\ref{fig:calibration_default_1} and \ref{fig:calibration_default_1000}
+show results for the default run but with extreme values of the number of
+light curves in the ensemble: $M = 1$ and $M = 1{,}000$, respectively.
+These two figures underscore the power of ensemble analyses: a single light
+curve (Figure~\ref{fig:calibration_default_1}) is simply not informative
+enough about the properties of its spots. On the other hand, a very large
+ensemble can be \emph{extremely} informative: the radius, latitude, and even
+the contrast are inferred correctly at high precision.
+
+Figure~\ref{fig:calibration_ld}---\ref{fig:calibration_ld_500_no_ld}
+show results for the default run but with limb darkening. In all cases
+we assume quadratic limb darkening with fiducial values $u_1 = 0.5$
+and $u_2 = 0.25$ for all stars. From Figure~\ref{fig:calibration_ld}, in which we
+assume we know the limb darkening coefficients exactly, it is clear that
+the presence of limb darkening significantly degrades our ability to
+infer both the radii and latitudes of the spots. Limb darkening has a complicated
+effect on the mapping between surface features and disk-integrated flux, as it 
+reveals information about odd harmonics at
+the expense of introducing strong degeneracies with the even harmonics
+(\S\ref{sec:limbdark}).
+
 Figure~\ref{fig:calibration_ld}
 Figure~\ref{fig:calibration_ld_1000}
 Figure~\ref{fig:calibration_ld_500_no_ld}
 Figure~\ref{fig:calibration_unnorm}
 Figure~\ref{fig:calibration_bigspots}
 Figure~\ref{fig:calibration_variance}
-Figure~\ref{fig:calibration_batch_default_1000}
 
-Tiny sunspots are about $70{,}000$ km across, comparable to large sunspots.
 
 \xxx{TODO}
 
@@ -1766,6 +1858,8 @@ at a wide range of inclinations. Those stars certainly have different
 surface intensity distributions, but what if we restricted ourselves to
 light curves of ``similar'' stars?
 
+\subsection{Limb darkening}
+\label{sec:limbdark}
 
 \subsection{Small spots}
 \label{sec:tinyspots}
@@ -4467,6 +4561,8 @@ over the inclination, so this approach is still valid.
 
 \section{Supplementary Figures}
 
+\renewcommand{\thefigure}{S\arabic{figure}}
+
 \begin{figure}[p!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/calibration_midlat_corner.pdf}
@@ -4647,15 +4743,6 @@ over the inclination, so this approach is still valid.
         \oscaption{calibration_variance}{%
             \xxx{TODO: Variance in all input parameters.}
             \label{fig:calibration_variance}
-        }
-    \end{centering}
-\end{figure}
-
-\begin{figure}[p!]
-    \begin{centering}
-        \oscaption{calibration_batch_default_1000}{%
-            \xxx{TODO: Batch run with $M=1000$.}
-            \label{fig:calibration_batch_default_1000}
         }
     \end{centering}
 \end{figure}

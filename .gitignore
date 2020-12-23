@@ -1,6 +1,7 @@
 # Misc
 *.gif
 *.pdf
+*.png
 *.o
 *.dSYM
 *.blg
