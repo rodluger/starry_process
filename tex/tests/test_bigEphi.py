@@ -40,6 +40,7 @@ def Ul(l):
 
 
 def clmmpi(l, m, mp, i):
+    """Return the scalar c^l_{m,mu,i}."""
     if (m - mp - i) % 2 == 0:
         return (
             (-1) ** ((2 * l - m + mp - i) / 2)
@@ -62,6 +63,7 @@ def clmmpi(l, m, mp, i):
 
 
 def Qllpiip(l, lp, i, ip, alpha, beta):
+    """Return the scalar (Q_\phi^{l,l'})_{i,i'}."""
     if (i + ip) % 2 == 0:
         return B(alpha, l + lp + beta - (i + ip) / 2) * hyp2f1(
             -(i + ip) / 2, alpha, l + lp + alpha + beta - (i + ip) / 2, -1
@@ -71,6 +73,7 @@ def Qllpiip(l, lp, i, ip, alpha, beta):
 
 
 def Pllpmmp(l, lp, m, mp, alpha, beta, Ellpr):
+    """Return the scalar (P_\phi^{l,l'})_{m,m'}."""
     term1 = 0
     for mu in range(-l, l + 1):
         for mup in range(-lp, lp + 1):
@@ -91,6 +94,7 @@ def Pllpmmp(l, lp, m, mp, alpha, beta, Ellpr):
 
 
 def Pllp(l, lp, alpha, beta, Ellpr):
+    """Return the matrix P_\phi^{l,l'}."""
     P = np.zeros((2 * l + 1, 2 * lp + 1), dtype="complex128")
     for m in range(-l, l + 1):
         for mp in range(-lp, lp + 1):
@@ -99,6 +103,7 @@ def Pllp(l, lp, alpha, beta, Ellpr):
 
 
 def Ellpphi(l, lp, alpha, beta, Ellpr):
+    """Return the matrix E_\phi^{l,l'}."""
     return (
         np.linalg.inv(Ul(l))
         @ Pllp(l, lp, alpha, beta, Ul(l) @ Ellpr @ Ul(lp).T)
@@ -107,6 +112,7 @@ def Ellpphi(l, lp, alpha, beta, Ellpr):
 
 
 def bigEphi(alpha, beta, Er):
+    """Return the latitude expectation integral E_\phi."""
     lmax = int(np.sqrt(Er.shape[0]) - 1)
     N = (lmax + 1) ** 2
     E = np.zeros((N, N), dtype="complex128")
@@ -122,6 +128,7 @@ def bigEphi(alpha, beta, Er):
 
 
 def bigEphi_numerical(alpha, beta, Er):
+    """Return the latitude expectation integral E_\phi, computed numerically."""
     lmax = int(np.sqrt(Er.shape[0]) - 1)
     N = (lmax + 1) ** 2
     E = np.zeros((N, N))
@@ -145,6 +152,11 @@ def bigEphi_numerical(alpha, beta, Er):
 
 
 def test_bigEphi(lmax=3, alpha=2.0, beta=5.0):
+    """
+    Show that our expression for the second moment
+    integral of the latitude distribution agrees
+    with a numerical estimate.
+    """
     np.random.seed(0)
     Er = np.random.randn((lmax + 1) ** 2, (lmax + 1) ** 2)
     Er = Er + Er.T

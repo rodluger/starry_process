@@ -38,6 +38,7 @@ def Ul(l):
 
 
 def clmmpi(l, m, mp, i):
+    """Return the scalar c^l_{m,mu,i}."""
     if (m - mp - i) % 2 == 0:
         return (
             (-1) ** ((2 * l - m + mp - i) / 2)
@@ -60,6 +61,7 @@ def clmmpi(l, m, mp, i):
 
 
 def qli(l, i):
+    """Return the scalar (q_\lambda^{l})_{i}."""
     if i % 2 == 0:
         return (
             2 ** l
@@ -73,6 +75,7 @@ def qli(l, i):
 
 
 def plm(l, m, elphi):
+    """Return the scalar (p_\lambda^{l})_{m}."""
     term1 = 0
     for mu in range(-l, l + 1):
         term2 = 0
@@ -83,6 +86,7 @@ def plm(l, m, elphi):
 
 
 def pl(l, elphi):
+    """Return the vector p_\lambda^{l}."""
     p = np.zeros(2 * l + 1, dtype="complex128")
     for m in range(-l, l + 1):
         p[l + m] = plm(l, m, elphi)
@@ -90,11 +94,13 @@ def pl(l, elphi):
 
 
 def ellam(l, elphi):
+    """Return the vector e_\lambda^{l}."""
     U = Ul(l)
     return np.linalg.inv(U) @ pl(l, U @ elphi)
 
 
 def elam(ephi):
+    """Return the first moment integral of the longitude."""
     lmax = int(np.sqrt(len(ephi)) - 1)
     e = []
     for l in range(lmax + 1):
@@ -105,7 +111,7 @@ def elam(ephi):
 
 
 def elam_numerical(ephi):
-
+    """Return the first moment integral of the longitude, computed numerically."""
     lmax = int(np.sqrt(len(ephi)) - 1)
     N = (lmax + 1) ** 2
     e = np.zeros(N)
@@ -126,6 +132,11 @@ def elam_numerical(ephi):
 
 
 def test_elam(lmax=5):
+    """
+    Show that our expression for the first moment
+    integral of the longitude distribution agrees
+    with a numerical estimate.
+    """
     np.random.seed(0)
     ephi = np.random.randn((lmax + 1) ** 2)
     assert np.allclose(elam(ephi), elam_numerical(ephi))

@@ -1884,37 +1884,43 @@ information about the surfaces of these objects.
 \xxx{TODO: Discuss the baseline degeneracy and how to break it. Discuss the
     degeneracy between $c$ and $N$ and how to break it.}
 
+\subsection{Gaussians all the way down}
+\label{sec:other-marg}
+\xxx{TODO: We can also marginalize over period and limb darkening coefficients.}
 
-\section{Caveats}
+\subsection{Caveats}
 \label{sec:caveats}
 \xxx{
     \begin{enumerate}
         \item The latitude distribution is not Gaussian.
         \item The number of spots does not have to be an integer.
+        \item Careful with light curves with large amplitudes, although
+        Figure~\ref{fig:calibration_hicontrast}
+        has max amplitudes of more than 10\% and works great.
+        \item No differential rotation / spot evolution yet!
     \end{enumerate}
 }
 
-
 \subsection{Other distributions}
 \label{sec:other-dist}
-Uniform spot radius distribution.
-
-\subsection{Gaussians all the way down}
-\label{sec:other-marg}
-We can also marginalize over period and limb darkening coefficients.
+\xxx{TODO: Discuss the uniform spot radius distribution.}
 
 \subsection{Prior on sigma}
 \label{sec:sigma-prior}
-Shrinkage prior on sigma.
+\xxx{TODO: We might want a shrinkage prior on sigma.}
 
-\subsection{Miscellaneous}
-Inclination distribution is bimodal.
-Careful with light curves with large amplitudes, although
-Figure~\ref{fig:calibration_hicontrast}
-has max amplitudes of more than 10\% and works great.
+\subsection{Inferring inclinations}
+\xxx{TODO: Works great. But inclination distribution is bimodal!}
+
 
 \section{Implementation}
 \label{sec:implementation}
+
+\xxx{TODO: Discuss the Python code here.}
+
+\section{Conclusions}
+\xxx{TODO: Summarize. Discuss future work, including differential rotation
+and spot evolution.}
 
 %
 %
@@ -1927,6 +1933,8 @@ has max amplitudes of more than 10\% and works great.
 %
 %
 %
+
+\input{table}
 
 \section{Notation}
 \label{sec:notation}
@@ -2673,7 +2681,7 @@ The first moment of the radius distribution is (Equation~\ref{eq:e1})
 %
 Using the equations from the previous section, its components may be written
 %
-\begin{proof}{test_erho}
+\begin{proof}{test_er}
     (e_\mathbb{r})^l_m
     & =
     \frac{\delta_{m,0}}{2\Delta r}
@@ -2696,7 +2704,7 @@ Using the equations from the previous section, its components may be written
 %
 where
 %
-\begin{proof}{test_erho}
+\begin{proof}{test_er}
     c_k(r, \Delta r) & =
     \frac{s}{2\Delta r}
     \ln
@@ -2711,7 +2719,7 @@ where
 \end{proof}
 %
 and
-\begin{proof}{test_erho}
+\begin{proof}{test_er}
     \chi_k^-(r, \Delta r) & \equiv \exp\left(\frac{r -\Delta r -\vartheta_k}{s}\right)
     \nonumber                                                              \\
     \chi_k^+(r, \Delta r) & \equiv \exp\left(\frac{r +\Delta r -\vartheta_k}{s}\right)
@@ -2720,7 +2728,7 @@ and
 %
 In vector form, we may simply write
 %
-\begin{proof}{test_erho}
+\begin{proof}{test_er}
     \mathbf{e}_r
     & =
     \pmb{\mathcal{I}} \,
@@ -2730,7 +2738,7 @@ In vector form, we may simply write
 %
 Note, finally, that in the limit $\Delta r \rightarrow 0$,
 %
-\begin{proof}{test_erho}
+\begin{proof}{test_er}
     \lim_{\Delta r \rightarrow 0}
     \mathbf{e}_r
     & =
@@ -2765,7 +2773,7 @@ The second moment of the radius distribution is (Equation~\ref{eq:E1})
 As before, its components may be written
 %
 %
-\begin{proof}{test_bigErho}
+\begin{proof}{test_bigEr}
     (E_\mathbb{r})^{l,l'}_{m,m'}
     & =
     \frac{\delta_{m,0}\delta_{m',0}}{2\Delta r}
@@ -2793,7 +2801,7 @@ As before, its components may be written
 %
 where
 %
-\begin{proof}{test_bigErho}
+\begin{proof}{test_bigEr}
     C_{k,k'}(r,\Delta r)
     & \equiv
     \frac{s}{2\Delta r}
@@ -2844,7 +2852,7 @@ where
 %
 In vector form, this may be written
 %
-\begin{proof}{test_bigErho}
+\begin{proof}{test_bigEr}
     \mathbf{E}_r
     &=
     \pmb{\mathcal{I}} \,
@@ -2855,7 +2863,7 @@ In vector form, this may be written
 %
 Finally, in the limit $\Delta r \rightarrow 0$,
 %
-\begin{proof}{test_bigErho}
+\begin{proof}{test_bigEr}
     \lim_{\Delta r \rightarrow 0}
     \mathbf{E}_r
     & =

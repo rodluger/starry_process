@@ -37,6 +37,7 @@ def Ul(l):
 
 
 def clmmpi(l, m, mp, i):
+    """Return the scalar c^l_{m,mu,i}."""
     if (m - mp - i) % 2 == 0:
         return (
             (-1) ** ((2 * l - m + mp - i) / 2)
@@ -59,6 +60,7 @@ def clmmpi(l, m, mp, i):
 
 
 def qli(l, i):
+    """Return the scalar (q_I^{l})_{i}."""
     return (
         (-1) ** i
         / (l - 0.5 * i + 1)
@@ -67,6 +69,7 @@ def qli(l, i):
 
 
 def plm(l, m, elyp):
+    """Return the scalar (P_I^{l})_{m}."""
     term1 = 0
     for mu in range(-l, l + 1):
         term2 = 0
@@ -77,6 +80,7 @@ def plm(l, m, elyp):
 
 
 def pl(l, elyp):
+    """Return the vector p_I^{l}."""
     p = np.zeros(2 * l + 1, dtype="complex128")
     for m in range(-l, l + 1):
         p[l + m] = plm(l, m, elyp)
@@ -84,11 +88,13 @@ def pl(l, elyp):
 
 
 def elypp(l, elyp):
+    """Return the vector e_{y''}^{l}."""
     U = Ul(l)
     return np.linalg.inv(U) @ pl(l, U @ elyp)
 
 
 def eI(ey):
+    """Return the first moment integral of the inclination distribution."""
     lmax = int(np.sqrt(len(ey)) - 1)
     rTA1 = rTA1Op(ydeg=lmax)().eval()
     e = []
@@ -101,7 +107,7 @@ def eI(ey):
 
 
 def eI_numerical(ey):
-
+    """Return the first moment integral of the inclination distribution, computed numerically."""
     lmax = int(np.sqrt(len(ey)) - 1)
     N = (lmax + 1) ** 2
     rTA1 = rTA1Op(ydeg=lmax)().eval()
@@ -124,6 +130,13 @@ def eI_numerical(ey):
 
 
 def test_eI(lmax=5):
+    """
+    Show that our expression for the first moment
+    expectation integral for the inclination agrees
+    with a numerical estimate. For simplicity, we're
+    making use of the isotropy assumption, so this
+    moment integral is actually just a scalar.
+    """
     np.random.seed(0)
     ey = np.random.randn((lmax + 1) ** 2)
     assert np.allclose(eI(ey), eI_numerical(ey))

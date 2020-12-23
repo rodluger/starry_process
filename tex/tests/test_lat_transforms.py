@@ -3,22 +3,26 @@ from scipy.stats import beta as Beta
 
 
 def pdf(phi, alpha, beta):
+    """Latitude PDF as a function of latitude."""
     return 0.5 * np.abs(np.sin(phi)) * Beta.pdf(np.cos(phi), alpha, beta)
 
 
 def deriv_pdf(phi, alpha, beta, eps=1e-8):
+    """Derivative of `pdf` with respect to latitude."""
     return (pdf(phi + eps, alpha, beta) - pdf(phi - eps, alpha, beta)) / (
         2 * eps
     )
 
 
 def log_pdf(phi, alpha, beta):
+    """Natural log of `pdf`."""
     return np.log(0.5 * np.abs(np.sin(phi))) + Beta.logpdf(
         np.cos(phi), alpha, beta
     )
 
 
 def second_deriv_log_pdf(phi, alpha, beta, eps=1e-4):
+    """Second derivative of `log_pdf` with respect to latitude."""
     return (
         log_pdf(phi + eps, alpha, beta)
         - 2 * log_pdf(phi, alpha, beta)
@@ -27,6 +31,7 @@ def second_deriv_log_pdf(phi, alpha, beta, eps=1e-4):
 
 
 def get_mu(alpha, beta):
+    """Compute the mode of the latitude distribution."""
     term = (
         4 * alpha ** 2
         - 8 * alpha
@@ -39,6 +44,7 @@ def get_mu(alpha, beta):
 
 
 def get_sigma(alpha, beta):
+    """Compute the local standard deviation of the latitude distribution."""
     mu = get_mu(alpha, beta)
     term = (
         1
@@ -51,6 +57,7 @@ def get_sigma(alpha, beta):
 
 
 def get_alpha(mu, sigma):
+    """Compute the Beta shape parameter #1."""
     v = sigma ** 2
     c1 = np.cos(mu)
     c2 = np.cos(2 * mu)
@@ -60,6 +67,7 @@ def get_alpha(mu, sigma):
 
 
 def get_beta(mu, sigma):
+    """Compute the Beta shape parameter #2."""
     v = sigma ** 2
     c1 = np.cos(mu)
     c2 = np.cos(2 * mu)
@@ -70,7 +78,8 @@ def get_beta(mu, sigma):
 
 def test_mu(ntests=100):
     """
-    Show that the derivative of the PDF is zero at phi = mu.
+    Show that the derivative of the PDF is zero at phi = mu;
+    that is, we've found the peak (mode) of the distribution.
 
     """
     np.random.seed(0)

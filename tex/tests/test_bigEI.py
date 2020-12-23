@@ -69,7 +69,7 @@ def Qllpiip(l, lp, i, ip):
 
 
 def Pllpkkpmmp(l, lp, k, kp, m, mp, barEyp_llpkkp):
-    """Return the scalar [(P_I^{l,l'})_{k,k'}]{m,m'}."""
+    """Return the scalar [(P_I^{l,l'})_{k,k'}]_{m,m'}."""
     term1 = 0
     for mu in range(-l, l + 1):
         for mup in range(-lp, lp + 1):

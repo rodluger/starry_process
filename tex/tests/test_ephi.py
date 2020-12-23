@@ -38,6 +38,7 @@ def Ul(l):
 
 
 def clmmpi(l, m, mp, i):
+    """Return the scalar c^l_{m,mu,i}."""
     if (m - mp - i) % 2 == 0:
         return (
             (-1) ** ((2 * l - m + mp - i) / 2)
@@ -60,6 +61,7 @@ def clmmpi(l, m, mp, i):
 
 
 def qli(l, i, alpha, beta):
+    """Return the scalar (q_\phi^{l})_{i}."""
     if i % 2 == 0:
         return B(alpha, l + beta - i / 2) * hyp2f1(
             -i / 2, alpha, l + alpha + beta - i / 2, -1
@@ -69,6 +71,7 @@ def qli(l, i, alpha, beta):
 
 
 def plm(l, m, alpha, beta, elr):
+    """Return the scalar (p_\phi^{l})_{m}."""
     term1 = 0
     for mu in range(-l, l + 1):
         term2 = 0
@@ -79,6 +82,7 @@ def plm(l, m, alpha, beta, elr):
 
 
 def pl(l, alpha, beta, elr):
+    """Return the vector p_\phi^{l}."""
     p = np.zeros(2 * l + 1, dtype="complex128")
     for m in range(-l, l + 1):
         p[l + m] = plm(l, m, alpha, beta, elr)
@@ -86,11 +90,13 @@ def pl(l, alpha, beta, elr):
 
 
 def elphi(l, alpha, beta, elr):
+    """Return the vector e_\phi^{l}."""
     U = Ul(l)
     return np.linalg.inv(U) @ pl(l, alpha, beta, U @ elr)
 
 
 def ephi(alpha, beta, er):
+    """Return the first moment integral of the latitude."""
     lmax = int(np.sqrt(len(er)) - 1)
     e = []
     for l in range(lmax + 1):
@@ -101,7 +107,7 @@ def ephi(alpha, beta, er):
 
 
 def ephi_numerical(alpha, beta, er):
-
+    """Return the first moment integral of the latitude, computed numerically."""
     lmax = int(np.sqrt(len(er)) - 1)
     N = (lmax + 1) ** 2
     e = np.zeros(N)
@@ -123,6 +129,11 @@ def ephi_numerical(alpha, beta, er):
 
 
 def test_ephi(lmax=5, alpha=2.0, beta=5.0):
+    """
+    Show that our expression for the first moment
+    integral of the latitude distribution agrees
+    with a numerical estimate.
+    """
     np.random.seed(0)
     er = np.random.randn((lmax + 1) ** 2)
     assert np.allclose(ephi(alpha, beta, er), ephi_numerical(alpha, beta, er))

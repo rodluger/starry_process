@@ -2,6 +2,7 @@ import numpy as np
 
 
 def get_mu(a, b):
+    """Compute the mode of the latitude distribution."""
     alpha = np.exp(a * 5)
     beta = np.exp(np.log(0.5) + b * (5 - np.log(0.5)))
     term = (
@@ -16,6 +17,7 @@ def get_mu(a, b):
 
 
 def get_sigma(a, b):
+    """Compute the local standard deviation of the latitude distribution."""
     alpha = np.exp(a * 5)
     beta = np.exp(np.log(0.5) + b * (5 - np.log(0.5)))
     mu = get_mu(a, b)
@@ -31,7 +33,7 @@ def get_sigma(a, b):
 
 def get_J(a, b):
     """
-    Jacobian for the transformation (a, b) <--> (mu, sigma)
+    Compute the Jacobian for the transformation (a, b) <--> (mu, sigma).
 
     """
     alpha = np.exp(a * 5)
@@ -57,6 +59,11 @@ def get_J(a, b):
 
 
 def test_jacobian(ntests=100, eps=1e-6):
+    """
+    Numerically show that our expression for the Jacobian agrees
+    with its definition in terms of derivatives.
+    
+    """
     np.random.seed(0)
 
     for n in range(ntests):

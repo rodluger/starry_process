@@ -3,7 +3,11 @@ import numpy as np
 
 
 def test_beta_transform(alpha=3.0, beta=5.0, nsamples=10000000, tol=1e-2):
+    """
+    Numericaly show that our variable transformation from `cos(phi)` to `phi`
+    in the latitude PDF is correct.
 
+    """
     # Draw from the PDF in `cos(phi)`
     cosphi = Beta.rvs(alpha, beta, size=nsamples)
 

@@ -38,6 +38,7 @@ def Ul(l):
 
 
 def clmmpi(l, m, mp, i):
+    """Return the scalar c^l_{m,mu,i}."""
     if (m - mp - i) % 2 == 0:
         return (
             (-1) ** ((2 * l - m + mp - i) / 2)
@@ -60,6 +61,7 @@ def clmmpi(l, m, mp, i):
 
 
 def Qllpiip(l, lp, i, ip):
+    """Return the scalar (Q_\lambda^{l,l'})_{i,i'}."""
     if (i + ip) % 2 == 0:
         return (
             2 ** (l + lp)
@@ -73,6 +75,7 @@ def Qllpiip(l, lp, i, ip):
 
 
 def Pllpmmp(l, lp, m, mp, Ellpphi):
+    """Return the scalar (P_\lambda^{l,l'})_{m,m'}."""
     term1 = 0
     for mu in range(-l, l + 1):
         for mup in range(-lp, lp + 1):
@@ -89,6 +92,7 @@ def Pllpmmp(l, lp, m, mp, Ellpphi):
 
 
 def Pllp(l, lp, Ellpphi):
+    """Return the matrix P_\lambda^{l,l'}."""
     P = np.zeros((2 * l + 1, 2 * lp + 1), dtype="complex128")
     for m in range(-l, l + 1):
         for mp in range(-lp, lp + 1):
@@ -97,6 +101,7 @@ def Pllp(l, lp, Ellpphi):
 
 
 def Ellplam(l, lp, Ellpphi):
+    """Return the matrix E_\lambda^{l,l'}."""
     return (
         np.linalg.inv(Ul(l))
         @ Pllp(l, lp, Ul(l) @ Ellpphi @ Ul(lp).T)
@@ -105,6 +110,7 @@ def Ellplam(l, lp, Ellpphi):
 
 
 def bigElam(Ephi):
+    """Return the longitude expectation integral E_\lambda."""
     lmax = int(np.sqrt(Ephi.shape[0]) - 1)
     N = (lmax + 1) ** 2
     E = np.zeros((N, N), dtype="complex128")
@@ -120,6 +126,7 @@ def bigElam(Ephi):
 
 
 def bigElam_numerical(Ephi):
+    """Return the longitude expectation integral E_\lambda, computed numerically."""
     lmax = int(np.sqrt(Ephi.shape[0]) - 1)
     N = (lmax + 1) ** 2
     E = np.zeros((N, N))
@@ -128,13 +135,13 @@ def bigElam_numerical(Ephi):
 
             def func(lam):
                 Rl = R(lmax, 0, lam, 0)
-                Rs = np.zeros((N, N))
+                M = np.zeros((N, N))
                 for l in range(lmax + 1):
                     for lp in range(lmax + 1):
                         i = slice(l ** 2, (l + 1) ** 2)
                         j = slice(lp ** 2, (lp + 1) ** 2)
-                        Rs[i, j] = Rl[l] @ Ephi[i, j] @ Rl[lp].T
-                return Rs[n1, n2] / (2 * np.pi)
+                        M[i, j] = Rl[l] @ Ephi[i, j] @ Rl[lp].T
+                return M[n1, n2] / (2 * np.pi)
 
             E[n1, n2] = quad(func, -np.pi, np.pi)[0]
 
@@ -142,6 +149,11 @@ def bigElam_numerical(Ephi):
 
 
 def test_bigElam(lmax=2):
+    """
+    Show that our expression for the second moment
+    integral of the longitude distribution agrees
+    with a numerical estimate.
+    """
     np.random.seed(0)
     Ephi = np.random.randn((lmax + 1) ** 2, (lmax + 1) ** 2)
     Ephi = Ephi + Ephi.T
