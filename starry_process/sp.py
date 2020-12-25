@@ -156,7 +156,7 @@ class StarryProcess(object):
         """
         # Spherical harmonic degree of the process
         self._ydeg = int(kwargs.get("ydeg", defaults["ydeg"]))
-        assert self._ydeg > 5, "Degree of map must be > 5."
+        assert self._ydeg >= 5, "Degree of map must be >= 5."
         self._udeg = int(kwargs.get("udeg", defaults["udeg"]))
         assert self._udeg >= 0, "Degree of limb darkening must be >= 0."
         self._nylm = (self._ydeg + 1) ** 2
