@@ -36,6 +36,7 @@ for j in tqdm(range(nsamples), disable=bool(int(os.getenv("NOTQDM", "0")))):
     logC = np.log10([C(cov, l) for l in ls])
     ax.plot(ls, logC, color="C0", lw=1, alpha=0.25)
 
+ax.margins(0, None)
 ax.axvline(15, color="k", lw=1, ls="--")
 ax.set_xticks([1, 5, 10, 15, 20])
 ax.set_xlabel(r"$l_\mathrm{max}$", fontsize=18)
