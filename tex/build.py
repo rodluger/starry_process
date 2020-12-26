@@ -5,12 +5,10 @@ import json
 from tqdm import tqdm
 import pytest
 import sys
-import requests
-import tarfile
 import shutil
 
 
-DATA_URL = "https://users.flatironinstitute.org/rluger/public_www/starry_process/data.tar.gz"
+DATA_URL = "https://users.flatironinstitute.org/~rluger/public_www/starry_process/data.tar.gz"
 
 
 def generate_github_links():
@@ -55,17 +53,15 @@ def download_data(clobber=False):
     if clobber or not os.path.exists("figures/data"):
 
         # Download the tarball
-        response = requests.get(DATA_URL, stream=True)
-        if response.status_code == 200:
-            with open("figures/data.tar.gz", "wb") as f:
-                f.write(response.raw.read())
+        subprocess.check_output(["wget", DATA_URL])
 
         # Extract it
-        with tarfile.open("figures/data.tar.gz", "r:gz") as f:
-            f.extractall("figures/")
+        subprocess.check_output(
+            ["tar", "-xzvf", "data.tar.gz", "-C", "figures"]
+        )
 
         # Remove the tarball
-        os.remove("figures/data.tar.gz")
+        os.remove("data.tar.gz")
 
 
 def build_figures():
