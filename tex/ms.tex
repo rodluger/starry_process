@@ -823,17 +823,17 @@ the probability of drawing a GP sample whose mean is close to zero is
 extremely small, and we can make use of the approximate expression derived
 in \citet{Luger2020} for the covariance of a normalized Gaussian process:
 %
-\begin{align}
+\begin{proof}{test_normgp}
     \label{eq:SigmaTilde}
     \tilde{\pmb{\Sigma}}
-     & \approx
+    & \approx
     \frac{A}{\mu^2} \pmb{\Sigma} +
     z \Big(
     (A + B) \, (\mathbf{1} - \mathbf{q}) \, (\mathbf{1} - \mathbf{q})^\top
     - A \, \mathbf{q} \, \mathbf{q}^\top
     \Big)
     \quad,
-\end{align}
+\end{proof}
 %
 where
 %
@@ -4852,16 +4852,17 @@ over the inclination, so this approach is still valid.
 
 \begin{figure}[p!]
     \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_variance_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_variance_latitude.pdf}
         \oscaption{calibration_variance}{%
-            \xxx{
-                TODO: Same as Figures~\ref{fig:calibration_default_corner}
-                and \ref{fig:calibration_default_latitude}, but for stars
-                with variance in their number of spots,
-                $n \sim \mathcal{N}(20, 3^2)$,
-                the spot radii, $r \sim \mathcal{N}(15^\circ, {3^\circ}^2)$,
-                and the spot contrasts,
-                $c \sim \mathcal{N}(0.05, 0.01^2)$.
-            }
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but for stars
+            with variance in their number of spots,
+            $n \sim \mathcal{N}(20, 3^2)$,
+            the spot radii, $r \sim \mathcal{N}(15^\circ, {3^\circ}^2)$,
+            and the spot contrasts,
+            $c \sim \mathcal{N}(0.05, 0.01^2)$.
             \label{fig:calibration_variance}
         }
     \end{centering}
