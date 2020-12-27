@@ -97,6 +97,7 @@ defined on a $(K \times 1)$ time array $\mathbf{t}$
 is ``distributed as a GP'' means that we may write
 %
 \begin{align}
+    \label{eq:fnormal}
     \mathbbb{f} \sim \mathcal{N}\left( \pmb{\mu}, \pmb{\Sigma} \right)
     \quad,
 \end{align}
@@ -145,6 +146,7 @@ it is customary to restrict the problem by
 assuming that the process is \emph{stationary}, such that we may write
 %
 \begin{align}
+    \label{eq:kernel}
     \Sigma_{i,j} & = k(t_i, t_j)
     \nonumber                                    \\
                  & = k(\left| t_i - t_j \right|)
@@ -510,12 +512,20 @@ $P$, and $\mathbf{u}$):
     =
      & -\frac{1}{2}
     \mathbf{r}_m^\top\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
-    \mathbf{K}_m^{-1}\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
+    \big[
+        \pmb{\Sigma}\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
+        +
+        \mathbf{C}_m
+        \big]^{-1}
     \mathbf{r}_m\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
     \nonumber       \\[0.75em]
      & -
     \frac{1}{2}
-    \ln \Big| \mathbf{K}_m\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right) \Big|
+    \ln \Big|
+    \pmb{\Sigma}\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
+    +
+    \mathbf{C}_m
+    \Big|
     -
     \frac{K_m}{2}
     \ln \left( 2 \pi \right)
@@ -532,15 +542,7 @@ where
 %
 is the residual vector,
 %
-\begin{align}
-    \mathbf{K}_m\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
-     & \equiv
-    \pmb{\Sigma}\left(I, P, \mathbf{u}, \pmb{\theta}_\bullet\right)
-    +
-    \mathbf{C}_m
-\end{align}
-%
-is the sum of the GP covariance and the data covariance $\mathbf{C}_m$
+$\mathbf{C}_m$ is the data covariance
 (which in most cases is a diagonal matrix whose entries
 are the squared uncertainty corresponding to each data point in the light curve),
 %
@@ -650,7 +652,7 @@ where we define the inclination first moment integral
      & \equiv
     \int
     \pmb{\mathcal{A}}(\mathbb{I}, P, \mathbf{u}) \,
-    \mathbf{E} \Big[ \mathbbb{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
+    \mathrm{E} \Big[ \mathbbb{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
     p(\mathbb{I}) \, \mathrm{d}\mathbb{I}
 \end{align}
 %
@@ -662,7 +664,7 @@ and the inclination second moment integral
      & \equiv
     \int
     \pmb{\mathcal{A}}(\mathbb{I}, P, \mathbf{u}) \,
-    \mathbf{E} \Big[ \mathbbb{y} \, \mathbbb{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] \,
+    \mathrm{E} \Big[ \mathbbb{y} \, \mathbbb{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] \,
     \pmb{\mathcal{A}}^\top(\mathbb{I}, P, \mathbf{u})
     p(\mathbb{I}) \, \mathrm{d}\mathbb{I}
     \quad.
@@ -687,6 +689,7 @@ Finally, for future reference, it is useful to note that the mean of the GP
 is constant:
 %
 \begin{align}
+    \label{eq:scalar-mean}
     \pmb{\mu}(P, \mathbf{u}, \pmb{\theta}_\bullet)
      & =  (1 + e_I)\mathbf{1}
     \nonumber                 \\
@@ -838,6 +841,7 @@ in \citet{Luger2020} for the covariance of a normalized Gaussian process:
 where
 %
 \begin{align}
+    \label{eq:z}
     z & \equiv \frac{\left< \Sigma \right>}{\mu^2}
 \end{align}
 %
@@ -979,9 +983,9 @@ Those expressions in turn depend on the inclination expectation integrals
 $e_I$ (Appendix~\ref{sec:inc-mom1}) and $\mathbf{E}_I$
 (Appendix~\ref{sec:inc-mom2}). Those, in turn, depend on the first and
 second moments of the distribution of spherical harmonic coefficient vectors,
-$\mathbf{E}\left[ \mathbbb{y} \, \big| \, \pmb{\theta}_\bullet \right]$
+$\mathrm{E}\left[ \mathbbb{y} \, \big| \, \pmb{\theta}_\bullet \right]$
 and
-$\mathbf{E}\left[ \mathbbb{y} \, \mathbbb{y}^\top \, \big| \, \pmb{\theta}_\bullet \right]$,
+$\mathrm{E}\left[ \mathbbb{y} \, \mathbbb{y}^\top \, \big| \, \pmb{\theta}_\bullet \right]$,
 given by Equations~(\ref{eq:exp_y_sep}) and (\ref{eq:exp_yy_sep}), respectively.
 To compute those, we must evaluate four nested integrals
 (Equations~\ref{eq:e1}--\ref{eq:e4} for the first moment
@@ -1415,7 +1419,7 @@ We use Equation~(\ref{eq:log-like}) as our log likelihood
 term, adding the log of the absolute value of Equation~(\ref{eq:J}) to
 enforce a uniform prior on $\mu_\phi$ and $\sigma_\phi$. As we mentioned
 above, the fact that $P$, $\mathbf{u}$, and $\sigma_f$ are shared among
-all $M$ light curves means that $\mathbf{K}_m$ is the same for all
+all $M$ light curves means that $\pmb{\Sigma} + \mathbf{C}_m$ is the same for all
 of them, greatly speeding up the likelihood evaluation since we need
 only invert (or factorize) it a single time per sample. Our
 covariance is the covariance of the \emph{normalized} process,
@@ -1552,11 +1556,15 @@ $2{-}3\sigma$.
     \end{centering}
 \end{figure}
 
-\begin{figure}[p!]
+\begin{figure}[t!]
     \begin{centering}
         \includegraphics[width=0.85\linewidth]{figures/calibration_batch_default_1000_corner.png}
         \oscaption{calibration_batch_default_1000}{%
-        \xxx{TODO: Batch run with $M=1{,}000$.}
+        Same as Figure~\ref{fig:calibration_batch_default_corner}, but
+        showing the posterior distributions of 100 realizations of ensembles
+        with $M=1{,}000$ (instead of 50) light curves each. The constraints on
+        mosts of the parameters are much tighter, and the polar spot degeneracy
+        is gone.
         \label{fig:calibration_batch_default_1000}
         }
     \end{centering}
@@ -1581,7 +1589,8 @@ If our model is truly unbiased, in the limit of an infinite number of realizatio
 of the data, the expectation value of the distribution
 of samples across all ensembles (the mean of the black curves in the marginal
 posterior plots) should coincide with the true values (blue lines).
-This is the case with the spot size $r$ posterior: on average, the posterior
+This is approximately
+the case with the spot size $r$ posterior: on average, the posterior
 distributions are centered on the correct value.
 However, this is not the case for
 the spot latitude parameters $\mu_\phi$ and $\sigma_\phi$, for which our
@@ -1639,7 +1648,19 @@ individual stellar inclinations.
 
 Finally, Figure~\ref{fig:calibration_batch_default_1000} shows
 the same posterior distributions as in Figure~\ref{fig:calibration_batch_default_corner},
-but for 100 trials each with $M=1{,}000$ light curves. \xxx{TODO.}
+but for 100 trials each with $M=1{,}000$ light curves. In addition to the
+constraints on all parameters (except the number of spots) being much
+tighter, the larger amount of data breaks the polar spot degeneracy discussed
+above. Given enough light curves, the model is capable of differentiating between
+concentrated mid-latitude spots and high-latitude spots with large variance.
+Interestingly, the inferred radius appears to be biased high by a small amount
+in this run. This is likely due to the fact that our prescription for
+generating the spots (\S\ref{sec:calibration-setup}) is different from how
+we actually model these spots. While we generate the spots as compact
+circular disks expanded at high spherical harmonic degree, we model them
+as sigmoids (\S\ref{sec:size}) expanded at significantly lower spherical
+harmonic degree. Some minor disagreement is therefore to be expected in the inferred
+radii.
 
 \subsection{Other runs}
 In this section we test the robustness of our model by changing one or
@@ -1657,7 +1678,7 @@ Figure~\ref{fig:calibration_hilat} to a trial with high-latitude
 Figure~\ref{fig:calibration_equatorial} to a trial with equatorial
 ($\mu_\phi = 0^\circ$ and $\sigma_\phi = 5^\circ$) spots, and
 Figure~\ref{fig:calibration_isotropic} to a trial with isotropically-distributed
-spots ($\phi \sim \cos$).
+spots ($\bbphi \sim \cos$).
 The results are largely consistent with those of the default run: in all
 cases we infer the correct spot radius, the mean and standard deviation of
 the spot latitude, and the spot contrast within $2-3\sigma$; the number of
@@ -1735,7 +1756,9 @@ this uncertainty can be dramatically reduced with more data, as evident
 in Figure~\ref{fig:calibration_ld_1000}, which shows the results of the
 same run but with $M=1{,}000$ light curves in the ensemble. The constraints
 on $r$, $\mu_\phi$, $\sigma_\phi$, and $c$ are now much tighter and in
-good agreement with the truth. \xxx{TODO: Is the radius biased high? Discuss the
+good agreement with the truth.
+
+\xxx{TODO: Discuss the
     result of the batch run on 1000 limb-darkened light curves.}
 
 \xxx{TODO: Figure~\ref{fig:calibration_unnorm}, Figure~\ref{fig:calibration_hicontrast},
@@ -1753,6 +1776,7 @@ Let us define the \emph{posterior shrinkage} $R$ for a given
 spherical harmonic coefficient as
 %
 \begin{align}
+    \label{eq:shrinkage}
     R \equiv 1 - \lim\limits_{\sigma_0^2 \rightarrow \infty}
     \frac{\sigma^2}{\sigma_0^2}
     \quad,
@@ -1977,9 +2001,11 @@ information about the surfaces of these objects.
 %
 %
 
-\begin{table}[p!]
+\afterpage{
     \input{table}
-\end{table}
+    \vfill
+    \clearpage
+}
 
 %
 %
@@ -2099,6 +2125,10 @@ tensors. It should also not be confused with the notation used for the complex
 spherical harmonics, which also uses upper and lower indexing.
 %
 
+For reference, Table~\ref{tab:variables} lists the principal symbols,
+operators, and variables used throughout the paper, with links to
+the equations and/or section in which they are presented.
+
 \section{Computing the flux}
 \label{sec:starry}
 
@@ -2193,12 +2223,12 @@ For any polynomial limb darkening law of the form
 %
 \begin{align}
     \label{eq:ld:I}
-    \frac{I(\mu)}{I(\mu = 1)} = 1 - \sum_{n=1}^{n_\mathrm{max}} u_n(1 - \mu)^n
+    \frac{I(\upmu)}{I(\upmu = 1)} = 1 - \sum_{n=1}^{n_\mathrm{max}} u_n(1 - \upmu)^n
     \quad,
 \end{align}
 %
 where $I$ is the intensity on the stellar surface,
-$\mu = z = \sqrt{1 - x^2 - y^2}$ is the radial coordinate on the
+$\upmu = z = \sqrt{1 - x^2 - y^2}$ is the radial coordinate on the
 projected disk, and $u_n$ is a limb darkening coefficient, the effect of
 limb darkening on the stellar map can be expressed exactly as a linear
 operation on the spherical harmonic coefficient vector
@@ -2296,6 +2326,7 @@ As we are specifically interested in modeling the effect of star spots
 on stellar light curves, we let
 %
 \begin{align}
+    \label{eq:x}
     \mathbbb{x} =
     \left(
     \mathbb{n} \,\,\,\,
@@ -2567,7 +2598,7 @@ We wish to model the brightness evaluated at each $\vartheta_k$
 as a weighted combination of Legendre polynomials,
 %
 \begin{align}
-    \mathbf{B} \, \tilde{\mathbf{s}}(r) = \mathbf{b}(r)
+    \mathbf{B} \, \mathbf{s_0}(r) = \mathbf{b}(r)
 \end{align}
 %
 %
@@ -2581,19 +2612,20 @@ the weighted Legendre polynomials,
     \quad,
 \end{align}
 %
-and $\tilde{\mathbf{s}}(r)$ are the coefficients of the expansion.
+and $\mathbf{s_0}(r)$ are the coefficients of the expansion.
 These are related to the full vector of spherical harmonic coefficients describing
 the spot, $\mathbf{s}(r)$, by
 %
 \begin{align}
-    s^l_m(r) = \tilde{s}_l(r) \delta_{m,0}
+    s^l_m(r) = s^l_0 \delta_{m,0}
     \quad,
 \end{align}
 %
 or, in vector form,
 %
 \begin{align}
-    \mathbf{s}(r) = \pmb{\mathcal{I}} \, \tilde{\mathbf{s}}(r)
+    \label{eq:sofr}
+    \mathbf{s}(r) = \pmb{\mathcal{I}} \, \mathbf{s_0}(r)
 \end{align}
 %
 where $\pmb{\mathcal{I}}$ is a rectangular
@@ -2606,11 +2638,11 @@ identity-like matrix with components
 \end{align}
 %
 and $\delta$ is the Kronecker delta function.
-To find the coefficients $\tilde{\mathbf{s}}(r)$
+To find the coefficients $\mathbf{s_0}(r)$
 (and hence $\mathbf{s}(r)$), we solve the (linear) inverse problem,
 %
 \begin{align}
-    \tilde{\mathbf{s}}(r) & = \mathbf{B}^+ \, \mathbf{b}(r)
+    \mathbf{s_0}(r) & = \mathbf{B}^+ \, \mathbf{b}(r)
 \end{align}
 %
 %
@@ -2626,17 +2658,17 @@ parameter $\epsilon$, $\mathbf{I}$ is the identity matrix, and
 $\mathbf{S}$ is a diagonal smoothing matrix with coefficients
 %
 \begin{align}
-    S_{k,l} = \exp\left[-\frac{l(l + 1)}{2\sigma^2}\right] \delta_{k,l}
+    S_{k,l} = \exp\left[-\frac{l(l + 1)}{2\xi^2}\right] \delta_{k,l}
 \end{align}
 %
-for smoothing strength $\sigma$. For $\epsilon \rightarrow 0$ and
-$\sigma \rightarrow \infty$,
+for smoothing strength $\xi$. For $\epsilon \rightarrow 0$ and
+$\xi \rightarrow \infty$,
 $\mathbf{B}^+$ is the exact pseudo-inverse of
 $\mathbf{B}$. However,
 $\epsilon > 0$ is chosen for improved numerical stability and
-$\sigma > 0$ is chosen to mitigate the effect of ringing in the solution.
+$\xi > 0$ is chosen to mitigate the effect of ringing in the solution.
 In practice, we obtain good results with $\epsilon \approx 10^{-9}$
-and $\sigma \approx 15$.
+and $\xi \approx 15$.
 
 \begin{figure}[t!]
     \begin{centering}
@@ -2660,7 +2692,7 @@ within the spots is close to $-1$ and the half-widths at half-minimum are
 equal to the spot radii, as expected.
 The effect of ringing due to the truncated spherical harmonic expansion is
 evident, although it is strongly suppressed compared to an expansion
-without the smoothing term (i.e., $\sigma = \infty$). However, for
+without the smoothing term (i.e., $\xi = \infty$). However, for
 $r \lesssim 10^\circ$, an expansion to $l_{\mathrm{max}} = \LMAX$ is
 insufficient to correctly model the spot, as can be seen from the
 $r = 5^\circ$ profile (dashed curve). Expansions to higher spherical harmonic
@@ -2688,7 +2720,7 @@ spot radius, characterized by a mean radius $r$ and a half-width $\Delta r$:
 where the hyperparameters of the distribution are
 %
 \begin{align}
-    \pmb{\theta}_\mathbb{r} = \left(
+    \pmb{\theta}_r = \left(
     r \, \, \, \,
     \Delta r \right)^\top
     \quad.
@@ -2732,7 +2764,7 @@ The first moment of the radius distribution is (Equation~\ref{eq:e1})
 Using the equations from the previous section, its components may be written
 %
 \begin{proof}{test_er}
-    (e_\mathbb{r})^l_m
+    (e_r)^l_m
     & =
     \frac{\delta_{m,0}}{2\Delta r}
     \int_{r - \Delta r}^{r+ \Delta r}
@@ -4036,22 +4068,22 @@ integrals in Equations (\ref{eq:e4}) and (\ref{eq:E4}) to write
      & \equiv
     \mathbf{e}_\lambda \,
     \int
-    \xi \,
-    p(\xi \, \big| \, \pmb{\theta}_{c}) \,
-    \mathrm{d}\xi
+    \mathbb{c} \,
+    p(\mathbb{c} \, \big| \, \pmb{\theta}_{c}) \,
+    \mathrm{d}\mathbb{c}
     \\
     \mathbf{E}_c
      & \equiv
     \mathbf{E}_\lambda \,
     \int
-    \xi^2 \,
-    p(\xi \, \big| \, \pmb{\theta}_\xi)
-    \mathrm{d}\xi
+    \mathbb{c}^2 \,
+    p(\mathbb{c} \, \big| \, \pmb{\theta}_c)
+    \mathrm{d}\mathbb{c}
     \quad.
 \end{align}
 %
 These integrals may be computed analytically for any choice of
-probability density function $p(\xi \, \big| \, \pmb{\theta}_\xi)$
+probability density function $p(\mathbb{c} \, \big| \, \pmb{\theta}_c)$
 with closed-form moments.
 %
 However, in practice, it is quite difficult to constrain the
@@ -4065,13 +4097,13 @@ we therefore choose the simplest possible probability distribution,
 a delta function:
 %
 \begin{align}
-    p(\xi \, \big| \, \pmb{\theta}_{c}) = \delta(\xi - c)
+    p(\mathbb{c} \, \big| \, \pmb{\theta}_{c}) = \delta(\mathbb{c} - c)
 \end{align}
 %
 characterized by a single parameter, the contrast of the spots:
 %
 \begin{align}
-    \pmb{\theta}_\xi = \left( \, c \, \right)^\top
+    \pmb{\theta}_c = \left( \, c \, \right)^\top
     \quad.
 \end{align}
 %
