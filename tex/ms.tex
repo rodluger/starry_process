@@ -284,9 +284,43 @@ GPs, with the added benefit of direct physical interpretability of its
 hyperparameters.
 %
 
-\xxx{TODO: Brief paper outline here.}
+The paper is organized as follows:
+we present an overview of the derivation of the GP in \S\ref{sec:gp}
+and a suite of tests on synthetic data to show the model is calibrated
+in \S\ref{sec:calibration}. We discuss our GP from an information
+theoretical perspective in \S\ref{sec:discussion}, focusing on
+the various degeneracies our model can and cannot break when applied
+to ensembles of light curves. In \S\ref{sec:implementation} we present
+our implementation of the algorithm in the open-source \starryprocess package
+alongside speed and stability tests, and in \S\ref{sec:conclusions} we
+summarize our results. Most of the math behind the algorithm
+is presented in the Appendix, followed by a series of supplementary figures
+from \S\ref{sec:calibration}. Appendix~\ref{sec:notation} discusses the
+notation we adopt throughout the paper and Table~\ref{tab:variables}
+lists the main symbols and variables, with links to their definitions.
 
-\xxx{TODO: Discuss our open-source figures and equation ``unit tests.''}
+Finally, we note that all of the figures in this paper were auto-generated
+using the Azure Pipelines continuous integration (CI) service, which
+ensures they are up to date with the latest version of the
+\starryprocess code. In particular, icons next to each of the figures \codeicon \,
+link to the exact script used to generate them to ensure the reproducibility
+of our results. In this paper we also introduce the concept of equation
+``unit tests'': \textsf{pytest}-compatible test scripts associated
+with the principal equations that pass (fail) if the equation is correct (wrong),
+in which case a clickable \testpassicon \, (\testfailicon) is shown next to the equation
+label.
+In most cases, the validity of an equation is gauged by comparison to
+a numerical solution. Like the figure scripts, the equation unit tests are
+run on Azure Pipelines upon every commit of the code.%
+\footnote{
+    These unit tests are certainly not foolproof: in particular, there is
+    no guarantee against a mismatch in the \LaTeX \, version of an equation
+    and its \Python implementation (e.g., due to an uncaught typo). However, they
+    \emph{do} ensure that the linked \Python implementation is correct to
+    within the accuracy of the numerical solution, providing readers with a
+    valid implementation of the equation for purposes of reproducibility.
+}
+
 
 \section{A Gaussian Process for Star Spots}
 \label{sec:main}
@@ -1388,8 +1422,8 @@ parameters in the spot parameter vector $\pmb{\theta}_\bullet$
 (Equation~\ref{eq:thetaspot}). We experimented with three different methods
 for doing posterior inference on our synthetic datasets: No-U Turn Sampling,
 a variant of Hamiltonian Monte Carlo
-\citep[NUTS;][]{?}, automatic differentiation
-variational inference \citep[ADVI;][]{?}, and nested sampling \citep{Skilling2004,Skilling2006}.
+\citep[NUTS;][]{Hoffman2011}, automatic differentiation
+variational inference \citep[ADVI;][]{Kucukelbir2016,Blei2016}, and nested sampling \citep{Skilling2004,Skilling2006}.
 We obtained the best performance using the nested sampling algorithm
 implemented in the \textsf{dynesty} package \citep{Speagle2020}, so that is what
 we will use below.
@@ -1451,7 +1485,7 @@ within a couple hours on a typical machine for most of the trials we perform.
             (radius $r$ in degrees, latitude mode $\mu_\phi$ and standard deviation $\sigma_\phi$ in degrees,
             fractional contrast $c$, and number of spots $n$)
             for the default run (Table~\ref{tab:synthetic} and Figure~\ref{fig:calibration_default_data}).
-            The axes span the entire prior volume, and the blue lines and markers
+            The axes span the entire prior volume, and the orange lines and markers
             indicate the true (input) values.
             \label{fig:calibration_default_corner}
         }
@@ -1588,7 +1622,7 @@ levels in the joint posterior plots.
 If our model is truly unbiased, in the limit of an infinite number of realizations
 of the data, the expectation value of the distribution
 of samples across all ensembles (the mean of the black curves in the marginal
-posterior plots) should coincide with the true values (blue lines).
+posterior plots) should coincide with the true values (orange lines).
 This is approximately
 the case with the spot size $r$ posterior: on average, the posterior
 distributions are centered on the correct value.
@@ -1935,7 +1969,7 @@ information about the surfaces of these objects.
 \xxx{TODO: We might want a shrinkage prior on sigma.}
 
 \subsection{Inferring inclinations}
-\xxx{TODO: Works great. But inclination distribution is bimodal!}
+\xxx{TODO: Works great. Note that inclination distribution is sometimes bimodal!}
 
 
 \section{Implementation}
@@ -1978,6 +2012,7 @@ information about the surfaces of these objects.
 \end{figure}
 
 \section{Conclusions}
+\label{sec:conclusions}
 \xxx{TODO: Summarize. Discuss future work, including differential rotation
     and spot evolution.}
 

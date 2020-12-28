@@ -2,6 +2,7 @@ from .wigner import R
 from .integrals import WignerIntegral
 from .ops import LatitudeIntegralOp, CheckBoundsOp
 from .defaults import defaults
+from .math import is_tensor
 import theano.tensor as tt
 from theano.ifelse import ifelse
 from scipy.stats import beta as Beta
@@ -22,8 +23,8 @@ def gauss2beta(
     closest to the Gaussian with mean ``mu`` and standard deviation ``sigma``.
 
     Args:
-        mu (float or ndarray): The mean latitude in degrees.
-        sigma (float or ndarray): The latitude standard deviation in degrees.
+        mu (scalar or vector): The mean latitude in degrees.
+        sigma (scalar or vector): The latitude standard deviation in degrees.
         log_alpha_max (float, optional): The maximum value of ``log(alpha)``. 
             Default is %%defaults["log_alpha_max"]%%.
         log_beta_max (float, optional): The maximum value of ``log(beta)``. 
@@ -40,28 +41,36 @@ def gauss2beta(
 
     .. note:: 
         
-        This is a utility function that accepts and returns numeric values
-        (not tensors).
+        This is a utility function that can accept and return
+        either numeric values or tensors. If both `mu` and `sigma`
+        are numeric quantities, the result will be a numeric
+        quantity; otherwise it will be a tensor.
 
     """
-    is_vector = hasattr(mu, "__len__")
-    if is_vector:
-        assert hasattr(sigma, "__len__")
-        assert len(mu) == len(sigma)
+    if is_tensor(mu, sigma):
+        math = tt
+        is_vector = True
+        m = mu * np.pi / 180
+        v = (sigma * np.pi / 180) ** 2
     else:
-        assert not hasattr(sigma, "__len__")
-    angle_fac = np.pi / 180
-    m = np.atleast_1d(mu) * angle_fac
-    v = (np.atleast_1d(sigma) * angle_fac) ** 2
-    c1 = np.cos(m)
-    c2 = np.cos(2 * m)
-    c3 = np.cos(3 * m)
-    term = 1.0 / (16 * v * np.cos(0.5 * m) ** 4)
+        math = np
+        is_vector = hasattr(mu, "__len__")
+        if is_vector:
+            assert hasattr(sigma, "__len__")
+            assert len(mu) == len(sigma)
+        else:
+            assert not hasattr(sigma, "__len__")
+        m = np.atleast_1d(mu) * np.pi / 180
+        v = (np.atleast_1d(sigma) * np.pi / 180) ** 2
+    c1 = math.cos(m)
+    c2 = math.cos(2 * m)
+    c3 = math.cos(3 * m)
+    term = 1.0 / (16 * v * math.cos(0.5 * m) ** 4)
     alpha = (2 + 4 * v + (3 + 8 * v) * c1 + 2 * c2 + c3) * term
     beta = (c1 + 2 * v * (3 + c2) - c3) * term
-    a = np.log(alpha) / log_alpha_max
-    b = np.maximum(
-        0.0, (np.log(beta) - np.log(0.5)) / (log_beta_max - np.log(0.5))
+    a = math.log(alpha) / log_alpha_max
+    b = math.maximum(
+        0.0, (math.log(beta) - math.log(0.5)) / (log_beta_max - math.log(0.5))
     )
     if is_vector:
         return a, b
@@ -81,8 +90,8 @@ def beta2gauss(
     with shape parameters ``a`` and ``b``.
 
     Args:
-        a (float or ndarray): Shape parameter.
-        b (float or ndarray): Shape parameter.
+        a (scalar or vector): Shape parameter.
+        b (scalar or vector): Shape parameter.
         log_alpha_max (float, optional): The maximum value of ``log(alpha)``. 
             Default is %%defaults["log_alpha_max"]%%.
         log_beta_max (float, optional): The maximum value of ``log(beta)``. 
@@ -98,21 +107,29 @@ def beta2gauss(
 
     .. note:: 
         
-        This is a utility function that accepts and returns numeric values
-        (not tensors).
+        This is a utility function that can accept and return
+        either numeric values or tensors. If both `a` and `b`
+        are numeric quantities, the result will be a numeric
+        quantity; otherwise it will be a tensor.
 
     """
-    is_vector = hasattr(a, "__len__")
-    if is_vector:
-        assert hasattr(b, "__len__")
-        assert len(a) == len(b)
+    if is_tensor(a, b):
+        math = tt
+        is_vector = True
+        alpha = tt.exp(a * log_alpha_max)
+        beta = tt.exp(np.log(0.5) + b * (log_beta_max - np.log(0.5)))
     else:
-        assert not hasattr(b, "__len__")
-    angle_fac = np.pi / 180
-    alpha = np.atleast_1d(np.exp(a * log_alpha_max))
-    beta = np.atleast_1d(
-        np.exp(np.log(0.5) + b * (log_beta_max - np.log(0.5)))
-    )
+        math = np
+        is_vector = hasattr(a, "__len__")
+        if is_vector:
+            assert hasattr(b, "__len__")
+            assert len(a) == len(b)
+        else:
+            assert not hasattr(b, "__len__")
+        alpha = np.atleast_1d(np.exp(a * log_alpha_max))
+        beta = np.atleast_1d(
+            np.exp(np.log(0.5) + b * (log_beta_max - np.log(0.5)))
+        )
     term = (
         4 * alpha ** 2
         - 8 * alpha
@@ -121,21 +138,21 @@ def beta2gauss(
         + beta ** 2
         + 5
     )
-    mu = 2 * np.arctan(np.sqrt(2 * alpha + beta - 2 - np.sqrt(term)))
+    mu = 2 * math.arctan(math.sqrt(2 * alpha + beta - 2 - math.sqrt(term)))
     term = (
         1
         - alpha
         + beta
-        + (beta - 1) * np.cos(mu)
-        + (alpha - 1) / np.cos(mu) ** 2
+        + (beta - 1) * math.cos(mu)
+        + (alpha - 1) / math.cos(mu) ** 2
     )
-    sigma = np.sin(mu) / np.sqrt(term)
-    mu[(alpha <= 1) | (beta <= 0.5)] = np.nan
-    sigma[(alpha <= 1) | (beta <= 0.5)] = np.nan
+    sigma = math.sin(mu) / math.sqrt(term)
+    mu[(alpha <= 1) | (beta <= 0.5)] = math.nan
+    sigma[(alpha <= 1) | (beta <= 0.5)] = math.nan
     if is_vector:
-        return mu / angle_fac, sigma / angle_fac
+        return mu / (np.pi / 180), sigma / (np.pi / 180)
     else:
-        return mu[0] / angle_fac, sigma[0] / angle_fac
+        return mu[0] / (np.pi / 180), sigma[0] / (np.pi / 180)
 
 
 class LatitudeIntegral(WignerIntegral):

@@ -387,6 +387,7 @@ def plot_corner(results, transform_beta=False, **kwargs):
         smooth1d=2.0,
         bins=100,
         hist_kwargs=dict(lw=1),
+        truth_color="#ff7f0e",
         **plot_kwargs
     )
 
@@ -624,7 +625,7 @@ def plot_batch(path):
             hist_kwargs=dict(alpha=0.5 * batch_alpha),
             range=ranges,
             truths=truths_,
-            truth_color="#4682b4",
+            truth_color="#ff7f0e",
         )
 
         # Running list

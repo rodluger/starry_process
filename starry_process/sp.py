@@ -1,5 +1,5 @@
 from .size import SizeIntegral
-from .latitude import LatitudeIntegral
+from .latitude import LatitudeIntegral, gauss2beta
 from .longitude import LongitudeIntegral
 from .contrast import ContrastIntegral
 from .flux import FluxIntegral
@@ -19,8 +19,6 @@ class StarryProcess(object):
         self,
         r=defaults["r"],
         d=defaults["d"],
-        a=defaults["a"],
-        b=defaults["b"],
         c=defaults["c"],
         n=defaults["n"],
         u=defaults["u"],
@@ -51,12 +49,22 @@ class StarryProcess(object):
                 distribution. This is equal to the log of the ``alpha``
                 parameter characterizing the Beta distribution in the
                 cosine of the latitude, scaled to the range ``[0, 1]``.
-                Default is %%defaults["a"]%%.
+                Default is %%defaults["a"]%%. Cannot be set if ``mu``
+                and ``sigma`` are provided.
             b (scalar, optional): Shape parameter of the spot latitude
                 distribution. This is equal to the log of the ``beta``
                 parameter characterizing the Beta distribution in the
                 cosine of the latitude, scaled to the range ``[0, 1]``.
-                Default is %%defaults["b"]%%.
+                Default is %%defaults["b"]%%. Cannot be set if ``mu``
+                and ``sigma`` are provided.
+            mu (scalar, optional): Mode of the spot latitude
+                distribution in degrees. Default is ``None``. If this parameter
+                is set, ``sigma`` must also be set, and ``a`` and
+                ``b`` cannot be provided.
+            sigma (scalar, optional): Standard deviation of the spot latitude
+                distribution in degrees. Default is ``None``. If this parameter
+                is set, ``mu`` must also be set, and ``a`` and
+                ``b`` cannot be provided.
             c (scalar, optional): The mean spot contrast as a fraction of
                 the photospheric intensity. Default is %%defaults["c"]%%.
             n (scalar, optional): The total number of spots. Note that since a
@@ -154,6 +162,26 @@ class StarryProcess(object):
                 above degree ``15``, which become particularly unstable.
                 Default is %%defaults["epsy15"]%%.
         """
+        # Latitude hyperparameters
+        mu = kwargs.pop("mu", None)
+        sigma = kwargs.pop("sigma", None)
+        if mu is None and sigma is None:
+            # User did not provide either `mu` or `sigma`
+            # User may have provided `a` and/or `b`
+            a = kwargs.pop("a", defaults["a"])
+            b = kwargs.pop("b", defaults["b"])
+        elif (
+            kwargs.get("a", None) is None and kwargs.get("b", None) is None
+        ) and (mu is not None and sigma is not None):
+            # User did not provide `a` and did not provide `b`
+            # User provided `mu` and `sigma`
+            a, b = gauss2beta(mu, sigma)
+        else:
+            # Invalid or ambiguous combination
+            raise ValueError(
+                "Must provide either `a` and `b` *or* `mu` and `sigma`."
+            )
+
         # Spherical harmonic degree of the process
         self._ydeg = int(kwargs.get("ydeg", defaults["ydeg"]))
         assert self._ydeg >= 5, "Degree of map must be >= 5."
