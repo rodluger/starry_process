@@ -129,7 +129,7 @@ given the data (i.e., the ``posterior'').
 Thanks to modern computer architectures, linear algebra packages, and
 GP algorithms,
 evaluating the GP likelihood may typically be done in a fraction of a second
-for a reasonably-sized dataset (i.e., $K \lesssim 10^5$ datapoints).
+for a reasonably-sized dataset (i.e., $K \lesssim 10^4$ datapoints).
 
 Another big advantage of GPs is their flexibility. GPs are often dubbed
 a class of ``non-parametric'' models, given that nowhere in the specification
@@ -295,7 +295,7 @@ our implementation of the algorithm in the open-source \starryprocess package
 alongside speed and stability tests, and in \S\ref{sec:conclusions} we
 summarize our results. Most of the math behind the algorithm
 is presented in the Appendix, followed by a series of supplementary figures
-from \S\ref{sec:calibration}. Appendix~\ref{sec:notation} discusses the
+(discussed in \S\ref{sec:calibration}). Appendix~\ref{sec:notation} discusses the
 notation we adopt throughout the paper and Table~\ref{tab:variables}
 lists the main symbols and variables, with links to their definitions.
 
@@ -337,7 +337,9 @@ a discussion of the notation and conventions we adopt.
         \includegraphics[width=\linewidth]{figures/ylms.pdf}
         \oscaption{ylms}{%
             The real spherical harmonics in the polar frame up to
-            $l = 5$. Rows correspond to the degree $l$ and columns to
+            $l = 5$, where dark colors correspond to negative intensity
+            and bright colors to positive intensity.
+            Rows correspond to the degree $l$ and columns to
             the order $m$. The set of all spherical harmonics forms a
             complete, orthogonal basis on the sphere.
             \label{fig:ylms}
@@ -507,8 +509,8 @@ our default representation of the GP hyperparameters is
 \end{align}
 %
 where $n$ is the number of star spots, $c$ is their contrast,
-$\mu_\phi$ and $\sigma_\phi$ are parameters describing the
-distribution of the spots in latitude, and $r$ is the radius
+$\mu_\phi$ and $\sigma_\phi$ are the mode and standard deviation
+of the spot latitude distribution, respectively, and $r$ is the radius
 of the spots.
 %
 The PDFs for the spot radius, the spot contrast, and the number
@@ -1422,7 +1424,7 @@ parameters in the spot parameter vector $\pmb{\theta}_\bullet$
 (Equation~\ref{eq:thetaspot}). We experimented with three different methods
 for doing posterior inference on our synthetic datasets: No-U Turn Sampling,
 a variant of Hamiltonian Monte Carlo
-\citep[NUTS;][]{Hoffman2011}, automatic differentiation
+\citep[NUTS;][]{Duane1987,Hoffman2011}, automatic differentiation
 variational inference \citep[ADVI;][]{Kucukelbir2016,Blei2016}, and nested sampling \citep{Skilling2004,Skilling2006}.
 We obtained the best performance using the nested sampling algorithm
 implemented in the \textsf{dynesty} package \citep{Speagle2020}, so that is what
@@ -1699,7 +1701,7 @@ radii.
 \subsection{Other runs}
 In this section we test the robustness of our model by changing one or
 more of the fiducial values listed in Table~\ref{tab:synthetic}.
-Each of the runs below correspond to a single realization of the ensemble
+Each of the runs below corresponds to a single realization of the ensemble
 dataset, and the corresponding figures are presented at the end of the Appendix.
 
 Figures~\ref{fig:calibration_midlat}---\ref{fig:calibration_isotropic}
@@ -1790,23 +1792,131 @@ this uncertainty can be dramatically reduced with more data, as evident
 in Figure~\ref{fig:calibration_ld_1000}, which shows the results of the
 same run but with $M=1{,}000$ light curves in the ensemble. The constraints
 on $r$, $\mu_\phi$, $\sigma_\phi$, and $c$ are now much tighter and in
-good agreement with the truth.
+good agreement with the truth. Finally, Figure~\ref{fig:calibration_ld_500_no_ld}
+shows the results of inference on limb-darkened light curves under the
+(wrong) assumption that limb darkening is not present ($\mathbf{u} = \mathbf{0}$).
+Neglecting the effect of limb darkening leads to significant biases in the spot radius
+and latitude parameters. While the model still favors mid-latitude spots
+(at $\sim 45^\circ$ instead of $30^\circ$), the constraints are deceptively tight
+and discrepant by many standard deviations. We discuss these points in
+more detail in \S\ref{sec:limbdark}.
 
-\xxx{TODO: Discuss the
-    result of the batch run on 1000 limb-darkened light curves.}
+The runs so far correspond to stars with many ($n = 20$) spots, for which the
+resulting light curves are smooth due to the fact that many spots are in
+view at any given time. Figures~\ref{fig:calibration_hicontrast} and
+\ref{fig:calibration_bigspots} show what happens when the model is applied to
+stars with $n=2$ and $n=1$ spots, respectively. Despite large portions of the
+light curves being flat (and therefore extremely non-stationary)
+in these scenarios, the GP does surprisingly well, recovering the radii
+and latitude parameters within $2-3\sigma$ in both cases.
+Note that in order to preserve the same signal-to-noise ratio relative to
+the other runs, the spots in Figure~\ref{fig:calibration_hicontrast}
+have much higher contrast ($c = 0.5$). Even though the contrast is degenerate
+with the number of spots (which is unobservable), the $c$ posterior
+has a much heavier tail than in the other runs, showing that the model is
+in fact sensitive to the spot contrast to some degree. In
+Figure~\ref{fig:calibration_bigspots}, we compensate for the smaller number
+of spots by increasing the spot radius to $r = 45^\circ \pm 5^\circ$ instead,
+showing that the model can accurately model large spots, even in the
+presence of some (unmodelled) scatter in their sizes.
 
-\xxx{TODO: Figure~\ref{fig:calibration_unnorm}, Figure~\ref{fig:calibration_hicontrast},
-    Figure~\ref{fig:calibration_bigspots}, Figure~\ref{fig:calibration_variance}.}
+In Figure~\ref{fig:calibration_variance} we add variance to all the spot
+properties when generating the light curves: we add $n = 20 \pm 3$ spots
+to each star with radii $r = 15^\circ \pm 3^\circ$, contrasts
+$c = 0.05 \pm 0.01$, and at latitudes $\phi = 30^\circ \pm 5^\circ$.
+As before, we only explicitly account for the latitude variance in our
+model. We correctly infer the latitude parameters and the contrast, but
+our radii appear to be biased high. This is likely due to the fact that
+larger spots have a bigger impact on the signal, so our inferred radius
+is a weighted average of all spot radii. In Appendix~\ref{sec:size} we
+derive an expression for the moment integrals of the spot size distribution
+assuming a uniform distribution between $r - \Delta r$ and $r + \Delta r$
+(instead of a delta function at $r$), which can be used to compute the
+GP if one wishes to explicitly account for scatter in the spot sizes.
+We find that repeating the trial shown in Figure~\ref{fig:calibration_variance}
+while explicitly sampling over the distribution in $\Delta r$ shifts the
+posterior mass to lower radii, mitigating the bias described above.
+
+Our final trial is shown in Figure~\ref{fig:calibration_unnorm}, in which
+we assume we know the true baseline of each light curve. That is, we
+assume that we can measure all light curves in units of the flux we would
+measure if the stars had no spots on them, and we \emph{do not}
+normalize them (see \S\ref{sec:baseline}). In practice, this would require
+knowledge of the brightness (or temperature) of the unspotted
+photosphere, which is not an observable in single-band relative photometry.
+This value can be probed, however, in multi-band photometry
+(see \S\ref{sec:breaking_baseline_degeneracy}), for which this trial is
+extremely relevant. We again recover the radii and latitude parameters
+to within $2-3\sigma$, but most importantly, we also infer the correct
+spot contrast \emph{and} the correct number of spots with fairly high
+precision. In particular, knowledge of the baseline breaks the $c-N$ degeneracy.
+Photometric measurements in multiple bands (even just two!)
+are therefore extremely useful when inferring spot properties.
+We discuss this point at length in \S\ref{sec:breaking_baseline_degeneracy}.
 
 \section{Discussion}
 \label{sec:discussion}
 
+
+\subsection{The null space}
+\label{sec:nullspace}
+
+In general, inferring the properties of a stellar surface from its light curve is not
+only difficult, but \emph{formally impossible}. To understand why, consider
+an expansion of the stellar surface intensity in the spherical
+harmonic basis (see Figure~\ref{fig:ylms}). Assuming (for the moment) that the
+star rotates about an axis that points up along the page, the observed
+light curve may be expressed as a weighted sum of the disk-integrated intensity
+of each of the spherical harmonics as they rotate about that same axis.
+However, not all spherical harmonics will contribute to the full light curve,
+as many (in fact, most) of the spherical harmonics are perfectly antisymmetric
+about the equator. This is the case for
+the $l = 1$, $m = -1$ harmonic, which integrates to zero regardless of
+the phase at which it is viewed. The same is true, in fact, for all other harmonics
+of order $m = -1$ and (perhaps less obviously) for all harmonics with odd
+$l = 3, 5, 7, ...$ Furthermore, there exist many linear combinations of
+spherical harmonics that similarly integrate to zero at all rotational
+phases. Together, these modes constitute the \emph{null space} of the problem:
+the set of modes on the surface that do not contribute to the observed
+light curve and therefore cannot be probed from photometry.
+As we will see below, the vast majority of the surface modes lie at least in part in the null
+space.
+
+But what if the star rotates about a different axis? A useful property of
+the spherical harmonics is that rotation about any axis can only change the
+order $m$ of the harmonic, while keeping the degree $l$ fixed: in other
+words, rotation simply mixes the spherical harmonics along rows in
+Figure~\ref{fig:ylms}. Therefore, if we rotate the spherical harmonics
+in the figure about a different axis, we are still subject to just as
+many degeneracies (i.e., the size of the null space is unchanged),
+but the particular linear combination of modes in the null space will
+be different.
+
+This all seems quite hopeless, and for analyses of individual stars,
+it pretty much is. Unless extremely strong (and likely incorrect) priors are employed
+(such as assuming the stellar surface consists of exactly two perfectly
+circular, uniform contrast spots), we simply cannot learn much about
+the surface of an individual star from photometry.
+
+However, we can use the dependence of the null space on inclination to our
+advantage. If we could observe a star from many different vantage points,
+we would be able to break many of the degeneracies at play, since we
+would get different constraints on the amplitude of each mode when viewed
+at different inclinations. This, of course, is not possible (at least not
+yet!). But what we \emph{can} do is observe many similar stars, each viewed
+at a different (random) inclination, and attempt to learn something about
+the properties of the ensemble of stars as a whole. This is exactly
+what we did in \S\ref{sec:calibration}, where we showed that this kind
+of ensemble analyses is not only possible but can also be extremely
+constraining of the spot properties at the population level. In the
+following section, we explore the role of ensemble analyses in breaking
+the degeneracies of the mapping problem in more detail.
+
 \subsection{Why ensemble analyses work}
 \label{sec:ensemble}
 
-\xxx{TODO: A gentler introduction before diving in.}
-
-Let us define the \emph{posterior shrinkage} $R$ for a given
+To quantify the power of ensemble analyses,
+let us define the \emph{posterior shrinkage} $R$ for a given
 spherical harmonic coefficient as
 %
 \begin{align}
@@ -1824,7 +1934,8 @@ and is independent of what the stellar surface actually looks like.
 If, at infinite SNR and with a completely uninformative prior,
 a particular mode can be learned exactly from a dataset, the posterior
 shrinkage is defined to be unity. Conversely, if the data is completely
-unconstraining, $R$ will tend to zero.
+unconstraining of that mode (i.e., it is entirely in the null space),
+$R$ will tend to zero.
 
 \begin{figure}[t!]
     \begin{centering}
@@ -1863,7 +1974,8 @@ increases, the shrinkage decreases dramatically: at $l = 14$, corresponding
 to features on scales of roughly $15^\circ$, the light curve
 can only tell us about $\sim 10\%$ of the total information about what the
 surface looks like. As $l$ increases further, $R$ tends to zero.
-Another important feature of the shrinkage is that it is exactly zero for
+Another important feature of the shrinkage, which we hinted at above,
+is that it is exactly zero for
 all odd-degree modes above $l = 1$. This is a well-known fact: all odd spherical
 harmonics other than the dipole are in the null space \emph{regardless of
     inclination} \citep[e.g.,][]{Luger2019}. In other words, these spherical
@@ -1888,9 +2000,9 @@ Note that since we are in the limit of infinite SNR, the fact that we have
 three times the data as we did in the previous scenario is irrelevant: the
 increase in the shrinkage is instead due to the fact that our observations
 from different vantage points broke some degeneracies in the problem.
-This is a consequence of the fact that the null space (for the even modes)
-is a strong function of the inclination: modes that are invisbile
-at one inclination can actually project into the flux at a different inclination.
+This is a consequence of the fact we mentioned in the previous section:
+the null space (for the even modes)
+is a strong function of the inclination.
 If we average over all modes, we obtain a total shrinkage of $\sim 24\%$
 for $l\leq15$ in this case.
 
@@ -1905,6 +2017,48 @@ tend to infinity. Thus, if we were able to measure light curves of identical sta
 from many different inclinations, the null space would consist \emph{only}
 of the odd modes, and our data would tell us exactly half of all the
 information about the surfaces of these objects.
+
+\begin{figure}[t!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/evenmodes.pdf}
+        \oscaption{evenmodes}{%
+            A spotted stellar surface seen in Mollweide projection
+            (left), the same surface with all odd $l > 2$ harmonics
+            set to zero (center), and the same surface with $l = 1$
+            and all even harmonics set to zero (right). The plot
+            on the right represents the portion of the surface that is
+            in the null space of the light curve problem at all
+            inclinations; the plot in the center is the portion of the
+            surface that can be inferred at some value of the inclination.
+            \label{fig:evenmodes}
+        }
+    \end{centering}
+\end{figure}
+
+Figure~\ref{fig:evenmodes} shows a spotted stellar surface decomposed
+into its \emph{preimage} and its \emph{null space} in the limiting case
+in which its light curve can be observed at a large number of inclinations.
+The former is the set of all modes that map onto the light curve (i.e.,
+the complement of the null space). Because spots are compact features, they
+are necessarily made up of a continuum of spherical harmonic modes spanning
+many different values of $l$: they can therefore be seen in both the even
+modes (the preimage) and the odd modes (the null space). Interestingly,
+the symmetries at play require spots to be paired with antipodal dark mirror
+images in the even modes, and with \emph{bright} ones in the odd modes
+(which sum to perfectly cancel out in the true map). Since these reflections
+are at the same latitude (in the opposite hemisphere) as the true spots,
+they do not contribute any bias to our inference, which already assumes the
+latitude distribution is symmetric about the equator. Thus, even though
+we are only sensitive to the even modes in ensemble analyses, they are
+sufficient to learn about the properties we are interested in.
+
+In practice, the fact that stars are not identical complicates this picture.
+We can still learn about the \emph{distribution} of spot properties, but
+in general our ensemble must consist of far more light curves in order to
+place strong constraints on these properties. As we showed in \S\ref{sec:calibration},
+under ideal conditions an ensemble of $M = 50$ similar stars may be sufficient,
+but in practice we may need on the order of hundreds or even a thousand light curves
+in order to mitigate the effects of variance in the sample.
 
 \subsection{Limb darkening}
 \label{sec:limbdark}
@@ -4877,22 +5031,6 @@ over the inclination, so this approach is still valid.
 
 \begin{figure}[p!]
     \begin{centering}
-        \includegraphics[width=\linewidth]{figures/calibration_unnorm_corner.pdf}
-        \\[1em]
-        \includegraphics[width=\linewidth]{figures/calibration_unnorm_latitude.pdf}
-        \oscaption{calibration_unnorm}{%
-            Same as Figures~\ref{fig:calibration_default_corner}
-            and \ref{fig:calibration_default_latitude}, but assuming
-            the light curves are not normalized and the true baseline is
-            known. Knowledge of the baseline breaks the $c-N$ degeneracy
-            and allows us to infer the total number of spots.
-            \label{fig:calibration_unnorm}
-        }
-    \end{centering}
-\end{figure}
-
-\begin{figure}[p!]
-    \begin{centering}
         \includegraphics[width=\linewidth]{figures/calibration_hicontrast_corner.pdf}
         \\[1em]
         \includegraphics[width=\linewidth]{figures/calibration_hicontrast_latitude.pdf}
@@ -4937,6 +5075,22 @@ over the inclination, so this approach is still valid.
             and the spot contrasts,
             $c \sim \mathcal{N}(0.05, 0.01^2)$.
             \label{fig:calibration_variance}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{figure}[p!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/calibration_unnorm_corner.pdf}
+        \\[1em]
+        \includegraphics[width=\linewidth]{figures/calibration_unnorm_latitude.pdf}
+        \oscaption{calibration_unnorm}{%
+            Same as Figures~\ref{fig:calibration_default_corner}
+            and \ref{fig:calibration_default_latitude}, but assuming
+            the light curves are not normalized and the true baseline is
+            known. Knowledge of the baseline breaks the $c-N$ degeneracy
+            and allows us to infer the total number of spots.
+            \label{fig:calibration_unnorm}
         }
     \end{centering}
 \end{figure}
