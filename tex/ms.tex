@@ -1747,7 +1747,7 @@ The same argument applies to Figure~\ref{fig:calibration_isotropic}.
 In both cases, the posterior approximates the true distribution as best it
 can given the constraints of the adopted PDF.
 
-Figures~\ref{fig:calibration_tinyspots} tests the performance of the model
+Figure~\ref{fig:calibration_tinyspots} tests the performance of the model
 on light curves of stars with spots much smaller than the effective resolution
 of the GP. Our expansion to $l_\mathrm{max} = 15$ only allows us to model spots
 with radii $r \gtrsim 10^\circ$ (see Figure~\ref{fig:spot_profile}), so we
@@ -1961,7 +1961,8 @@ $R$ will tend to zero.
 
 Figure~\ref{fig:nullspace_ensemble} shows the posterior shrinkage
 as a function of spherical harmonic degree for a few different hypothetical
-scenarios in which we observe one or more stellar light curves.
+scenarios in which we observe one or more stellar light curves with
+no limb darkening.
 Let us first consider the blue curves, in which a light curve is
 collected from a single star viewed at a single random inclination (which, of course, is
 all we can do from our fixed vantage point on Earth).
@@ -2063,9 +2064,6 @@ in order to mitigate the effects of variance in the sample.
 \subsection{Limb darkening}
 \label{sec:limbdark}
 
-\xxx{TODO: Discuss Figure~\ref{fig:nullspace_ensemble_ld} and how limb darkening
-    changes things.}
-
 \begin{figure}[t!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/nullspace_ensemble_ld.pdf}
@@ -2078,13 +2076,75 @@ in order to mitigate the effects of variance in the sample.
             modes can now be probed, at the expense of the even modes.
             \emph{Bottom:} Same as the top panel, but allowing for
             a 10\% variation in $u_1$ and $u_2$
-            across different observations. For ${\gtrsim}30$ light curves,
+            across different observations. For $\gtrsim 30$ light curves,
             there is virtually no null space up to $l_\mathrm{max} = 15$.
             \codelink{nullspace_ensemble_ld_var}
             \label{fig:nullspace_ensemble_ld}
         }
     \end{centering}
 \end{figure}
+
+As we saw in Figure~\ref{fig:calibration_ld}, the presence of limb darkening
+makes it significantly more difficult to infer spot properties at fixed
+SNR. To understand
+why, let us repeat the experiment from the previous section,
+this time with moderate quadratic limb darkening ($u_1 = 0.5$ and $u_2 = 0.25$).
+The top panel of Figure~\ref{fig:nullspace_ensemble_ld} shows the
+posterior shrinkage plot (same as Figure~\ref{fig:nullspace_ensemble}, but
+with limb darkening). Interestingly, there is no longer a clean division of
+the null space between even and odd modes in the limit of large $M$.
+This is because limb darkening effectively lifts odd modes out of the null space, \emph{at the
+    expense of the even modes}. While no coefficient lies entirely in the
+null space ($R = 0$) when limb darkening is present, no coefficient
+can be uniquely inferred ($R = 1$), either. This can be understood by noting that
+a polynomial limb darkening law can be written
+exactly as a linear combination of the $m=0$ spherical harmonics
+up to a degree equal to the order of the limb darkening
+\citep[in this case, $l = 2$;][and Appendix~\ref{sec:ld}]{Luger2019,Agol2020}.
+Since the limb darkening operation is a (multiplicative) downweighting of
+the surface intensity, the map seen by the observer is just the product
+of the spherical harmonic representation of the surface ($\mathbf{y}$)
+and the spherical harmonic representation of the limb darkening profile.
+And since spherical harmonics are just polynomials on the surface of the sphere,
+the product of spherical harmonics of degree $l_1$ and $l_2$ is a spherical
+harmonic of degree $l_1 + l_2$. This means that the linear limb darkening
+component ($l = 1$) effectively raises the degree of all spherical harmonic
+coefficients of the surface map by one. This has the effect of reversing
+the null space: under \emph{only} linear limb darkening, it is the \emph{even}
+modes that would like in the null space. However, the quadratic
+limb darkening term ($l = 2$) raises the degree of all spherical harmonics by two,
+so its presence ensures that the even modes can still be probed to some extent.
+In reality, the true limb darkening profile of a stellar surface is more
+complicated than a two-parameter quadratic model can capture; but one may still
+expand it as an arbitrary order polynomial, in which case the argument still
+applies---limb darkening mixes the null space and the preimage in a nontrivial
+way. The fact that no coefficient can be determined uniquely---i.e., there are
+perfect degeneracies involving \emph{all} modes on the surface---is what makes it more
+difficult in practice to perform ensemble analyses on limb-darkened stars.
+Nevertheless, it is still possible to uniquely and precisely infer the spot properties
+under limb darkening,
+but as a rule of thumb, the stronger the limb darkening, the larger the
+ensemble must be (see Figure~\ref{fig:calibration_ld_1000}).
+
+In reality, it is unlikely that all stars in a given ensemble have exactly
+the same limb darkening coefficients, however ``similar'' the stars may be.
+The bottom panel of Figure~\ref{fig:nullspace_ensemble_ld} shows the same
+posterior shrinkage plot, but for the case where each star has coefficients
+$u_1 = 0.5 \pm 0.05$ and $u_2 = 0.25 \pm 0.025$; i.e., we add a scatter of
+10\% in the value of these coefficients. The plot shows the posterior
+shrinkage in the hypothetical case where we know the coefficients for
+each star exactly. Now, as the size of the ensemble increases, the posterior
+shrinkage approaches unity \emph{for all spherical harmonic modes}.
+In the same way that the null space is a strong function of the inclination,
+allowing us to chip away at it with observations at different inclinations,
+the null space is also a strong function of the limb darkening law. Even a
+small amount of variance in the coefficients is sufficient to constrain all surface
+modes exactly (in the limit of infinite SNR and large $M$).
+
+In practice, of course, we will never know the limb darkening coefficients
+exactly, so we must either model them or marginalize over them
+(see \S\ref{sec:other-marg}). This will dilute our ability to infer surface
+properties exactly.
 
 \subsection{Small spots}
 \label{sec:tinyspots}
