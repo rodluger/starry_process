@@ -26,11 +26,12 @@ jobs:
   - script: |
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
-      conda install -y -q numpy scipy mkl openblas=0.3.6 sympy theano
+      conda install -y -q numpy scipy mkl openblas=0.3.6 sympy theano nb_conda nb_conda_kernels
       theano-cache purge
       pip install -U pip
       pip install -U setuptools
       conda install -y -q -c conda-forge tectonic pandoc
+      pip install -U "nbconvert>=5.5"
       pip install -U sphinx
       pip install -U nbsphinx
       pip install -U dynesty

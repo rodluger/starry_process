@@ -1449,7 +1449,7 @@ as such, it has support over all real numbers within the bounds listed
 above. We \emph{could} restrict it to integer values, but this would make
 sampling quite tricky. Moreover, in practice it is useful to allow for
 noninteger values to add some flexibility to the model; we discuss this
-in more detail in \S\ref{sec:integerspots}
+in more detail in \S\ref{sec:caveats}
 
 We use Equation~(\ref{eq:log-like}) as our log likelihood
 term, adding the log of the absolute value of Equation~(\ref{eq:J}) to
@@ -1652,7 +1652,7 @@ it is clear that in the tails of the distribution, the mean spot latitude
 and the standard deviation of spot latitudes are positively correlated.
 The bias we see is therefore not a shortcoming of the model, but of the
 \emph{data} itself. To get around this, we either need to impose a
-shrinkage prior on $\sigma_\phi$ (\S\ref{sec:sigma-prior}),
+shrinkage prior on $\sigma_\phi$ (\S\ref{sec:caveats}),
 observe in a different mode that is sensitive to baseline information
 (\S\ref{sec:breaking_baseline_degeneracy}), or simply collect more data.
 As we will see below, the degeneracy described above is not perfect:
@@ -2148,46 +2148,87 @@ properties exactly.
 
 \subsection{Small spots}
 \label{sec:tinyspots}
+\xxx{TODO: The model is limited in resolution to features with radii $r \gtrsim 10^\circ$.
+    Typical sun spots are MUCH smaller than that. However, our model can still
+    correctly infer latitudinal parameters even when spots are really tiny
+    (i.e., no bias due to the limited resolution). We might try to improve the
+    numerical stability of the model at higher spherical harmonic degree, but
+    that's a task for a future paper.}
 
-\xxx{TODO: Discuss what we should do about tiny spots.}
+\subsection{Bright spots}
+\label{sec:brightspots}
+\xxx{TODO: We can easily model bright spots and plages by setting $c < 0$. Show
+    an example. This model can be used to differentiate between spot-dominated
+    and plage-dominated surfaces, which is physically interesting. Cite
+    Brett's paper on TRAPPIST-1.}
 
 \subsection{The baseline degeneracy}
 \label{sec:breaking_baseline_degeneracy}
-
 \xxx{TODO: Discuss the baseline degeneracy and how to break it. Discuss the
-    degeneracy between $c$ and $N$ and how to break it.}
+    degeneracy between $c$ and $N$ and how to break it. The basic idea here
+    is that if we can constrain the (spotless) photospheric temperature, we
+    can uniquely infer $n$. I think this can be done by taking light curves
+    in two bands, but I'm checking with Gully. @HEDGES: Anything to add on this?}
 
 \subsection{Gaussians all the way down}
 \label{sec:other-marg}
-\xxx{TODO: We can also marginalize over period and limb darkening coefficients.}
+\xxx{TODO: We can also marginalize over period and limb darkening coefficients.
+    Argue that it's just integrals of Wigner matrices all over again, which we
+    can compute efficiently in closed form. I think we need a uniform prior on
+    the rotation \emph{frequency}, which is probably fine. And I think we can
+    parametrize limb darkening in terms of Kipping's $q_1$ and $q_2$ and place
+    a uniform prior in that space---I'm fairly confident the integrals can still
+    be solved exactly.}
+
+\subsection{Time evolution}
+\label{sec:temporal}
+\xxx{TODO: The model presented in this paper assumes statics stellar surfaces,
+    corresponding to perfectly periodic light curves. This is hardly ever the
+    case in practice, as spots evolve and differential rotation changes the surface
+    over time. We can still use this model, but we need to either restrict our analysis
+    to segments of light curves of duration shorter than the timescale on which
+    the surface evolves, or explicitly model the effect of time evolution on the covariance.
+    The next paper will deal with temporal evolution more
+    rigorously, but the way to do this is just take the elementwise product of the \starryprocess
+    flux covariance with a temporal covariance. This corresponds to the Kronecker product
+    in spherical harmonic space. Show a figure, give an example, etc.}
+
+\subsection{Application to transits and RV}
+\label{sec:other-work}
+\xxx{TODO: The covariance in the spherical harmonic basis can be used as a prior
+    in many other settings.}
+
+\subsection{Comparison to other work}
+\label{sec:other-work}
+\xxx{TODO: Discuss \citet{Basri2020}, how we agree and disagree. Compare to Brett's
+    paper using ABC to measure spot sizes as a function of spectral type. Discuss
+    Simon Wood's paper in ecology on synthetic likelihoods. Talk about similarities
+    to Gaussian Random Fields in CMB studies.}
 
 \subsection{Caveats}
 \label{sec:caveats}
+\xxx{TODO: Miscellaneous caveats.}
 \xxx{
     \begin{enumerate}
-        \item The latitude distribution is not Gaussian.
-        \item The number of spots does not have to be an integer.
+        \item The latitude distribution is not Gaussian, so careful
+              when interpreting $\mu_\phi$ and $\sigma_\phi$
+        \item The number of spots does not have to be an integer. This is
+              fine, since it makes the model more flexible.
         \item Careful with light curves with large amplitudes, although
               Figure~\ref{fig:calibration_hicontrast}
               has max amplitudes of more than 10\% and works great.
-        \item No differential rotation / spot evolution yet!
+        \item No differential rotation / spot evolution yet! We're working on it.
+        \item We might want a shrinkage prior on sigma, since it's hard to
+              break the polar spot degeneracy with single-band light curves.
     \end{enumerate}
 }
-
-\subsection{Prior on sigma}
-\label{sec:sigma-prior}
-\xxx{TODO: We might want a shrinkage prior on sigma.}
-
-\subsection{Inferring inclinations}
-\xxx{TODO: Works great. Note that inclination distribution is sometimes bimodal!}
-
 
 \section{Implementation}
 \label{sec:implementation}
 
 We implement our interpretable GP in the open-source, user-friendly
 \Python package \starryprocess, which can be installed via \textsf{pip}\xspace
-or from source on GitHub\footnote{\url{https://github.com/rodluger/starry_process}}.
+or from source on \href{https://github.com/rodluger/starry_process}{GitHub}.
 The code is thoroughly unit-tested and well documented, with examples on how
 to use the GP in custom inference problems. Users can choose, among other
 options, whether or not
@@ -2277,7 +2318,7 @@ the period and limb darkening coefficients, which would remove the scaling
 with $M$ entirely if the photometric precision were the same for all
 light curves. Even if it is not, the algorithm can still be greatly sped up,
 although an implementation of this is deferred to the next paper.
-\xxx{DFM: Is this true? I.e., is there an efficient way to solve Equation~(\ref{eq:log-like})
+\xxx{@DFM: Is this true? I.e., is there an efficient way to solve Equation~(\ref{eq:log-like})
     when $\pmb{\Sigma}$ is the same for all stars but $\mathbf{C}$ is different? Is there
     some limit in which an approximation of some sort can be made?}
 
@@ -2332,7 +2373,98 @@ our GP is flexible enough to model.
 
 \section{Conclusions}
 \label{sec:conclusions}
-\xxx{TODO: Summarize. Discuss future work, including differential rotation
+We presented a new Gaussian process (GP) model for stellar variability
+whose hyperparameters explicitly correspond to physical properties of the stellar
+surface. Our GP allows one to efficiently compute the likelihood function
+for stellar light curves
+marginalized over nuisance parameters such as the specific sizes,
+positions, and contrasts of individual spots,
+which are generally unknowable due to the extreme degeneracies
+involved in the light curve mapping problem. Our GP therefore
+makes it easy to
+do posterior inference on the real quantities of interest: parameters
+controlling the \emph{distribution} of spot sizes, latitudes, and
+contrasts within a star and/or across many stars in an ensemble.
+
+Because our expression for the GP covariance has an exact, closed-form
+solution as a function of the spot parameters, it can be computed
+extremely efficiently: a typical likelihood evaluation on a dataset
+consisting of $K \sim 1{,}000$ points takes about 10ms on a modern
+laptop. Our algorithm is implemented in the open-source, user-friendly
+\Python package \starryprocess, which is \textsf{pip}-installable and available on
+\href{https://github.com/rodluger/starry_process}{GitHub}.
+In keeping with other papers in the \starry series, all figures in this
+paper are generated automatically from open-source scripts linked to in
+each of the captions \codeicon, and the principal equations link to associated
+unit tests that ensure the accuracy and reproducibility of the algorithm
+presented here \testpassicon/\testfailicon.
+
+We devoted a large portion of this paper to testing the algorithm on a variety
+of synthetic datasets, showing that it is a well-calibrated and in most
+cases unbiased estimator for star spot properties. Below we list the main
+results presented in this paper:
+
+\begin{enumerate}
+    \item \textbf{Our GP works best for ensemble analyses.} The light curve mapping
+          problem is extremely degenerate, as light curves contain a vanishingly small
+          fraction of the total information about a stellar surface. However, the
+          degenerate surface modes are a strong function of the observer's viewing
+          angle, so light curves of stars seen at different inclinations constrain
+          different components of the surface. We have shown that if we jointly
+          analyze the light curves of many stars,
+          we can break many of the degeneracies at play and uniquely infer the
+          statistical properties of the spots across the ensemble. This type
+          of analysis works best if the stars in the ensemble are statistically
+          similar: i.e., the properties of their spots are all drawn from the
+          same parent distribution, whose parameters we can constrain.
+    \item \textbf{In general, an ensemble of at least $M \sim 50$ light curves
+              is needed to place meaningful constraints on the spot properties}.
+          This estimate is based on ensemble analyses of light curves with
+          $K = 1{,}000$ cadence each and per-cadence precision of one part
+          per thousand. Lower quality, shorter baseline observations, or
+          datasets contaminated by outliers will in general require larger values
+          of $M$ for the same constraining power. The presence of strong limb
+          darkening also degrades the information content of light curves, in
+          which case an ensemble of hundreds or even a thousand light curves
+          is recommended.
+    \item \textbf{Our GP is an unbiased estimator for the spot radius and
+              latitude distributions.} We showed that our GP can accurately infer the
+          angular size of spots and the mode and standard deviation of their
+          distribution in latitude from stellar light curves. For the fiducial
+          ensemble of $M = 50$ light curves described above, we are able to
+          constrain the average spot radii to within a couple degrees and the
+          average spot latitudes to within $5^\circ$.
+    \item \textbf{Relative single-band photometry cannot uniquely constrain
+              the spot contrast or the total number of spots}. These two quantities
+          are degnerate with each other. While the contrast can be very weakly
+          constrained with lots of data, the total number of spots is not
+          an observable in relative single-band photometry. Knowledge of the
+          unspotted photospheric brightness (or temperate) can break this
+          degeneracy, so analyses of multi-band light curves can in principle
+          infer the total spottiness of a stellar surface.
+    \item \textbf{Our GP can accurately infer stellar inclinations.} We presented
+          two versions of our GP: one conditioned on a specific value of the stellar
+          inclination, and one marginalized over inclination under an isotropic
+          prior. In both cases, we find that we can accurately infer the inclinations
+          of individual stars in an ensemble analysis (in the latter case, a
+          simple post-processing step can yield the inclination posterior distribution).
+          While the inclination is not an observable for an individual stellar light
+          curve, the population-level constraints on the spot properties achieved
+          by the GP can break the degeneracies involving the inclination, allowing
+          us to usually infer it to within about $10^\circ$ and without bias.
+    \item \textbf{Our GP can be used to model small, Sun-like spots.} The algorithm
+          presented here is limited to a surface resolution of about $10^\circ$,
+          corresponding to spots about an order of magnitude larger than typical
+          Sun spots. However, we have showed that when we apply our model to
+          light curves of stars with small ($r \sim 3^\circ$) spots, we can
+          still infer their latitudinal distribution without bias.
+    \item \textbf{Our GP can be extended to model time-variable surfaces.} The
+          algorithm presented here was derived for static stellar surfaces,
+          corresponding to perfectly periodic light curves. \xxx{...}
+    \item \textbf{Possible applications.} Spot-dominated versus plage-dominated
+\end{enumerate}
+
+\xxx{TODO: Discuss future work, including differential rotation
     and spot evolution.}
 
 %
