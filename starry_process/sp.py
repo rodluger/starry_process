@@ -67,7 +67,8 @@ class StarryProcess(object):
                 ``b`` cannot be provided.
             c (scalar, optional): The mean spot contrast as a fraction of
                 the photospheric intensity. Default is %%defaults["c"]%%.
-            n (scalar, optional): The total number of spots. Note that since a
+            n (scalar, optional): The total number of spots (does not
+                have to be an integer). Note that since a
                 ``StarryProcess`` does not model spots as discrete features,
                 this parameter will not generally have the expected behavior
                 when sampling from the prior. In other words, it is unlikely

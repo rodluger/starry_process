@@ -2393,11 +2393,13 @@ consisting of $K \sim 1{,}000$ points takes about 10ms on a modern
 laptop. Our algorithm is implemented in the open-source, user-friendly
 \Python package \starryprocess, which is \textsf{pip}-installable and available on
 \href{https://github.com/rodluger/starry_process}{GitHub}.
-In keeping with other papers in the \starry series, all figures in this
-paper are generated automatically from open-source scripts linked to in
-each of the captions \codeicon, and the principal equations link to associated
-unit tests that ensure the accuracy and reproducibility of the algorithm
-presented here \testpassicon/\testfailicon.
+The algorithm is implemented in a combination of \cpp and \Python,
+linked using the \theano package. Because our GP covariance has an exact
+representation, so too do its derivatives. We therefore implement
+backpropagated derivatives with respect to all input parameters for
+out-of-the-box usage with gradient-based inference and optimization
+tools such as Hamiltionain Monte Carlo (HMC), autodifferentation
+variational inference (ADVI), and gradient-based nested sampling.
 
 We devoted a large portion of this paper to testing the algorithm on a variety
 of synthetic datasets, showing that it is a well-calibrated and in most
@@ -2457,15 +2459,63 @@ results presented in this paper:
           corresponding to spots about an order of magnitude larger than typical
           Sun spots. However, we have showed that when we apply our model to
           light curves of stars with small ($r \sim 3^\circ$) spots, we can
-          still infer their latitudinal distribution without bias.
+          still infer their latitudinal distribution without bias, as well as
+          the presence of spots below our resolution limit.
     \item \textbf{Our GP can be extended to model time-variable surfaces.} The
           algorithm presented here was derived for static stellar surfaces,
-          corresponding to perfectly periodic light curves. \xxx{...}
-    \item \textbf{Possible applications.} Spot-dominated versus plage-dominated
+          corresponding to perfectly periodic light curves. However, time
+          variability can easily be modeled as the product of the \starryprocess
+          kernel and a kernel describing the covariance of the process in
+          time, such as a simple squared exponential or Mat\'ern-3/2 kernel.
+          The hyperparameters of the temporal covariance are then strictly
+          tied to the timescale on which the surface evolves. More
+          complex temporal variability, such as that induced by differential
+          rotation, will be the subject of the next paper in this series.
+    \item \textbf{Our GP can be used in exoplanet transit modeling and
+              radial velocity datasets.} At its core, the \starryprocess GP
+          defines a distribution over spherical harmonic representations
+          of stellar surfaces. It can therefore be used as a physically
+          interpretable prior when modeling transits of exoplanets across
+          spotted stars, either to marginalize over the stellar inhomogeneity
+          or to explicitly infer spot properties. When combined with the
+          \starry package, it can also be used as a
+          prior on the stellar surface in Doppler imaging, Doppler tomography,
+          or even radial velocity searches for exoplanets.
 \end{enumerate}
 
-\xxx{TODO: Discuss future work, including differential rotation
-    and spot evolution.}
+The GP presented here has far-ranging applications for stellar light
+curve studies. It serves as a drop-in replacement for commonly used
+GP kernels for stellar variability, which currently do not have
+physically interpretable parameters other than (perhaps) the rotation
+period. As such, it can be used to marginalize over stellar rotational variability
+signals in (say) transiting exoplanet searches, asteroseismic characterization
+of stars, radial velocity searches, etc. It can also be used to learn
+about stellar surfaces directly: to infer spot properties of main sequence
+stars as a function of spectral type and age, to differentiate between
+spot-dominated and plage-dominated stellar surfaces, to better understand
+chemically peculiar massive stars, and to better understand the spot
+properties of transiting exoplanet hosts for unbiased spectroscopic
+characterization of their atmospheres (to name a few).
+
+The next papers in this series will focus on (II) a more rigorous
+treatment of time variability and (III) explicit marginalization over
+the remaining stellar parameters. In particular, paper II will focus
+on modeling differential rotation, whose effect on the covariance of the
+process can be derived in a similar fashion to what we did here. This
+will enable direct inference about the differential rotation rates and
+spot evolution timescales of stars, processes whose effects on light curves
+are too similar for current methodology to reliably discern between them.
+Paper III will focus on marginalization over the stellar rotation period
+and limb darkening coefficients, which can also be done analytically
+under certain choices of prior. This will eliminate all per-star
+hyperparameters in the expression for the GP covariance, greatly
+speeding up inference for large ensembles of stellar light curves.
+
+In keeping with other papers in the \starry series, all figures in this
+paper are generated automatically from open-source scripts linked to in
+each of the captions \codeicon, and the principal equations link to associated
+unit tests that ensure the accuracy and reproducibility of the algorithm
+presented here \testpassicon/\testfailicon.
 
 %
 %
@@ -3654,8 +3704,8 @@ where the matrix
     \mathbf{K}
     =
     \parenMatrixstack{
-    0              & 5 \\
-    \ln\frac{1}{2} & 5
+    0              & 10 \\
+    \ln\frac{1}{2} & 10
     }
 \end{align}
 %

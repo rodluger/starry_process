@@ -25,9 +25,9 @@ def gauss2beta(
     Args:
         mu (scalar or vector): The mean latitude in degrees.
         sigma (scalar or vector): The latitude standard deviation in degrees.
-        log_alpha_max (float, optional): The maximum value of ``log(alpha)``.
+        log_alpha_max (float, optional): The maximum value of ``ln(alpha)``.
             Default is %%defaults["log_alpha_max"]%%.
-        log_beta_max (float, optional): The maximum value of ``log(beta)``.
+        log_beta_max (float, optional): The maximum value of ``ln(beta)``.
             Default is %%defaults["log_alpha_max"]%%.
 
     The shape parameters ``a`` and ``b`` are related to the shape parameters of
@@ -42,7 +42,7 @@ def gauss2beta(
     .. note::
 
         This is a utility function that can accept and return
-        either numeric values or tensors. If both `mu` and `sigma`
+        either numeric values or tensors. If both ``mu`` and ``sigma``
         are numeric quantities, the result will be a numeric
         quantity; otherwise it will be a tensor.
 
@@ -92,9 +92,9 @@ def beta2gauss(
     Args:
         a (scalar or vector): Shape parameter.
         b (scalar or vector): Shape parameter.
-        log_alpha_max (float, optional): The maximum value of ``log(alpha)``.
+        log_alpha_max (float, optional): The maximum value of ``ln(alpha)``.
             Default is %%defaults["log_alpha_max"]%%.
-        log_beta_max (float, optional): The maximum value of ``log(beta)``.
+        log_beta_max (float, optional): The maximum value of ``ln(beta)``.
             Default is %%defaults["log_alpha_max"]%%.
 
     The shape parameters ``a`` and ``b`` are related to the shape parameters of
@@ -108,7 +108,7 @@ def beta2gauss(
     .. note::
 
         This is a utility function that can accept and return
-        either numeric values or tensors. If both `a` and `b`
+        either numeric values or tensors. If both ``a`` and ``b``
         are numeric quantities, the result will be a numeric
         quantity; otherwise it will be a tensor.
 
