@@ -1,0 +1,7 @@
+div.nbinput.container div.prompt pre {
+    display: none;
+}
+
+div.nboutput.container div.prompt pre {
+    display: none;
+}

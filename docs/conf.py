@@ -38,10 +38,13 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.todo",
     "matplotlib.sphinxext.plot_directive",
+    "nbsphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
+html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -73,3 +76,12 @@ autodoc_docstring_signature = True
 
 # todos
 todo_include_todos = True
+
+# nbsphinx
+nbsphinx_prolog = """
+{% set docname = env.doc2path(env.docname, base=None) %}
+.. note:: This tutorial was generated from a Jupyter notebook that can be
+          downloaded `here <https://github.com/rodluger/starry_process/blob/master/docs/{{ docname }}>`_.
+"""
+nbsphinx_prompt_width = "0"
+napoleon_use_ivar = True

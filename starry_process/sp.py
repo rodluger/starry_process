@@ -1,5 +1,5 @@
 from .size import SizeIntegral
-from .latitude import LatitudeIntegral, gauss2beta
+from .latitude import LatitudeIntegral, gauss2beta, beta2gauss
 from .longitude import LongitudeIntegral
 from .contrast import ContrastIntegral
 from .flux import FluxIntegral
@@ -18,7 +18,7 @@ class StarryProcess(object):
     def __init__(
         self,
         r=defaults["r"],
-        d=defaults["d"],
+        dr=defaults["dr"],
         c=defaults["c"],
         n=defaults["n"],
         u=defaults["u"],
@@ -41,8 +41,8 @@ class StarryProcess(object):
                 typically lead to poor approximations, although the
                 process will in general still be valid and numerically
                 stable.
-            d (scalar, optional): The half-width of the uniform prior
-                on the spot radius in degrees. Default is %%defaults["d"]%%.
+            dr (scalar, optional): The half-width of the uniform prior
+                on the spot radius in degrees. Default is %%defaults["dr"]%%.
                 If this value is zero, a delta-function prior centered at
                 ``r`` is assumed.
             a (scalar, optional): Shape parameter of the spot latitude
@@ -75,7 +75,7 @@ class StarryProcess(object):
                 visualizing the corresponding stellar surface, nor will it
                 necessarily have more spots than a draw with (say) ``n=5``.
                 However, this parameter *does* behave correctly in an
-                inference setting: the posterior over ``n`` when doing 
+                inference setting: the posterior over ``n`` when doing
                 inference on an ensemble of light curves is meaningful and
                 should have a mean (on average) equal to the true number of
                 spots (assuming all other model assumptions are valid).
@@ -87,22 +87,22 @@ class StarryProcess(object):
                 marginalize over the inclination under the assumption of an
                 isotropic prior. Recommended if there are no constraints on
                 the inclination of the object. If this is set to ``True``,
-                the value of the ``i`` keyword to several of the methods in 
-                this class will be ignored. Default is 
+                the value of the ``i`` keyword to several of the methods in
+                this class will be ignored. Default is
                 %%defaults["marginalize_over_inclination"]%%.
-            normalized (bool, optional): Whether or not the flux observations 
-                (passed in calls to ``log_likelihood`` and 
+            normalized (bool, optional): Whether or not the flux observations
+                (passed in calls to ``log_likelihood`` and
                 ``sample_ylm_conditional``) are normalized. Usually, the
                 true baseline in stellar photometry is unknown, as it
                 requires knowledge of how bright the star would be in the
                 absence of star spots. If the baseline is unknown
-                (which is almost certainly the case), we recommend setting 
-                this keyword to ``True`` and make sure observations are 
-                mean- (or median-) normalized. 
+                (which is almost certainly the case), we recommend setting
+                this keyword to ``True`` and make sure observations are
+                mean- (or median-) normalized.
                 Alternatively, particularly when the amplitude of variability
                 is large, you may set this to ``False`` and explicitly
                 model the unknown baseline with a latent parameter *for
-                each star* when doing inference. 
+                each star* when doing inference.
                 Default is %%defaults["normalized"]%%.
             covpts (int, optional): The number of grid points on which to
                 compute the kernel when ``marginalize_over_inclination`` is
@@ -118,7 +118,7 @@ class StarryProcess(object):
         what you are doing:
 
         Parameters:
-            ydeg (int, optional): The spherical harmonic  degree of the 
+            ydeg (int, optional): The spherical harmonic  degree of the
                 process. Default is %%defaults["ydeg"]%%. Decreasing this
                 value will speed up computations but decrease the ability
                 to model small features on the surface. Increasing this
@@ -127,24 +127,24 @@ class StarryProcess(object):
             udeg (int, optional): The degree of limb darkening.
                 Default is %%defaults["udeg"]%%. Changing this is currently
                 supported, but it is likely that future releases will
-                deprecate this in favor of always using quadratic limb 
+                deprecate this in favor of always using quadratic limb
                 darkening, which can be analytically marginalized over.
             normalization_order (int, optional): Order of the series
                 expansion for the normalized covariance. Default is
                 %%defaults["normalization_order"]%%.
             normalization_zmax (float, optional): Maximum value of the
                 expansion parameter ``z`` when computing the normalized
-                covariance. Values above this threshold will result in 
-                infinite variance and a log probability of ``-np.inf``. 
+                covariance. Values above this threshold will result in
+                infinite variance and a log probability of ``-np.inf``.
                 Default is %%defaults["normalization_zmax"]%%.
-            log_alpha_max (float, optional): The maximum value of 
+            log_alpha_max (float, optional): The maximum value of
                 ``log(alpha)``. Default is %%defaults["log_alpha_max"]%%.
-            log_beta_max (float, optional): The maximum value of ``log(beta)``. 
+            log_beta_max (float, optional): The maximum value of ``log(beta)``.
                 Default is %%defaults["log_alpha_max"]%%.
-            sigma_max (float, optional): The maximum value of the latitude 
-                standard deviation in degrees. The latitude distribution 
-                becomes extremely non-gaussian for high values of ``sigma``. 
-                This value is used to penalize such distributions when 
+            sigma_max (float, optional): The maximum value of the latitude
+                standard deviation in degrees. The latitude distribution
+                becomes extremely non-gaussian for high values of ``sigma``.
+                This value is used to penalize such distributions when
                 computing the jacobian of the transformation.
                 Default is %%defaults["sigma_max"]%%.
             compile_args (list, optional): Additional arguments to be passed to
@@ -152,13 +152,13 @@ class StarryProcess(object):
                 entry in the list should be a tuple of ``(name, value)`` pairs.
                 For possible options, see the macros under ``USER CONSTANTS``
                 in the header file
-                `starry_process/ops/include/constants.h 
+                `starry_process/ops/include/constants.h
                 <https://github.com/rodluger/starry_process/blob/master/starry_process/ops/include/constants.h>`_.
             epsy (float, optional): A small number added to the diagonal of the
                 spherical harmonic covariance matrix for stability.
                 Default is %%defaults["epsy"]%%.
-            epsy15 (float, optional): A small number added to terms in the 
-                diagonal of the spherical harmonic covariance matrix 
+            epsy15 (float, optional): A small number added to terms in the
+                diagonal of the spherical harmonic covariance matrix
                 above degree ``15``, which become particularly unstable.
                 Default is %%defaults["epsy15"]%%.
         """
@@ -202,7 +202,7 @@ class StarryProcess(object):
         self._get_alpha_beta = AlphaBetaOp(self._normN)
 
         # Initialize the Ylm integral ops
-        self._size = SizeIntegral(r, d, **kwargs)
+        self._size = SizeIntegral(r, dr, **kwargs)
         self._latitude = LatitudeIntegral(a, b, child=self._size, **kwargs)
         self._longitude = LongitudeIntegral(child=self._latitude, **kwargs)
         self._contrast = ContrastIntegral(
@@ -233,6 +233,57 @@ class StarryProcess(object):
         self.random = tt.shared_randomstreams.RandomStreams(
             kwargs.get("seed", 0)
         )
+
+    @property
+    def a(self):
+        """Hyperparameter controlling the shape of the latitude distribution."""
+        return self._latitude._a
+
+    @property
+    def b(self):
+        """Hyperparameter controlling the shape of the latitude distribution."""
+        return self._latitude._b
+
+    @property
+    def mu(self):
+        """
+        Hyperparameter controlling the mode of the latitude
+        distribution in degrees.
+
+        """
+        return beta2gauss(self._latitude._a, self._latitude._b)[0]
+
+    @property
+    def sigma(self):
+        """
+        Hyperparameter controlling the standard deviation of
+        the latitude distribution in degrees.
+
+        """
+        return beta2gauss(self._latitude._a, self._latitude._b)[1]
+
+    @property
+    def c(self):
+        """Hyperparameter controlling the fractional spot contrast."""
+        return self._contrast._c
+
+    @property
+    def n(self):
+        """Hyperparameter controlling the number of spots."""
+        return self._contrast._n
+
+    @property
+    def r(self):
+        """Hyperparameter controlling the mean spot radius in degrees."""
+        return self._size._r * (180.0 / np.pi)
+
+    @property
+    def dr(self):
+        """Hyperparameter controlling the half-width of the radius
+        distribution in degrees.
+
+        """
+        return self._size._dr * (180.0 / np.pi)
 
     @property
     def ydeg(self):
@@ -318,7 +369,7 @@ class StarryProcess(object):
     def cov_ylm(self):
         """
         The spherical harmonic covariance matrix.
-        
+
         """
         return self._cov_ylm
 
@@ -326,7 +377,7 @@ class StarryProcess(object):
     def cho_cov_ylm(self):
         """
         The lower Cholesky factorization of the spherical harmonic covariance.
-        
+
         """
         return self._cho_cov_ylm
 
@@ -359,14 +410,14 @@ class StarryProcess(object):
 
         Args:
             t (vector): The time array in arbitrary units.
-            flux (vector): The array of observed flux values in arbitrary 
+            flux (vector): The array of observed flux values in arbitrary
                 units. In general, the flux should be either mean- or
                 median-normalized with zero baseline. If the raw photometry
                 is measured in ``counts``, users should compute the ``flux``
                 from
 
                     .. code-block:: python
-                    
+
                         flux = counts / np.mean(counts) - 1
 
                 If the baseline is something else (such as unity), users
@@ -375,11 +426,11 @@ class StarryProcess(object):
                 Note that if the ``normalized`` keyword passed to this class
                 is ``False`` (not recommended for real data), then the flux
                 should instead be normalized to the true baseline (i.e., the
-                counts one would measure if the star had no spots). 
-            data_cov (scalar, vector, or matrix): The data covariance 
-                matrix. This may be a scalar equal to the (homoscedastic) 
-                variance of the data, a vector equal to the variance of each 
-                observation, or a matrix equal to the full covariance of the 
+                counts one would measure if the star had no spots).
+            data_cov (scalar, vector, or matrix): The data covariance
+                matrix. This may be a scalar equal to the (homoscedastic)
+                variance of the data, a vector equal to the variance of each
+                observation, or a matrix equal to the full covariance of the
                 dataset.
             i (scalar, optional): The inclination of the star in degrees.
                 Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
@@ -387,7 +438,7 @@ class StarryProcess(object):
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
             baseline_mean (scalar or vector, optional): The flux baseline to
-                subtract when computing the GP likelihood. Default is 
+                subtract when computing the GP likelihood. Default is
                 %%defaults["baseline_mean"]%%.
             baseline_var (scalar or matrix): The variance (square of the
                 uncertainty) on the true value of the baseline. This is added
@@ -397,7 +448,7 @@ class StarryProcess(object):
                 noise unrelated to star spot variability. Default is
                 %%defaults["baseline_var"]%%.
             nsamples (int, optional): The number of samples to draw. Default 1.
-            
+
         """
         # TODO
         if self._marginalize_over_inclination:
@@ -457,7 +508,7 @@ class StarryProcess(object):
                 Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
                 is set, this argument is ignored.
             p (scalar, optional): The rotational period of the star in the same
-                units as ``t``. Default is %%defaults["p"]%%.           
+                units as ``t``. Default is %%defaults["p"]%%.
         """
         if self._normalized:
             return tt.zeros_like(cast(t, vectorize=True))
@@ -474,7 +525,7 @@ class StarryProcess(object):
                 Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
                 is set, this argument is ignored.
             p (scalar, optional): The rotational period of the star in the same
-                units as ``t``. Default is %%defaults["p"]%%.           
+                units as ``t``. Default is %%defaults["p"]%%.
         """
         if self._normalized:
             cov = self._flux.cov(t, i, p)
@@ -548,25 +599,25 @@ class StarryProcess(object):
         The log of the absolute value of the determinant of the Jacobian matrix.
 
         The spot latitude is Beta-distributed with shape parameters
-        ``a`` and ``b``, equal to the log of the traditional ``alpha`` 
+        ``a`` and ``b``, equal to the log of the traditional ``alpha``
         and ``beta`` parameters of the Beta distribution, normalized and scaled
-        to the range ``[0, 1]``. From Bayes' theorem, the joint posterior in 
+        to the range ``[0, 1]``. From Bayes' theorem, the joint posterior in
         these two quantities is
 
             .. math::
 
-                p\\big(a, b \\big| data\\big) \\sim 
+                p\\big(a, b \\big| data\\big) \\sim
                 p\\big(data \\big| a, b\\big) \\times  p(a, b)
 
         However, this is a rather awkward parametrization, since it's hard to
-        visualize how exactly ``a`` and ``b`` (or ``alpha`` and ``beta``) 
-        determine quantities we actually care about, such as the mean ``mu`` and 
-        standard deviation ``sigma`` of the distribution. This parameterization 
-        is especially clumsy when it comes to specifying the prior ``p(a, b)``, 
-        since any prior on these quantities will imply a very different prior 
-        on ``mu`` and ``sigma``. In most cases, we probably want to place a prior 
+        visualize how exactly ``a`` and ``b`` (or ``alpha`` and ``beta``)
+        determine quantities we actually care about, such as the mean ``mu`` and
+        standard deviation ``sigma`` of the distribution. This parameterization
+        is especially clumsy when it comes to specifying the prior ``p(a, b)``,
+        since any prior on these quantities will imply a very different prior
+        on ``mu`` and ``sigma``. In most cases, we probably want to place a prior
         on ``mu`` and ``sigma`` directly. We can do this by noting that
-        
+
             .. math::
 
                 p(a, b) = p(\\mu, \\sigma) \\times J
@@ -575,16 +626,16 @@ class StarryProcess(object):
 
             .. math::
 
-                J = \\bigg| \\frac{\\partial{\\mu}}{\\partial{a}} \\times 
+                J = \\bigg| \\frac{\\partial{\\mu}}{\\partial{a}} \\times
                            \\frac{\\partial{\\sigma}}{\\partial{b}} -
-                           \\frac{\\partial{\\mu}}{\\partial{b}} \\times 
+                           \\frac{\\partial{\\mu}}{\\partial{b}} \\times
                            \\frac{\\partial{\\sigma}}{\\partial{a}} \\bigg|
 
         is the absolute value of the determinant of the Jacobian matrix.
 
         Thus, to enforce a uniform prior on ``mu`` and ``sigma``, sample
         in ``a`` and ``b`` with a uniform prior in the range ``[0, 1]``
-        and multiply the PDF by ``J``. Since we're in log space, you'll want 
+        and multiply the PDF by ``J``. Since we're in log space, you'll want
         to add ``log J`` (the value returned by this function) to the
         log likelihood.
 
@@ -606,14 +657,14 @@ class StarryProcess(object):
 
         Args:
             t (vector): The time array in arbitrary units.
-            flux (vector): The array of observed flux values in arbitrary 
+            flux (vector): The array of observed flux values in arbitrary
                 units. In general, the flux should be either mean- or
                 median-normalized with zero baseline. If the raw photometry
                 is measured in ``counts``, users should compute the ``flux``
                 from
 
                     .. code-block:: python
-                    
+
                         flux = counts / np.mean(counts) - 1
 
                 If the baseline is something else (such as unity), users
@@ -622,11 +673,11 @@ class StarryProcess(object):
                 Note that if the ``normalized`` keyword passed to this class
                 is ``False`` (not recommended for real data), then the flux
                 should instead be normalized to the true baseline (i.e., the
-                counts one would measure if the star had no spots). 
-            data_cov (scalar, vector, or matrix): The data covariance 
-                matrix. This may be a scalar equal to the (homoscedastic) 
-                variance of the data, a vector equal to the variance of each 
-                observation, or a matrix equal to the full covariance of the 
+                counts one would measure if the star had no spots).
+            data_cov (scalar, vector, or matrix): The data covariance
+                matrix. This may be a scalar equal to the (homoscedastic)
+                variance of the data, a vector equal to the variance of each
+                observation, or a matrix equal to the full covariance of the
                 dataset.
             i (scalar, optional): The inclination of the star in degrees.
                 Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
@@ -634,7 +685,7 @@ class StarryProcess(object):
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
             baseline_mean (scalar or vector, optional): The flux baseline to
-                subtract when computing the GP likelihood. Default is 
+                subtract when computing the GP likelihood. Default is
                 %%defaults["baseline_mean"]%%.
             baseline_var (scalar or matrix): The variance (square of the
                 uncertainty) on the true value of the baseline. This is added
@@ -646,7 +697,7 @@ class StarryProcess(object):
 
         Returns:
             The log marginal likelihood of the `flux` vector conditioned on
-            the current properties of the model. This is the likelihood 
+            the current properties of the model. This is the likelihood
             marginalized over all possible spherical harmonic vectors.
 
         """

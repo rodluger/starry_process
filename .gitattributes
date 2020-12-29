@@ -1,0 +1,6 @@
+vendor/* linguist-vendored
+docs/* linguist-documentation
+
+# nbstripout removes output from notebooks
+*.ipynb filter=nbstripout
+*.ipynb diff=ipynb

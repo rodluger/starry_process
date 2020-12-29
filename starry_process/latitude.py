@@ -25,22 +25,22 @@ def gauss2beta(
     Args:
         mu (scalar or vector): The mean latitude in degrees.
         sigma (scalar or vector): The latitude standard deviation in degrees.
-        log_alpha_max (float, optional): The maximum value of ``log(alpha)``. 
+        log_alpha_max (float, optional): The maximum value of ``log(alpha)``.
             Default is %%defaults["log_alpha_max"]%%.
-        log_beta_max (float, optional): The maximum value of ``log(beta)``. 
+        log_beta_max (float, optional): The maximum value of ``log(beta)``.
             Default is %%defaults["log_alpha_max"]%%.
 
     The shape parameters ``a`` and ``b`` are related to the shape parameters of
     the Beta distribution in cosine latitude via the transformations
 
-        .. code-block::python 
-        
+        .. code-block::python
+
             alpha = exp(a * log_alpha_max)
             beta = exp(log(0.5) + b * (log_beta_max - log(0.5)))
 
 
-    .. note:: 
-        
+    .. note::
+
         This is a utility function that can accept and return
         either numeric values or tensors. If both `mu` and `sigma`
         are numeric quantities, the result will be a numeric
@@ -86,27 +86,27 @@ def beta2gauss(
 ):
     """
     Return the mode ``mu`` and standard deviation ``sigma`` of Laplace's
-    (Gaussian) approximation to the PDF of the latitude Beta distribution 
+    (Gaussian) approximation to the PDF of the latitude Beta distribution
     with shape parameters ``a`` and ``b``.
 
     Args:
         a (scalar or vector): Shape parameter.
         b (scalar or vector): Shape parameter.
-        log_alpha_max (float, optional): The maximum value of ``log(alpha)``. 
+        log_alpha_max (float, optional): The maximum value of ``log(alpha)``.
             Default is %%defaults["log_alpha_max"]%%.
-        log_beta_max (float, optional): The maximum value of ``log(beta)``. 
+        log_beta_max (float, optional): The maximum value of ``log(beta)``.
             Default is %%defaults["log_alpha_max"]%%.
 
     The shape parameters ``a`` and ``b`` are related to the shape parameters of
     the Beta distribution in cosine latitude via the transformations
 
-        .. code-block::python 
-        
+        .. code-block::python
+
             alpha = exp(a * log_alpha_max)
             beta = exp(log(0.5) + b * (log_beta_max - log(0.5)))
 
-    .. note:: 
-        
+    .. note::
+
         This is a utility function that can accept and return
         either numeric values or tensors. If both `a` and `b`
         are numeric quantities, the result will be a numeric
@@ -147,8 +147,21 @@ def beta2gauss(
         + (alpha - 1) / math.cos(mu) ** 2
     )
     sigma = math.sin(mu) / math.sqrt(term)
-    mu[(alpha <= 1) | (beta <= 0.5)] = math.nan
-    sigma[(alpha <= 1) | (beta <= 0.5)] = math.nan
+    if is_tensor(a, b):
+        if a.ndim == 0:
+            invalid = tt.or_(tt.le(alpha, 1.0), tt.le(beta, 0.5))
+            mu = ifelse(invalid, np.nan, mu)
+            sigma = ifelse(invalid, np.nan, sigma)
+        else:
+            invalid = tt.or_(
+                tt.le(alpha, tt.ones_like(alpha)),
+                tt.le(beta, tt.ones_like(beta)),
+            )
+            mu = tt.switch(invalid, tt.ones_like(mu) * np.nan, mu)
+            sigma = tt.switch(invalid, tt.ones_like(sigma) * np.nan, sigma)
+    else:
+        mu[(alpha <= 1) | (beta <= 0.5)] = np.nan
+        sigma[(alpha <= 1) | (beta <= 0.5)] = np.nan
     if is_vector:
         return mu / (np.pi / 180), sigma / (np.pi / 180)
     else:
@@ -158,7 +171,7 @@ def beta2gauss(
 class LatitudeIntegral(WignerIntegral):
     def _ingest(self, a, b, **kwargs):
         """
-        Ingest the parameters of the distribution and 
+        Ingest the parameters of the distribution and
         set up the transform and rotation operators.
 
         """
@@ -232,11 +245,11 @@ class LatitudeIntegral(WignerIntegral):
 
     def _pdf(self, phi, a, b):
         """
-        Return the probability density function evaluated at a 
+        Return the probability density function evaluated at a
         latitude `phi`.
-        
-        .. note:: 
-        
+
+        .. note::
+
             This function operates on and returns numeric values.
             It is used internally in the `perform` step of a `PDFOp`.
 
@@ -254,11 +267,11 @@ class LatitudeIntegral(WignerIntegral):
         """
         Draw samples from the latitude distribution (in degrees).
 
-        .. note:: 
-        
+        .. note::
+
             This function operates on and returns numeric values.
             It is used internally in the `perform` step of a `SampleOp`.
-        
+
         """
         alpha = np.exp(a * self._log_alpha_max)
         beta = np.exp(np.log(0.5) + b * (self._log_beta_max - np.log(0.5)))
@@ -270,7 +283,7 @@ class LatitudeIntegral(WignerIntegral):
         """
         Return the log of the absolute value of the Jacobian for the
         transformation from `(a, b)` to `(mu, sigma)`.
-        
+
         """
         log_jac = tt.log(
             tt.abs_(

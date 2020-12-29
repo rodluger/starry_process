@@ -7,7 +7,7 @@ from theano.configparser import change_flags
 import pytest
 
 
-def test_size(ydeg=15, r=15.0, d=5.0, rtol=1e-7, ftol=1e-7, **kwargs):
+def test_size(ydeg=15, r=15.0, dr=5.0, rtol=1e-7, ftol=1e-7, **kwargs):
     # Indices of non-zero elements
     l = np.arange(ydeg + 1)
     i = l * (l + 1)
@@ -15,14 +15,14 @@ def test_size(ydeg=15, r=15.0, d=5.0, rtol=1e-7, ftol=1e-7, **kwargs):
 
     # Get analytic integrals
     print("Computing moments analytically...")
-    S = SizeIntegral(r, d, ydeg=ydeg, **kwargs)
+    S = SizeIntegral(r, dr, ydeg=ydeg, **kwargs)
     e = S._first_moment().eval()[i]
     eigE = S._second_moment().eval()
     E = (eigE @ eigE.T)[ij]
 
     # Get the first moment by numerical integration
     r_rad = r * np.pi / 180
-    d_rad = d * np.pi / 180
+    d_rad = dr * np.pi / 180
     e_num = np.zeros(ydeg + 1)
     Bp = S._spot.Bp.eval()
     theta = S._spot.theta.eval()
@@ -59,16 +59,16 @@ def test_size(ydeg=15, r=15.0, d=5.0, rtol=1e-7, ftol=1e-7, **kwargs):
 
 
 def test_size_grad(
-    ydeg=15, r=15.0, d=5.0, abs_tol=1e-5, rel_tol=1e-5, eps=1e-5,
+    ydeg=15, r=15.0, dr=5.0, abs_tol=1e-5, rel_tol=1e-5, eps=1e-5
 ):
     with change_flags(compute_test_value="off"):
 
-        S = SizeIntegral(r, d, ydeg=ydeg)
+        S = SizeIntegral(r, dr, ydeg=ydeg)
 
         # d/de
         verify_grad(
-            lambda r, d: SizeIntegral(r, d, ydeg=ydeg)._first_moment(),
-            (r, d),
+            lambda r, dr: SizeIntegral(r, dr, ydeg=ydeg)._first_moment(),
+            (r, dr),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,
@@ -77,8 +77,8 @@ def test_size_grad(
 
         # d/dE
         verify_grad(
-            lambda r, d: SizeIntegral(r, d, ydeg=ydeg)._second_moment(),
-            (r, d),
+            lambda r, dr: SizeIntegral(r, dr, ydeg=ydeg)._second_moment(),
+            (r, dr),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,

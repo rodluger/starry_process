@@ -53,38 +53,34 @@ class Spot:
         y = tt.set_subtensor(y[self.i], tt.dot(self.Bp, b))
         return y
 
-    def get_e(self, r, d):
-        chim = tt.exp(self.sfac * (r - d - self.theta))
-        chip = tt.exp(self.sfac * (r + d - self.theta))
-        c = 1.0 / (2 * d * self.sfac) * tt.log((1 + chim) / (1 + chip))
+    def get_e(self, r, dr):
+        chim = tt.exp(self.sfac * (r - dr - self.theta))
+        chip = tt.exp(self.sfac * (r + dr - self.theta))
+        c = 1.0 / (2 * dr * self.sfac) * tt.log((1 + chim) / (1 + chip))
         e = tt.zeros(self.N)
         e = tt.set_subtensor(e[self.i], tt.dot(self.Bp, c))
         return e
 
-    def get_eigE(self, r, d):
-        # NOTE: For theta > r + d, the `C` matrix drops
+    def get_eigE(self, r, dr):
+        # NOTE: For theta > r + dr, the `C` matrix drops
         # to zero VERY quickly. In practice we get better
         # numerical stability if we just set those elements
         # to zero without evaluating them, especially since
         # we can get NaNs from operations involving the extremely
         # large dynamic range between the `exp` and `ln` terms.
         # TODO: Find a more numerically stable way of evaluating this.
-        kmax = tt.argmax(self.theta / (r + d) > self.cutoff)
+        kmax = tt.argmax(self.theta / (r + dr) > self.cutoff)
         t = tt.reshape(self.theta[:kmax], (1, -1))
-        chim = tt.exp(self.sfac * (r - d - t))
-        chip = tt.exp(self.sfac * (r + d - t))
+        chim = tt.exp(self.sfac * (r - dr - t))
+        chip = tt.exp(self.sfac * (r + dr - t))
         exp = tt.exp(self.sfac * (t - tt.transpose(t)))
         term = tt.log(1 + chim) - tt.log(1 + chip)
         C0 = (exp * term - tt.transpose(term)) / (1 - exp + 1.0e-15)
         C0 = tt.set_subtensor(
             C0[tt.arange(kmax), tt.arange(kmax)],
-            (
-                tt.reshape(
-                    1 / (1 + chip) + chim / (1 + chim) - term - 1, (-1,),
-                )
-            ),
+            (tt.reshape(1 / (1 + chip) + chim / (1 + chim) - term - 1, (-1,))),
         )
-        C0 /= 2 * d * self.sfac
+        C0 /= 2 * dr * self.sfac
         C = tt.zeros((self.theta.shape[0], self.theta.shape[0]))
         C = tt.set_subtensor(C[:kmax, :kmax], C0)
         Etilde = tt.dot(tt.dot(self.Bp, C), tt.transpose(self.Bp))
@@ -95,9 +91,9 @@ class Spot:
 
 
 class SizeIntegral(MomentIntegral):
-    def _ingest(self, r, d, **kwargs):
+    def _ingest(self, r, dr, **kwargs):
         """
-        Ingest the parameters of the distribution and 
+        Ingest the parameters of the distribution and
         set up the transform and rotation operators.
 
         """
@@ -111,22 +107,23 @@ class SizeIntegral(MomentIntegral):
 
         # Different behavior depending on whether we're
         # modeling a delta function or a uniform prior
-        if d is None:
+        if dr is None:
 
             # delta function
             self._params = [self._r]
             self._q = self._spot.get_y(self._r)
             self._eigQ = tt.reshape(self._q, (-1, 1))
+            self._dr = tt.as_tensor_variable(0.0)
 
         else:
 
             # uniform
-            self._d = CheckBoundsOp(name="d", lower=0, upper=0.5 * np.pi)(
-                d * self._angle_fac
+            self._dr = CheckBoundsOp(name="dr", lower=0, upper=0.5 * np.pi)(
+                dr * self._angle_fac
             )
-            self._params = [self._r, self._d]
-            self._q = self._spot.get_e(self._r, self._d)
-            self._eigQ = self._spot.get_eigE(self._r, self._d)
+            self._params = [self._r, self._dr]
+            self._q = self._spot.get_e(self._r, self._dr)
+            self._eigQ = self._spot.get_eigE(self._r, self._dr)
 
     def _compute(self):
         pass

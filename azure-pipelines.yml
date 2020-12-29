@@ -11,18 +11,18 @@ jobs:
   pool:
     vmImage: Ubuntu-16.04
   steps:
-  
+
   - script: |
       nproc
       lscpu
     displayName: 'Machine info'
-  
+
   - script: |
       sudo chown -R $USER $CONDA
       . $CONDA/etc/profile.d/conda.sh
       conda create --yes --quiet --name starry_process python=3.7.3 pip
     displayName: 'Setup conda'
-  
+
   - script: |
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
@@ -32,10 +32,11 @@ jobs:
       pip install -U setuptools
       conda install -y -q -c conda-forge tectonic pandoc
       pip install -U sphinx
+      pip install -U nbsphinx
       pip install -U dynesty
 
     displayName: 'Install dependencies'
-  
+
   - script: |
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
@@ -78,7 +79,7 @@ jobs:
     displayName: 'Build the paper'
     env:
       ON_AZURE: 1
-  
+
   - script: |
       cd $(Build.SourcesDirectory)
       git checkout --orphan $(Build.SourceBranchName)-pdf
@@ -92,4 +93,3 @@ jobs:
     env:
       GITHUB_API_KEY: $(GITHUB_API_KEY)
       GITHUB_USER: $(GITHUB_USER)
-    
