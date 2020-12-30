@@ -37,6 +37,10 @@ for prop in [
         if hasattr(obj, "__doc__"):
             try:
                 for key, value in defaults.items():
+
+                    if callable(value):
+                        value = value.__name__
+
                     obj.__doc__ = obj.__doc__.replace(
                         '%%defaults["{}"]%%'.format(key),
                         "``{}``".format(value),

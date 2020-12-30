@@ -4,6 +4,12 @@ import functools
 
 
 def cache(*cache_args):
+    """
+    Decorator for caching pre-computable things. Not
+    currently used in the code.
+
+    """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(self, *args, clobber=False, **kwargs):

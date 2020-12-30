@@ -11,7 +11,6 @@ from .ops import (
 from .wigner import R
 from .defaults import defaults
 from .math import cast
-from .cache import cache
 from scipy.special import gamma, hyp2f1
 import numpy as np
 import theano
@@ -126,9 +125,9 @@ class FluxIntegral:
     def _G(self, j, i):
         """
         This is the integral of
-         
+
             cos(x / 2)^i sin(x / 2)^j sin(x)
-        
+
         from 0 to pi/2.
         """
         return 2 * gamma(1 + 0.5 * i) * gamma(1 + 0.5 * j) / gamma(
@@ -250,7 +249,7 @@ class FluxIntegral:
     def _precompute(self):
         """
         Pre-compute some vectors and matrices.
-        
+
         """
         # Pre-compute some matrices
         self._precompute_inclination_integrals()

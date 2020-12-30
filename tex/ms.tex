@@ -161,7 +161,7 @@ between the phases of two data points. The kernel of a stationary process is
 therefore a one-dimensional function, typically chosen from a set of
 standard functions with desirable smoothness and spectral properties.
 Among a vast number of kernels are a few that are commonly used
-in modeling stellar variability: the squared exponential kernel,
+in modeling stellar variability: the exponential squared kernel,
 %
 \begin{align}
     k_\mathrm{E^2}(\Delta t)           & = \sigma^2 \exp\left(-\frac{\Delta t}{2\tau}\right)
@@ -2170,6 +2170,10 @@ properties exactly.
     can uniquely infer $n$. I think this can be done by taking light curves
     in two bands, but I'm checking with Gully. @HEDGES: Anything to add on this?}
 
+\subsection{Mixture models}
+\label{sec:mixture}
+\xxx{TODO: kernels can be summed!}
+
 \subsection{Gaussians all the way down}
 \label{sec:other-marg}
 \xxx{TODO: We can also marginalize over period and limb darkening coefficients.
@@ -2466,7 +2470,7 @@ results presented in this paper:
           corresponding to perfectly periodic light curves. However, time
           variability can easily be modeled as the product of the \starryprocess
           kernel and a kernel describing the covariance of the process in
-          time, such as a simple squared exponential or Mat\'ern-3/2 kernel.
+          time, such as a simple exponential squared or Mat\'ern-3/2 kernel.
           The hyperparameters of the temporal covariance are then strictly
           tied to the timescale on which the surface evolves. More
           complex temporal variability, such as that induced by differential

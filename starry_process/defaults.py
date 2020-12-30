@@ -1,3 +1,5 @@
+from .temporal import *
+
 defaults = dict(
     ydeg=15,
     udeg=2,
@@ -10,6 +12,8 @@ defaults = dict(
     p=1.0,
     i=60.0,
     u=None,
+    tau=None,
+    temporal_kernel=Matern32Kernel,
     normalized=True,
     normalization_order=20,
     normalization_zmax=0.023,
@@ -17,7 +21,7 @@ defaults = dict(
     baseline_mean=0.0,
     baseline_var=0.0,
     driver="numpy",
-    eps=1e-6,
+    eps=1e-8,
     epsy=1e-12,
     epsy15=1e-9,
     covpts=300,

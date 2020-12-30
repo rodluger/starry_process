@@ -14,6 +14,27 @@ import numpy as np
 __all__ = ["StarryProcess"]
 
 
+def special_property(func):
+    """
+    Special implementation of the ``property`` decorator.
+
+    For ``StarryProcess`` instances, this is just the regular
+    ``property`` decorator. But for instances of ``StarryProcessSum``,
+    this returns a list of the values of the current property for
+    each of the components of the sum.
+
+    """
+
+    @property
+    def wrapper(self):
+        if type(self) is StarryProcessSum:
+            return [getattr(child, func.__name__) for child in self._children]
+        else:
+            return func(self)
+
+    return wrapper
+
+
 class StarryProcess(object):
     def __init__(
         self,
@@ -22,6 +43,8 @@ class StarryProcess(object):
         c=defaults["c"],
         n=defaults["n"],
         u=defaults["u"],
+        tau=defaults["tau"],
+        temporal_kernel=defaults["temporal_kernel"],
         marginalize_over_inclination=defaults["marginalize_over_inclination"],
         normalized=defaults["normalized"],
         covpts=defaults["covpts"],
@@ -84,6 +107,21 @@ class StarryProcess(object):
             u (vector, optional): The limb darkening coefficients for the
                 star. In the case of no limb darkening, set this to
                 ``None``. Default is %%defaults["u"]%%.
+            tau (scalar, optional): The spot evolution timescale. This is
+                the timescale of the kernel defined by ``temporal_kernel``
+                to model temporal variability of the stellar surface.
+                In the case of no time evolution, set this to
+                ``None``. Default is %%defaults["tau"]%%.
+            temporal_kernel (callable, optional): The kernel function used to
+                model temporal variability. This must be a callable of the form
+                ``f(t1, t2, tau)`` where ``t1`` and ``t2`` are tensors (scalar or
+                vector-valued) representing the input times
+                and ``tau`` is a tensor representing the timescale hyperparameter,
+                and it must return a tensor covariance matrix of shape
+                ``(len(t1), len(t2))``.
+                Recommended kernels
+                are implemented in the ``starry_process.temporal`` module.
+                Default is %%defaults["temporal_kernel"]%%.
             marginalize_over_inclination (bool, optional): Whether or not to
                 marginalize over the inclination under the assumption of an
                 isotropic prior. Recommended if there are no constraints on
@@ -183,6 +221,16 @@ class StarryProcess(object):
                 "Must provide either `a` and `b` *or* `mu` and `sigma`."
             )
 
+        # Temporal parameters
+        if tau is None:
+            self._tau = tt.as_tensor_variable(0.0)
+            self._time_variable = False
+            self._temporal_kernel = None
+        else:
+            self._tau = CheckBoundsOp(name="tau", lower=0, upper=np.inf)(tau)
+            self._time_variable = True
+            self._temporal_kernel = temporal_kernel
+
         # Spherical harmonic degree of the process
         self._ydeg = int(kwargs.get("ydeg", defaults["ydeg"]))
         assert self._ydeg >= 5, "Degree of map must be >= 5."
@@ -235,17 +283,17 @@ class StarryProcess(object):
             kwargs.get("seed", 0)
         )
 
-    @property
+    @special_property
     def a(self):
         """Hyperparameter controlling the shape of the latitude distribution."""
         return self._latitude._a
 
-    @property
+    @special_property
     def b(self):
         """Hyperparameter controlling the shape of the latitude distribution."""
         return self._latitude._b
 
-    @property
+    @special_property
     def mu(self):
         """
         Hyperparameter controlling the mode of the latitude
@@ -254,7 +302,7 @@ class StarryProcess(object):
         """
         return beta2gauss(self._latitude._a, self._latitude._b)[0]
 
-    @property
+    @special_property
     def sigma(self):
         """
         Hyperparameter controlling the standard deviation of
@@ -263,28 +311,38 @@ class StarryProcess(object):
         """
         return beta2gauss(self._latitude._a, self._latitude._b)[1]
 
-    @property
+    @special_property
     def c(self):
         """Hyperparameter controlling the fractional spot contrast."""
         return self._contrast._c
 
-    @property
+    @special_property
     def n(self):
         """Hyperparameter controlling the number of spots."""
         return self._contrast._n
 
-    @property
+    @special_property
     def r(self):
         """Hyperparameter controlling the mean spot radius in degrees."""
         return self._size._r * (180.0 / np.pi)
 
-    @property
+    @special_property
     def dr(self):
         """Hyperparameter controlling the half-width of the radius
         distribution in degrees.
 
         """
         return self._size._dr * (180.0 / np.pi)
+
+    @special_property
+    def tau(self):
+        """Timescale of the temporal process in arbitrary units."""
+        return self._tau
+
+    @special_property
+    def temporal_kernel(self):
+        """Kernel for the temporal process."""
+        return self._temporal_kernel
 
     @property
     def ydeg(self):
@@ -318,7 +376,7 @@ class StarryProcess(object):
         """
         return self._marginalize_over_inclination
 
-    @property
+    @special_property
     def latitude(self):
         """
         The latitude distribution integral.
@@ -333,7 +391,7 @@ class StarryProcess(object):
         """
         return self._latitude
 
-    @property
+    @special_property
     def longitude(self):
         """
         The longitude distribution integral.
@@ -348,15 +406,20 @@ class StarryProcess(object):
         """
         return self._longitude
 
-    @property
+    @special_property
     def contrast(self):
         """The contrast distribution integral (not *really* user-facing)."""
         return self._contrast
 
-    @property
+    @special_property
     def flux(self):
-        """The flux integral  (not *really* user-facing)."""
+        """The flux distribution integral (not *really* user-facing)."""
         return self._flux
+
+    @special_property
+    def size(self):
+        """The size distribution integral (not *really* user-facing)."""
+        return self._size
 
     @property
     def mean_ylm(self):
@@ -388,6 +451,11 @@ class StarryProcess(object):
 
         Args:
             nsamples (int, optional): The number of samples to draw. Default 1.
+
+        .. note::
+
+            This method returns static map samples only (i.e., any time variability
+            is ignored).
 
         """
         u = self.random.normal((self._nylm, nsamples))
@@ -449,6 +517,11 @@ class StarryProcess(object):
                 noise unrelated to star spot variability. Default is
                 %%defaults["baseline_var"]%%.
             nsamples (int, optional): The number of samples to draw. Default 1.
+
+        .. note::
+
+            This method returns static map samples only (i.e., any time variability
+            is ignored).
 
         """
         # TODO
@@ -530,10 +603,15 @@ class StarryProcess(object):
         """
         if self._normalized:
             cov = self._flux.cov(t, i, p)
+            if self._time_variable:
+                cov *= self._temporal_kernel(t, t, self._tau)
             mean = self._flux.mean(t, i, p)[0]
             return self._normalize(1.0 + mean, cov)
         else:
-            return self._flux.cov(t, i, p)
+            cov = self._flux.cov(t, i, p)
+            if self._time_variable:
+                cov *= self._temporal_kernel(t, t, self._tau)
+            return cov
 
     def _normalize(self, mu, Sig):
         """
@@ -580,7 +658,8 @@ class StarryProcess(object):
             nsamples (int, optional): The number of samples to draw. Default 1.
             eps (float, optional): A small number added to the diagonal of the
                 flux covariance matrix when marginalizing over inclination
-                for extra stability. Default is %%defaults["eps"]%%.
+                for extra stability. If this method returns ``NaN`` values, try
+                increasing this value. Default is %%defaults["eps"]%%.
         """
         if self._marginalize_over_inclination:
             t = cast(t)
@@ -763,6 +842,9 @@ class StarryProcessSum(StarryProcess):
             == second._marginalize_over_inclination
         ), "Mismatch in `marginalize_over_inclination`."
         assert first._covpts == second._covpts, "Mismatch in `covpts`."
+        assert (
+            first._time_variable is False and second._time_variable is False
+        ), "Sums of `StarryProcess` instances not implemented for time-variable surfaces."
         self._ydeg = first._ydeg
         self._nylm = first._nylm
         self._normalized = first._normalized
@@ -773,8 +855,17 @@ class StarryProcessSum(StarryProcess):
         self._normN = first._normN
         self._normzmax = first._normzmax
         self._get_alpha_beta = first._get_alpha_beta
+        self._time_variable = False
         self._kwargs = first._kwargs
         self.random = first.random
+
+        # Running list of children
+        self._children = []
+        for child in [first, second]:
+            if hasattr(child, "_children"):
+                self._children += child._children
+            else:
+                self._children += [child]
 
         # Sum the random variables
         self._mean_ylm = first._mean_ylm + second._mean_ylm
