@@ -518,11 +518,6 @@ class StarryProcess(object):
                 %%defaults["baseline_var"]%%.
             nsamples (int, optional): The number of samples to draw. Default 1.
 
-        .. note::
-
-            This method returns static map samples only (i.e., any time variability
-            is ignored).
-
         """
         # TODO
         if self._marginalize_over_inclination:
@@ -534,6 +529,12 @@ class StarryProcess(object):
         if self._normalized:
             raise NotImplementedError(
                 "Not yet implemented when the flux is normalized."
+            )
+
+        # TODO
+        if self._time_variable:
+            raise NotImplementedError(
+                "Not yet implemented for time-variable maps."
             )
 
         # Get the full data covariance

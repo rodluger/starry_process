@@ -164,7 +164,7 @@ Among a vast number of kernels are a few that are commonly used
 in modeling stellar variability: the exponential squared kernel,
 %
 \begin{align}
-    k_\mathrm{E^2}(\Delta t)           & = \sigma^2 \exp\left(-\frac{\Delta t}{2\tau}\right)
+    k_\mathrm{E^2}(\Delta t)           & = \sigma^2 \exp\left(-\frac{\Delta t^2}{2\tau}\right)
     \quad,                                                                                                                                           \\
     \intertext{the Mat\'ern-3/2 kernel,}
     k_\mathrm{M^\frac{3}{2}}(\Delta t) & = \sigma^2 \left( 1 + \frac{\sqrt{3}\Delta t}{\tau} \right) \exp\left(-\frac{\sqrt{3}\Delta t}{\tau}\right)
@@ -2174,6 +2174,23 @@ properties exactly.
 \label{sec:mixture}
 \xxx{TODO: kernels can be summed!}
 
+\begin{figure}[t!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/gpsum.pdf}
+        \oscaption{gpsum}{%
+            Prior samples from a sum of two \starryprocess models. The
+            first model consists of small ($r=10^\circ$)
+            circumpolar ($\phi = 60^\circ \pm 3^\circ$) spots and the
+            second model consists of larger ($r=20^\circ$)
+            equatorial ($\phi = 0^\circ \pm 3^\circ$) spots.
+            The sum of two \starryprocess models is also a
+            \starryprocess, making it easy to model more complex
+            distributions of spots.
+            \label{fig:gpsum}
+        }
+    \end{centering}
+\end{figure}
+
 \subsection{Gaussians all the way down}
 \label{sec:other-marg}
 \xxx{TODO: We can also marginalize over period and limb darkening coefficients.
@@ -2196,6 +2213,44 @@ properties exactly.
     rigorously, but the way to do this is just take the elementwise product of the \starryprocess
     flux covariance with a temporal covariance. This corresponds to the Kronecker product
     in spherical harmonic space. Show a figure, give an example, etc.}
+
+\begin{figure}[t!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/temporal.pdf}
+        \oscaption{temporal}{%
+            Prior sample from a time-variable \starryprocess, assuming a rotation
+            period $P = 1$ day and a temporal evolution timescale $\tau = 20$ days
+            modeled with an exponential squared kernel. Evolving map samples are
+            shown at the top, with the corresponding light curve viewed at an
+            inclination $I = 60^\circ$ at the bottom. The GP hyperparameters are
+            set to their default values (Table~\ref{tab:synthetic}).
+            \label{fig:temporal}
+        }
+    \end{centering}
+\end{figure}
+
+\begin{proof}{test_temporal}
+    \pmb{\mathcal{A}}^\ddagger
+    \left(\pmb{\Sigma}_\mathbf{t} \otimes \pmb{\Sigma}_\mathbf{y}\right)
+    {\pmb{\mathcal{A}}^\ddagger}^\top
+    &=
+    \pmb{\Sigma} \odot \pmb{\Sigma}_\mathbf{t}
+\end{proof}
+%
+where
+%
+\begin{align}
+    \pmb{\mathcal{A}}^\ddagger
+                      & \equiv
+    \setstackgap{L}{1.25\baselineskip}
+    \fixTABwidth{T}
+    \parenMatrixstack{
+    \mathbf{a}_0^\top &                   &        &                              \\
+                      & \mathbf{a}_1^\top &        &                              \\
+                      &                   & \ddots &                              \\
+                      &                   &        & \,\,\, \mathbf{a}_{K-1}^\top
+    }\quad.
+\end{align}
 
 \subsection{Application to transits and RV}
 \label{sec:other-work}

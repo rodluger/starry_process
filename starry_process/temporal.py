@@ -7,7 +7,7 @@ __all__ = ["ExpSquaredKernel", "Matern32Kernel"]
 
 def ExpSquaredKernel(t1, t2, tau):
     dt = tt.abs_(tt.reshape(t1, (-1, 1)) - tt.reshape(t2, (1, -1)))
-    return tt.exp(-dt / (2 * tau))
+    return tt.exp(-(dt ** 2) / (2 * tau))
 
 
 def Matern32Kernel(t1, t2, tau):
