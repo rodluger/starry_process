@@ -19,8 +19,8 @@ seed = 0
 # Plotting settings
 nimg = 5
 pad = 85
-vmin = -0.2
-vmax = 0.1
+vmin = -0.15
+vmax = 0.075
 
 # Spatial covariance
 np.random.seed(seed)

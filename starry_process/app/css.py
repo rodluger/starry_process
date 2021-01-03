@@ -37,14 +37,14 @@ TEMPLATE = """
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%%;
-            height: 100%%;
+            width: 100%;
+            height: 100%;
             z-index: 99999;
             display: flex;
             flex-flow: row nowrap;
             justify-content: center;
             align-items: center;
-            background: none repeat scroll 0 0 #ffffff; 
+            background: none repeat scroll 0 0 #ffffff;
         }
         .loader-message {
             font-family: Helvetica, Arial, sans-serif;
@@ -62,23 +62,23 @@ TEMPLATE = """
             text-align: center;
         }
         .dot1 {
-            width: 25%%;
-            height: 25%%;
+            width: 25%;
+            height: 25%;
             display: inline-block;
             position: absolute;
             left: 120px;
             top: 0;
             background-color: #999;
-            border-radius: 100%%;
+            border-radius: 100%;
             z-index: 1;
         }
         .dot2 {
             display: inline-block;
             position: absolute;
             background-color: #666;
-            border-radius: 100%%;
-            width: 10%%;
-            height: 10%%;
+            border-radius: 100%;
+            width: 10%;
+            height: 10%;
             top: 60px;
             left: 80px;
             z-index: 2;
@@ -86,11 +86,11 @@ TEMPLATE = """
             animation: sk-orbit 0.75s infinite linear;
         }
         @keyframes sk-orbit {
-            0%% { z-index: 2; transform: translate(0%%, 0%%); }
-            49%% { z-index: 2; transform: translate(400%%, -200%%); }
-            50%% { z-index: 0; transform: translate(400%%, -200%%); }
-            99%% { z-index: 0; transform: translate(0%%, 0%%); }
-            100%% { z-index: 2; transform: translate(0%%, 0%%); }
+            0% { z-index: 2; transform: translate(0%, 0%); }
+            49% { z-index: 2; transform: translate(400%, -200%); }
+            50% { z-index: 0; transform: translate(400%, -200%); }
+            99% { z-index: 0; transform: translate(0%, 0%); }
+            100% { z-index: 2; transform: translate(0%, 0%); }
         }
     </style>
 
@@ -141,25 +141,25 @@ PLASMA = "background: linear-gradient(to left, \n{:s}\n);".format(plasma)
 # Description textbox
 description = """
 The sliders to the left and at the top control the hyperparameters of a
-<a href="https://github.com/rodluger/starry_process" 
+<a href="https://github.com/rodluger/starry_process"
 style="text-decoration: none; font-weight:600; color: #444444;">
 starry process</a>,
-an interpretable gaussian process for stellar light curves. 
-The hyperparameters describe the spot latitude distribution 
+an interpretable gaussian process for stellar light curves.
+The hyperparameters describe the spot latitude distribution
 (<span style="font-style:italic;=">left</span>),
-the spot radius 
-(<span style="font-style:italic;=">center</span>), 
-and the spot contrast 
-(<span style="font-style:italic;=">above</span>). 
+the spot radius
+(<span style="font-style:italic;=">center</span>),
+and the spot contrast
+(<span style="font-style:italic;=">above</span>).
 Below are five
 samples from the process seen in a Mollweide projection on the stellar
-surface, followed by the corresponding light curves viewed at 
-inclinations of 
-<span style="font-weight:600; color:{};">15</span>, 
-<span style="font-weight:600; color:{};">30</span>, 
-<span style="font-weight:600; color:{};">45</span>, 
-<span style="font-weight:600; color:{};">60</span>, 
-<span style="font-weight:600; color:{};">75</span>, 
+surface, followed by the corresponding light curves viewed at
+inclinations of
+<span style="font-weight:600; color:{};">15</span>,
+<span style="font-weight:600; color:{};">30</span>,
+<span style="font-weight:600; color:{};">45</span>,
+<span style="font-weight:600; color:{};">60</span>,
+<span style="font-weight:600; color:{};">75</span>,
 and
 <span style="font-weight:600; color:{};">90</span>
 degrees.
@@ -173,7 +173,7 @@ style = lambda: Div(
     text="""
 <style>
     html, body {
-        margin: 0 !important; 
+        margin: 0 !important;
         height: 100%% !important;
     }
     .samples{

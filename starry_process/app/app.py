@@ -329,7 +329,7 @@ class Samples(object):
             var ylm = ylm_source.data['ylm'];
             var i, j, k, l, m, n;
             for (n = 0; n < {nmax}; n++) {{
-                
+
                 // Update the light curves
                 var flux = flux_source[n].data['ys'];
                 for (l = 0; l < {lmax}; l++) {{
@@ -382,7 +382,7 @@ class Samples(object):
             sizing_mode="scale_both",
             css_classes=["samples"],
         )
-        self.layout = grid([[self.plots],])
+        self.layout = grid([[self.plots]])
 
     def slider_callback(self, attr, old, new):
         self.color_mapper.low, self.color_mapper.high = self.slider.value
@@ -644,7 +644,7 @@ class Integral(object):
                             *self.hidden_sliders,
                             sizing_mode="stretch_width",
                         )
-                    ],
+                    ]
                 ]
             )
 
@@ -655,7 +655,7 @@ class Integral(object):
             if len(self.funcs):
 
                 self.source.data["ys"] = [
-                    f(x, *[slider.value for slider in self.sliders],)
+                    f(x, *[slider.value for slider in self.sliders])
                     for x, f in zip(self.source.data["xs"], self.funcs)
                 ]
                 for slider in self.sliders:
@@ -730,7 +730,7 @@ class Application(object):
         self.gp = StarryProcess(ydeg=self.ydeg, r=r, a=a, b=b, c=c, n=n)
         self.gp.random.seed(238)
         self.sample_function = theano.function(
-            [r, a, b, c, n,],
+            [r, a, b, c, n],
             [self.gp.sample_ylm(self.nmaps)],
             no_default_updates=True,
         )
@@ -818,7 +818,7 @@ class Application(object):
 
         # Settings
         ControlPanel = column(
-            Div(text="<h1>settings</h1>", css_classes=["control-title"],),
+            Div(text="<h1>settings</h1>", css_classes=["control-title"]),
             self.Contrast.layout,
             self.Samples.slider,
             row(
@@ -851,6 +851,13 @@ class Application(object):
         print("Done rendering.")
 
         # Remove the loading spinner
+        self.remove_spinner(doc)
+
+    def remove_spinner(self, doc):
+
+        # HACK: Invoke a JS snippet by binding it
+        # to a `js_on_change` property of a dummy object,
+        # then immediately triggering it
         js_dummy = self.Samples.flux_plot[0].circle(x=0, y=0, size=1, alpha=0)
         js_dummy.glyph.js_on_change(
             "size",
@@ -858,7 +865,18 @@ class Application(object):
                 code="document.getElementsByClassName('preloader')[0].style.display = 'none';"
             ),
         )
-        js_dummy.glyph.size = 0
+
+        def hide_spinner():
+            js_dummy.glyph.size = 0
+
+        hide_spinner()
+
+        # SUPER HACK: For some reason, sometimes the above code doesn't
+        # get triggered on the server, and the spinner persists forever.
+        # Here we add a (lightweight) periodic callback to make
+        # the spinner invisible every 1000ms. This is a *horrible* HACK,
+        # so any suggestions are welcome!
+        cb = doc.add_periodic_callback(hide_spinner, 1000)
 
 
 # Instantiate the base app
@@ -871,4 +889,3 @@ app = Application(
     throttle_time=float(os.getenv("THROTTLE_TIME", 0.15)),
     load_timeout=float(os.getenv("LOAD_TIMEOUT", 1.0)),
 )
-
