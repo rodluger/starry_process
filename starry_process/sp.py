@@ -618,7 +618,7 @@ class StarryProcess(object):
         """
         Return the series expansion of the normalized covariance matrix.
 
-        See Luger (2020) for details.
+        See Luger (2021) for details.
 
         """
         # Terms
