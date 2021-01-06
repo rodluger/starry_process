@@ -30,11 +30,12 @@ jobs:
       theano-cache purge
       pip install -U pip
       pip install -U setuptools
-      conda install -y -q -c conda-forge tectonic pandoc
+      conda install -y -q -c conda-forge tectonic pandoc ipywidgets
       pip install -U "nbconvert>=5.5"
       pip install -U sphinx
       pip install -U nbsphinx
       pip install -U dynesty
+      jupyter nbextension enable --py widgetsnbextension
 
     displayName: 'Install dependencies'
 
