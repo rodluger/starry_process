@@ -4,3 +4,4 @@ from .flux import rTA1Op, rTA1LOp, LOp
 from .exceptions import CheckBoundsOp, CheckVectorSizeOp
 from .eigh import EighOp
 from .norm import AlphaBetaOp
+from .sample import SampleYlmTemporalOp

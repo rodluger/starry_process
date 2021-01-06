@@ -5,7 +5,7 @@ from .contrast import ContrastIntegral
 from .flux import FluxIntegral
 from .math import cho_factor, cho_solve, cast
 from .defaults import defaults
-from .ops import CheckBoundsOp, AlphaBetaOp
+from .ops import CheckBoundsOp, AlphaBetaOp, SampleYlmTemporalOp
 import theano.tensor as tt
 from theano.ifelse import ifelse
 import numpy as np
@@ -440,23 +440,32 @@ class StarryProcess(object):
         """
         return self._cho_cov_ylm
 
-    def sample_ylm(self, nsamples=1):
+    def sample_ylm(self, t=None, nsamples=1):
         """
         Draw samples from the prior.
 
         Args:
+            t (vector, optional): If provided, return the samples evaluated
+                at these points in time. This is only useful if the surface
+                variability timescale ``tau`` is set. Default is ``None``.
             nsamples (int, optional): The number of samples to draw. Default 1.
 
-        .. note::
-
-            This method returns static map samples only (i.e., any time variability
-            is ignored).
+        Returns:
+            An array of samples of shape ``(nsamples, ntimes, nylm)``
+            (if a vector of times is provided) or ``(nsamples, nylm)``
+            if not.
 
         """
-        u = self.random.normal((self._nylm, nsamples))
-        return tt.transpose(
-            self.mean_ylm[:, None] + tt.dot(self.cho_cov_ylm, u)
-        )
+        if t is None:
+            u = self.random.normal((self._nylm, nsamples))
+            return tt.transpose(
+                self.mean_ylm[:, None] + tt.dot(self.cho_cov_ylm, u)
+            )
+        else:
+            cov_t = self._temporal_kernel(t, t, self._tau)
+            cho_cov_t = cho_factor(cov_t)
+            U = self.random.normal((nsamples, tt.shape(cov_t)[0], self._nylm))
+            return SampleYlmTemporalOp()(self._cho_cov_ylm, cho_cov_t, U)
 
     def sample_ylm_conditional(
         self,
@@ -666,15 +675,19 @@ class StarryProcess(object):
                 flux covariance matrix when marginalizing over inclination
                 for extra stability. If this method returns ``NaN`` values, try
                 increasing this value. Default is %%defaults["eps"]%%.
+
+        Returns:
+            An array of samples of shape ``(nsamples, ntimes)``.
+
         """
         if self._marginalize_over_inclination:
             t = cast(t)
-            u = self.random.normal((t.shape[0], nsamples))
+            U = self.random.normal((t.shape[0], nsamples))
             cho_cov = cho_factor(
                 self.cov(t, i, p, u) + eps * tt.eye(t.shape[0])
             )
             return tt.transpose(
-                self.mean(t, i, p)[:, None] + tt.dot(cho_cov, u)
+                self.mean(t, i, p, u)[:, None] + tt.dot(cho_cov, U)
             )
         else:
             ylm = self.sample_ylm(nsamples=nsamples)

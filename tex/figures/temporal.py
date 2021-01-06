@@ -49,7 +49,6 @@ map = starry.Map(ydeg, inc=inc, lazy=False)
 A = map.design_matrix(theta=360 / p * t)
 y = np.zeros((Nt, Ny))
 flux = np.zeros(Nt)
-y = np.zeros((Nt, Ny))
 U = np.random.randn(Ny, Nt)
 for j in range(Ny):
     flux += (A @ Ly.T[j]) * (Lt @ U[j])

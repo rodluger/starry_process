@@ -43,7 +43,6 @@ def get_log_prob(
         b=b,
         c=c,
         n=n,
-        u=u,
         normalized=normalized,
         marginalize_over_inclination=marginalize_over_inclination,
         covpts=len(t) - 1,
@@ -54,8 +53,8 @@ def get_log_prob(
     nlc = tt.shape(flux)[0]
 
     # Compute the mean and covariance of the process
-    gp_mean = sp.mean(t, p=p, i=i)
-    gp_cov = sp.cov(t, p=p, i=i)
+    gp_mean = sp.mean(t, p=p, i=i, u=u)
+    gp_cov = sp.cov(t, p=p, i=i, u=u)
 
     # Residual matrix
     R = tt.transpose(flux) - tt.reshape(gp_mean, (-1, 1))
