@@ -13,7 +13,7 @@ def test_rTA1L_grad():
     with change_flags(compute_test_value="off"):
         op = rTA1LOp(ydeg=1, udeg=3)
         verify_grad(
-            lambda u1, u2, u3: op([u1, u2, u3]), [0.5, 0.25, 0.1], n_tests=1,
+            lambda u1, u2, u3: op([u1, u2, u3]), [0.5, 0.25, 0.1], n_tests=1
         )
 
 
@@ -41,6 +41,6 @@ def test_compare_to_starry(ydeg=15, udeg=2):
 def test_null_limb_darkening():
 
     t = np.linspace(0, 1, 300)
-    cov1 = StarryProcess(udeg=2, u=None).cov(t).eval()
-    cov2 = StarryProcess(udeg=2, u=[0.0, 0.0]).cov(t).eval()
+    cov1 = StarryProcess(udeg=0).cov(t).eval()
+    cov2 = StarryProcess(udeg=2).cov(t, u=[0.0, 0.0]).eval()
     assert np.allclose(cov1, cov2)

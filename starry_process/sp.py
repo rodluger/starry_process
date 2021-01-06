@@ -42,7 +42,6 @@ class StarryProcess(object):
         dr=defaults["dr"],
         c=defaults["c"],
         n=defaults["n"],
-        u=defaults["u"],
         tau=defaults["tau"],
         temporal_kernel=defaults["temporal_kernel"],
         marginalize_over_inclination=defaults["marginalize_over_inclination"],
@@ -104,9 +103,6 @@ class StarryProcess(object):
                 should have a mean (on average) equal to the true number of
                 spots (assuming all other model assumptions are valid).
                 Default is %%defaults["n"]%%.
-            u (vector, optional): The limb darkening coefficients for the
-                star. In the case of no limb darkening, set this to
-                ``None``. Default is %%defaults["u"]%%.
             tau (scalar, optional): The spot evolution timescale. This is
                 the timescale of the kernel defined by ``temporal_kernel``
                 to model temporal variability of the stellar surface.
@@ -272,7 +268,6 @@ class StarryProcess(object):
         self._flux = FluxIntegral(
             self._mean_ylm,
             self._cov_ylm,
-            u=u,
             marginalize_over_inclination=self._marginalize_over_inclination,
             covpts=self._covpts,
             **self._kwargs,
@@ -470,6 +465,7 @@ class StarryProcess(object):
         data_cov,
         i=defaults["i"],
         p=defaults["p"],
+        u=defaults["u"],
         baseline_mean=defaults["baseline_mean"],
         baseline_var=defaults["baseline_var"],
         nsamples=1,
@@ -506,6 +502,8 @@ class StarryProcess(object):
                 is set, this argument is ignored.
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
+            u (vector, optional): The limb darkening coefficients for the
+                star. Default is %%defaults["u"]%%.
             baseline_mean (scalar or vector, optional): The flux baseline to
                 subtract when computing the GP likelihood. Default is
                 %%defaults["baseline_mean"]%%.
@@ -555,7 +553,7 @@ class StarryProcess(object):
         C += baseline_var
 
         # Compute C^-1 . A
-        A = self._flux._design_matrix(t, i, p)
+        A = self._flux.design_matrix(t, i, p, u)
         cho_C = cho_factor(C)
         CInvA = cho_solve(cho_C, A)
 
@@ -573,7 +571,7 @@ class StarryProcess(object):
         u = self.random.normal((self._nylm, nsamples))
         return tt.transpose(ymu[:, None] + tt.dot(cho_ycov, u))
 
-    def mean(self, t, i=defaults["i"], p=defaults["p"]):
+    def mean(self, t, i=defaults["i"], p=defaults["p"], u=defaults["u"]):
         """
         The GP flux mean vector.
 
@@ -584,13 +582,15 @@ class StarryProcess(object):
                 is set, this argument is ignored.
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
+            u (vector, optional): The limb darkening coefficients for the
+                star. Default is %%defaults["u"]%%.
         """
         if self._normalized:
             return tt.zeros_like(cast(t, vectorize=True))
         else:
-            return self._flux.mean(t, i, p)
+            return self._flux.mean(t, i, p, u)
 
-    def cov(self, t, i=defaults["i"], p=defaults["p"]):
+    def cov(self, t, i=defaults["i"], p=defaults["p"], u=defaults["u"]):
         """
         The GP flux covariance matrix.
 
@@ -601,15 +601,17 @@ class StarryProcess(object):
                 is set, this argument is ignored.
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
+            u (vector, optional): The limb darkening coefficients for the
+                star. Default is %%defaults["u"]%%.
         """
         if self._normalized:
-            cov = self._flux.cov(t, i, p)
+            cov = self._flux.cov(t, i, p, u)
             if self._time_variable:
                 cov *= self._temporal_kernel(t, t, self._tau)
-            mean = self._flux.mean(t, i, p)[0]
+            mean = self._flux.mean(t, i, p, u)[0]
             return self._normalize(1.0 + mean, cov)
         else:
-            cov = self._flux.cov(t, i, p)
+            cov = self._flux.cov(t, i, p, u)
             if self._time_variable:
                 cov *= self._temporal_kernel(t, t, self._tau)
             return cov
@@ -643,6 +645,7 @@ class StarryProcess(object):
         t,
         i=defaults["i"],
         p=defaults["p"],
+        u=defaults["u"],
         nsamples=1,
         eps=defaults["eps"],
     ):
@@ -656,6 +659,8 @@ class StarryProcess(object):
                 is set, this argument is ignored.
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
+            u (vector, optional): The limb darkening coefficients for the
+                star. Default is %%defaults["u"]%%.
             nsamples (int, optional): The number of samples to draw. Default 1.
             eps (float, optional): A small number added to the diagonal of the
                 flux covariance matrix when marginalizing over inclination
@@ -665,14 +670,16 @@ class StarryProcess(object):
         if self._marginalize_over_inclination:
             t = cast(t)
             u = self.random.normal((t.shape[0], nsamples))
-            cho_cov = cho_factor(self.cov(t, i, p) + eps * tt.eye(t.shape[0]))
+            cho_cov = cho_factor(
+                self.cov(t, i, p, u) + eps * tt.eye(t.shape[0])
+            )
             return tt.transpose(
                 self.mean(t, i, p)[:, None] + tt.dot(cho_cov, u)
             )
         else:
             ylm = self.sample_ylm(nsamples=nsamples)
             return tt.transpose(
-                tt.dot(self._flux._design_matrix(t, i, p), tt.transpose(ylm))
+                tt.dot(self._flux.design_matrix(t, i, p, u), tt.transpose(ylm))
             )
 
     def log_jac(self):
@@ -730,6 +737,7 @@ class StarryProcess(object):
         data_cov,
         i=defaults["i"],
         p=defaults["p"],
+        u=defaults["u"],
         baseline_mean=defaults["baseline_mean"],
         baseline_var=defaults["baseline_var"],
     ):
@@ -765,6 +773,8 @@ class StarryProcess(object):
                 is set, this argument is ignored.
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
+            u (vector, optional): The limb darkening coefficients for the
+                star. Default is %%defaults["u"]%%.
             baseline_mean (scalar or vector, optional): The flux baseline to
                 subtract when computing the GP likelihood. Default is
                 %%defaults["baseline_mean"]%%.
@@ -783,8 +793,8 @@ class StarryProcess(object):
 
         """
         # Get the flux gp mean and covariance
-        gp_mean = self.mean(t, i=i, p=p)
-        gp_cov = self.cov(t, i=i, p=p)
+        gp_mean = self.mean(t, i=i, p=p, u=u)
+        gp_cov = self.cov(t, i=i, p=p, u=u)
         K = gp_mean.shape[0]
 
         # Get the full data covariance
@@ -835,6 +845,7 @@ class StarryProcessSum(StarryProcess):
             second, (StarryProcess, StarryProcessSum)
         ), "Can only add instances of `StarryProcess` to each other."
         assert first._ydeg == second._ydeg, "Mismatch in `ydeg`."
+        assert first._udeg == second._udeg, "Mismatch in `udeg`."
         assert (
             first._normalized == second._normalized
         ), "Mismatch in `normalized`."
@@ -847,6 +858,7 @@ class StarryProcessSum(StarryProcess):
             first._time_variable is False and second._time_variable is False
         ), "Sums of `StarryProcess` instances not implemented for time-variable surfaces."
         self._ydeg = first._ydeg
+        self._udeg = first._udeg
         self._nylm = first._nylm
         self._normalized = first._normalized
         self._marginalize_over_inclination = (

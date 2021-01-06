@@ -26,87 +26,19 @@ TEMPLATE = """
       {% endblock %}
       {% block postamble %}{% endblock %}
     {% endblock %}
+    <style>
+    .body-wrapper {
+        width:90%;
+        height:90%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    </style>
   </head>
   {% endblock %}
   {% block body %}
   <body style="min-width: 1400px; !important">
-    <div style="width:90%; height:90%; margin-left: auto; margin-right: auto;">
-
-    <style>
-        .preloader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 99999;
-            display: flex;
-            flex-flow: row nowrap;
-            justify-content: center;
-            align-items: center;
-            background: none repeat scroll 0 0 #ffffff;
-        }
-        .loader-message {
-            font-family: Helvetica, Arial, sans-serif;
-            font-size: 20pt;
-            font-weight: 600;
-            color: #999;
-            margin: 100px auto;
-            position: relative;
-        }
-        .spinner {
-            margin: 100px auto;
-            width: 320px;
-            height: 320px;
-            position: relative;
-            text-align: center;
-        }
-        .dot1 {
-            width: 25%;
-            height: 25%;
-            display: inline-block;
-            position: absolute;
-            left: 120px;
-            top: 0;
-            background-color: #999;
-            border-radius: 100%;
-            z-index: 1;
-        }
-        .dot2 {
-            display: inline-block;
-            position: absolute;
-            background-color: #666;
-            border-radius: 100%;
-            width: 10%;
-            height: 10%;
-            top: 60px;
-            left: 80px;
-            z-index: 2;
-            -webkit-animation: sk-orbit 0.75s infinite linear;
-            animation: sk-orbit 0.75s infinite linear;
-        }
-        @keyframes sk-orbit {
-            0% { z-index: 2; transform: translate(0%, 0%); }
-            49% { z-index: 2; transform: translate(400%, -200%); }
-            50% { z-index: 0; transform: translate(400%, -200%); }
-            99% { z-index: 0; transform: translate(0%, 0%); }
-            100% { z-index: 2; transform: translate(0%, 0%); }
-        }
-    </style>
-
-    <div class="preloader">
-        <div class="spinner">
-            <div class="dot1"></div>
-            <div class="dot2"></div>
-            <div class="loader-message">
-                &nbsp;starry process
-                <div style="font-size: 10pt; font-weight: 100; margin-top: 10px;">
-                    sit tight while the page renders...
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <div class="body-wrapper">
     {% block inner_body %}
       {% block contents %}
         {% for doc in docs %}
@@ -124,6 +56,82 @@ TEMPLATE = """
   </body>
   {% endblock %}
 </html>
+"""
+
+LOADING_SCREEN = """
+<style>
+    .preloader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 99999;
+        display: flex;
+        flex-flow: row nowrap;
+        justify-content: center;
+        align-items: center;
+        background: none repeat scroll 0 0 #ffffff;
+    }
+    .loader-message {
+        font-family: Helvetica, Arial, sans-serif;
+        font-size: 20pt;
+        font-weight: 600;
+        color: #999;
+        margin: 100px auto;
+        position: relative;
+    }
+    .spinner {
+        margin: 100px auto;
+        width: 320px;
+        height: 320px;
+        position: relative;
+        text-align: center;
+    }
+    .dot1 {
+        width: 25%;
+        height: 25%;
+        display: inline-block;
+        position: absolute;
+        left: 120px;
+        top: 0;
+        background-color: #999;
+        border-radius: 100%;
+        z-index: 1;
+    }
+    .dot2 {
+        display: inline-block;
+        position: absolute;
+        background-color: #666;
+        border-radius: 100%;
+        width: 10%;
+        height: 10%;
+        top: 60px;
+        left: 80px;
+        z-index: 2;
+        -webkit-animation: sk-orbit 0.75s infinite linear;
+        animation: sk-orbit 0.75s infinite linear;
+    }
+    @keyframes sk-orbit {
+        0% { z-index: 2; transform: translate(0%, 0%); }
+        49% { z-index: 2; transform: translate(400%, -200%); }
+        50% { z-index: 0; transform: translate(400%, -200%); }
+        99% { z-index: 0; transform: translate(0%, 0%); }
+        100% { z-index: 2; transform: translate(0%, 0%); }
+    }
+</style>
+<div class="preloader">
+    <div class="spinner">
+        <div class="dot1"></div>
+        <div class="dot2"></div>
+        <div class="loader-message">
+            &nbsp;starry process
+            <div style="font-size: 10pt; font-weight: 100; margin-top: 10px;">
+                sit tight while the page renders...
+            </div>
+        </div>
+    </div>
+</div>
 """
 
 # Plasma gradient

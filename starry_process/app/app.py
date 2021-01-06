@@ -1,4 +1,4 @@
-from .css import description, style, TEMPLATE
+from .css import description, style, TEMPLATE, LOADING_SCREEN
 from .design import get_intensity_design_matrix, get_flux_design_matrix
 from .moll import get_latitude_lines, get_longitude_lines
 from starry_process import StarryProcess
@@ -745,9 +745,11 @@ class Application(object):
         doc.title = "starry process"
         doc.template = TEMPLATE
 
-        # Set a timer; when it's done, load the widgets
-        self.layout = column(Div(), style(), sizing_mode="scale_both")
+        # Show the loading screen
+        self.layout = Div(text=LOADING_SCREEN, css_classes=["body-wrapper"])
         doc.add_root(self.layout)
+
+        # Set a delay timer for safety; when it's done, load the widgets
         doc.add_timeout_callback(
             lambda: self._run(doc), int(1000 * self.load_timeout)
         )
@@ -834,49 +836,26 @@ class Application(object):
         )
 
         # Full layout
-        self.layout.children.pop(0)
-        self.layout.children.append(
-            column(
-                row(
-                    self.Latitude.layout,
-                    self.Size.layout,
-                    ControlPanel,
-                    sizing_mode="scale_both",
-                ),
-                self.Samples.layout,
+        layout = column(
+            row(
+                self.Latitude.layout,
+                self.Size.layout,
+                ControlPanel,
                 sizing_mode="scale_both",
-            )
+            ),
+            self.Samples.layout,
+            style(),
+            sizing_mode="scale_both",
         )
 
         print("Done rendering.")
 
-        # Remove the loading spinner
-        self.remove_spinner(doc)
+        # Remove the loading screen
+        doc.remove_root(self.layout)
 
-    def remove_spinner(self, doc):
-
-        # HACK: Invoke a JS snippet by binding it
-        # to a `js_on_change` property of a dummy object,
-        # then immediately triggering it
-        js_dummy = self.Samples.flux_plot[0].circle(x=0, y=0, size=1, alpha=0)
-        js_dummy.glyph.js_on_change(
-            "size",
-            CustomJS(
-                code="document.getElementsByClassName('preloader')[0].style.display = 'none';"
-            ),
-        )
-
-        def hide_spinner():
-            js_dummy.glyph.size = 0
-
-        hide_spinner()
-
-        # SUPER HACK: For some reason, sometimes the above code doesn't
-        # get triggered on the server, and the spinner persists forever.
-        # Here we add a (lightweight) periodic callback to make
-        # the spinner invisible every 1000ms. This is a *horrible* HACK,
-        # so any suggestions are welcome!
-        cb = doc.add_periodic_callback(hide_spinner, 1000)
+        # Add the interface
+        self.layout = layout
+        doc.add_root(self.layout)
 
 
 # Instantiate the base app

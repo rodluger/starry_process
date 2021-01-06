@@ -6,7 +6,6 @@ from .ops import (
     rTA1Op,
     rTA1LOp,
     CheckBoundsOp,
-    CheckVectorSizeOp,
 )
 from .wigner import R
 from .defaults import defaults
@@ -29,19 +28,14 @@ class FluxIntegral:
         mean_ylm,
         cov_ylm,
         udeg=defaults["udeg"],
-        u=defaults["u"],
         marginalize_over_inclination=defaults["marginalize_over_inclination"],
         covpts=defaults["covpts"],
         ydeg=defaults["ydeg"],
         **kwargs
     ):
+
         # General
         self._udeg = udeg
-        if u is None or self._udeg == 0:
-            self._limbdarkened = False
-        else:
-            self._limbdarkened = True
-            self._u = CheckVectorSizeOp("u", self._udeg)(u)
         self._marginalize_over_inclination = marginalize_over_inclination
         self._covpts = covpts
         self._mean_ylm = mean_ylm
@@ -58,10 +52,6 @@ class FluxIntegral:
             self._ydeg, cos_alpha=0, sin_alpha=1, cos_gamma=0, sin_gamma=-1
         )
         self._CC = tt.extra_ops.CpuContiguous()
-        if self._limbdarkened:
-            self._rTA1 = rTA1LOp(ydeg=self._ydeg, udeg=self._udeg)(self._u)
-        else:
-            self._rTA1 = rTA1Op(ydeg=self._ydeg)()
 
         # Get the moments of the Ylm process in the polar frame
         self._ez = tt.transpose(
@@ -73,21 +63,15 @@ class FluxIntegral:
         tmp = self._CC(tt.transpose(self._dotRx(mom2, 0.5 * np.pi)))
         self._Ez = self._dotRx(tmp, 0.5 * np.pi)
 
-        # Pre-compute the integrals
+        # Pre-compute stuff that doesn't depend on user inputs
         self._precompute()
 
-    def _check_params(self, i, p):
-        # Period
-        p = CheckBoundsOp(name="p", lower=0, upper=np.inf)(p)
-
-        # Inclination
-        if not self._marginalize_over_inclination:
-
-            i = CheckBoundsOp(name="i", lower=0, upper=0.5 * np.pi)(
-                i * self._angle_fac
-            )
-
-        return i, p
+        # These parameters are star-specific and are set in
+        # calls to `mean()` and `cov()`.
+        self._t = None
+        self._i = None
+        self._p = None
+        self._u = None
 
     def _dotRx(self, M, theta):
         f = tt.zeros_like(M)
@@ -136,9 +120,10 @@ class FluxIntegral:
             1 + 0.5 * i, -0.5 * j, 2 + 0.5 * i, 0.5
         )
 
-    def _precompute_inclination_integrals(self):
+    def _precompute(self):
         """
-        Pre-compute the inclination marginalization integrals.
+        Pre-compute some stuff that doesn't depend on
+        user inputs.
 
         """
         # First, we can pre-compute a bunch of stuff
@@ -154,11 +139,11 @@ class FluxIntegral:
         )
 
         # First moment integral
-        t = [None for l in range(self._ydeg + 1)]
+        self._wnp = [None for l in range(self._ydeg + 1)]
         for l in range(self._ydeg + 1):
             m = np.arange(-l, l + 1)
             i = slice(l ** 2, (l + 1) ** 2)
-            t[l] = self._R[l] @ G[l - m, l + m]
+            self._wnp[l] = self._R[l] @ G[l - m, l + m]
 
         # Second moment integral. Apologies for
         # how opaque this all is, since it's the result of
@@ -186,90 +171,148 @@ class FluxIntegral:
                 )
                 R = self._R[l2][j - l2 ** 2, p - l2 ** 2].T
                 Q[l1, : 2 * l1 + 1, : 2 * l2 + 1, p] = L @ R
-        P = np.empty((self._nylm, self._nylm))
+        self._Wnp = np.empty((self._nylm, self._nylm))
         for l1 in range(self._ydeg + 1):
             i = np.arange(l1 ** 2, (l1 + 1) ** 2)
             for l2 in range(self._ydeg + 1):
                 j = np.arange(l2 ** 2, (l2 + 1) ** 2)
-                P[i.reshape(-1, 1), j.reshape(1, -1)] = Q[
+                self._Wnp[i.reshape(-1, 1), j.reshape(1, -1)] = Q[
                     l1, : 2 * l1 + 1, l2, j
                 ].T
 
-        # Now we need to deal with user inputs. If there's
-        # no limb darkening, we can just `eval` the flux op,
-        # since it doesn't have any inputs. But if there's
-        # limb darkening, we need to stick to tensor operations.
+    def _compute_inclination_integrals(self):
 
         # In the computation of the second moment below, we implicitly
         # make use of the fact that `rTA1 = 0` if `m != 0` because
         # of symmetry. This vastly reduces the number of operations
         # we need to do!
 
-        if self._limbdarkened:
+        if self._udeg > 0:
+
+            # Flux integral op
+            self._rTA1 = rTA1LOp(ydeg=self._ydeg, udeg=self._udeg)(self._u)
 
             # First moment
-            self._t = [None for l in range(self._ydeg + 1)]
+            self._w = [None for l in range(self._ydeg + 1)]
             for l in range(self._ydeg + 1):
                 i = slice(l ** 2, (l + 1) ** 2)
-                self._t[l] = tt.dot(self._rTA1[i], t[l])
+                self._w[l] = tt.dot(self._rTA1[i], self._wnp[l])
 
             # Second moment
             m0 = np.array([l ** 2 + l for l in range(self._ydeg + 1)])
             Z = tt.outer(self._rTA1[m0], self._rTA1[m0])
-            self._T = tt.zeros((self._nylm, self._nylm))
+            self._W = tt.zeros((self._nylm, self._nylm))
             for l1 in range(self._ydeg + 1):
                 i = np.arange(l1 ** 2, (l1 + 1) ** 2).reshape(-1, 1)
                 for l2 in range(self._ydeg + 1):
                     j = np.arange(l2 ** 2, (l2 + 1) ** 2).reshape(1, -1)
-                    self._T = tt.set_subtensor(
-                        self._T[i, j], P[i, j] * Z[l1, l2]
+                    self._W = tt.set_subtensor(
+                        self._W[i, j], self._Wnp[i, j] * Z[l1, l2]
                     )
 
         else:
 
-            # Get the numeric value of the `rTA1` vector
-            rTA1 = self._rTA1.eval()
+            # Get the numeric value of the flux op, since it
+            # doesn't depend on any user inputs
+            self._rTA1 = rTA1Op(ydeg=self._ydeg)().eval()
 
             # First moment
-            self._t = [None for l in range(self._ydeg + 1)]
+            self._w = [None for l in range(self._ydeg + 1)]
             for l in range(self._ydeg + 1):
                 i = slice(l ** 2, (l + 1) ** 2)
-                self._t[l] = rTA1[i] @ t[l]
+                self._w[l] = self._rTA1[i] @ self._wnp[l]
 
             # Second moment
             m0 = np.array([l ** 2 + l for l in range(self._ydeg + 1)])
-            Z = np.outer(rTA1[m0], rTA1[m0])
-            self._T = np.zeros((self._nylm, self._nylm))
+            Z = np.outer(self._rTA1[m0], self._rTA1[m0])
+            self._W = np.zeros((self._nylm, self._nylm))
             for l1 in range(self._ydeg + 1):
                 i = np.arange(l1 ** 2, (l1 + 1) ** 2).reshape(-1, 1)
                 for l2 in range(self._ydeg + 1):
                     j = np.arange(l2 ** 2, (l2 + 1) ** 2).reshape(1, -1)
-                    self._T[i, j] = P[i, j] * Z[l1, l2]
+                    self._W[i, j] = self._Wnp[i, j] * Z[l1, l2]
 
-    def _precompute(self):
+    def _set_params(self, t, i, p, u):
+        # Ingest
+        t = cast(t, vectorize=True)
+        if not self._marginalize_over_inclination:
+            i = CheckBoundsOp(name="i", lower=0, upper=0.5 * np.pi)(
+                i * self._angle_fac
+            )
+        else:
+            i = None
+        p = CheckBoundsOp(name="p", lower=0, upper=np.inf)(p)
+        if self._udeg > 0:
+            u = cast(u, vectorize=True)[: self._udeg]
+        else:
+            u = None
+
+        # Check if they are different from the cached variables
+        if (
+            (self._t != t)
+            or (self._i != i)
+            or (self._p != p)
+            or (self._u != u)
+        ):
+            # We need to re-compute everything
+            self._t = t
+            self._i = i
+            self._p = p
+            self._u = u
+            self._compute()
+
+    def _interpolate_cov(self):
         """
-        Pre-compute some vectors and matrices.
+        Interpolate the pre-computed kernel onto a
+        grid of time lags in 2D to get the full covariance.
 
         """
-        # Pre-compute some matrices
-        self._precompute_inclination_integrals()
+        theta = 2 * np.pi * tt.mod(self._t / self._p, 1.0)
+        x = tt.reshape(tt.abs_(theta[:, None] - theta[None, :]), (-1,))
+        inds = tt.cast(tt.floor(x / self._dx), "int64")
+        x0 = (x - self._xp[inds + 1]) / self._dx
+        cov = tt.reshape(
+            self._a0[inds]
+            + self._a1[inds] * x0
+            + self._a2[inds] * x0 ** 2
+            + self._a3[inds] * x0 ** 3,
+            (theta.shape[0], theta.shape[0]),
+        )
+
+        # If len(theta) == 1, return the *variance* instead
+        cov = ifelse(tt.eq(theta.shape[0], 1), self._var, cov)
+        return cov
+
+    def _design_matrix(self):
+        theta = 2 * np.pi * tt.mod(self._t / self._p, 1.0)
+        rTA1 = tt.tile(self._rTA1, (theta.shape[0], 1))
+        return self._right_project(rTA1, theta, self._i)
+
+    def _compute(self):
+        """
+        Compute some vectors and matrices used in the
+        evaluation of the mean and covariance.
+
+        """
+        # Compute some helper matrices
+        self._compute_inclination_integrals()
 
         # If we're marginalizing over inclination, pre-compute the
-        # radial kernel on a fine grid. We'll interpolate over it
-        # when actually computing the covariance for a given `t`, `p`.
+        # radial kernel on a fine grid, then interpolate onto the
+        # provided time array.
         if self._marginalize_over_inclination:
 
-            # Pre-compute the mean
+            # Compute the scalar mean
             self._mean = tt.sum(
                 [
-                    tt.dot(self._t[l], self._ez[slice(l ** 2, (l + 1) ** 2)])
+                    tt.dot(self._w[l], self._ez[slice(l ** 2, (l + 1) ** 2)])
                     for l in range(self._ydeg + 1)
                 ]
             )
 
-            # Pre-compute the *variance*
+            # Compute the *variance*
             self._var = (
-                tt.tensordot(self._T, self._Ez) - self._mean ** 2
+                tt.tensordot(self._W, self._Ez) - self._mean ** 2
             ) * tt.eye(1)
 
             # Evaluate the kernel on a regular 1d grid in theta
@@ -279,7 +322,7 @@ class FluxIntegral:
             )
 
             # Compute the batched tensor dot product T_ij R_ilk M_lj
-            mom2 = self._special_tensordotRz(self._T, self._Ez, self._xp)
+            mom2 = self._special_tensordotRz(self._W, self._Ez, self._xp)
 
             # The actual covariance
             yp = mom2 - self._mean ** 2
@@ -294,73 +337,51 @@ class FluxIntegral:
             self._a2 = 0.5 * (y0 + y2) - y1
             self._a3 = 0.5 * ((y1 - y2) + (y3 - y0) / 3.0)
 
-    def _interpolate_cov(self, t, p):
+            # Compute the covariance
+            self._cov = self._interpolate_cov()
+
+        else:
+
+            A = self._design_matrix()
+
+            # Compute the scalar mean
+            self._mean = tt.dot(A, self._mean_ylm)[0]
+
+            # Compute the covariance
+            self._cov = tt.dot(tt.dot(A, self._cov_ylm), tt.transpose(A))
+
+    def design_matrix(self, t, i, p, u):
         """
-        Interpolate the pre-computed kernel onto a
-        grid of time lags in 2D to get the full covariance.
 
         """
-        t = cast(t, vectorize=True)
-        theta = 2 * np.pi * tt.mod(t / p, 1.0)
-        x = tt.reshape(tt.abs_(theta[:, None] - theta[None, :]), (-1,))
-        inds = tt.cast(tt.floor(x / self._dx), "int64")
-        x0 = (x - self._xp[inds + 1]) / self._dx
-        cov = tt.reshape(
-            self._a0[inds]
-            + self._a1[inds] * x0
-            + self._a2[inds] * x0 ** 2
-            + self._a3[inds] * x0 ** 3,
-            (t.shape[0], t.shape[0]),
-        )
+        self._set_params(t, i, p, u)
+        return self._design_matrix()
 
-        # If len(t) == 1, return the *variance* instead
-        cov = ifelse(tt.eq(t.shape[0], 1), self._var, cov)
-        return cov
+    def kernel(self, t, i, p, u):
+        """
 
-    def _design_matrix(self, t, i, p):
-        i, p = self._check_params(i, p)
-        theta = 2 * np.pi / p * cast(t, vectorize=True)
-        rTA1 = tt.tile(self._rTA1, (theta.shape[0], 1))
-        return self._right_project(rTA1, theta, i)
-
-    def kernel(self, t, i, p):
+        """
+        self._set_params(t, i, p, u)
         if self._marginalize_over_inclination:
             mom2 = self._special_tensordotRz(
-                self._T,
+                self._W,
                 self._Ez,
-                2 * np.pi * tt.mod(tt.reshape(t, (-1,)) / p, 1.0),
+                2 * np.pi * tt.mod(tt.reshape(self._t, (-1,)) / self._p, 1.0),
             )
             return mom2 - self._mean ** 2
         else:
-            return self.cov(t, i, p)[0]
+            return self._cov[0]
 
-    def mean(self, t, i, p):
+    def mean(self, t, i, p, u):
+        """
 
-        # Note that the mean doesn't actually depend on the period!
-        i, p = self._check_params(i, p)
+        """
+        self._set_params(t, i, p, u)
+        return self._mean * tt.ones_like(self._t)
 
-        if self._marginalize_over_inclination:
+    def cov(self, t, i, p, u):
+        """
 
-            # Flux mean marginalized over inclination
-            mean = self._mean
-
-        else:
-
-            # Flux mean at this inclination
-            mean = tt.dot(
-                self._design_matrix(cast([0.0]), i, p), self._mean_ylm
-            )[0]
-
-        return mean * tt.ones_like(cast(t, vectorize=True))
-
-    def cov(self, t, i, p):
-        if self._marginalize_over_inclination:
-
-            # Marginalized over inclination
-            return self._interpolate_cov(t, p)
-
-        else:
-
-            # Conditioned on inclination
-            A = self._design_matrix(t, i, p)
-            return tt.dot(tt.dot(A, self._cov_ylm), tt.transpose(A))
+        """
+        self._set_params(t, i, p, u)
+        return self._cov

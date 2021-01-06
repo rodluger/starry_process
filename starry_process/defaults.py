@@ -1,4 +1,5 @@
 from .temporal import *
+import numpy as np
 
 defaults = dict(
     ydeg=15,
@@ -11,7 +12,7 @@ defaults = dict(
     n=10.0,
     p=1.0,
     i=60.0,
-    u=None,
+    u=np.zeros(30),
     tau=None,
     temporal_kernel=Matern32Kernel,
     normalized=True,
