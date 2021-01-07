@@ -5,6 +5,7 @@ import theano.tensor as tt
 import matplotlib.pyplot as plt
 from matplotlib import colors
 from matplotlib.animation import FuncAnimation
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import os
 
 

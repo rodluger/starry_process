@@ -944,7 +944,7 @@ class StarryProcess(object):
             y = self.sample_ylm()
         img = self.mollweide(y, unit_background=unit_background).eval()
         if len(img.shape) == 2:
-            img = np.reshape(1, *img.shape)
+            img = np.reshape(img, (1, *img.shape))
         while len(img.shape) > 3:
             img = img[0]
         visualize(img, **kwargs)
