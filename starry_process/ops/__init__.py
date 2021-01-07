@@ -5,3 +5,4 @@ from .exceptions import CheckBoundsOp, CheckVectorSizeOp
 from .eigh import EighOp
 from .norm import AlphaBetaOp
 from .sample import SampleYlmTemporalOp
+from .poly import pTA1Op

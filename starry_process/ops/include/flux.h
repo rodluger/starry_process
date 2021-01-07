@@ -581,6 +581,65 @@ public:
   }
 };
 
+/**
+  Compute the polynomial basis at a vector of points.
+
+*/
+template <typename ROWVECTOR, typename ROWMATRIX>
+inline void computepT(const ROWVECTOR &x, const ROWVECTOR &y,
+                      const ROWVECTOR &z, ROWMATRIX &pT) {
+  // Dimensions
+  using Scalar = typename ROWVECTOR::Scalar;
+  size_t npts = x.size();
+  pT.resize(npts, SP__N);
+
+  // Optimized polynomial basis computation
+  // A little opaque, sorry...
+  RowMatrix<Scalar, Dynamic, Dynamic> xarr(npts, SP__N), yarr(npts, SP__N);
+  RowVector<Scalar, Dynamic> xterm(npts), yterm(npts);
+  xterm.setOnes();
+  yterm.setOnes();
+  xterm += 0.0 * z; // Ensures we get `nan`s off the disk
+  yterm += 0.0 * z; // Ensures we get `nan`s off the disk
+  int i0 = 0, di0 = 3, j0 = 0, dj0 = 2;
+  int i, j, di, dj, n;
+  for (n = 0; n < SP__LMAX + 1; ++n) {
+    i = i0;
+    di = di0;
+    xarr.col(i) = xterm;
+    j = j0;
+    dj = dj0;
+    yarr.col(j) = yterm;
+    i = i0 + di - 1;
+    j = j0 + dj - 1;
+    while (i + 1 < SP__N) {
+      xarr.col(i) = xterm;
+      xarr.col(i + 1) = xterm;
+      di += 2;
+      i += di;
+      yarr.col(j) = yterm;
+      yarr.col(j + 1) = yterm;
+      dj += 2;
+      j += dj - 1;
+    }
+    xterm = xterm.cwiseProduct(x);
+    i0 += 2 * n + 1;
+    di0 += 2;
+    yterm = yterm.cwiseProduct(y);
+    j0 += 2 * (n + 1) + 1;
+    dj0 += 2;
+  }
+  n = 0;
+  for (int l = 0; l < SP__LMAX + 1; ++l) {
+    for (int m = -l; m < l + 1; ++m) {
+      pT.col(n) = xarr.col(n).cwiseProduct(yarr.col(n));
+      if ((l + m) % 2 != 0)
+        pT.col(n) = pT.col(n).cwiseProduct(z.transpose());
+      ++n;
+    }
+  }
+}
+
 } // namespace flux
 } // namespace sp
 

@@ -30,4 +30,6 @@ defaults = dict(
     log_beta_max=10,
     abmin=1e-12,
     sigma_max=45.0,
+    mx=300,
+    my=150,
 )

@@ -5,6 +5,7 @@ from .contrast import ContrastIntegral
 from .flux import FluxIntegral
 from .math import cho_factor, cho_solve, cast
 from .defaults import defaults
+from .visualize import mollweide_transform, visualize
 from .ops import CheckBoundsOp, AlphaBetaOp, SampleYlmTemporalOp
 import theano.tensor as tt
 from theano.ifelse import ifelse
@@ -196,6 +197,10 @@ class StarryProcess(object):
                 diagonal of the spherical harmonic covariance matrix
                 above degree ``15``, which become particularly unstable.
                 Default is %%defaults["epsy15"]%%.
+            mx (int, optional): x resolution of Mollweide grid
+                (for map visualizations). Default is %%defaults["mx"]%%.
+            my (int, optional): y resolution of Mollweide grid
+                (for map visualizations). Default is %%defaults["my"]%%.
         """
         # Latitude hyperparameters
         mu = kwargs.pop("mu", None)
@@ -235,6 +240,9 @@ class StarryProcess(object):
         self._nylm = (self._ydeg + 1) ** 2
         self._covpts = int(covpts)
         self._kwargs = kwargs
+        self._M = None
+        self._mx = kwargs.get("mx", defaults["mx"])
+        self._my = kwargs.get("my", defaults["my"])
 
         # Is the flux normalized?
         self._normalized = normalized
@@ -524,6 +532,9 @@ class StarryProcess(object):
                 noise unrelated to star spot variability. Default is
                 %%defaults["baseline_var"]%%.
             nsamples (int, optional): The number of samples to draw. Default 1.
+
+        Returns:
+            An array of samples of shape ``(nsamples, nylm)``.
 
         """
         # TODO
@@ -850,6 +861,94 @@ class StarryProcess(object):
         else:
             return self.__add__(other)
 
+    def mollweide(self, y, unit_background=True):
+        """
+        Return the Mollweide projection of a spherical harmonic
+        representation of a surface `y`.
+
+        Args:
+            y (vector or matrix): The spherical harmonic coefficients. This
+                can be an ndarray or tensor of any number of dimensions provided
+                the last dimension has length equal to the number of spherical
+                harmonic coefficients of the map. The output from methods such
+                as ``sample_ylm`` can thus be directly passed to this method.
+            unit_background (bool, optional): If ``True`` (default), the
+                returned image is shifted so that the unspotted surface has
+                unit intensity; otherwise, the baseline is set to zero.
+        Returns:
+            A matrix of dimension one greater than `y`, where the last two
+            dimensions have shape ``(my, mx)``, corresponding to the number
+            of pixels along the vertical and horizontal axes of the rendered
+            image. These parameters can be passed as kewyords when instantiating
+            this class; their default values are %%defaults["my"]%% and
+            %%defaults["mx"]%%, respectively.
+
+        """
+        if self._M is None:
+            self._M = mollweide_transform(my=self._my, mx=self._mx)
+        y = tt.as_tensor_variable(y)
+
+        if unit_background:
+            offset = tt.zeros_like(tt.transpose(y))
+            offset = tt.inc_subtensor(offset[0], tt.ones_like(offset[0]))
+            y += tt.transpose(offset)
+
+        img = tt.transpose(
+            tt.tensordot(self._M, tt.transpose(y), axes=[[1], [0]])
+        )
+        shape = tt.concatenate((tt.shape(y)[:-1], [self._my], [self._mx]))
+        return tt.reshape(img, shape, ndim=y.ndim + 1)
+
+    def visualize(self, y=None, unit_background=True, **kwargs):
+        """
+        Visualize the Mollweide projection of a spherical harmonic
+        representation of a surface `y` using matplotlib.
+
+        Args:
+            y (vector or matrix, optional): The spherical harmonic coefficients. This
+                can be an ndarray or tensor of any number of dimensions provided
+                the last dimension has length equal to the number of spherical
+                harmonic coefficients of the map and the next to last dimension
+                is the number of frames in the animation. The output from methods such
+                as ``sample_ylm`` can thus be directly passed to this method.
+                If more than 2d, all but the last two dimensions are ignored.
+                If not provided, `y` will be computed from a call to `sample_ylm()`.
+            unit_background (bool, optional): If ``True`` (default), the
+                returned image is shifted so that the unspotted surface has
+                unit intensity; otherwise, the baseline is set to zero.
+            ax (optional): A matplotlib axis instance to use. Default is
+                to create a new figure.
+            cmap (string or colormap instance, optional): The matplotlib colormap
+                to use. Defaults to ``plasma``.
+            figsize (tuple, optional): Figure size in inches. Default is
+                ``(7, 3.5)``.
+            colorbar (bool, optional): Display a colorbar? Default is False.
+            grid (bool, optional): Show latitude/longitude grid lines?
+                Defaults to True.
+            interval (int, optional): Interval between frames in milliseconds
+                (animated maps only). Defaults to 75.
+            file (string, optional): The file name (including the extension)
+                to save the figure or animation to. Defaults to None.
+            html5_video (bool, optional): If rendering in a Jupyter notebook,
+                display as an HTML5 video? Default is True. If False, displays
+                the animation using Javascript (file size will be larger.)
+            dpi (int, optional): Image resolution in dots per square inch.
+                Defaults to the value defined in ``matplotlib.rcParams``.
+            bitrate (int, optional): Bitrate in kbps (animations only).
+                Defaults to the value defined in ``matplotlib.rcParams``.
+            vmin (float, optional): The lower bound of the colormap.
+            vmax (float, optional): The upper bound of the colormap.
+
+        """
+        if y is None:
+            y = self.sample_ylm()
+        img = self.mollweide(y, unit_background=unit_background).eval()
+        if len(img.shape) == 2:
+            img = np.reshape(1, *img.shape)
+        while len(img.shape) > 3:
+            img = img[0]
+        visualize(img, **kwargs)
+
 
 class StarryProcessSum(StarryProcess):
     def __init__(self, first, second):
@@ -883,6 +982,9 @@ class StarryProcessSum(StarryProcess):
         self._get_alpha_beta = first._get_alpha_beta
         self._time_variable = False
         self._kwargs = first._kwargs
+        self._M = first._M
+        self._mx = first._mx
+        self._my = first._my
         self.random = first.random
 
         # Running list of children
