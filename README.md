@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="450" src="starry.png"/>
+  <img width="450" src="starry_process.gif"/>
   <br/>
   <a href="https://dev.azure.com/rodluger/starry_process/_build">
     <img src="https://dev.azure.com/rodluger/starry_process/_apis/build/status/rodluger.starry_process?branchName=master"/>
