@@ -482,7 +482,7 @@ class StarryProcess(object):
         data_cov,
         i=defaults["i"],
         p=defaults["p"],
-        u=defaults["u"],
+        u=defaults["u"][: defaults["udeg"]],
         baseline_mean=defaults["baseline_mean"],
         baseline_var=defaults["baseline_var"],
         nsamples=1,
@@ -520,7 +520,7 @@ class StarryProcess(object):
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
             u (vector, optional): The limb darkening coefficients for the
-                star. Default is %%defaults["u"]%%.
+                star. Default is %%defaults["u"][:defaults["udeg"]]%%.
             baseline_mean (scalar or vector, optional): The flux baseline to
                 subtract when computing the GP likelihood. Default is
                 %%defaults["baseline_mean"]%%.
@@ -591,7 +591,13 @@ class StarryProcess(object):
         u = self.random.normal((self._nylm, nsamples))
         return tt.transpose(ymu[:, None] + tt.dot(cho_ycov, u))
 
-    def mean(self, t, i=defaults["i"], p=defaults["p"], u=defaults["u"]):
+    def mean(
+        self,
+        t,
+        i=defaults["i"],
+        p=defaults["p"],
+        u=defaults["u"][: defaults["udeg"]],
+    ):
         """
         The GP flux mean vector.
 
@@ -603,14 +609,20 @@ class StarryProcess(object):
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
             u (vector, optional): The limb darkening coefficients for the
-                star. Default is %%defaults["u"]%%.
+                star. Default is %%defaults["u"][:defaults["udeg"]]%%.
         """
         if self._normalized:
             return tt.zeros_like(cast(t, vectorize=True))
         else:
             return self._flux.mean(t, i, p, u)
 
-    def cov(self, t, i=defaults["i"], p=defaults["p"], u=defaults["u"]):
+    def cov(
+        self,
+        t,
+        i=defaults["i"],
+        p=defaults["p"],
+        u=defaults["u"][: defaults["udeg"]],
+    ):
         """
         The GP flux covariance matrix.
 
@@ -623,7 +635,7 @@ class StarryProcess(object):
             p (scalar, optional): The rotational period of the star in the same
             units as ``t``. Default is %%defaults["p"]%%.
             u (vector, optional): The limb darkening coefficients for the
-            star. Default is %%defaults["u"]%%.
+            star. Default is %%defaults["u"][:defaults["udeg"]]%%.
 
         """
         if self._normalized:
@@ -667,7 +679,7 @@ class StarryProcess(object):
         t,
         i=defaults["i"],
         p=defaults["p"],
-        u=defaults["u"],
+        u=defaults["u"][: defaults["udeg"]],
         nsamples=1,
         eps=defaults["eps"],
     ):
@@ -682,7 +694,7 @@ class StarryProcess(object):
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
             u (vector, optional): The limb darkening coefficients for the
-                star. Default is %%defaults["u"]%%.
+                star. Default is %%defaults["u"][:defaults["udeg"]]%%.
             nsamples (int, optional): The number of samples to draw. Default 1.
             eps (float, optional): A small number added to the diagonal of the
                 flux covariance matrix when marginalizing over inclination
@@ -763,7 +775,7 @@ class StarryProcess(object):
         data_cov,
         i=defaults["i"],
         p=defaults["p"],
-        u=defaults["u"],
+        u=defaults["u"][: defaults["udeg"]],
         baseline_mean=defaults["baseline_mean"],
         baseline_var=defaults["baseline_var"],
     ):
@@ -800,7 +812,7 @@ class StarryProcess(object):
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
             u (vector, optional): The limb darkening coefficients for the
-                star. Default is %%defaults["u"]%%.
+                star. Default is %%defaults["u"][:defaults["udeg"]]%%.
             baseline_mean (scalar or vector, optional): The flux baseline to
                 subtract when computing the GP likelihood. Default is
                 %%defaults["baseline_mean"]%%.
@@ -901,7 +913,14 @@ class StarryProcess(object):
         shape = tt.concatenate((tt.shape(y)[:-1], [self._my], [self._mx]))
         return tt.reshape(img, shape, ndim=y.ndim + 1)
 
-    def flux(self, y, t, i=defaults["i"], p=defaults["p"], u=defaults["u"]):
+    def flux(
+        self,
+        y,
+        t,
+        i=defaults["i"],
+        p=defaults["p"],
+        u=defaults["u"][: defaults["udeg"]],
+    ):
         """
         Return the light curve corresponding to a spherical harmonic
         representation of a surface `y`.
