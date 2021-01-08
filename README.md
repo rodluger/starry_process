@@ -7,6 +7,9 @@
   <a href="https://github.com/rodluger/starry_process/raw/master-pdf/tex/ms.pdf">
     <img src="https://img.shields.io/badge/read-the_paper-blue.svg?style=flat"/>
   </a>
+  <a href="https://luger.dev/starry_process">
+    <img src="https://img.shields.io/badge/read-the_docs-blue.svg?style=flat"/>
+  </a>
 </p>
 
 <p align="center">
