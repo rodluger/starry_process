@@ -36,6 +36,7 @@ jobs:
       pip install -U nbsphinx
       pip install -U dynesty
       jupyter nbextension enable --py widgetsnbextension
+      sudo apt-get install ffmpeg
 
     displayName: 'Install dependencies'
 
