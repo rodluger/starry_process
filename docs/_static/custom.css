@@ -5,3 +5,7 @@ div.nbinput.container div.prompt pre {
 div.nboutput.container div.prompt pre {
     display: none;
 }
+
+div.highlight-python.notranslate pre {
+    padding-left: 5px;
+}

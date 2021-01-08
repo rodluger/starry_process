@@ -615,14 +615,16 @@ class StarryProcess(object):
         The GP flux covariance matrix.
 
         Args:
+
             t (vector): The time array in arbitrary units.
             i (scalar, optional): The inclination of the star in degrees.
-                Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
-                is set, this argument is ignored.
+            Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
+            is set, this argument is ignored.
             p (scalar, optional): The rotational period of the star in the same
-                units as ``t``. Default is %%defaults["p"]%%.
+            units as ``t``. Default is %%defaults["p"]%%.
             u (vector, optional): The limb darkening coefficients for the
-                star. Default is %%defaults["u"]%%.
+            star. Default is %%defaults["u"]%%.
+
         """
         if self._normalized:
             cov = self._flux.cov(t, i, p, u)
@@ -898,6 +900,38 @@ class StarryProcess(object):
         )
         shape = tt.concatenate((tt.shape(y)[:-1], [self._my], [self._mx]))
         return tt.reshape(img, shape, ndim=y.ndim + 1)
+
+    def flux(self, y, t, i=defaults["i"], p=defaults["p"], u=defaults["u"]):
+        """
+        Return the light curve corresponding to a spherical harmonic
+        representation of a surface `y`.
+
+        Args:
+            y (vector or matrix): The spherical harmonic coefficients. This
+                can be an ndarray or tensor of any number of dimensions provided
+                the last dimension has length equal to the number of spherical
+                harmonic coefficients of the map. If time variability is enabled,
+                the next to last dimension should be equal to the number of
+                time points. The output from methods such
+                as ``sample_ylm`` can thus be directly passed to this method.
+
+        Returns:
+            The flux timeseries. This will in general have shape
+            `(..., nsamples, ntimes)`.
+
+        """
+        y = tt.as_tensor_variable(y)  # (nsamples, [ntimes,] nylm)
+        A = self._flux.design_matrix(t, i, p, u)  # (ntimes, nylm)
+        F = tt.tensordot(A, y, axes=[[1], [y.ndim - 1]])
+        if self._time_variable:
+            flux = tt.ExtractDiag(axis1=0, axis2=y.ndim - 1)(F)
+        else:
+            flux = tt.transpose(F)
+        if self._normalized:
+            flux = (1.0 + flux) / tt.reshape(
+                tt.mean(1.0 + flux, axis=-1), (-1, 1)
+            ) - 1.0
+        return flux
 
     def visualize(self, y=None, unit_background=True, **kwargs):
         """

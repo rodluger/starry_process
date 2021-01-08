@@ -235,17 +235,11 @@ class FluxIntegral:
     def _set_params(self, t, i, p, u):
         # Ingest
         t = cast(t, vectorize=True)
-        if not self._marginalize_over_inclination:
-            i = CheckBoundsOp(name="i", lower=0, upper=0.5 * np.pi)(
-                i * self._angle_fac
-            )
-        else:
-            i = None
+        i = CheckBoundsOp(name="i", lower=0, upper=0.5 * np.pi)(
+            i * self._angle_fac
+        )
         p = CheckBoundsOp(name="p", lower=0, upper=np.inf)(p)
-        if self._udeg > 0:
-            u = cast(u, vectorize=True)[: self._udeg]
-        else:
-            u = None
+        u = cast(u, vectorize=True)[: self._udeg]
 
         # Check if they are different from the cached variables
         if (
