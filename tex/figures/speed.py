@@ -43,9 +43,9 @@ ax.plot(npts, tloglike[1], label="marginal")
 
 # Asymptotic
 n = np.array([2e2, 1.0e4])
-ax.plot(n, 3e-10 * n ** 2.5, "k--", alpha=0.5)
+ax.plot(n, 1.2e-10 * n ** 2.6, "k--", alpha=0.5)
 ax.annotate(
-    r"$\propto K^{2.5}$",
+    r"$\propto K^{2.6}$",
     fontsize=16,
     xy=(2e3, 1e-2),
     xycoords="data",
