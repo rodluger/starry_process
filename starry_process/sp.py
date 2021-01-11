@@ -830,7 +830,7 @@ class StarryProcess(object):
 
         Args:
             t (vector): The time array in arbitrary units.
-            flux (vector): The array of observed flux values in arbitrary
+            flux (vector or matrix): The array of observed flux values in arbitrary
                 units. In general, the flux should be either mean- or
                 median-normalized with zero baseline. If the raw photometry
                 is measured in ``counts``, users should compute the ``flux``
@@ -847,6 +847,19 @@ class StarryProcess(object):
                 is ``False`` (not recommended for real data), then the flux
                 should instead be normalized to the true baseline (i.e., the
                 counts one would measure if the star had no spots).
+                Note, finally, that ``flux`` may also be a matrix, in which
+                case each of its ``M`` rows is assumed to be the light curve
+                of a different star whose periods, limb darkening coefficients,
+                inclinations (if ``marginalize_over_inclination`` is ``False``)
+                and data uncertainty are *all the same*. This is probably not
+                very useful for real data, for which all of these are bound
+                to be different even for "similar" stars, but it is very
+                useful for testing and dealing with synthetic data. If that's
+                your use case, it's much faster to pass in a batch of light
+                curves than to call this function ``M`` times.
+                Future versions of this code will (likely) provide the option
+                to marginalize over period and limb darkening coefficients,
+                in which case this feature will be *far* more useful!
             data_cov (scalar, vector, or matrix): The data covariance
                 matrix. This may be a scalar equal to the (homoscedastic)
                 variance of the data, a vector equal to the variance of each
@@ -904,13 +917,23 @@ class StarryProcess(object):
         cho_gp_cov = cho_factor(gp_cov)
 
         # Compute the marginal likelihood
-        r = tt.reshape(flux - gp_mean - baseline_mean, (-1, 1))
-        lnlike = -0.5 * tt.dot(tt.transpose(r), cho_solve(cho_gp_cov, r))
-        lnlike -= tt.sum(tt.log(tt.diag(cho_gp_cov)))
-        lnlike -= 0.5 * K * tt.log(2 * np.pi)
+        mean = tt.reshape(gp_mean + baseline_mean, (K, 1))
+        r = tt.reshape(flux, (K, -1)) - mean
+        M = r.shape[1]
+        lnlike = -0.5 * ifelse(
+            M > 1,
+            tt.sum(
+                tt.batched_dot(
+                    tt.transpose(r), tt.transpose(cho_solve(cho_gp_cov, r))
+                )
+            ),
+            tt.sum(tt.dot(tt.transpose(r), cho_solve(cho_gp_cov, r))),
+        )
+        lnlike -= M * tt.sum(tt.log(tt.diag(cho_gp_cov)))
+        lnlike -= 0.5 * K * M * tt.log(2 * np.pi)
 
         # NANs --> -inf
-        return ifelse(tt.isnan(lnlike[0, 0]), -np.inf, lnlike[0, 0])
+        return ifelse(tt.isnan(lnlike), -np.inf, lnlike)
 
     def __add__(self, other):
         return StarryProcessSum(self, other)

@@ -855,7 +855,7 @@ drawing a sample whose mean is arbitrarily close to zero is finite.
 
 If this is all starting to sound like a bad idea, that's because it is!
 A much safer approach is to resist the temptation to normalize the light curve
-and instead model the unknown baseline as a latent variable. However,
+and instead model the unknown multiplicative amplitude as a latent variable. However,
 this would require an extra parameter \emph{for every light curve}, so the
 computational savings we achieved by marginalizing out the inclination
 would be gone. Fortunately, in practice, the variance of a stellar light curve
@@ -934,8 +934,8 @@ distribution of $\tilde{\mathbbb{f}\hspace{0.2em}}$ is approximately Gaussian. I
 we recommend employing this trick only for $z \lesssim 0.02$, for which the
 error in the approximation to the covariance is less than $10^{-6}$.
 In cases where the light curve variability exceeds a few percent, we recommend
-modeling the baseline in each light curve as a latent variable, as discussed
-above. \xxx{NOTE: I'm actually no long sure this would work! DFM, let's chat about this.}
+modeling the multiplicative amplitude in each light curve as a latent variable, as discussed
+above.
 
 \begin{figure}[t!]
     \begin{centering}
@@ -2173,9 +2173,14 @@ properties exactly.
     can uniquely infer $n$. I think this can be done by taking light curves
     in two bands, but I'm checking with Gully. @HEDGES: Anything to add on this?}
 
-\subsection{Mixture models}
+\subsection{Composite GPs}
 \label{sec:mixture}
-\xxx{TODO: kernels can be summed!}
+Thus far we have assumed that spots are concentrated at a single latitude
+(above and below the equator). We baked this assumption directly into our choice of
+distribution function for the latitude (\S\ref{sec:lat}), which has exactly
+two modes at $\pm \mu_\sigma$. However, it is possible (at least in principle)
+that certain stars could have two or more active latitudes, in which case
+our GP is not an appropriate description of the stellar surface.
 
 \begin{figure}[t!]
     \begin{centering}
@@ -2194,15 +2199,36 @@ properties exactly.
     \end{centering}
 \end{figure}
 
-\subsection{Gaussians all the way down}
-\label{sec:other-marg}
-\xxx{TODO: We can also marginalize over period and limb darkening coefficients.
-    Argue that it's just integrals of Wigner matrices all over again, which we
-    can compute efficiently in closed form. I think we need a uniform prior on
-    the rotation \emph{frequency}, which is probably fine. And I think we can
-    parametrize limb darkening in terms of Kipping's $q_1$ and $q_2$ and place
-    a uniform prior in that space---I'm fairly confident the integrals can still
-    be solved exactly.}
+Fortunately, Gaussian distributions (and thus also Gaussian processes) are
+closed under addition, meaning that the sum of two GPs is also a GP. We can thus
+construct more complex models for stellar variability by summing GPs with different
+spot hyperparameter vectors $\pmb{\theta}_\bullet$. The composite GP will then
+have a mean equal to the sum of the means of each GP, and a covariance matrix equal
+to the sum of the covariance matrices of each GP. One possible application of this
+is to model stars with multiple active latitudes, as described above; an example
+of this is shown in Figure~\ref{fig:gpsum}, where samples are drawn from a GP with
+small circumpolar spots and large equatorial spots (see caption for details).
+Since the composite GP inherits all of the properties of the standard GP, it can
+be used to do inference under more complex priors than those presented here.
+
+It is also worth noting that this technique may be employed to model arbitrary
+distributions for parameters like the spot radius and the number of spots. In
+the Appendix we present a formulation of our GP that admits a radius distribution
+half-width parameter $\Delta r$; this generalizes our delta function distribution to
+a uniform distribution between $r - \Delta r$ and $r + \Delta r$. One may then
+compute the weighted sum of several GPs
+with half-widths $\Delta \ne 0$ and central radii
+$r = r_0$,
+$r = r_0 + 2\Delta r$,
+$r = r_0 + 4\Delta r$,
+etc., to approximate \emph{any} distribution of spot radii. Similarly, one
+may compute the weighted sum of several GPs with different values of the
+number of spots $n$ to enforce any discrete distribution for that quantity.
+The reader should keep in mind that the cost of computing the GP
+covariance matrix will scale linearly with the number of GP components.
+In many cases, however, the computational bottleneck is the covariance factorization
+step (\S\ref{sec:implementation}), in which case adding components to the
+model will result in negligible overhead.
 
 \subsection{Time evolution}
 \label{sec:temporal}
@@ -2254,6 +2280,72 @@ where
                       &                   &        & \,\,\, \mathbf{a}_{K-1}^\top
     }\quad.
 \end{align}
+
+\subsection{Gaussians all the way down}
+\label{sec:other-marg}
+
+In \S\ref{sec:inclination} we discussed the value of marginalizing over the
+stellar inclination when computing the GP covariance (and thus the likelihood).
+When jointly analyzing the light curves of many stars (which we have repeatedly
+argued is the best way to infer their spot properties), it can be extremely useful to
+minimize the number of latent variables associated with individual stars by
+analytically marginalizing over them. This can dramatically reduce the number
+of free parameters, turning a difficult inference problem in (possibly) hundreds
+or thousands of dimensions into a much easier problem in a handful of dimensions.
+We showed how it is possible to marginalize away the dependence of our GP on
+the inclinations of individual stars, which is a huge step in this direction.
+However, our GP remains a function of two other quantities that will in general
+be different for different stars: the stellar rotation period $P$ and the
+limb darkening coefficient vector $\mathbf{u}$. We argued that in some cases
+one may be able to fix the period of each star at an estimate obtained in a pre-processing
+step (i.e., from a periodogram) and fix the limb darkening coefficients at
+theoretical values, in which case the number of free parameters of the GP
+is equal to the size of the spot hyperparameter vector $\pmb{\theta}_\bullet$
+(five by default), and \emph{independent} of the number of light curves in
+the ensemble.
+%
+However, this procedure ignores any uncertainty in the period and limb darkening
+coefficients, which could be significant; it is also subject to bias due to
+the fact that theoretical models for limb darkening coefficients have been
+shown to be wrong, especially for low mass stars \citep{?}. A much better
+approach would be to analytically marginalize over these two quantities.
+
+Consider Equation~(\ref{eq:akT}) in the Appendix, from which the rows of the
+design matrix (which transforms vectors in the spherical harmonic basis to vectors
+representing the flux at a point in time) are computed. Marginalization over the
+inclination, which we demonstrated how to perform analytically in
+Appendix~\ref{sec:inc}, entails integrating over the term
+$\mathbf{R}_{\hat{\mathbf{x}}}\left(-I\right)$, the Wigner matrix that rotates
+the star by the inclination angle $I$ into the observer's frame.
+Similarly, marginalization over the
+rotation period would entail integration over the term
+$\mathbf{R}_{\hat{\mathbf{z}}}\left(\frac{2\pi}{P} t_k\right)$, another
+Wigner matrix that rotates the star to the correct rotational phase at
+time $t = t_k$. Given the appropriate prior on the rotational angular
+frequency $\frac{2\pi}{P}$, it should be possible to follow the same
+procedure outlined in Appendix~\ref{sec:inc} to analytically
+compute the first two moments of the distribution of light curves marginalized over the
+rotation period.
+
+Equation~(\ref{eq:akT}) also makes clear the dependence of the GP on
+the limb darkening cofficients, which enter via the limb darkening
+operator $\mathbf{L}(\mathbf{u})$. The coefficients
+of this matrix are linear in the limb darkening coefficients $u_1$ and $u_2$
+(c.f. Equation~\ref{eq:ld:L}), so it should be possible to derive closed
+form solutions to the relevant integrals over $\mathbf{L}(\mathbf{u})$ to
+yield the GP covariance marginalized over $\mathbf{u}$. It may be
+possible to compute the marginalized covariance even when parametrizing
+the quadratic limb darkening
+coefficients in terms of the uncorrelated $q_1$ and $q_2$ parameters from
+\citet{?}, which would allow us to incorporate hard constraints on positivity
+and strict limb darkening (as opposed to brightening) directly into the prior.
+
+Given the complexity of the operations involved,
+performing these marginalizations is beyond the scope of the present paper.
+However, given the significant computational benefits of this marginalization,
+and given the fact that the mapping problem is particularly sensitive to
+the limb darkening coefficients (see \S\ref{sec:limbdark}), marginalizing over
+$P$ and $\mathbf{u}$ will be the subject of the next paper in this series.
 
 \subsection{Application to transits and RV}
 \label{sec:other-work}
