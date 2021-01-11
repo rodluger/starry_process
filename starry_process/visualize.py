@@ -16,20 +16,34 @@ def RAxisAngle(axis, theta):
     axis /= np.sqrt(np.sum(axis ** 2))
     cost = np.cos(theta)
     sint = np.sin(theta)
-    return np.reshape(
+    return np.array(
         [
-            cost + axis[0] * axis[0] * (1 - cost),
-            axis[0] * axis[1] * (1 - cost) - axis[2] * sint,
-            axis[0] * axis[2] * (1 - cost) + axis[1] * sint,
-            axis[1] * axis[0] * (1 - cost) + axis[2] * sint,
-            cost + axis[1] * axis[1] * (1 - cost),
-            axis[1] * axis[2] * (1 - cost) - axis[0] * sint,
-            axis[2] * axis[0] * (1 - cost) - axis[1] * sint,
-            axis[2] * axis[1] * (1 - cost) + axis[0] * sint,
-            cost + axis[2] * axis[2] * (1 - cost),
-        ],
-        [3, 3],
+            [
+                cost + axis[0] * axis[0] * (1 - cost),
+                axis[0] * axis[1] * (1 - cost) - axis[2] * sint,
+                axis[0] * axis[2] * (1 - cost) + axis[1] * sint,
+            ],
+            [
+                axis[1] * axis[0] * (1 - cost) + axis[2] * sint,
+                cost + axis[1] * axis[1] * (1 - cost),
+                axis[1] * axis[2] * (1 - cost) - axis[0] * sint,
+            ],
+            [
+                axis[2] * axis[0] * (1 - cost) - axis[1] * sint,
+                axis[2] * axis[1] * (1 - cost) + axis[0] * sint,
+                cost + axis[2] * axis[2] * (1 - cost),
+            ],
+        ]
     )
+
+
+def latlon_to_xyz(lat, lon):
+    """Convert lat-lon points in radians to Cartesian points."""
+    lat = np.atleast_1d(lat)
+    lon = np.atleast_1d(lon)
+    R1 = RAxisAngle([1.0, 0.0, 0.0], -lat)
+    R2 = RAxisAngle([0.0, 1.0, 0.0], lon)
+    return np.einsum("ij...,jl...,l->i...", R2, R1, np.array([0.0, 0.0, 1.0]))
 
 
 def compute_moll_grid(my, mx):
@@ -60,6 +74,15 @@ def compute_moll_grid(my, mx):
 
 def mollweide_transform(my=150, mx=300):
     x, y, z = compute_moll_grid(my=my, mx=mx)
+    M = np.pi * pTA1Op()(x, y, z).eval()
+    return M
+
+
+def latlon_transform(lat, lon):
+    x, y, z = latlon_to_xyz(lat, lon)
+    x = x.reshape(-1)
+    y = y.reshape(-1)
+    z = z.reshape(-1)
     M = np.pi * pTA1Op()(x, y, z).eval()
     return M
 

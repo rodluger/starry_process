@@ -23,8 +23,7 @@
 % Title
 \title{%
     \textbf{
-        Interpretable Gaussian Processes for Stellar Variability\\
-        I: Static Surfaces
+        Interpretable Gaussian Processes for Stellar Variability
     }
 }
 
@@ -41,8 +40,8 @@
 
 \begin{abstract}
     The use of Gaussian processes (GPs) in stellar light curve modeling has recently
-    become almost ubiquitous, given their ease of use, flexibility, and
-    computational efficiency. GPs excel in particular at marginalization
+    become almost ubiquitous, given their ease of use and flexibility.
+    GPs excel in particular at marginalization
     of the stellar signal in cases where the stellar variability is treated
     as a nuisance, such as in exoplanet transit modeling.
     However, in cases where the stellar signal is of primary interest,
@@ -52,13 +51,13 @@
     Instead, it is common practice to explicitly model the effect
     of individual star spots on the light curve and attempt to infer their
     properties via optimization or posterior inference, a process that is
-    ill-posed, ridden by degeneracies, and computationally intractable when
+    ill-posed, plagued by degeneracies, and computationally intractable when
     applied to stars with more than a few spots and/or to ensembles of many
     light curves.
     %
     In this paper, we derive a closed-form expression for the
-    mean and covariance of the Gaussian process that best describes
-    the light curve of a rotating star with a given distribution of
+    mean and covariance of a Gaussian process model that describes
+    the light curve of a rotating star conditioned on a given distribution of
     star spot sizes, contrasts, and latitudes.
     %
     We show that, when employed in an inference setting, our GP is unbiased,
@@ -2347,7 +2346,7 @@ in a single light curve. For $K \lesssim 100$, the computation time is constant
 at $10-20$ ms for both algorithms. This is the approximate time (on a typical
 modern laptop) taken to compute the GP covariance matrix given a set of
 hyperparameters $\pmb{\theta}_\bullet$. For larger values of $K$, the
-cost approaches a scaling of $K^{2.5}$, which is dominated by the factorization
+cost approaches a scaling of $K^{2.6}$, which is dominated by the factorization
 of the covariance matrix and the solve operation to compute the likelihood.
 The likelihood marginalized over inclination is only slightly slower to compute,
 thanks to the tricks discussed in Appendix~\ref{sec:inc-speedup}.

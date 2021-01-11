@@ -3,9 +3,9 @@ from .latitude import LatitudeIntegral, gauss2beta, beta2gauss
 from .longitude import LongitudeIntegral
 from .contrast import ContrastIntegral
 from .flux import FluxIntegral
-from .math import cho_factor, cho_solve, cast
+from .math import cho_factor, cho_solve, cast, is_tensor
 from .defaults import defaults
-from .visualize import mollweide_transform, visualize
+from .visualize import mollweide_transform, latlon_transform, visualize
 from .ops import CheckBoundsOp, AlphaBetaOp, SampleYlmTemporalOp
 import theano.tensor as tt
 from theano.ifelse import ifelse
@@ -447,6 +447,52 @@ class StarryProcess(object):
 
         """
         return self._cho_cov_ylm
+
+    def mean_pix(self, latlon):
+        """
+        The mean of the process in latitude-longitude pixel space.
+
+        Args:
+            latlon (ndarray): The latitude(s) and longitude(s) at which to
+                evaluate the mean in degrees. This must be a numerical
+                quantity (tensor inputs are not supported) of shape
+                ``(..., 2)``, where the last dimension corresponds to
+                a tuple of latitude-longitude values.
+
+        Returns:
+            The tensor-valued mean evaluated at the flattened vector of
+            input coordinates.
+            This will have shape ``(N,)`` where ``N`` is the number of
+            input lat-lon coordinates.
+
+        """
+        assert not is_tensor(latlon), "Input must be a numerical ndarray."
+        lat, lon = latlon.reshape(-1, 2).T
+        A = latlon_transform(lat * np.pi / 180, lon * np.pi / 180)
+        return tt.dot(A, self._mean_ylm)
+
+    def cov_pix(self, latlon):
+        """
+        The covariance of the process in latitude-longitude pixel space.
+
+        Args:
+            latlon (ndarray): The latitude(s) and longitude(s) at which to
+                evaluate the covariance in degrees. This must be a numerical
+                quantity (tensor inputs are not supported) of shape
+                ``(..., 2)``, where the last dimension corresponds to
+                a tuple of latitude-longitude values.
+
+        Returns:
+            The tensor-valued covariance evaluated at the flattened vector of
+            input coordinates.
+            This will have shape ``(N, N)`` where ``N`` is the number of
+            input lat-lon coordinates.
+
+        """
+        assert not is_tensor(latlon), "Input must be a numerical ndarray."
+        lat, lon = latlon.reshape(-1, 2).T
+        A = latlon_transform(lat * np.pi / 180, lon * np.pi / 180)
+        return tt.dot(tt.dot(A, self._cov_ylm), A.T)
 
     def sample_ylm(self, t=None, nsamples=1):
         """
