@@ -1114,19 +1114,19 @@ differences between these maps and what we would obtain by procedurally adding d
 circular spots to a gridded stellar surface:
 %
 \begin{enumerate}
-    \item \textbf{The spots are not circular.} This is most evident in row (c),
+    \item \emph{The spots are not circular.} This is most evident in row (c),
           where some spots are distinctly asymmetric.
-    \item \textbf{There is significant variance in contrast from one spot to another},
+    \item \emph{There is significant variance in contrast from one spot to another},
           even though our model
           implicitly treats $c$ as constant. Within spots, the contrast is also
           not constant, even though (again) our model implictly treats it as such.
-    \item \textbf{There is ringing in the background.} This is apparent to some extent in
+    \item \emph{There is ringing in the background.} This is apparent to some extent in
           row (b), where there are small fluctuations in the brightness at low
           latitudes where no spots are present.
-    \item \textbf{There aren't exactly 10 (or 20) spots in those maps.} This is
+    \item \emph{There aren't exactly 10 (or 20) spots in those maps.} This is
           most obvious in row (c), where only a few large distinct spots,
           plus maybe (?) a few smaller ones, are visible.
-    \item \textbf{There are bright spots in addition to dark spots.} This may be
+    \item \emph{There are bright spots in addition to dark spots.} This may be
           the most glaring issue. We explicitly model spots as being dark, and yet
           there are (almost) just as many bright spots, particularly in row (d).
           While bright spots (such as plages) certainly exist in reality, we did not
@@ -2267,7 +2267,61 @@ model will result in negligible overhead.
 \subsection{Time evolution}
 \label{sec:temporal}
 
-Another limitation of the base algorithm...
+Another big limitation of the base algorithm is the implicit assumption that
+stellar surfaces are static. Our GP hyperparameters $\pmb{\theta}_\bullet$
+describe the \emph{spatial} configuration of star spots, but they say nothing
+about their evolution in time. We know from observations of the Sun and of
+\emph{Kepler} stars that temporal variability is extremely common: spots appear,
+disappear, and even migrate in latitude over time. While it may be possible to
+parametrize their evolution in a way that is general enough to capture all the
+ways in which they may change over time, such an approach is beyond the scope
+of the present paper. It is, however, straightforward to implement an
+\emph{uninformative} temporal prior within the framework of our GP. To do this,
+we will make two simplifying assumptions:
+
+\begin{enumerate}
+    \item \emph{The temporal process is stationary.} This implies that there is no
+          preferred time (or phase) and that the spatial covariance is the
+          same at all points in time.
+    \item \emph{The temporal and spatial covariances are independent.} This implies
+          that the evolution of each spherical harmonic mode in time is independent of the
+          evolution of any of the other modes in time.
+\end{enumerate}
+
+There is some tension between these assumptions and our knowledge of how stellar
+surfaces evolve. Assumption (1) excludes surfaces whose total spottiness changes
+significantly
+or whose spots migrate in latitude, as both processes change the spatial covariance
+over time. Assumption (2) ignores the correlation between spherical harmonic modes
+due to the migration of spots, which requires the coherent evolution of many
+modes at once. These assumptions likely limit the ability of our GP to model
+light curves on very long baselines (i.e., on timescales of years) over which
+stellar activity cycles take place. However, given that the use case of our
+algorithm is likely to be the analysis of individual quarters of \emph{Kepler}
+and individual sectors of \emph{TESS} data,
+our assumptions are likely valid in most cases. Analyses of (say) all quarters of
+\emph{Kepler} data could process each quarter at a time in a hierarchical
+framework in which hyperparameters like the mean spot latitude in each quarter
+are treated as functions of time.
+
+The two assumptions listed above suggest a fairly straightforward form for the
+GP covariance in spherical harmonics and time:
+%
+\begin{align}
+    \pmb{\Sigma}_\mathbf{t,y} = \pmb{\Sigma}_\mathbf{t} \otimes \pmb{\Sigma}_\mathbf{y}
+    \quad,
+\end{align}
+%
+where $\pmb{\Sigma}_\mathbf{t}$ is a $(K \times K)$ matrix describing the
+covariance among the $K$ points in time,
+$\pmb{\Sigma}_\mathbf{y}$ is the $(N \times N)$ matrix describing describing
+the covariance among the $N \equiv (l_\mathrm{max} + 1)^2$ spherical
+harmonic coefficients,
+and $\otimes$ denotes the Kronecker product.
+The quantity $\pmb{\Sigma}_\mathbf{t,y}$
+is the $(NK \times NK)$ temporal-spatial covariance, whose coefficient at index
+$(Nk + n, Nk' + n')$ is the covariance between the spherical harmonic coefficient
+$y_{n}(t_k)$ and the spherical harmonic coefficient $y_{n'}(t_{k'})$.
 
 \xxx{TODO: The model presented in this paper assumes statics stellar surfaces,
     corresponding to perfectly periodic light curves. This is hardly ever the
@@ -5339,7 +5393,7 @@ on any user inputs and thus may be pre-computed, but even still
 we require evaluating the four nested sums
 in Equation~(\ref{eq:Eyppkkp})
 $\mathcal{O}(l_\mathrm{max}^3)$ times
-\emph{for each entry} in the $K \times K$ matrix $\mathbf{E}_I$.
+\emph{for each entry} in the $(K \times K)$ matrix $\mathbf{E}_I$.
 
 Fortunately, the inner two sums in Equation~(\ref{eq:Eyppkkp})
 do not depend on user inputs, so those may be pre-computed,

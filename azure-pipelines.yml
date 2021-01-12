@@ -26,7 +26,8 @@ jobs:
   - script: |
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
-      conda install -y -q numpy scipy mkl openblas=0.3.6 sympy theano nb_conda nb_conda_kernels
+      conda install -y -q numpy scipy mkl openblas=0.3.6 sympy nb_conda nb_conda_kernels
+      pip install theano
       theano-cache purge
       pip install -U pip
       pip install -U setuptools
@@ -39,7 +40,6 @@ jobs:
       pip install -U corner
       jupyter nbextension enable --py widgetsnbextension
       sudo apt-get install ffmpeg
-
     displayName: 'Install dependencies'
 
   - script: |
@@ -75,6 +75,7 @@ jobs:
     env:
       GITHUB_API_KEY: $(GITHUB_API_KEY)
       GITHUB_USER: $(GITHUB_USER)
+    condition: always()
 
   - script: |
       . $CONDA/etc/profile.d/conda.sh
@@ -84,6 +85,7 @@ jobs:
     displayName: 'Build the paper'
     env:
       ON_AZURE: 1
+    condition: always()
 
   - script: |
       cd $(Build.SourcesDirectory)
@@ -98,3 +100,4 @@ jobs:
     env:
       GITHUB_API_KEY: $(GITHUB_API_KEY)
       GITHUB_USER: $(GITHUB_USER)
+    condition: always()
