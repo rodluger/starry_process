@@ -35,6 +35,8 @@ jobs:
       pip install -U sphinx
       pip install -U nbsphinx
       pip install -U dynesty
+      pip install -U emcee
+      pip install -U corner
       jupyter nbextension enable --py widgetsnbextension
       sudo apt-get install ffmpeg
 

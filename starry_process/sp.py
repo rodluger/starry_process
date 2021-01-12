@@ -918,7 +918,10 @@ class StarryProcess(object):
 
         # Compute the marginal likelihood
         mean = tt.reshape(gp_mean + baseline_mean, (K, 1))
-        r = tt.reshape(flux, (K, -1)) - mean
+        r = (
+            tt.reshape(tt.transpose(tt.as_tensor_variable(flux)), (K, -1))
+            - mean
+        )
         M = r.shape[1]
         lnlike = -0.5 * ifelse(
             M > 1,

@@ -1947,7 +1947,7 @@ $R$ will tend to zero.
             Posterior shrinkage as a function of spherical harmonic degree
             for a hypothetical scenario in which an observer can measure the light curves
             of 1 (blue), 3 (orange), 10 (green), and 30 (red) \emph{identical} stars
-            viewed at random inclinations.
+            viewed at random orientations.
             The thicker curves correspond to
             the mean shrinkage for each experiment.
             The information content in the light curve of a star observed
@@ -2033,7 +2033,8 @@ information about the surfaces of these objects.
             on the right represents the portion of the surface that is
             in the null space of the light curve problem at all
             inclinations; the plot in the center is the portion of the
-            surface that can be inferred at some value of the inclination.
+            surface that can be inferred by combining observations
+            made from all possible inclinations.
             \label{fig:evenmodes}
         }
     \end{centering}
@@ -2075,12 +2076,12 @@ in order to mitigate the effects of variance in the sample.
         \oscaption{nullspace_ensemble_ld}{%
             \emph{Top:} Same as Figure~\ref{fig:nullspace_ensemble},
             but for limb-darkened
-            stars with coefficients $u_1 = 0.5$ and $u_2 = 0.25$. Odd
+            stars with quadratic coefficients $u_1 = 0.5$ and $u_2 = 0.25$. Odd
             modes can now be probed, at the expense of the even modes.
             \emph{Bottom:} Same as the top panel, but allowing for
             a 10\% variation in $u_1$ and $u_2$
             across different observations. For $\gtrsim 30$ light curves,
-            there is virtually no null space up to $l_\mathrm{max} = 15$.
+            there is virtually no null space up to at least $l_\mathrm{max} = 15$.
             \codelink{nullspace_ensemble_ld_var}
             \label{fig:nullspace_ensemble_ld}
         }
@@ -2173,6 +2174,39 @@ properties exactly.
     can uniquely infer $n$. I think this can be done by taking light curves
     in two bands, but I'm checking with Gully. @HEDGES: Anything to add on this?}
 
+\subsection{Application to transits and RV}
+\label{sec:other-work}
+\xxx{TODO: The covariance in the spherical harmonic basis can be used as a prior
+    in many other settings.}
+
+\subsection{Comparison to other work}
+\label{sec:other-work}
+\xxx{TODO: Discuss \citet{Basri2020}, how we agree and disagree. Compare to Brett's
+    paper using ABC to measure spot sizes as a function of spectral type. Discuss
+    Simon Wood's paper in ecology on synthetic likelihoods. Talk about similarities
+    to Gaussian Random Fields in CMB studies.}
+
+\subsection{Caveats}
+\label{sec:caveats}
+\xxx{TODO: Miscellaneous caveats.}
+\xxx{
+    \begin{enumerate}
+        \item The latitude distribution is not Gaussian, so careful
+              when interpreting $\mu_\phi$ and $\sigma_\phi$
+        \item The number of spots does not have to be an integer. This is
+              fine, since it makes the model more flexible.
+        \item Careful with light curves with large amplitudes, although
+              Figure~\ref{fig:calibration_hicontrast}
+              has max amplitudes of more than 10\% and works great.
+        \item No differential rotation / spot evolution yet! We're working on it.
+        \item We might want a shrinkage prior on sigma, since it's hard to
+              break the polar spot degeneracy with single-band light curves.
+    \end{enumerate}
+}
+
+\section{Extensions}
+\label{sec:extensions}
+
 \subsection{Composite GPs}
 \label{sec:mixture}
 Thus far we have assumed that spots are concentrated at a single latitude
@@ -2232,6 +2266,9 @@ model will result in negligible overhead.
 
 \subsection{Time evolution}
 \label{sec:temporal}
+
+Another limitation of the base algorithm...
+
 \xxx{TODO: The model presented in this paper assumes statics stellar surfaces,
     corresponding to perfectly periodic light curves. This is hardly ever the
     case in practice, as spots evolve and differential rotation changes the surface
@@ -2281,7 +2318,7 @@ where
     }\quad.
 \end{align}
 
-\subsection{Gaussians all the way down}
+\subsection{Marginalizing over period and limb darkening}
 \label{sec:other-marg}
 
 In \S\ref{sec:inclination} we discussed the value of marginalizing over the
@@ -2345,37 +2382,7 @@ performing these marginalizations is beyond the scope of the present paper.
 However, given the significant computational benefits of this marginalization,
 and given the fact that the mapping problem is particularly sensitive to
 the limb darkening coefficients (see \S\ref{sec:limbdark}), marginalizing over
-$P$ and $\mathbf{u}$ will be the subject of the next paper in this series.
-
-\subsection{Application to transits and RV}
-\label{sec:other-work}
-\xxx{TODO: The covariance in the spherical harmonic basis can be used as a prior
-    in many other settings.}
-
-\subsection{Comparison to other work}
-\label{sec:other-work}
-\xxx{TODO: Discuss \citet{Basri2020}, how we agree and disagree. Compare to Brett's
-    paper using ABC to measure spot sizes as a function of spectral type. Discuss
-    Simon Wood's paper in ecology on synthetic likelihoods. Talk about similarities
-    to Gaussian Random Fields in CMB studies.}
-
-\subsection{Caveats}
-\label{sec:caveats}
-\xxx{TODO: Miscellaneous caveats.}
-\xxx{
-    \begin{enumerate}
-        \item The latitude distribution is not Gaussian, so careful
-              when interpreting $\mu_\phi$ and $\sigma_\phi$
-        \item The number of spots does not have to be an integer. This is
-              fine, since it makes the model more flexible.
-        \item Careful with light curves with large amplitudes, although
-              Figure~\ref{fig:calibration_hicontrast}
-              has max amplitudes of more than 10\% and works great.
-        \item No differential rotation / spot evolution yet! We're working on it.
-        \item We might want a shrinkage prior on sigma, since it's hard to
-              break the polar spot degeneracy with single-band light curves.
-    \end{enumerate}
-}
+$P$ and $\mathbf{u}$ will be the subject of an upcoming paper.
 
 \section{Implementation}
 \label{sec:implementation}
@@ -2472,9 +2479,6 @@ the period and limb darkening coefficients, which would remove the scaling
 with $M$ entirely if the photometric precision were the same for all
 light curves. Even if it is not, the algorithm can still be greatly sped up,
 although an implementation of this is deferred to the next paper.
-\xxx{@DFM: Is this true? I.e., is there an efficient way to solve Equation~(\ref{eq:log-like})
-    when $\pmb{\Sigma}$ is the same for all stars but $\mathbf{C}$ is different? Is there
-    some limit in which an approximation of some sort can be made?}
 
 \begin{figure}[t!]
     \begin{centering}

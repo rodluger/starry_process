@@ -72,7 +72,7 @@ ax.set_xticks(l ** 2 + l)
 ax.set_xticklabels(["{}".format(l) for l in np.arange(2, ydeg + 1)])
 ax.set_xlabel("spherical harmonic degree")
 ax.set_ylabel("posterior shrinkage")
-leg = ax.legend(loc="upper right", title="light curves", fontsize=10)
+leg = ax.legend(loc="upper right", title="orientations", fontsize=10)
 leg.get_title().set_fontsize(8)
 leg.get_title().set_fontweight("bold")
 
