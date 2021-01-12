@@ -49,6 +49,16 @@
          & \S\ref{sec:baseline}
         \\
         %
+        $\odot$
+         & Elementwise product
+         & \S\ref{sec:temporal}
+        \\
+        %
+        $\otimes$
+         & Kronecker product
+         & \S\ref{sec:temporal}
+        \\
+        %
         $a$
          & GP hyperparameter: spot latitude shape parameter
          & Appendix~\ref{sec:lat}
@@ -218,6 +228,11 @@
          & ---
         \\
         %
+        $\mathbf{K}$
+         & Temporal covariance matrix
+         & \S\ref{sec:temporal}
+        \\
+        %
         $l$
          & Spherical harmonic degree
          & Appendix~\ref{sec:notation}
@@ -233,11 +248,6 @@
          & Equation~(\ref{eq:log-like})
         \\
         %
-        $\bblambda$
-         & Spot longitude (random variable)
-         & Appendix~\ref{sec:lon}
-        \\
-        %
         %
         %
         %
@@ -248,6 +258,11 @@
         %
         %
         %
+        %
+        $\bblambda$
+         & Spot longitude (random variable)
+         & Appendix~\ref{sec:lon}
+        \\
         $m$
          & Spherical harmonic order
          & Appendix~\ref{sec:notation}
@@ -342,6 +357,11 @@
          & Equation~(\ref{eq:cov_f})
         \\
         %
+        $\pmb{\Sigma}^\mathbf{(t)}$
+         & Flux GP covariance matrix w/ temporal evolution
+         & Equation~(\ref{eq:cov_f})
+        \\
+        %
         $\tilde{\pmb{\Sigma}}$
          & Flux GP covariance matrix (normalized processs)
          & Equation~(\ref{eq:SigmaTilde})
@@ -352,9 +372,19 @@
          & Equation~(\ref{eq:cov_y})
         \\
         %
+        $\pmb{\Sigma}_\mathbf{y}^\mathbf{(t)}$
+         & Spherical harmonic GP covariance w/ temporal evolution
+         & Equation~(\ref{eq:cov_y})
+        \\
+        %
         $t$
          & time
          & ---
+        \\
+        %
+        $\tau$
+         & GP hyperparameter: timescale
+         & \S\ref{sec:temporal}
         \\
         %
         $\mathbf{u}$

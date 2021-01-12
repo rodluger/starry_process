@@ -51,18 +51,6 @@ jobs:
   - script: |
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
-      py.test -v -s tests --junitxml=junit/test-results.xml
-    displayName: 'Run the tests'
-
-  - task: PublishTestResults@2
-    condition: succeededOrFailed()
-    inputs:
-      testResultsFiles: '**/test-*.xml'
-      testRunTitle: 'Publish test results'
-
-  - script: |
-      . $CONDA/etc/profile.d/conda.sh
-      conda activate starry_process
       make -C docs html
       cd docs/_build/html
       git init
@@ -101,3 +89,15 @@ jobs:
       GITHUB_API_KEY: $(GITHUB_API_KEY)
       GITHUB_USER: $(GITHUB_USER)
     condition: always()
+
+  - script: |
+      . $CONDA/etc/profile.d/conda.sh
+      conda activate starry_process
+      py.test -v -s tests --junitxml=junit/test-results.xml
+    displayName: 'Run the tests'
+
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results'

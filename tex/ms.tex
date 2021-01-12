@@ -167,9 +167,11 @@ Among a vast number of kernels are a few that are commonly used
 in modeling stellar variability: the exponential squared kernel,
 %
 \begin{align}
+    \label{eq:expsq}
     k_\mathrm{E^2}(\Delta t)           & = \sigma^2 \exp\left(-\frac{\Delta t^2}{2\tau}\right)
     \quad,                                                                                                                                           \\
     \intertext{the Mat\'ern-3/2 kernel,}
+    \label{eq:mat32}
     k_\mathrm{M^\frac{3}{2}}(\Delta t) & = \sigma^2 \left( 1 + \frac{\sqrt{3}\Delta t}{\tau} \right) \exp\left(-\frac{\sqrt{3}\Delta t}{\tau}\right)
     \quad,                                                                                                                                           \\
     \intertext{the exponential sine squared kernel,}
@@ -2308,31 +2310,25 @@ The two assumptions listed above suggest a fairly straightforward form for the
 GP covariance in spherical harmonics and time:
 %
 \begin{align}
-    \pmb{\Sigma}_\mathbf{t,y} = \pmb{\Sigma}_\mathbf{t} \otimes \pmb{\Sigma}_\mathbf{y}
+    \label{eq:Sigmaty}
+    \pmb{\Sigma}_\mathbf{y}^\mathbf{(t)} = \mathbf{K} \otimes \pmb{\Sigma}_\mathbf{y}
     \quad,
 \end{align}
 %
-where $\pmb{\Sigma}_\mathbf{t}$ is a $(K \times K)$ matrix describing the
+where $\mathbf{K}$ is a $(K \times K)$ matrix describing the
 covariance among the $K$ points in time,
 $\pmb{\Sigma}_\mathbf{y}$ is the $(N \times N)$ matrix describing describing
 the covariance among the $N \equiv (l_\mathrm{max} + 1)^2$ spherical
-harmonic coefficients,
+harmonic coefficients (Equation~\ref{eq:cov_y}),
 and $\otimes$ denotes the Kronecker product.
-The quantity $\pmb{\Sigma}_\mathbf{t,y}$
+The quantity $\pmb{\Sigma}_\mathbf{y}^\mathbf{(t)}$
 is the $(NK \times NK)$ temporal-spatial covariance, whose coefficient at index
 $(Nk + n, Nk' + n')$ is the covariance between the spherical harmonic coefficient
-$y_{n}(t_k)$ and the spherical harmonic coefficient $y_{n'}(t_{k'})$.
-
-\xxx{TODO: The model presented in this paper assumes statics stellar surfaces,
-    corresponding to perfectly periodic light curves. This is hardly ever the
-    case in practice, as spots evolve and differential rotation changes the surface
-    over time. We can still use this model, but we need to either restrict our analysis
-    to segments of light curves of duration shorter than the timescale on which
-    the surface evolves, or explicitly model the effect of time evolution on the covariance.
-    The next paper will deal with temporal evolution more
-    rigorously, but the way to do this is just take the elementwise product of the \starryprocess
-    flux covariance with a temporal covariance. This corresponds to the Kronecker product
-    in spherical harmonic space. Show a figure, give an example, etc.}
+$y_{n}(t_k)$ and the spherical harmonic coefficient $y_{n'}(t_{k'})$, where
+the index $n$ is related to the spherical harmonic indices $l$ and $m$ via
+Equation~(\ref{eq:n}). Finally, because of our assumption of stationarity,
+the mean of the GP is still constant and equal to the mean of the static
+process.
 
 \begin{figure}[t!]
     \begin{centering}
@@ -2349,13 +2345,20 @@ $y_{n}(t_k)$ and the spherical harmonic coefficient $y_{n'}(t_{k'})$.
     \end{centering}
 \end{figure}
 
-\begin{proof}{test_temporal}
+The covariance matrix in Equation~(\ref{eq:Sigmaty}) can be sampled from to
+yield time-variable surface maps, or it can be transformed into flux space
+for sampling light curves or computing likelihoods. The covariance in
+flux space is given by
+%
+\begin{align}
+    \label{eq:SigmatSlow}
+    \pmb{\Sigma}^\mathbf{(t)} & =
     \pmb{\mathcal{A}}^\ddagger
-    \left(\pmb{\Sigma}_\mathbf{t} \otimes \pmb{\Sigma}_\mathbf{y}\right)
+    \,
+    \pmb{\Sigma}_\mathbf{y}^\mathbf{(t)}
+    \,
     {\pmb{\mathcal{A}}^\ddagger}^\top
-    &=
-    \pmb{\Sigma} \odot \pmb{\Sigma}_\mathbf{t}
-\end{proof}
+\end{align}
 %
 where
 %
@@ -2369,8 +2372,54 @@ where
                       & \mathbf{a}_1^\top &        &                              \\
                       &                   & \ddots &                              \\
                       &                   &        & \,\,\, \mathbf{a}_{K-1}^\top
-    }\quad.
+    }
 \end{align}
+%
+is a design matrix constructed by staggering the rows of the standard design
+matrix $\pmb{\mathcal{A}}$ (see Appendix \ref{sec:starry:basic}). The diagonal
+structure of $\pmb{\mathcal{A}}^\ddagger$ is due to the fact that each snapshot of the surface is only observed
+at a single phase.
+
+In the temporally-variable version of our GP, the covariance matrix in
+Equation~(\ref{eq:SigmatSlow}) replaces the standard covariance
+$\pmb{\Sigma}$; it can similarly be modified (\S\ref{sec:baseline})
+to obtain the covariance of the normalized process. While $\pmb{\Sigma}^\mathbf{(t)}$
+is $(K \times K)$, it is computed from the contraction of a much larger
+$(NK \times NK)$ matrix, which is extremely inefficient to instantiate and
+operate on. Fortunately, it can be shown that
+%
+\begin{proof}{test_temporal}
+    \pmb{\Sigma}^\mathbf{(t)} & =
+    \pmb{\mathcal{A}}^\ddagger
+    \,
+    \pmb{\Sigma}_\mathbf{y}^\mathbf{(t)}
+    \,
+    {\pmb{\mathcal{A}}^\ddagger}^\top
+    \nonumber \\
+    &=
+    \pmb{\mathcal{A}}^\ddagger
+    \left(\mathbf{K} \otimes \pmb{\Sigma}_\mathbf{y}\right)
+    {\pmb{\mathcal{A}}^\ddagger}^\top
+    \nonumber \\
+    &=
+    \pmb{\Sigma} \odot \mathbf{K}
+    \quad,
+\end{proof}
+%
+that is, the flux covariance is just the elementwise $\odot$ product of the
+GP covariance $\pmb{\Sigma}$ and the temporal covariance $\mathbf{K}$.
+This fact makes the temporal GP \emph{just as efficient} to
+evaluate as the standard GP!
+
+Armed with this algorithm for computing $\pmb{\Sigma}^\mathbf{(t)}$, it only
+remains for us to decide on a structure for $\mathbf{K}$. While this can
+in principle be any covariance matrix constructed from a stationary kernel,
+we recommend one of the common radial kernels such as the exponential
+squared kernel (Equation~\ref{eq:expsq}) or the Mat\'ern-3/2 kernel
+(Equation~\ref{eq:mat32}) with variance parameter $\sigma^2$ set to
+unity (since the variance is already specified within $\pmb{\Sigma}$). In this
+case, the temporal covariance $\mathbf{K}$ is a function of a single
+parameter: the timescale of the variability, $\tau$.
 
 \subsection{Marginalizing over period and limb darkening}
 \label{sec:other-marg}
@@ -2882,6 +2931,7 @@ the equations and/or section in which they are presented.
 
 \subsection{Basic expression}
 %
+\label{sec:starry:basic}
 As we mentioned in \S\ref{sec:gp}, the flux $\mathbf{f}$ is a purely
 linear function of the spherical harmonic coefficient vector $\mathbf{y}$:
 %
