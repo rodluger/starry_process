@@ -2419,7 +2419,19 @@ squared kernel (Equation~\ref{eq:expsq}) or the Mat\'ern-3/2 kernel
 (Equation~\ref{eq:mat32}) with variance parameter $\sigma^2$ set to
 unity (since the variance is already specified within $\pmb{\Sigma}$). In this
 case, the temporal covariance $\mathbf{K}$ is a function of a single
-parameter: the timescale of the variability, $\tau$.
+parameter: the timescale of the variability, $\tau$. Similar to the other
+hyperparameters of our GP, this parameter can be estimated in an inference
+setting. However, a detailed investigation of the ability of our temporal
+GP to accurately capture spot variability is beyond the scope of this paper,
+and will be revisited in the future, along with an algorithm to explicitly
+model the effects of differential rotation on the covariance structure.
+
+Figure~\ref{fig:temporal} shows a single prior sample from the temporal
+GP described above, assuming a squared exponential covariance with $\tau = 20$ days
+and a rotation period $P = 1$ day. We compute both the map samples at five
+different times (top) and the light curve sample over ten rotations (bottom).
+The flux variability is qualitatively similar to that seen in
+temporally-variable \emph{Kepler} light curves.
 
 \subsection{Marginalizing over period and limb darkening}
 \label{sec:other-marg}
