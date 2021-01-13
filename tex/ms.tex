@@ -2163,10 +2163,83 @@ properties exactly.
 
 \subsection{Bright spots}
 \label{sec:brightspots}
-\xxx{TODO: We can easily model bright spots and plages by setting $c < 0$. Show
-    an example. This model can be used to differentiate between spot-dominated
-    and plage-dominated surfaces, which is physically interesting. Cite
-    Brett's paper on TRAPPIST-1.}
+
+\begin{figure}[t!]
+    \begin{centering}
+        \includegraphics[width=\linewidth]{figures/brightspots.pdf}
+        \oscaption{brightspots}{%
+            Comparison of GP samples with dark spots (top) and bright
+            spots (center) alongside their corresponding light curves
+            viewed at $I = 75^\circ$ (bottom). Without knowledge of
+            the baseline (\S\ref{sec:baseline}), it is very
+            difficult to differentiate between the two from stellar
+            light curves.
+            \label{fig:brightspots}
+        }
+    \end{centering}
+\end{figure}
+
+All the calibration tests performed in the previous section assumed the
+stellar surface was dominated by dark spots. We can easily model the
+effect of bright spots by choosing negative values for the contrast
+parameter, i.e. $c < 0$. The top two panels of Figure~\ref{fig:brightspots}
+show five random samples from the GP with dark spots ($c = 0.1$) and
+bright spots ($c = -0.1$), respectively; the random seed is the same for
+both panels, so the maps are identical in all other respects.
+While the surface maps can be easily distinguished by eye, the same is not
+true for the corresponding light curve samples (bottom panel), which
+are almost identical. There is a slight difference in amplitude between
+the two cases: surfaces with dark spots have slightly higher light curve
+amplitudes than surfaces with bright spots of the same contrast magnitude.
+However, the magnitude of the bright spots can be increased slightly to get
+a near-perfect match to the dark spot light curves, meaning it may be
+difficult (if not impossible) to tell the difference between dark and bright
+spots via the GP approach.
+
+The reason for this degeneracy is rooted (once again) in the
+fundamental issue with relative photometry: we lack any information about
+the true baseline level of the light curve.
+Consider the dependence of the (unnormalized) GP covariance on the
+contrast: it enters in a single place, via Equation~(\ref{eq:bigEc}),
+as $c^2$, meaning dark and bright spots models have exactly the same
+covariance. These models differ only in the mean of the unnormalized
+process, since that is proportional to $c$ (via Equation~\ref{eq:ec}).
+However, as we argue in \S\ref{sec:baseline}, the mean is not a direct
+observable. Instead, in relative photometry, we are only sensitive to
+the \emph{ratio} of the covariance to the square of the mean
+(see Equation~\ref{eq:SigmaTilde}). From that equation, we can deduce
+that stars with dark spots (for which
+the light curve mean $\mu < 1$) will therefore have larger variance
+than stars with bright spots ($\mu > 1$), leading to the slight difference
+seen in the figure. However, since this is strictly a multiplicative
+factor affecting the covariance, it is degenerate with the two other
+properties that scale the covariance: the magnitude of the contrast and
+the total number of spots.%
+\footnote{There is also a small additive term in
+    Equation~(\ref{eq:SigmaTilde}), but this, too, depends only on the ratio
+    of entries in the covariance matrix to the mean, so it is of little help
+    in breaking the degeneracy.}
+
+We therefore conclude that \textbf{relative single-band photometry is largely insensitive to
+    the difference between bright spots and dark spots}. However, it is
+important to bear in mind that the
+degeneracy described above exists only for the \emph{Gaussian approximation}
+to the likelihood function. As we argued earlier, the true likelihood function
+is not a Gaussian; in particular, the true probability distribution
+has higher-order moments that we do not model here. These moments should
+in principle encode information about the sign of the spot contrast, but they
+may be very difficult to infer in practice. It may be possible to distinguish
+between dark spots and bright spots with traditional forward models of stellar
+surfaces, but (as we argued earlier) a statistically rigorous ensemble analysis
+of stellar light curves using such forward models is probably computationally
+intractable.
+
+We can, however, skirt this degeneracy with observations in multiple bands,
+which can provide limited information about the baseline level. Recently,
+\citet{Morris2018} used approximately coeval \emph{Kepler} and \emph{Spitzer}
+light curves of TRAPPIST-1 to argue that a bright spot model for the star
+is more consistent with the data. We discuss the ability of multi-band
+photometry to break these degeneracies in the following section.
 
 \subsection{The baseline degeneracy}
 \label{sec:breaking_baseline_degeneracy}
@@ -4920,8 +4993,10 @@ characterized by a single parameter, the contrast of the spots:
 The moment integrals are then trivial to evaluate:
 %
 \begin{align}
+    \label{eq:ec}
     \mathbf{e}_c & = c \, \mathbf{e}_\lambda
     \\
+    \label{eq:bigEc}
     \mathbf{E}_c & = c^2 \mathbf{E}_\lambda
     \quad.
 \end{align}

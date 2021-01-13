@@ -11,12 +11,13 @@ from theano.configparser import change_flags
 import pytest
 from tqdm import tqdm
 from itertools import product
+import os
+
+ON_AZURE = bool(int(os.getenv("ON_AZURE", "0")))
 
 
 def get_functions(marginalize_over_inclination=False, seed=42):
-    def _lnlike(
-        r, a, b, c, n, i, p, t, flux, data_cov,
-    ):
+    def _lnlike(r, a, b, c, n, i, p, t, flux, data_cov):
         gp = StarryProcess(
             r=r,
             a=a,
@@ -28,9 +29,7 @@ def get_functions(marginalize_over_inclination=False, seed=42):
         )
         return gp.log_likelihood(t, flux, data_cov, p=p, i=i)
 
-    def _sample(
-        r, a, b, c, n, i, p, t,
-    ):
+    def _sample(r, a, b, c, n, i, p, t):
         gp = StarryProcess(
             r=r,
             a=a,
@@ -100,6 +99,7 @@ def test_lnlike_array(marginalize_over_inclination, plot=False, seed=42):
     assert np.abs(b_arr[np.nanargmax(ll)] - defaults["b"]) < 0.10
 
 
+@pytest.mark.skipif(ON_AZURE, reason="consumes too much memory")
 @pytest.mark.parametrize(
     "param,marginalize_over_inclination",
     product(["r", "a", "b", "c", "n", "i", "p"], [False, True]),
@@ -134,4 +134,3 @@ def test_lnlike_grad(param, marginalize_over_inclination):
                 (defaults[param],),
                 n_tests=1,
             )
-

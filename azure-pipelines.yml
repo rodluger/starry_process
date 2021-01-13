@@ -95,6 +95,8 @@ jobs:
       conda activate starry_process
       py.test -v -s tests --junitxml=junit/test-results.xml
     displayName: 'Run the tests'
+    env:
+      ON_AZURE: 1
 
   - task: PublishTestResults@2
     condition: succeededOrFailed()

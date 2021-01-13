@@ -16,7 +16,7 @@ def test_sample(tol=5):
     y = sp.sample_ylm().eval()
 
     # Instantiate a starry map to compute
-    # Cthe longitudinally-averaged intensity
+    # the longitudinally-averaged intensity
     map = starry.Map(15, lazy=False)
     map[:, :] = y
     lat = np.linspace(-90, 90, 300)

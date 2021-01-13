@@ -41,10 +41,19 @@ for prop in [
                     if callable(value):
                         value = value.__name__
 
-                    obj.__doc__ = obj.__doc__.replace(
-                        '%%defaults["{}"]%%'.format(key),
-                        "``{}``".format(value),
-                    )
+                    # Hack: limit the default value of `u`
+                    # to `udeg` elements.
+                    if key == "u":
+                        obj.__doc__ = obj.__doc__.replace(
+                            '%%defaults["{}"]%%'.format(key),
+                            "``{}``".format(value[: defaults["udeg"]]),
+                        )
+                    else:
+                        obj.__doc__ = obj.__doc__.replace(
+                            '%%defaults["{}"]%%'.format(key),
+                            "``{}``".format(value),
+                        )
+
             except:
                 pass
 

@@ -415,11 +415,6 @@ class StarryProcess(object):
         return self._contrast
 
     @special_property
-    def flux(self):
-        """The flux distribution integral (not *really* user-facing)."""
-        return self._flux
-
-    @special_property
     def size(self):
         """The size distribution integral (not *really* user-facing)."""
         return self._size
@@ -566,7 +561,7 @@ class StarryProcess(object):
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
             u (vector, optional): The limb darkening coefficients for the
-                star. Default is %%defaults["u"][:defaults["udeg"]]%%.
+                star. Default is %%defaults["u"]%%.
             baseline_mean (scalar or vector, optional): The flux baseline to
                 subtract when computing the GP likelihood. Default is
                 %%defaults["baseline_mean"]%%.
@@ -655,7 +650,7 @@ class StarryProcess(object):
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
             u (vector, optional): The limb darkening coefficients for the
-                star. Default is %%defaults["u"][:defaults["udeg"]]%%.
+                star. Default is %%defaults["u"]%%.
         """
         if self._normalized:
             return tt.zeros_like(cast(t, vectorize=True))
@@ -676,12 +671,12 @@ class StarryProcess(object):
 
             t (vector): The time array in arbitrary units.
             i (scalar, optional): The inclination of the star in degrees.
-            Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
-            is set, this argument is ignored.
+                Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
+                is set, this argument is ignored.
             p (scalar, optional): The rotational period of the star in the same
-            units as ``t``. Default is %%defaults["p"]%%.
+                units as ``t``. Default is %%defaults["p"]%%.
             u (vector, optional): The limb darkening coefficients for the
-            star. Default is %%defaults["u"][:defaults["udeg"]]%%.
+                star. Default is %%defaults["u"]%%.
 
         """
         if self._normalized:
@@ -740,7 +735,7 @@ class StarryProcess(object):
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
             u (vector, optional): The limb darkening coefficients for the
-                star. Default is %%defaults["u"][:defaults["udeg"]]%%.
+                star. Default is %%defaults["u"]%%.
             nsamples (int, optional): The number of samples to draw. Default 1.
             eps (float, optional): A small number added to the diagonal of the
                 flux covariance matrix when marginalizing over inclination
@@ -871,7 +866,7 @@ class StarryProcess(object):
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
             u (vector, optional): The limb darkening coefficients for the
-                star. Default is %%defaults["u"][:defaults["udeg"]]%%.
+                star. Default is %%defaults["u"]%%.
             baseline_mean (scalar or vector, optional): The flux baseline to
                 subtract when computing the GP likelihood. Default is
                 %%defaults["baseline_mean"]%%.
@@ -1005,6 +1000,14 @@ class StarryProcess(object):
                 the next to last dimension should be equal to the number of
                 time points. The output from methods such
                 as ``sample_ylm`` can thus be directly passed to this method.
+            t (vector): The time array in arbitrary units.
+            i (scalar, optional): The inclination of the star in degrees.
+                Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
+                is set, this argument is ignored.
+            p (scalar, optional): The rotational period of the star in the same
+                units as ``t``. Default is %%defaults["p"]%%.
+            u (vector, optional): The limb darkening coefficients for the
+                star. Default is %%defaults["u"]%%.
 
         Returns:
             The flux timeseries. This will in general have shape
