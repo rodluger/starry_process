@@ -438,7 +438,7 @@ $\mathbbb{f}\,\mathbbb{f}^\top$, respectively:
 %
 Given the linear relationship between flux and spherical harmonic
 coefficients (Equation~\ref{eq:fAy}),
-we may write the mean and covariance of our flux GP as
+we may write the mean and covariance of our GP as
 %
 \begin{align}
     \label{eq:mean_f}
@@ -463,7 +463,7 @@ where
      & = \mathrm{E} \Big[ \mathbbb{y} \, \mathbbb{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big] - \pmb{\mu}_{\mathbf{y}}(\pmb{\theta}_\bullet) \pmb{\mu}_{\mathbf{y}}^\top(\pmb{\theta}_\bullet)
 \end{align}
 %
-are the mean and covariance of the GP in the spherical harmonics basis.
+are the mean and covariance of the distribution over spherical harmonic coefficients.
 The bulk of the math in this paper (Appendix~\ref{sec:integrals})
 is devoted to computing
 the expectations in the expressions above, which
@@ -611,7 +611,7 @@ from light curves with minimal bias.
 \label{sec:inclination}
 %
 As we mentioned in the previous section,
-the equations for the mean and covariance of the flux GP
+the equations for the mean and covariance of our GP
 (Equations~\ref{eq:mean_f} and \ref{eq:cov_f}, respectively) are conditioned
 on specific values of the stellar and spot properties. To obtain the posterior distribution
 for these parameters, we must typically resort to numerical sampling techniques,
@@ -2154,12 +2154,50 @@ properties exactly.
 
 \subsection{Small spots}
 \label{sec:tinyspots}
-\xxx{TODO: The model is limited in resolution to features with radii $r \gtrsim 10^\circ$.
-    Typical sun spots are MUCH smaller than that. However, our model can still
-    correctly infer latitudinal parameters even when spots are really tiny
-    (i.e., no bias due to the limited resolution). We might try to improve the
-    numerical stability of the model at higher spherical harmonic degree, but
-    that's a task for a future paper.}
+
+One of the biggest downsides of adopting a spherical harmonic representation
+of the stellar surface as the foundation of our GP is the inherent limitation
+it imposes on the resolution of surface features. In order to maximize
+computational efficiency and numerical stability, our default approach is to
+model the surface using an expansion up to degree $l_\mathrm{max} = 15$,
+which can model features only as small as
+$\sim \nicefrac{180^\circ}{15} = 12^\circ$ on the surface. Even on scales
+slightly larger than this, the presence of ringing can be seen
+(c.f. panel (b) in Figure~\ref{fig:samples}, where ringing can just barely be
+seen in the equatorial region of the maps). The spherical harmonic basis consists
+of global modes, all of which contribute to the intensity everywhere on the surface.
+Localized features require constructive interference of modes inside
+and destructive interference of modes outside, often leading to a wave-like ringing
+pattern that gets worse as the size of the features gets smaller. Taken at
+face value, this might suggest that a different basis---such as the common
+choice of pixels on a grid, or perhaps a localized wavelet basis---would be better
+at modeling small spots. While this is probably true, a different choice of
+basis would not admit the same analytic solutions to the integrals needed to
+compute the GP covariance. And it is precisely the ability to compute these
+integrals analytically (Appendix~\ref{sec:integrals}) that makes the evaluation
+of the marginal likelihood tractable; it is difficult to envision an approach
+that uses a \emph{local} basis and simultaneously enjoys the same
+analyticity under integration.
+
+In principle, small spots can be modeled with negligible ringing by simply
+increasing the degree of the spherical harmonic expansion. As we discuss in
+\S\ref{sec:implementation}, however, the algorithm presented here becomes
+unstable for $l \gtrsim 15$, so doing so would require a reparametrization
+of the equations in the Appendix. However, as we showed in
+\S\ref{sec:calibration}, the current implementation of the GP is suitable
+to modeling light curves of stars with spots smaller than the limiting
+resolution of $\sim 10^\circ$. Consider Figure~\ref{fig:calibration_tinyspots},
+which shows the results of doing inference on an ensemble of light curves
+of stars with small ($r = 3^\circ$) spots; these are comparable to some of
+the larger spots seen on the Sun with diameters of about $70,000$ km.
+Even though our inferred radius and contrast are wrong, the fact that the radius
+posterior peaks
+at the lower prior bound of $10^\circ$ is strongly suggestive of the presence
+of spots smaller than the resolution of the model. Moreover, the
+latitude mode and standard deviation posteriors are \emph{unbiased}, and we
+correctly infer the presence of low-variance, mid-latitude spots.
+With the above caveats in mind, our GP can therefore still be used to model
+stars with small spots.
 
 \subsection{Bright spots}
 \label{sec:brightspots}
@@ -2249,11 +2287,6 @@ photometry to break these degeneracies in the following section.
     can uniquely infer $n$. I think this can be done by taking light curves
     in two bands, but I'm checking with Gully. @HEDGES: Anything to add on this?}
 
-\subsection{Application to transits and RV}
-\label{sec:other-work}
-\xxx{TODO: The covariance in the spherical harmonic basis can be used as a prior
-    in many other settings.}
-
 \subsection{Comparison to other work}
 \label{sec:other-work}
 \xxx{TODO: Discuss \citet{Basri2020}, how we agree and disagree. Compare to Brett's
@@ -2263,21 +2296,28 @@ photometry to break these degeneracies in the following section.
 
 \subsection{Caveats}
 \label{sec:caveats}
-\xxx{TODO: Miscellaneous caveats.}
-\xxx{
-    \begin{enumerate}
-        \item The latitude distribution is not Gaussian, so careful
-              when interpreting $\mu_\phi$ and $\sigma_\phi$
-        \item The number of spots does not have to be an integer. This is
-              fine, since it makes the model more flexible.
-        \item Careful with light curves with large amplitudes, although
-              Figure~\ref{fig:calibration_hicontrast}
-              has max amplitudes of more than 10\% and works great.
-        \item No differential rotation / spot evolution yet! We're working on it.
-        \item We might want a shrinkage prior on sigma, since it's hard to
-              break the polar spot degeneracy with single-band light curves.
-    \end{enumerate}
-}
+
+We conclude our discussion with a list of several caveats that should be kept
+in mind when using our algorithm and/or its \Python implementation.
+
+\xxx{TODO}
+
+\begin{enumerate}
+    \item \emph{The assumed latitude distribution is not Gaussian}.
+          Careful when interpreting $\mu_\phi$ and $\sigma_\phi$.
+    \item \emph{The number of spots $n$ does not have to be an integer}.
+          This is fine, since it makes the model more flexible.
+    \item \emph{Care should be taken when modeling large-amplitude light curves}.
+          Careful with light curves with large amplitudes, although
+          Figure~\ref{fig:calibration_hicontrast}
+          has max amplitudes of more than 10\% and works great.
+    \item \emph{Keep in mind the polar spot degeneracy}.
+          We might want a shrinkage prior on sigma, since it's hard to
+          break the polar spot degeneracy with single-band light curves.
+    \item \emph{Careful with the data}. Jitter term, baseline, etc.
+    \item \emph{Careful with sample selection}. Even non-variable light curves.
+          If you're worried, use a mixture model.
+\end{enumerate}
 
 \section{Extensions}
 \label{sec:extensions}
@@ -2572,6 +2612,91 @@ and given the fact that the mapping problem is particularly sensitive to
 the limb darkening coefficients (see \S\ref{sec:limbdark}), marginalizing over
 $P$ and $\mathbf{u}$ will be the subject of an upcoming paper.
 
+\subsection{Modeling transits and radial velocity datasets}
+\label{sec:transits-rvs}
+
+Finally, we would like to note that the GP developed in this paper is not
+limited to modeling (rotational) light curves of stars. We derived the
+covariance structure of spotted stellar surfaces in the spherical harmonic
+basis, which we then linearly transformed into flux space to obtain the
+light curve GP presented above. However, our GP may be used to model
+\emph{any} kind of observation that
+is linearly related to the spherical harmonic representation. If $\mathbf{A}$
+is the linear operator that transforms the spherical harmonic representation
+$\mathbf{y}$ to the data vector $\mathbf{d}$ via
+$\mathbf{d} = \mathbf{A} \mathbf{y}$, then the mean and covariance of the
+GP model for $\mathbf{d}$ are given by
+%
+\begin{align}
+    \pmb{\mu}_\mathbf{d}    & = \mathbf{A} \, \pmb{\mu}_\mathbf{y}
+    \\
+    \pmb{\Sigma}_\mathbf{d} & = \mathbf{A} \, \pmb{\Sigma}_\mathbf{y} \, \mathbf{A}^\top
+    \quad,
+\end{align}
+%
+respectively, where $\pmb{\mu}_\mathbf{y}$ and $\pmb{\Sigma}_\mathbf{y}$
+are the mean and covariance in the spherical harmonic basis derived in this paper.
+In \citet{Luger2019} we showed that
+occultation light curves are also linearly related to the
+spherical harmonic representation of the stellar surface, so it is
+straightforward to use our GP to model transits of planets across spotted
+stars, either to marginalize over the spot variability or to constrain the
+surface map of the star. In this context, $\mathbf{A}$ may be computed via the
+\textsf{design\_matrix()} method of a \textsf{Map} instance of the \starry
+package.
+
+The formalism developed here may also be extended to model radial
+velocity (RV) datasets, although this requires a bit more work. The
+instantaneous radial
+velocity shift $v$ induced by a rotating spotted star may be approximated as
+%
+\begin{align}
+    v & = \frac{\iint_S I \, V \, \mathrm{d} S}{\iint_S I \mathrm{d} S}
+\end{align}
+%
+where $I$ is the stellar intensity at a point on the surface, $V$ is the
+radial component of the rotational velocity vector at that point, and the
+integral is taken over the projected disk of the star.
+%
+If we expand the surface intensity distribution in spherical harmonics,
+the integral in the denominator is just a classical \starry integral, as it
+is just the disk-integrated intensity (i.e., the flux).
+%
+The numerator may also be computed following the \starry formalism,
+provided we weight the surface intensity representation by the velocity
+field $V$. In the case of rigid body rotation, $V$ is exactly a dipole ($l = 1$)
+field, so the quantity $I V$ can be expressed exactly as a product of
+spherical harmonics.%
+\footnote{
+    Higher order effects such as differential rotation and convective
+    blueshift can be easily modeled with a higher degree expansion of $u$.
+}
+Since spherical harmonics are closed under multiplication,
+we may write $I V$ as a linear combination of spherical harmonics, meaning
+the integral in the numerator is \emph{also} a \starry integral.
+For some linear operators $\mathbf{A}$ and $\mathbf{B}$, we may therefore
+write
+%
+\begin{align}
+    \mathbbb{v} & = \frac{\mathbf{B} \, \mathbbb{y}}{\mathbf{A} \, \mathbbb{y}}
+\end{align}
+%
+where $\mathbbb{v}$ is the random variable representing the observed radial
+velocity timeseries and
+$\mathbbb{y}$ is the Gaussian random variable representing the spherical harmonic
+coefficients describing the stellar surface.
+%
+Since the $\mathbbb{v}$ is the ratio of two Gaussian random variables, its
+distribution is not Gaussian. However, we can still compute the first two moments
+of the distribution of $\mathbbb{v}$ to derive a Gaussian approximation to it
+(similar to what we did in \S\ref{sec:baseline}), which will yield the mean
+and covariance of the Gaussian process representation of the radial velocity
+timeseries.
+%
+Given the complexity of the operations described above,
+we defer this calculation (and the calibration of the resulting GP model)
+to future work.
+
 \section{Implementation}
 \label{sec:implementation}
 
@@ -2826,7 +2951,8 @@ results presented in this paper:
           or to explicitly infer spot properties. When combined with the
           \starry package, it can also be used as a
           prior on the stellar surface in Doppler imaging, Doppler tomography,
-          or even radial velocity searches for exoplanets.
+          or even radial velocity searches for exoplanets. The latter will
+          be the subject of a future paper in this series.
 \end{enumerate}
 
 The GP presented here has far-ranging applications for stellar light
@@ -2843,19 +2969,35 @@ chemically peculiar massive stars, and to better understand the spot
 properties of transiting exoplanet hosts for unbiased spectroscopic
 characterization of their atmospheres (to name a few).
 
-The next papers in this series will focus on (II) a more rigorous
-treatment of time variability and (III) explicit marginalization over
-the remaining stellar parameters. In particular, paper II will focus
-on modeling differential rotation, whose effect on the covariance of the
-process can be derived in a similar fashion to what we did here. This
-will enable direct inference about the differential rotation rates and
-spot evolution timescales of stars, processes whose effects on light curves
-are too similar for current methodology to reliably discern between them.
-Paper III will focus on marginalization over the stellar rotation period
-and limb darkening coefficients, which can also be done analytically
-under certain choices of prior. This will eliminate all per-star
-hyperparameters in the expression for the GP covariance, greatly
-speeding up inference for large ensembles of stellar light curves.
+The next papers in this series will focus on (in no particular order)
+\begin{itemize}
+    \item \emph{A more rigorous treatment of time variability}.
+          This paper will focus
+          on modeling differential rotation, whose effect on the covariance of the
+          process can be derived in a similar fashion to what we did here. This
+          will enable direct inference about the differential rotation rates and
+          spot evolution timescales of stars, processes whose effects on light curves
+          are too similar for current methodology to reliably discern between them.
+    \item \emph{Explicit marginalization over the remaining stellar parameters}.
+          These include the stellar rotation period
+          and limb darkening coefficients, which can be marginalized over analytically
+          under certain choices of prior. This will eliminate all per-star
+          hyperparameters in the expression for the GP covariance, greatly
+          speeding up inference for large ensembles of stellar light curves.
+    \item \emph{Extension of this formalism to radial velocity datasets}.
+          As we discussed in \S\ref{sec:transits-rvs}, it is possible to extend
+          the methodology presented here to model the contribution of stellar
+          surface variability to radial velocity measurements, which can be used
+          (for instance) to mitigate systematics in extreme precision radial velocity
+          (EPRV) searches for exoplanets.
+    \item \emph{Extension of this formalism to Doppler imaging}.
+          As we show in upcoming work, it is possible to derive an exact
+          linear relationship between the wavelength-dependent spherical harmonic
+          representation of a rotating star and its time-variable spectrum.
+          This linearity makes it possible to adapt our GP formalism to the Doppler
+          imaging problem, providing an efficient marginal likelihood function
+          for rigorous inference studies.
+\end{itemize}
 
 In keeping with other papers in the \starry series, all figures in this
 paper are generated automatically from open-source scripts linked to in
@@ -3195,7 +3337,7 @@ stellar surface $\mathbbb{y}$,
     \quad,
 \end{align}
 %
-which are linearly related to the mean and the covariance of our GP in flux
+which are linearly related to the mean and the covariance of our GP
 (\S\ref{sec:gp}).
 %
 Recall that $\mathbbb{x}$ is a vector of parameters describing the exact
@@ -5068,7 +5210,7 @@ where
     \mathrm{E} \Big[ \mathbbb{y} \, \Big| \, \pmb{\theta}_\bullet \Big]
 \end{align}
 %
-is the first moment of the GP in the spherical harmonic basis
+is the first moment of the distribution over spherical harmonic coefficients
 (Equation~\ref{eq:exp_y}). We can use Equations~(\ref{eq:Arows})
 and (\ref{eq:akT})
 to express the element at index $k$ (corresponding to the mean of the
@@ -5306,7 +5448,7 @@ where
     \mathrm{E} \Big[ \mathbbb{y} \, \mathbbb{y}^\top \, \Big| \, \pmb{\theta}_\bullet \Big]
 \end{align}
 %
-is the second moment of the GP in the spherical harmonic basis
+is the second moment of the distribution over spherical harmonic coefficients
 (Equation~\ref{eq:exp_yy}). We can use Equations~(\ref{eq:Arows})
 and (\ref{eq:akT})
 to express the element at index $k, k'$ (corresponding to the covariance of the
