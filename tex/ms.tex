@@ -1819,8 +1819,10 @@ the other runs, the spots in Figure~\ref{fig:calibration_hicontrast}
 have much higher contrast ($c = 0.5$). Even though the contrast is degenerate
 with the number of spots (which is unobservable), the $c$ posterior
 has a much heavier tail than in the other runs, showing that the model is
-in fact sensitive to the spot contrast to some degree. In
-Figure~\ref{fig:calibration_bigspots}, we compensate for the smaller number
+in fact sensitive to the spot contrast to some degree.%
+\footnote{The sensitivity to $c$ is for the most part
+    due to our hard lower prior bound $n \ge 1$.}
+In Figure~\ref{fig:calibration_bigspots}, we compensate for the smaller number
 of spots by increasing the spot radius to $r = 45^\circ \pm 5^\circ$ instead,
 showing that the model can accurately model large spots, even in the
 presence of some (unmodelled) scatter in their sizes.
@@ -2281,11 +2283,69 @@ photometry to break these degeneracies in the following section.
 
 \subsection{The baseline degeneracy}
 \label{sec:breaking_baseline_degeneracy}
-\xxx{TODO: Discuss the baseline degeneracy and how to break it. Discuss the
-    degeneracy between $c$ and $N$ and how to break it. The basic idea here
-    is that if we can constrain the (spotless) photospheric temperature, we
-    can uniquely infer $n$. I think this can be done by taking light curves
-    in two bands, but I'm checking with Gully. @HEDGES: Anything to add on this?}
+
+We showed in \S\ref{sec:calibration-inference} that there exists a
+strong degeneracy between the contrast of individual spots $c$ and
+the total number of spots $n$ on a star. For relative photometry, in
+which the true baseline level (\S\ref{sec:baseline}) is not known,
+this degeneracy is perfect: relative photometry cannot tell us anything
+about the total spottiness of a stellar surface. Inspection of the
+dependence of the GP on $c$ and $n$ (c.f. Appendix~\ref{sec:integrals}) reveals
+that the mean and variance of the GP scale as
+%
+\begin{align}
+    \mu      & \propto c \, n
+    \nonumber                   \\
+    \sigma^2 & \propto c^2 \, n
+    \quad,
+\end{align}
+%
+respectively. If our observations were sensitive to both the true mean and
+variance of stellar light curves,
+we could uniquely infer $c$ and $n$. However, as we discussed in \S\ref{sec:baseline},
+to very good approximation, relative photometry can only tell us about the ratio
+%
+\begin{align}
+    \frac{\sigma^2}{\mu^2} \propto \frac{c}{n}
+    \quad,
+\end{align}
+%
+i.e., the ratio of the spot contrast to the total number of spots.
+The reason for this is that the relationship between the amplitude of the
+light curve (measured in, e.g., counts per second on the detector)
+and the fractional intensity deficit due to spots on the surface of
+the star is not known. It is easy enough to normalize a light curve to its
+mean, median, or maximum to obtain what we typically refer to as
+``fractional'' or ``relative'' units, but this is \emph{not the same
+    thing}! Consider the two stellar surfaces in Figure~\ref{fig:mean_normalization},
+whose true light curves---measured in units where an unspotted star would
+have unit flux---have different baselines and different amplitudes (top panel).
+This is not what we observe when we do photometry---instead, we observe these
+light curves multiplied by an unknown amplitude, which depends on (potentially
+knowable) factors such as the luminosity of the star, the distance to it,
+and the efficiency of the detector but also on the (typically unknowable)
+unspotted photospheric brightness, which sets the true baseline level.
+%
+Division of these light curves by their (observed) baseline levels
+(which is the operation typically done on stellar light curves) yields the
+``relative'' light curves in the bottom panel, which are \emph{indistinguishable}
+from each other. In this example, we are unable to distinguish between
+models of the surface with different spot contrasts and number of spots (as well
+as total spot ``coverage''). In general, these quantities cannot be learned
+from single-band photometric measurements.
+%
+
+Fortunately, it may be possible to break this degeneracy (at least to some extent)
+by collecting photometric data in multiple wavelength bands, an idea that has
+been explored recently \citep[e.g.,][]{Gully2017,Guo2018}. Assuming the
+locations and sizes of a star's spots are constant in wavelength, the amplitude
+of the light curve in different bands (and in particular its slope as a function
+of wavelength) can be used to directly constrain the
+temperature, and hence the contrast, of the spots. This effectively breaks the
+$c-N$ degeneracy. In practice, the effective size of spots may be different
+at different wavelengths, which could complicate this picture somewhat. An extension
+of the formalism in this paper to multi-band photometry, and a detailed investigation
+of the information content of such observations, is left to future work.
 
 \subsection{Comparison to other work}
 \label{sec:other-work}
@@ -2297,26 +2357,74 @@ photometry to break these degeneracies in the following section.
 \subsection{Caveats}
 \label{sec:caveats}
 
-We conclude our discussion with a list of several caveats that should be kept
+We conclude our discussion with a list of several notes and caveats that should be kept
 in mind when using our algorithm and/or its \Python implementation.
-
-\xxx{TODO}
 
 \begin{enumerate}
     \item \emph{The assumed latitude distribution is not Gaussian}.
-          Careful when interpreting $\mu_\phi$ and $\sigma_\phi$.
+          Because we require the first and second moment integrals
+          (Equations~\ref{eq:ephi} and \ref{eq:Ephi}) to have closed
+          form solutions, there are restrictions on the probability
+          density function we can assume for the spot latitude.
+          We find that a Beta distribution in the cosine of the latitude
+          is integrable in closed form and can be evaluated efficiently
+          in terms of recursion relations. In many cases, particularly
+          when $\mu_\phi \lesssim 75^\circ$ and $\sigma_\phi \lesssim 10^\circ$,
+          the distribution in the spot latitude
+          is close to a bi-modal Gaussian with mean $\pm\mu_\phi$ and
+          standard deviation $\sigma_\phi$ (see Figure~\ref{fig:latitude_pdf}).
+          In general, however, $\mu_\phi$ is formally equal to the \emph{mode}
+          (as opposed to the mean) of the distribution, and $\sigma_\phi$ is
+          the Laplace approximation to the local standard deviation at the mode.
     \item \emph{The number of spots $n$ does not have to be an integer}.
-          This is fine, since it makes the model more flexible.
+          Samples from our GP prior will not in general have exactly $n$
+          spots (see, e.g., Figure~\ref{fig:samples}). This is due to the fact
+          that our model is only an approximation to the true distribution
+          of stellar surfaces conditioned on the spot properties. A corollary
+          of this point is that $n$ need not be an integer, which makes it
+          easier in practice to sample over using modern inference
+          techniques such as MCMC, HMC, ADVI, and nested sampling.
     \item \emph{Care should be taken when modeling large-amplitude light curves}.
-          Careful with light curves with large amplitudes, although
-          Figure~\ref{fig:calibration_hicontrast}
-          has max amplitudes of more than 10\% and works great.
-    \item \emph{Keep in mind the polar spot degeneracy}.
-          We might want a shrinkage prior on sigma, since it's hard to
-          break the polar spot degeneracy with single-band light curves.
-    \item \emph{Careful with the data}. Jitter term, baseline, etc.
-    \item \emph{Careful with sample selection}. Even non-variable light curves.
-          If you're worried, use a mixture model.
+          We discussed this point at length in \S\ref{sec:baseline}. Modeling
+          a light curve that has been normalized to its mean (or median) as a
+          Gaussian process is conceptually a bad idea when the amplitude
+          of variability is large compared to the mean. As a rule of thumb, if
+          the amplitude of variability exceeds $\sim 10\%$, we recommend
+          not normalizing the light curve in this way, and instead modeling
+          the normalization amplitude as a latent variable.
+          % Note that Figure~\ref{fig:calibration_hicontrast}
+          % has max amplitudes of more than 10\% and works great.
+    \item \emph{Keep in mind the polar spot degeneracy}. Even when modeling
+          ensembles of light curves, there are still strong degeneracies at
+          play. In particular, spots centered on the poles are always in
+          the null space, so it can be difficult in practice to rule out
+          their presence. This can be seen in Figure~\ref{fig:calibration_hilat},
+          in which the model cannot distinguish between localized spots
+          at $60^\circ$ and polar spots with high latitude variance.
+          It may thus be advisable to adopt a prior that favors small values
+          of $\sigma_\phi$, such as the common inverse gamma prior for the
+          variance.
+    \item \emph{Limb darkening matters!} The null space is extremely sensitive
+          to limb darkening (\S\ref{sec:limbdark}). It is therefore
+          extremely important to model it correctly; otherwise, there may
+          be substantial bias in the inferred spot parameters.
+    \item \emph{Careful with the data}. In general, covariances can be very
+          hard to estimate from noisy data. This makes it especially important
+          to ensure one is correctly modeling the noise. When applying our GP
+          to model real data, we recommend the usual
+          inference practices of clipping outliers,
+          modeling a latent white noise (jitter) term, and modeling
+          a small latent additive offset term to minimize the risk of
+          bias in the posteriors of interest.
+    \item \emph{Careful with the sample selection}. When performing an ensemble
+          analysis of stellar variability, it is tempting to only analyze light curves
+          that show variability in the first place. \emph{This is extremely
+              dangerous}, since the lack of variability could simply be due to low
+          inclinations. It is extremely important to ensure the sample selection step does
+          not introduce bias. If there is reason to believe there are two
+          distinct populations within an ensemble---say, a population of active
+          stars and a population of quiet (spotless) stars---we strongly recommend
+          the use of a Gaussian mixture model.
 \end{enumerate}
 
 \section{Extensions}
@@ -2909,10 +3017,9 @@ results presented in this paper:
           average spot latitudes to within $5^\circ$.
     \item \textbf{Relative single-band photometry cannot uniquely constrain
               the spot contrast or the total number of spots}. These two quantities
-          are degnerate with each other. While the contrast can be very weakly
-          constrained with lots of data, the total number of spots is not
-          an observable in relative single-band photometry. Knowledge of the
-          unspotted photospheric brightness (or temperate) can break this
+          are perfectly degnerate with each other in relative single-band photometry.
+          Knowledge of the
+          unspotted photospheric brightness (or temperature) can break this
           degeneracy, so analyses of multi-band light curves can in principle
           infer the total spottiness of a stellar surface.
     \item \textbf{Our GP can accurately infer stellar inclinations.} We presented
@@ -4402,6 +4509,7 @@ distribution one spherical harmonic degree at a time. To that end, let us
 write the first moment integral as
 %
 \begin{proof}{test_ephi}
+    \label{eq:ephi}
     \mathbf{e}_\phi
     & \equiv
     \int
