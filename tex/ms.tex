@@ -60,7 +60,7 @@
     the light curve of a rotating star conditioned on a given distribution of
     star spot sizes, contrasts, and latitudes.
     %
-    We show that, when employed in an inference setting, our GP is unbiased,
+    We show that our GP is unbiased,
     allowing one to correctly infer physical parameters of interest from one
     or more stellar light curves, including
     the typical radii and the mean and variance of the latitude
@@ -2349,10 +2349,49 @@ of the information content of such observations, is left to future work.
 
 \subsection{Comparison to other work}
 \label{sec:other-work}
+
+The core idea behind the methodology presented in this paper---to compute the
+Gaussian approximation to an intractable multidimensional distribution in order
+to obtain a likelihood function for inference---is not new. Although the
+method likely goes by different names in different fields, it is a popular
+technique particularly in the field of ecological population dynamics,
+where it is referred to as the synthetic likelihood \citep[SL;][]{Wood2010}
+or Bayesian synthetic likelihood \citep[BSL;][]{Price2018} method. In many
+ecological systems, population growth is a chaotic process; observations of the
+size of a population over time can be dominated by steep spikes and drops
+in the population that occur due to sudden, random environmental pressure.
+While population growth can be forward modeled with ease, it is very
+difficult to use forward models to constrain basic growth parameters in an
+inference setting, since that requires marginalization over the extremely
+nonlinear noice processes. As a way around this, \citet{Wood2010} introduced
+the SL method, in which, conditioned on a set of parameters of interest
+$\pmb{\theta}$, one computes the forward model $f(\pmb{\theta})$ many times
+under different realizations of the noise, and adopts the sample mean
+and sample covariance as the mean and covariance of the Gaussian likelihood
+function $p(f \, | \, \pmb{\theta})$. \citet{Wood2010} showed that,
+provided the number of forward model samples is large enough, this
+``synthetic'' likelihood allows one to infer the population growth parameters
+efficiently and without bias.
+
+The method presented in this paper may be thought of as a synthetic likelihood
+method in the limit of an infinite number of forward model samples. Unlike
+\citet{Wood2010}, whose method determines the mean and covariance of the
+distribution of $f$ conditioned on $\pmb{\theta}$ by sampling, we are able
+to actually compute the mean and covariance of $f$ \emph{in closed form}.
+Unlike traditional SL methods, which are inherently noisy, our method employs
+the \emph{exact} Gaussian approximation to the likelihood function.
+
+Our GP is also closely related to techniques commonly employed in models
+of the cosmic microwave background. In particular, it is a type of
+Gaussian random field (GRF) on the sphere \citep{Wandelt2012} \xxx{...}
+
+Finally, our method is also related to various families of approximate inference, such as
+variational inference (VI), in which a multivariate Gaussian is used to
+approximate the \emph{posterior} distribution, or to approximate Bayesian
+computation (ABC) \xxx{...}
+
 \xxx{TODO: Discuss \citet{Basri2020}, how we agree and disagree. Compare to Brett's
-    paper using ABC to measure spot sizes as a function of spectral type. Discuss
-    Simon Wood's paper in ecology on synthetic likelihoods. Talk about similarities
-    to Gaussian Random Fields in CMB studies.}
+    paper using ABC to measure spot sizes as a function of spectral type.}
 
 \subsection{Caveats}
 \label{sec:caveats}
