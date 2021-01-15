@@ -2350,6 +2350,8 @@ of the information content of such observations, is left to future work.
 \subsection{Comparison to other work}
 \label{sec:other-work}
 
+\subsubsection{GPs, GRFs, and approximate inference}
+
 The core idea behind the methodology presented in this paper---to compute the
 Gaussian approximation to an intractable multidimensional distribution in order
 to obtain a likelihood function for inference---is not new. Although the
@@ -2378,20 +2380,47 @@ method in the limit of an infinite number of forward model samples. Unlike
 \citet{Wood2010}, whose method determines the mean and covariance of the
 distribution of $f$ conditioned on $\pmb{\theta}$ by sampling, we are able
 to actually compute the mean and covariance of $f$ \emph{in closed form}.
-Unlike traditional SL methods, which are inherently noisy, our method employs
+While traditional SL methods are inherently noisy, our method employs
 the \emph{exact} Gaussian approximation to the likelihood function.
 
 Our GP is also closely related to techniques commonly employed in models
-of the cosmic microwave background. In particular, it is a type of
-Gaussian random field (GRF) on the sphere \citep{Wandelt2012} \xxx{...}
+of the cosmic microwave background (CMB). In particular, it is a type of
+Gaussian random field (GRF) on the sphere, which are frequently used to
+model perturbations in the CMB \citep{Wandelt2012}. In general, however,
+GRFs used in cosmology are isotropic: when expressed in the spherical
+harmonic basis, their covariance matrix is diagonal and admits a
+representation as a (one-dimensional) power spectrum. Our GP, in contrast,
+is anisotropic in
+the polar coordinate (i.e., the latitude) by construction.
 
-Finally, our method is also related to various families of approximate inference, such as
+Our method is also related to various families of approximate inference, such as
 variational inference (VI), in which a multivariate Gaussian is used to
-approximate the \emph{posterior} distribution, or to approximate Bayesian
-computation (ABC) \xxx{...}
+approximate the \emph{posterior} distribution \citep[e.g,][]{Blei2016},
+or to approximate Bayesian
+computation (ABC), in which an (often intractable) likelihood function is
+replaced with an approximation computed from simulations from the prior
+\citep[e.g.,][]{Beaumont2019}.
 
-\xxx{TODO: Discuss \citet{Basri2020}, how we agree and disagree. Compare to Brett's
-    paper using ABC to measure spot sizes as a function of spectral type.}
+\xxx{Finally, talk about \citet{Perger2020} on interpretable GPs}.
+
+\subsubsection{Spots and stellar variability}
+
+\xxx{%
+    \citet{Morris2020} uses the ``smoothed amplitude'', the difference between the
+    maximum and minimum flux in a de-trended light curve, as the summary statistic
+    in ABC. Try to infer spot coverage fractions. But this is \emph{not an
+        observable}. Note that his contrast $c'$ is defined in the opposite sense
+    as ours (our $c = 1 - c'$.)
+}
+
+\xxx{%
+    \begin{itemize}
+        \item Discuss \citet{Basri2020}, how we agree and disagree.
+        \item Discuss \citep{Morris2020} on ABC to measure spot sizes as a function of spectral type.
+        \item Discuss \citep{Jackson2013}.
+        \item Discuss \citep{Mazeh2015}.
+    \end{itemize}
+}
 
 \subsection{Caveats}
 \label{sec:caveats}
