@@ -92,17 +92,42 @@ ax[1].plot(t - 0.5, 1e3 * (flux2 / flux2.max() - 1), "C1--", lw=2.5)
 ax[1].set_ylabel("observed flux [ppt]", fontsize=20)
 ax[1].set_xlabel("rotations", fontsize=20)
 
+# Compute the spot coverage: the fraction of the
+# surface that is darker than one-tenth the peak
+# spot darknesss
+moll1 = star1.map.render(projection="moll").flatten()
+moll1 = moll1[np.isfinite(moll1)]
+moll1[moll1 > -0.1] = 0
+moll1[moll1 < -0.1] = 1
+fs1 = np.count_nonzero(moll1) / np.size(moll1)
+
+moll2 = star2.map.render(projection="moll").flatten()
+moll2 = moll2[np.isfinite(moll2)]
+moll2[moll2 > -0.1] = 0
+moll2[moll2 < -0.1] = 1
+fs2 = np.count_nonzero(moll2) / np.size(moll2)
+
 # Legend
 ax1a = plt.axes([0.9, 0.55, 0.2, 0.2])
+for spines in ["top", "right", "left", "bottom"]:
+    ax1a.spines[spines].set_visible(False)
+ax1a.set_xticks([])
+ax1a.set_yticks([])
+ax1a.set_title("{:.0f}% coverage".format(fs1 * 100))
 star1.map.show(ax=ax1a, norm=norm)
-ax2a = plt.axes([0.9, 0.25, 0.2, 0.2])
+ax2a = plt.axes([0.9, 0.23, 0.2, 0.2])
+for spines in ["top", "right", "left", "bottom"]:
+    ax2a.spines[spines].set_visible(False)
+ax2a.set_xticks([])
+ax2a.set_yticks([])
+ax2a.set_title("{:.0f}% coverage".format(fs2 * 100))
 star2.map.show(ax=ax2a, norm=norm)
 ax1b = plt.axes([1.1, 0.55, 0.07, 0.2])
 ax1b.set_ylim(0, 1)
 ax1b.set_xlim(0, 1)
 ax1b.plot([0, 1], [0.5, 0.5], "C0-", lw=3)
 ax1b.axis("off")
-ax2b = plt.axes([1.1, 0.25, 0.07, 0.2])
+ax2b = plt.axes([1.1, 0.23, 0.07, 0.2])
 ax2b.set_ylim(0, 1)
 ax2b.set_xlim(0, 1)
 ax2b.plot([0, 1], [0.5, 0.5], "C1--", lw=3)

@@ -642,6 +642,12 @@ class StarryProcess(object):
         """
         The GP flux mean vector.
 
+        Note that this mean is defined relative to a baseline of zero. If
+        ``normalized`` is ``True``, this method always returns zero. If
+        ``normalized`` is ``False``, this method returns the mean flux deficit.
+        In these units, a star with no spots on it has zero flux. To get
+        light curves measured relative to a unit baseline, simply add 1.
+
         Args:
             t (vector): The time array in arbitrary units.
             i (scalar, optional): The inclination of the star in degrees.

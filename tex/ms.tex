@@ -776,13 +776,14 @@ in the modeling and (2) it can substantially change the covariance structure
 of the dataset.
 
 The first point is illustrated in the toy example in
-Figure~\ref{fig:mean_normalization}. As it has been pointed out before \citep{?},
-we will not spend too much time discussing it, other than to say that the
+Figure~\ref{fig:mean_normalization}. \xxx{As it has been pointed out before \citep{?},
+    we will not spend too much time discussing it,} other than to say that the
 flux normalization introduces a degeneracy between the total spot coverage
 of a star and the contrast of any individual feature on the surface.
-While this is a formally perfect degeneracy for a single light curve, we can
-again resort to ensemble statistics across many light curves to break it;
-we discuss this further in \S\ref{sec:breaking_baseline_degeneracy}.
+\xxx{While this is a formally perfect degeneracy for a single light curve, we can
+    again resort to ensemble statistics across many light curves to break it;
+    we discuss this further in \S\ref{sec:breaking_baseline_degeneracy}.
+    NO WE CAN'T. Talk about this in more detail.}
 
 \begin{figure}[t!]
     \begin{centering}
@@ -813,6 +814,8 @@ we discuss this further in \S\ref{sec:breaking_baseline_degeneracy}.
             In the absence of baseline information, there
             exists a perfect degeneracy between the total spot coverage
             and the contrast of any individual feature on the surface.
+            As a consequence, the total spot coverage of a star cannot be
+            inferred from relative photometry.
             \label{fig:mean_normalization}
         }
     \end{centering}
@@ -2173,19 +2176,43 @@ and destructive interference of modes outside, often leading to a wave-like ring
 pattern that gets worse as the size of the features gets smaller. Taken at
 face value, this might suggest that a different basis---such as the common
 choice of pixels on a grid, or perhaps a localized wavelet basis---would be better
-at modeling small spots. While this is probably true, a different choice of
-basis would not admit the same analytic solutions to the integrals needed to
-compute the GP covariance. And it is precisely the ability to compute these
-integrals analytically (Appendix~\ref{sec:integrals}) that makes the evaluation
-of the marginal likelihood tractable; it is difficult to envision an approach
-that uses a \emph{local} basis and simultaneously enjoys the same
-analyticity under integration.
+at modeling small spots. While this is probably true, it may be quite
+difficult to find closed-form expressions for the expectation integrals
+(\S\ref{sec:integrals}) that make the GP covariance evaluation tractable.
 
-In principle, small spots can be modeled with negligible ringing by simply
+One option is to bypass the computation of the covariance on the surface of
+the star and to write down an expression for the flux directly in terms of
+the properties of a star spot. Circular spots of uniform intensity can be
+modeled as spherical caps, which are simply segments of ellipses when
+projeted onto the sky. It is possible to express in closed form the projected area
+they cover---and hence their contribution to the flux $\mathbbb{f}$---even in the case
+where part of the spot is on the hemisphere facing away from the observer.
+This was done in \citet{Luger2017}, who solved this problem in closed form
+(see \S3.3.2 and Appendix A.3 in that paper). Computing the GP is then a matter of
+integrating $\mathbbb{f}$ and $\mathbbb{f}\,\mathbbb{f}^\top$, weighted by
+the hyperparameter PDFs, as we did in \S\ref{sec:gp}.
+However, the expression for
+$\mathbbb{f}$ involves square roots and arctangents of functions of the spot
+latitude and longitude
+\citep[c.f. Equation~40 in][]{Luger2017},
+so computing these integrals in closed form is
+likely to be very difficult. Even if a closed form solution can be found,
+incorporating limb darkening (which we argued can be extremely important)
+poses an even greater challenge. It is likely that several simplifications
+must be made in order to make this approach tractable. This was done to some
+extent in \citet{Morris2020}, who derived a closed form expression for the flux by
+ignoring certain projection effects, such
+as the self-occultation of large spots by the limb of the star, and neglected
+variations in limb darkening within spots. Such a model could admit a closed-form
+solution to the GP covariance and may be better at capturing the effects
+of small spots, at the expense of the ability to model larger spots.
+
+In principle, small spots can be modeled under our current
+approach with negligible ringing by simply
 increasing the degree of the spherical harmonic expansion. As we discuss in
 \S\ref{sec:implementation}, however, the algorithm presented here becomes
 unstable for $l \gtrsim 15$, so doing so would require a reparametrization
-of the equations in the Appendix. However, as we showed in
+of the equations in the Appendix. Importantly, however, as we showed in
 \S\ref{sec:calibration}, the current implementation of the GP is suitable
 to modeling light curves of stars with spots smaller than the limiting
 resolution of $\sim 10^\circ$. Consider Figure~\ref{fig:calibration_tinyspots},
@@ -2284,33 +2311,36 @@ photometry to break these degeneracies in the following section.
 \subsection{The baseline degeneracy}
 \label{sec:breaking_baseline_degeneracy}
 
-We showed in \S\ref{sec:calibration-inference} that there exists a
+We showed in \S\ref{sec:calibration-inference} that in relative photometry there exists a
 strong degeneracy between the contrast of individual spots $c$ and
-the total number of spots $n$ on a star. For relative photometry, in
-which the true baseline level (\S\ref{sec:baseline}) is not known,
-this degeneracy is perfect: relative photometry cannot tell us anything
-about the total spottiness of a stellar surface. Inspection of the
+the total number of spots $n$ on a star. Inspection of the
 dependence of the GP on $c$ and $n$ (c.f. Appendix~\ref{sec:integrals}) reveals
 that the mean and variance of the GP scale as
 %
 \begin{align}
-    \mu      & \propto c \, n
-    \nonumber                   \\
-    \sigma^2 & \propto c^2 \, n
+    \mu      & = 1 - c \, n \, g (I, \mathbf{u}, r, \mu_\phi, \sigma_\phi)
+    \nonumber                                                              \\
+    \sigma^2 & = c^2 \, n \, h (I, \mathbf{u}, r, \mu_\phi, \sigma_\phi)
     \quad,
 \end{align}
 %
-respectively. If our observations were sensitive to both the true mean and
+for some function $g$ and some function $h$ of the inclination,
+the limb darkening coefficients, the spot radius, and the spot latitude
+parameters.
+If our observations were sensitive to both the true mean and
 variance of stellar light curves,
 we could uniquely infer $c$ and $n$. However, as we discussed in \S\ref{sec:baseline},
-to very good approximation, relative photometry can only tell us about the ratio
+to good approximation, relative photometry can only tell us about the \emph{ratio}
 %
 \begin{align}
-    \frac{\sigma^2}{\mu^2} \propto \frac{c}{n}
+    \frac{\sigma^2}{\mu^2}
+     & \propto \frac{c^2 n}{(1 - c n g)^2}
     \quad,
 \end{align}
 %
-i.e., the ratio of the spot contrast to the total number of spots.
+where $g$ is a complicated function of the (unknown) stellar and spot parameters;
+relative photometry cannot tell us about the values of $c$ and $n$ independently.
+
 The reason for this is that the relationship between the amplitude of the
 light curve (measured in, e.g., counts per second on the detector)
 and the fractional intensity deficit due to spots on the surface of
@@ -2335,7 +2365,33 @@ as total spot ``coverage''). In general, these quantities cannot be learned
 from single-band photometric measurements.
 %
 
-Fortunately, it may be possible to break this degeneracy (at least to some extent)
+A direct consequence of the baseline degeneracy is that it is not in general
+possible to constrain the total spot coverage of a star from relative,
+single-band photometry. Assuming no spot overlap, the total spot coverage $f_S$ is simply the (average) area of a spot
+times the total number of spots divided by the total area of the sphere, which
+may be expressed as
+%
+\begin{proof}{test_fS}
+    f_S = \frac{1}{2}(1 - \cos r)n
+    \quad,
+\end{proof}
+%
+recalling that $r$ is the \emph{angular} radius of the spot.
+While $r$ may be constrained from the covariance structure of the data
+(\S\ref{sec:calibration-inference}), $n$ cannot.
+
+The arguments above are based on the \emph{Gaussian approximation} to the
+distribution of stellar light curves. As we discussed in \S\ref{sec:why-calibrate},
+the true distribution has higher order moments that we do not consider here.
+It is possible in principle that these moments could encode information to
+break the $c-N$ degeneracy, but these are in general much more difficult
+to constrain from the data. And even if this were the case, the fact remains
+that degeneracies like the polar spot effect are fundamental: recall
+Figure~\ref{fig:mean_normalization}, in which the two stars
+have identical relative light curves, but very different spot coverage
+fractions.
+
+Fortunately, it may be possible to break these degeneracies (at least to some extent)
 by collecting photometric data in multiple wavelength bands, an idea that has
 been explored recently \citep[e.g.,][]{Gully2017,Guo2018}. Assuming the
 locations and sizes of a star's spots are constant in wavelength, the amplitude
@@ -2406,19 +2462,27 @@ replaced with an approximation computed from simulations from the prior
 \subsubsection{Spots and stellar variability}
 
 \xxx{%
-    \citet{Morris2020} uses the ``smoothed amplitude'', the difference between the
-    maximum and minimum flux in a de-trended light curve, as the summary statistic
-    in ABC. Try to infer spot coverage fractions. But this is \emph{not an
-        observable}. Note that his contrast $c'$ is defined in the opposite sense
-    as ours (our $c = 1 - c'$.)
-}
-
-\xxx{%
     \begin{itemize}
-        \item Discuss \citet{Basri2020}, how we agree and disagree.
-        \item Discuss \citep{Morris2020} on ABC to measure spot sizes as a function of spectral type.
-        \item Discuss \citep{Jackson2013}.
-        \item Discuss \citep{Mazeh2015}.
+        \item Discuss \citet{Morris2020} on ABC to measure spot sizes as a
+              function of spectral type.
+              Brett uses the ``smoothed amplitude'', the difference between the
+              maximum and minimum flux in a de-trended light curve, as the summary statistic
+              in ABC to try to infer spot coverage fractions. But this is \emph{not an
+                  observable} as we discussed above. Poking around in his code reveals he
+              assumes $n=3$ spots for all stars, so his results are extremely
+              prior-dominated. He also fixes limb darkening and assumed a uniform
+              (not isotropic) prior on the inclinations. But there's probably an
+              easy way to turn his ABC code into a GP, since his expression for the flux
+              is closed-form and (probably) easily integrable.
+              Also note that his contrast $c'$ is defined in the opposite sense
+              as ours (our $c = 1 - c'$.)
+        \item Discuss \citet{Basri2020}, how we agree and disagree.  Gibor has some very
+              good points about the null space, but he is overly pessimistic about what
+              can and can't be learned from light curves. He does not consider the
+              power of ensemble analysis, and claims there's just no way to disentangle
+              spot evolution from differential rotation.
+        \item Discuss \citet{Jackson2013}.
+        \item Discuss \citet{Mazeh2015}.
     \end{itemize}
 }
 
@@ -2471,7 +2535,7 @@ in mind when using our algorithm and/or its \Python implementation.
           at $60^\circ$ and polar spots with high latitude variance.
           It may thus be advisable to adopt a prior that favors small values
           of $\sigma_\phi$, such as the common inverse gamma prior for the
-          variance.
+          variance. \xxx{Or an isotropic prior on $\mu_\phi$.}
     \item \emph{Limb darkening matters!} The null space is extremely sensitive
           to limb darkening (\S\ref{sec:limbdark}). It is therefore
           extremely important to model it correctly; otherwise, there may
@@ -3084,7 +3148,8 @@ results presented in this paper:
           constrain the average spot radii to within a couple degrees and the
           average spot latitudes to within $5^\circ$.
     \item \textbf{Relative single-band photometry cannot uniquely constrain
-              the spot contrast or the total number of spots}. These two quantities
+              the spot contrast, the total number of spots, or the total spot
+              coverage}. These two quantities
           are perfectly degnerate with each other in relative single-band photometry.
           Knowledge of the
           unspotted photospheric brightness (or temperature) can break this
@@ -3542,6 +3607,7 @@ and
 \begin{align}
     \label{eq:RRs}
     \mathbbb{y}(\mathbbb{x}) =
+    -
     \sum_{i=0}^{\mathbb{n}-1}
     \mathbb{c}_i
     \,
@@ -3687,6 +3753,7 @@ where we define the first moment integrals
     \label{eq:e4}
     \mathbf{e}_c
      & \equiv
+    -
     \int
     \mathbb{c} \,
     \mathbf{e}_\lambda \,
@@ -5267,6 +5334,7 @@ integrals in Equations (\ref{eq:e4}) and (\ref{eq:E4}) to write
 \begin{align}
     \mathbf{e}_c
      & \equiv
+    -
     \mathbf{e}_\lambda \,
     \int
     \mathbb{c} \,
@@ -5312,7 +5380,7 @@ The moment integrals are then trivial to evaluate:
 %
 \begin{align}
     \label{eq:ec}
-    \mathbf{e}_c & = c \, \mathbf{e}_\lambda
+    \mathbf{e}_c & = - c \, \mathbf{e}_\lambda
     \\
     \label{eq:bigEc}
     \mathbf{E}_c & = c^2 \mathbf{E}_\lambda
