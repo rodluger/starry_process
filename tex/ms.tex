@@ -2387,7 +2387,8 @@ times the total number of spots divided by the total area of the sphere, which
 may be expressed as
 %
 \begin{proof}{test_fS}
-    f_S = \frac{1}{2}(1 - \cos r)n
+    \label{eq:fS}
+    f_S = \frac{1}{2}\left(1 - \left<\cos r\right>\right)n
     \quad,
 \end{proof}
 %
@@ -2472,34 +2473,106 @@ computation (ABC), in which an (often intractable) likelihood function is
 replaced with an approximation computed from simulations from the prior
 \citep[e.g.,][]{Beaumont2019}.
 
-\xxx{Finally, talk about \citet{Perger2020} on interpretable GPs}.
+Finally, the methodology developed here is closely related to that in
+\citet{Perger2020}, who studied the effect of different star spot
+configurations on the autocorrelation and covariance of stellar
+radial velocity (RV) measurements. The authors of that study compared the
+performance of various commonly used quasi-periodic kernels when applied
+to synthetic RV datasets, arguing that a new four-parameter quasi-periodic
+cosine kernel (QPC) can better capture the variability due to star spots.
+However, their study was empirical and related spot configurations to their
+effect on the covariance structure of the data primarily in a qualitative
+fashion. Their QPC kernel is a function of two interpretable hyperparameters
+(the rotation period and a spot timescale) as well as two amplitudes, which
+are not explicitly related to physical spot properties. Our GP, in contrast,
+is built from the ground up such that all of its hyperparameters directly
+correspond to physical spot properties, allowing one to use it in star spot
+inference (not just marginalization) problems. While the methodology presented
+here applies to photometry, it is possible to extend it to model RV
+datasets as well; we discuss this in \S\ref{sec:extensions}.
 
 \subsubsection{Spots and stellar variability}
 
-\xxx{%
-    \begin{itemize}
-        \item Discuss \citet{Morris2020} on ABC to measure spot sizes as a
-              function of spectral type.
-              Brett uses the ``smoothed amplitude'', the difference between the
-              maximum and minimum flux in a de-trended light curve, as the summary statistic
-              in ABC to try to infer spot coverage fractions. But this is \emph{not an
-                  observable} as we discussed above. Poking around in his code reveals he
-              assumes $n=3$ spots for all stars, so his results are extremely
-              prior-dominated. He also fixes limb darkening and assumed a uniform
-              (not isotropic) prior on the inclinations. But there's probably an
-              easy way to turn his ABC code into a GP, since his expression for the flux
-              is closed-form and (probably) easily integrable.
-              Also note that his contrast $c'$ is defined in the opposite sense
-              as ours (our $c = 1 - c'$.)
-        \item Discuss \citet{Basri2020}, how we agree and disagree.  Gibor has some very
-              good points about the null space, but he is overly pessimistic about what
-              can and can't be learned from light curves. He does not consider the
-              power of ensemble analysis, and claims there's just no way to disentangle
-              spot evolution from differential rotation.
-        \item Discuss \citet{Jackson2013}.
-        \item Discuss \citet{Mazeh2015}.
-    \end{itemize}
-}
+Recently, \citet{Morris2020} used \emph{Kepler}, \emph{K2}, and \emph{TESS}
+light curves to derive a relationship between stellar age and spot
+coverage. Because of the intractability of the marginal likelihood function,
+that study used an approximate Bayesian computation (ABC) method to
+infer spot properties from a large ensemble of stars. \citet{Morris2020}
+developed a fast, approximate forward model for light curves of spotted stars
+\citep[\textsf{fleck};][]{Morris2020b}, which they used to generate a large
+number of prior samples for different values of the spot radii, contrasts,
+and latitude distributions. For each collection of samples generated from a
+given set of hyperparameters, \citet{Morris2020} computed the distribution of
+the ``smoothed amplitude'',
+the peak-to-trough difference of the (normalized, de-trended) light curve.
+This distribution was then compared to the distribution of observed
+smoothed amplitude values among stellar clusters of different ages
+within an ABC algorithm, yielding approximate
+posterior distributions for the hyperparameters as a function of
+stellar age. \citet{Morris2020} found that the spot coverage $f_S$ as a
+function of age is well modeled by a simple power law, decreasing from
+${\sim}10\%$ for the youngest (${\sim}10$ Myr) stars
+to less than $1\%$ for the oldest (${\sim}5$ Gyr) stars.
+%
+While these results broadly agree with the expectation that stellar
+magnetic activity decreases over time, our work strongly suggests
+that these results are predominantly prior-dominated. As we discussed
+at length
+in \S\ref{sec:breaking_baseline_degeneracy} (and found in our inference
+runs in \S\ref{sec:calibration-inference}, as well as in the toy
+model presented in Figure~\ref{fig:mean_normalization}), the fractional
+spot coverage $f_S$ is not an observable in single-band photometry.
+%
+This is because the expression for $f_S$ (Equation~\ref{eq:fS}) depends on
+two quantities: the average spot radius $r$, which we showed can be
+constrained, and the total number of spots $n$, which
+we showed \emph{cannot} be constrained from single-band light curves.
+%
+In fact, \citet{Morris2020} assumed $n=3$ for simplicity when doing
+posterior inference. We therefore urge care in interpreting those results,
+as it is very likely this assumption does not hold across the large
+range of spectral types and stellar ages considered in that study.
+
+Nevertheless, the core idea in \citet{Morris2020}
+\citep[and in related studies such as][]{Jackson2013}
+is very similar
+to that advocated here: the use of ensemble analyses to constrain population-level
+parameters when invidual datasets are not sufficiently constraining.
+Our work builds on that of \citet{Morris2020} by deriving a closed form
+solution to the likelihood function (as opposed to a sample-based
+likelihood-free inference algorithm) and by harnessing the covariance
+structure of the data when doing inference (as opposed to relying solely
+on the amplitude of the data).
+
+Another recent paper relevant to our work is that of \citet{Basri2020}, who
+investigated the information content of stellar light curves, exploring what
+can and cannot be learned about star spot configurations from individual
+light curves. That paper strongly urges against the common practice
+of interpreting
+light curves with one or two dips as originating from one or two spots,
+respectively, a point we strongly agree with (c.f. Figure~\ref{fig:degeneracies}).
+It also reinforces our point about the additional degeneracies introduced
+by the unknown baseline inherent to single-band photometry.
+%
+Finally, \citet{Basri2020} present a large suite of forward models of light curves of
+spotted stars, which they use to discuss the (complicated) dependence of
+various light curve metrics on
+the physical spot parameters used to generate the data. They conclude that it
+is not possible to uniquely relate these metrics to the underlying star spot
+configuration. While we agree this is the case for individual stars, our work
+stresses that it is possible to break many of these degeneracies with
+ensemble analyses.
+%
+\citet{Basri2020} also conclude it is not in general possible to
+uniquely disentangle differential rotation from spot evolution when their
+timescales are comparable; nor is it possible to confidently measure a rotation
+period when the evolution timescale is very short. However, their study
+relies on the effect these processes have on simple light curve metrics,
+which are almost certainly not sufficient statistics of the data. Inference
+that takes into account the full covariance structure of the data, while
+considering large ensembles of light curves, could in principle break
+this degeneracy. While we do not explicitly model differential rotation in
+this paper, it will be the subject of a future paper in this series.
 
 \subsection{Caveats}
 \label{sec:caveats}
@@ -2546,11 +2619,13 @@ in mind when using our algorithm and/or its \Python implementation.
           play. In particular, spots centered on the poles are always in
           the null space, so it can be difficult in practice to rule out
           their presence. This can be seen in Figure~\ref{fig:calibration_hilat},
-          in which the model cannot distinguish between localized spots
+          in which the model cannot distinguish between spots localized
           at $60^\circ$ and polar spots with high latitude variance.
           It may thus be advisable to adopt a prior that favors small values
           of $\sigma_\phi$, such as the common inverse gamma prior for the
-          variance. \xxx{Or an isotropic prior on $\mu_\phi$.}
+          variance. Alternatively, one could place an isotropic prior on
+          the latitude (with density proportional to $\cos\mu_\phi$)
+          to downweight very high latitude spots.
     \item \emph{Limb darkening matters!} The null space is extremely sensitive
           to limb darkening (\S\ref{sec:limbdark}). It is therefore
           extremely important to model it correctly; otherwise, there may

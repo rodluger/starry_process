@@ -90,14 +90,14 @@ norm = Normalize(vmin=-0.08, vmax=0.03)
 radius0 = 20
 lon0 = 0
 lat0 = 30
-contrast0 = 0.075
+contrast0 = 0.1
 
 # Properties of the other spots, which
 # are _entirely_ in the null space
-lon = [80, 180, -150, -30, -80]
+lon = [80, 180, -120, -30, -80]
 lat = [-10, 45, 0, -20, 10]
 radius = [20, 15, 20, 15, 20]
-contrast = [0.08, 0.1, 0.1, 0.1, 0.08]
+contrast = [0.15, 0.1, 0.15, 0.15, 0.15]
 
 # Set up
 N = len(lon)
@@ -119,7 +119,22 @@ ax_lc = plt.subplot2grid(
 star = Star()
 star.add_spot(lon=lon0, lat=lat0, radius=radius0, contrast=contrast0)
 y0 = star.get_y()
+
+# Add some inhomogeneities for fun
+np.random.seed(1)
+alpha = 0.0075
+lam = 0.25
+l0 = 5
+ybkg = np.concatenate(
+    [
+        alpha * np.exp(-lam * (l - l0) ** 2) * np.random.randn(2 * l + 1)
+        for l in range(31)
+    ]
+)
+ybkg[0] = 0
+y0 += ybkg
 star.map[:, :] = y0
+
 for k in range(phases):
     star.map.show(ax=ax[0, k], theta=theta[k], norm=norm)
 flux = star.map.flux(theta=np.linspace(-180, 180, 1000))
