@@ -12,7 +12,7 @@ copy = lambda name, src, dest: shutil.copyfile(
 )
 
 # Run
-calibrate.run(path=abspath("data/default"))
+calibrate.run(path=abspath("data/default"), ncols=7, clip=True)
 
 # Copy output to this directory
 copy("default", "data.pdf", "calibration_default_data.pdf")

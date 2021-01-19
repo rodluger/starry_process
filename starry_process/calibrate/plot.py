@@ -95,7 +95,7 @@ def lat2y(lat):
     return np.sin(theta)
 
 
-def plot_data(data, **kwargs):
+def plot_data(data, ncols=10, clip=False, **kwargs):
     """
     Plot a synthetic dataset.
 
@@ -115,17 +115,19 @@ def plot_data(data, **kwargs):
 
     # Plot the synthetic dataset
     nlc = len(flux)
-    if nlc > 10:
-        nrows = int(np.ceil(nlc / 10))
+    if clip:
+        nlc = divmod(nlc, ncols)[0] * ncols
+    if nlc > ncols:
+        nrows = int(np.ceil(nlc / ncols))
     else:
         nrows = 1
-    wr = np.ones(min(nlc, 10))
+    wr = np.ones(min(nlc, ncols))
     wr[-1] = 1.17
     gridspec = {"width_ratios": wr}
     fig, ax = plt.subplots(
         2 * nrows,
-        min(nlc, 10),
-        figsize=(min(nlc, 10) + 2, 2 * nrows),
+        min(nlc, ncols),
+        figsize=(min(nlc, ncols) + 2, 2 * nrows),
         gridspec_kw=gridspec,
     )
     fig.subplots_adjust(hspace=0.4)
@@ -225,7 +227,7 @@ def plot_latitude_pdf(results, **kwargs):
     _b = tt.dscalar()
 
     # The true pdf
-    draw_pdf = theano.function([_x, _a, _b], _draw_pdf(_x, _a, _b),)
+    draw_pdf = theano.function([_x, _a, _b], _draw_pdf(_x, _a, _b))
     x = np.linspace(-89.9, 89.9, nlat_pts)
     if np.isfinite(sigma_true):
         pdf_true = 0.5 * (

@@ -18,6 +18,8 @@ def run(
     plot_corner=False,
     plot_corner_transformed=True,
     plot_inclination_pdf=True,
+    ncols=10,
+    clip=False,
     **kwargs,
 ):
     if not os.path.exists(path):
@@ -47,7 +49,7 @@ def run(
     # Plot the data
     if plot_all or plot_data:
         if clobber or not os.path.exists(os.path.join(path, "data.pdf")):
-            fig = plot.plot_data(data, **kwargs)
+            fig = plot.plot_data(data, ncols=ncols, clip=clip, **kwargs)
             fig.savefig(
                 os.path.join(path, "data.pdf"), bbox_inches="tight", dpi=300
             )
@@ -125,5 +127,5 @@ def run(
         ):
             fig = plot.plot_inclination_pdf(data, inc_results, **kwargs)
             fig.savefig(
-                os.path.join(path, "inclination.pdf"), bbox_inches="tight",
+                os.path.join(path, "inclination.pdf"), bbox_inches="tight"
             )
