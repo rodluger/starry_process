@@ -791,14 +791,30 @@ in the modeling and (2) it can substantially change the covariance structure
 of the dataset.
 
 The first point is illustrated in the toy example in
-Figure~\ref{fig:mean_normalization}. \xxx{As it has been pointed out before \citep{?},
-    we will not spend too much time discussing it,} other than to say that the
+Figure~\ref{fig:mean_normalization}. As it has been pointed out before
+\citep[e.g.,][]{Basri2018},
+we will not spend too much time discussing it, other than to say that the
 flux normalization introduces a degeneracy between the total spot coverage
 of a star and the contrast of any individual feature on the surface.
-\xxx{While this is a formally perfect degeneracy for a single light curve, we can
-    again resort to ensemble statistics across many light curves to break it;
-    we discuss this further in \S\ref{sec:breaking_baseline_degeneracy}.
-    NO WE CAN'T. Talk about this in more detail.}
+The two stars in the figure have different numbers of spots, different
+spot contrasts, and different total spot coverage. In ``absolute'' units, in which
+the flux is measured as a fraction of the flux of an unspotted star, the two
+light curves are distinct (top panel). However, we can only measure these light
+curves up to an unknown multiplicative factor. Normalizing these light curves
+to the ``continuum'' level yields the curves in the bottom panel, which are
+\emph{perfectly} indistinguishable from each other. Normalization to the mean,
+median, or any other statistic of the light curve does not help break this
+degeneracy, which is inherent to relative photometry. While one could instead \emph{fit}
+for the normalization as a latent variable, there is no information in the data
+that can help break it, so the result will be entirely determined by the prior.%
+\footnote{%
+In principle, the maximum level of a light curve could set a lower limit on
+the location of the baseline. However, this applies only if the surface is
+known to be made up of \emph{exclusively} dark spots. The presence of bright
+spots (faculae), which are common on the Sun, make it effectively impossible
+for one to infer the baseline from single-band relative photometry alone.
+}
+We discuss these issues further in \S\ref{sec:breaking_baseline_degeneracy}.
 
 \begin{figure}[t!]
     \begin{centering}
