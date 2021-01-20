@@ -69,31 +69,6 @@ jobs:
   - script: |
       . $CONDA/etc/profile.d/conda.sh
       conda activate starry_process
-      cd $(Build.SourcesDirectory)/tex
-      make
-    displayName: 'Build the paper'
-    env:
-      ON_AZURE: 1
-    condition: always()
-
-  - script: |
-      cd $(Build.SourcesDirectory)
-      git checkout --orphan $(Build.SourceBranchName)-pdf
-      git rm -rf --cached .
-      git add -f tex/ms.pdf
-      git add -f tex/figures/*.pdf
-      git add -f tex/figures/*.png
-      git -c user.name='azure' -c user.email='azure' commit -m "building the paper"
-      git push -q -f https://$GITHUB_USER:$GITHUB_API_KEY@github.com/rodluger/starry_process $(Build.SourceBranchName)-pdf >/dev/null 2>&1
-    displayName: 'Upload the paper'
-    env:
-      GITHUB_API_KEY: $(GITHUB_API_KEY)
-      GITHUB_USER: $(GITHUB_USER)
-    condition: always()
-
-  - script: |
-      . $CONDA/etc/profile.d/conda.sh
-      conda activate starry_process
       py.test -v -s tests --junitxml=junit/test-results.xml
     displayName: 'Run the tests'
     env:
