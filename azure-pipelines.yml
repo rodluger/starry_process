@@ -1,4 +1,4 @@
-name: WriteThePaper
+name: BuildThePackage
 
 trigger:
   branches:
