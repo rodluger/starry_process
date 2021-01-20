@@ -3281,7 +3281,7 @@ The code was designed to maximize the speed and numerical stability of the
 computation. Although most of the computations of the expectation integrals
 (see Appendix~\ref{sec:integrals}) involve many layers of nested sums over
 all spherical harmonic coefficients, these may be expressed as high-dimensional
-tensor products, which can be evaluated extremely efficiently on modern
+tensor products, which can be evaluated efficiently on modern
 hardware. Many of the expressions can also be either pre-computed or
 computed recursively. To maximize the speed of the algorithm, the code is
 implemented in hybrid \cpp/\Python using the just-in-time compilation
@@ -3300,7 +3300,7 @@ for NUTS/HMC or ADVI sampling.
             as a function of the number of points $K$ in each light curve
             when conditioning on a value of the inclination (blue) and when
             marginalizing over the inclination (orange). At $l_\mathrm{max} = 15$,
-            computation of the covariance matrix of the GP takes about 10ms
+            computation of the covariance matrix of the GP takes about 20ms
             on a 2018 MacBook Pro. The dashed line shows the asymptotic scaling
             of the algorithm, which is due to the Cholesky factorization and
             solve operations.
@@ -3419,8 +3419,8 @@ contrasts within a star and/or across many stars in an ensemble.
 
 Because our expression for the GP covariance has an exact, closed-form
 solution as a function of the spot parameters, it can be computed
-extremely efficiently: a typical likelihood evaluation on a dataset
-consisting of $K \sim 1{,}000$ points takes about 10ms on a modern
+efficiently: a typical likelihood evaluation on a dataset
+consisting of $K \sim 1{,}000$ points takes about 20ms on a modern
 laptop. Our algorithm is implemented in the open-source, user-friendly
 \Python package \starryprocess, which is \textsf{pip}-installable and available on
 \href{https://github.com/rodluger/starry_process}{GitHub}.
@@ -3435,7 +3435,7 @@ variational inference (ADVI), and gradient-based nested sampling.
 We devoted a large portion of this paper to testing the algorithm on a variety
 of synthetic datasets, showing that it is a well-calibrated and in most
 cases unbiased estimator for star spot properties. Below we list the main
-results presented in this paper:
+results concerning our GP:
 
 \begin{enumerate}
     \item \textbf{Our GP works best for ensemble analyses.} The light curve mapping
@@ -3450,16 +3450,6 @@ results presented in this paper:
           of analysis works best if the stars in the ensemble are statistically
           similar: i.e., the properties of their spots are all drawn from the
           same parent distribution, whose parameters we can constrain.
-    \item \textbf{In general, an ensemble of at least $M \sim 50$ light curves
-              is needed to place meaningful constraints on the spot properties}.
-          This estimate is based on ensemble analyses of light curves with
-          $K = 1{,}000$ cadence each and per-cadence precision of one part
-          per thousand. Lower quality, shorter baseline observations, or
-          datasets contaminated by outliers will in general require larger values
-          of $M$ for the same constraining power. The presence of strong limb
-          darkening also degrades the information content of light curves, in
-          which case an ensemble of hundreds or even a thousand light curves
-          is recommended.
     \item \textbf{Our GP is an unbiased estimator for the spot radius and
               latitude distributions.} We showed that our GP can accurately infer the
           angular size of spots and the mode and standard deviation of their
@@ -3467,14 +3457,6 @@ results presented in this paper:
           ensemble of $M = 50$ light curves described above, we are able to
           constrain the average spot radii to within a couple degrees and the
           average spot latitudes to within $5^\circ$.
-    \item \textbf{Relative single-band photometry cannot uniquely constrain
-              the spot contrast, the total number of spots, or the total spot
-              coverage}. These two quantities
-          are perfectly degnerate with each other in relative single-band photometry.
-          Knowledge of the
-          unspotted photospheric brightness (or temperature) can break this
-          degeneracy, so analyses of multi-band light curves can in principle
-          infer the total spottiness of a stellar surface.
     \item \textbf{Our GP can accurately infer stellar inclinations.} We presented
           two versions of our GP: one conditioned on a specific value of the stellar
           inclination, and one marginalized over inclination under an isotropic
@@ -3501,7 +3483,7 @@ results presented in this paper:
           The hyperparameters of the temporal covariance are then strictly
           tied to the timescale on which the surface evolves. More
           complex temporal variability, such as that induced by differential
-          rotation, will be the subject of the next paper in this series.
+          rotation, will be the subject of a future paper in this series.
     \item \textbf{Our GP can be used in exoplanet transit modeling and
               radial velocity datasets.} At its core, the \starryprocess GP
           defines a distribution over spherical harmonic representations
@@ -3513,6 +3495,44 @@ results presented in this paper:
           prior on the stellar surface in Doppler imaging, Doppler tomography,
           or even radial velocity searches for exoplanets. The latter will
           be the subject of a future paper in this series.
+\end{enumerate}
+
+In this paper we also demonstrated and discussed four points that apply more
+broadly to stellar light curve variability modeling in general:
+
+\begin{enumerate}
+    \item \textbf{Typically, an ensemble of at least $M \sim 50$ light curves
+              is needed to place meaningful constraints on starspot properties}.
+          This estimate is based on ensemble analyses of light curves with
+          $K = 1{,}000$ cadence each and per-cadence precision of one part
+          per thousand. Lower quality, shorter baseline observations, or
+          datasets contaminated by outliers will in general require larger values
+          of $M$ for the same constraining power. The presence of strong limb
+          darkening also degrades the information content of light curves, in
+          which case an ensemble of hundreds or even a thousand light curves
+          is recommended.
+    \item \textbf{Limb darkening breaks degeneracies}. The presence of limb darkening
+          changes the structure of the null space. Even small variations in the
+          limb darkening coefficients among stars in an ensemble can effectively
+          increase the information content of their light curves when analyzed
+          jointly. However, this is both a blessing and a curse: it is very
+          important to accurately model limb darkening to infer starspot
+          properties without bias.
+    \item \textbf{Relative single-band photometry cannot uniquely constrain
+              the spot contrast, the total number of spots, or the total spot
+              coverage}. We showed that these two quantities
+          are perfectly degenerate with each other in relative single-band photometry.
+          Knowledge of the
+          unspotted photospheric brightness (or temperature) can break this
+          degeneracy, so analyses of multi-band light curves can in principle
+          infer the total spottiness of a stellar surface.
+    \item \textbf{Care should be taken when analyzing normalized light curves}.
+        We showed that the widely-adopted practice of normalizing light curves
+        to their mean, median, or maximum changes the covariance structure of
+        the data in potentially complex ways. In addition to changing the total
+        variance of the data, this normalization step introduces non-stationarity
+        in the covariance, which can lead to biases particularly when
+        modeling light curves of stars with very long rotation periods.
 \end{enumerate}
 
 The GP presented here has far-ranging applications for stellar light
