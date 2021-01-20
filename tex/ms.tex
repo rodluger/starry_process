@@ -23,18 +23,25 @@
 % Title
 \title{%
     \textbf{
-        Interpretable Gaussian Processes for Stellar Variability
+        Interpretable Gaussian Processes for Starspots
     }
 }
 
 % Author list
 \author[0000-0002-0296-3826]{Rodrigo Luger}\altaffiliation{Flatiron Fellow}
 \email{rluger@flatironinstitute.org}
-\affil{Center~for~Computational~Astrophysics, Flatiron~Institute, New~York, NY}
+\affil{Center~for~Computational~Astrophysics,~Flatiron~Institute,~New~York,~NY}
 \affil{Virtual~Planetary~Laboratory, University~of~Washington, Seattle, WA}
 %
+\author[0000-0002-9328-5652]{Daniel Foreman-Mackey}
+\affil{Center~for~Computational~Astrophysics,~Flatiron~Institute,~New~York,~NY}
+%
+\author[0000-0002-3385-8391]{Christina Hedges}
+\affil{Bay~Area~Environmental~Research~Institute,~P.O.~Box~25,~Moffett~Field,~CA~94035,~USA}
+\affil{NASA~Ames~Research~Center,~Moffett~Field,~CA}
+%
 
-\keywords{methods: analytic}
+\keywords{analytical mathematics --- time series analysis --- Gaussian processes regression --- starspots}
 
 \features{open-source figures \codeicon; equation unit tests: \input{tests/tally}}
 
@@ -43,14 +50,14 @@
     become almost ubiquitous, given their ease of use and flexibility.
     GPs excel in particular at marginalization
     of the stellar signal in cases where the
-    variability due to star spots rotating in and out of view is treated
+    variability due to starspots rotating in and out of view is treated
     as a nuisance, such as in exoplanet transit modeling.
     However, in cases where the star spot signal is of primary interest,
     GPs have thus far been less useful: it is often difficult to
     relate their hyperparameters to the physical properties of interest, such
     as the size, contrast, and latitudinal distribution of the spots.
     Instead, it is common practice to explicitly model the effect
-    of individual star spots on the light curve and attempt to infer their
+    of individual starspots on the light curve and attempt to infer their
     properties via optimization or posterior inference. Unfortunately,
     this process is
     degenerate, ill-posed, and often computationally intractable when
@@ -67,7 +74,7 @@
     allowing one to correctly infer physical parameters of interest from one
     or more stellar light curves, including
     the typical radii and the mean and variance of the latitude
-    distribution of star spots.
+    distribution of starspots.
     %
     Our GP has far-ranging implications for understanding the variability and
     magnetic activity of stars from both light curves and radial velocity (RV)
@@ -82,13 +89,73 @@
 \section{Introduction}
 \label{sec:intro}
 
+\subsection{Stellar surface modeling}
+\label{sec:intro:spots}
+
+The advent of space-based precision photometry with missions such as
+\emph{Kepler} \citep{Borucki2010} and \emph{TESS} \citep{Ricker2015}
+has led to a renewed interest in the modeling of stellar light curves,
+and, in particular, in understanding what these light curves can tell
+us about the surfaces of stars across the HR diagram. One of the dominant
+sources of stellar light curve variability is the modulation caused
+by starspots rotating in and out of view.
+Dark spots arise due to the suppression of convection in regions of
+intense magnetic field, resulting in a locally cooler (and hence darker)
+photosphere. Bright spots can similarly
+arise in the photosphere as faculae or in the chromosphere as plages, and
+are also magnetically driven \citep[e.g.,][]{Berdyugina2005}.
+%
+Constraining the sizes,
+contrasts, locations, and number of spots on stars can therefore reveal
+information about stellar magnetic activity, stellar interior structure,
+and how these quantities vary across spectral type and over time.
+A detailed understanding of the stellar surface is also crucial to
+mitigating systematics in the radial velocity search for exoplanets
+\citep[e.g.,][]{Lanza2011} and in the spectroscopic characterization of their
+atmospheres \citep[e.g.,][]{Rackham2018}.
+
+To date, most studies aimed at inferring stellar surface
+properties from light curves follow one of two broad approaches. The
+first is to model the stellar surface as a collection of one or more
+discrete, circular, uniform contrast dark or bright spots on a uniform
+intensity photosphere.
+The advantage of this approach is that
+the light curve can be computed efficiently and in some cases even
+analytically \citep[e.g.,][]{Davenport2015,Morris2017,Morris2020b}.
+%
+The second approach is to discretize the surface at some resolution
+and compute the emergent flux as a weighted sum of the visible pixel intensities.
+This approach is more flexible, since it is not limited to surfaces
+composed of distinct circular spots \citep[e.g.,][]{Harmon2000,Roettenbacher2017}.
+%
+Both approaches rely on an explicit \emph{forward model}, a prescription for
+how to generate data given a set of parameters. In most cases, however, we are interested
+in the inverse problem: constraining the parameters given data.
+%
+Unfortunately, the inverse problem is not only difficult---as it requires
+a large number of forward model evaluations to find the parameter values
+that are most consistent with the
+data---but also formally \emph{ill-posed}.
+%
+While the mapping from a stellar surface to a light curve (the forward
+problem) is unique, the mapping from a light curve to a surface
+(the inverse problem) is not:
+given any light curve, there exist an infinite number of surfaces that
+could have generated it. These degeneracies are illustrated in
+Figure~\ref{fig:degeneracies}, where six synthetic stellar surfaces
+are shown (rows) at twelve different phases (columns), all at an
+inclination $I=60^\circ$. Each surface
+consists of a different number of dark spots on a brighter, heterogeneous
+background.
+
 \begin{figure}[t!]
     \begin{centering}
         \includegraphics[width=\linewidth]{figures/degeneracies.pdf}
         \oscaption{degeneracies}{%
             The fundamental limitations of the mapping problem. Each row
             corresponds to a stellar surface with a different number of
-            dark spots seen at various phases at an inclination $I=60^\circ$.
+            dark spots seen at various phases at an inclination $I=60^\circ$;
+            all images are shown on the same color scale.
             The bottom panel shows the light curves of each of these stars.
             All six light curves are indistinguishable from each other, even
             at infinite signal to noise. See text for details.
@@ -97,9 +164,70 @@
     \end{centering}
 \end{figure}
 
-% CHECK OUT
+While the stellar surfaces are all distinct, containing between one (top)
+and six (bottom) large dark spots,
+\textbf{their rotational light curves are identical}
+(lower panel). This is true even at infinite signal to
+noise: the mapping from a stellar surface
+to its rotational light curve is so degenerate that there exist an infinite number of solutions
+to the inverse problem. This fact has been pointed out recently in different contexts
+\citep[e.g.,][]{Cowan2013,Luger2019,Basri2020}, but it dates back at least to
+\citet{Russell1906}, who demonstrated it by expanding the surface
+intensity of a celestial body in terms of spherical harmonics
+(see \S\ref{sec:main} and Figure~\ref{fig:ylms}). \citet{Russell1906} showed
+that many of the modes comprising the intensity profile of a spherical
+object are in the \emph{null space}, the set of surface features that have identically
+zero effect on the light curve. In fact,
+the \emph{vast majority} of the modes are in the null space for rotational
+light curves of stars (\S\ref{sec:nullspace}). This is what allows us to construct pathological
+scenarios like that shown in Figure~\ref{fig:degeneracies}, where the light curve
+could be explained by any number of spots atop a heterogeneous bright background.
+
+Stellar mapping studies tackle these degeneracies in different ways, but
+it usually comes down to a choice of prior: when the data is not
+sufficiently informative, prior assumptions are needed to discriminate
+between competing solutions. In discrete spot models like the ones
+discussed above, the degeneracy-breaking prior is (typically) the assumption that the
+spots must be circular, have uniform contrast, and sit atop an otherwise
+uniform photosphere. In gridded stellar surface models, it is common to
+assume a regularization prior such as the maximum entropy penalty
+\citep[e.g.,][]{Vogt1987}, which typically favors solutions with the fewest
+number of dark pixels (usually referred to as the ``simplest'' solution).
+
+While these assumptions may be approximately valid in some cases, it is
+important to bear in mind that because of the light curve degeneracies discussed above,
+\textbf{most of the information about the stellar surface usually comes from the prior},
+so it is very important to get the
+prior right. In general, sunspots are not circular and do not have uniform
+contrast throughout; nor do spots always arrange themselves in the highest
+entropy configuration. The amount of bias introduced by these assumptions
+will in general vary, but in principle it could be quite significant.
+
+% Add to this photometric noise, the generally unknown stellar inclination,
+% the poorly constrained limb darkening parameters, and you get ... a mess.
+
+Fortunately, although individual light curves are not very constraining,
+we have \emph{a lot of them} thanks to missions like \emph{Kepler} and \emph{TESS}.
+In this paper, we will thoroughly explore the power of ensemble analyses
+in breaking the degeneracies inherent to the light curve mapping problem.
+By jointly analyzing the light curves of many stars, we will show that it
+is often possible to uniquely constrain statistical properties about their
+surfaces. This idea was recently explored to some extent
+in \citet{Morris2020}, who used ensemble analyses to derive constraints on
+spot coverage areas as a function of stellar age (see \S\ref{sec:other-work}).
+We will go a step further and
+show that it is possible to constrain the distribution of spot sizes, active
+latitudes, and other statistical properties of stellar surfaces using a novel
+interpretable Gaussian process approach, which we motivate in the following
+section.
+
+
+% CHECK OUT (for a future paper)
 % Louden 2020 https://ui.adsabs.harvard.edu/abs/2020arXiv201200776L/abstract
 % Mazeh 2015
+
+\subsection{Gaussian processes}
+\label{sec:intro:gps}
 
 Over the past decade, Gaussian processes (GPs) have gained traction as
 a leading tool for modeling correlated signals in astrophysical timeseries
@@ -133,14 +261,14 @@ $\mu_i = m(t_i)$ and $\Sigma_{i,j} = k(t_i, t_j)$, respectively.%
     See Appendix~\ref{sec:notation} for a detailed explanation of our notation.
 }
 Because of this relationship to multivariate Gaussians,
-GPs are extremely easy to sample from.%
+GPs are easy to sample from.%
 \footnote{Given a 1-d array \texttt{mean} and a 2-d array \texttt{cov} in \Python,
     sampling from the corresponding GP (if it exists)
     can be done in a single line of code by calling
     \texttt{numpy.random.multivariate\_normal(mean, cov)}.}
 But the real showstopper is the application of GPs to inference problems.
 Multivariate Gaussian distributions have a closed-form (marginal) likelihood
-function, so it is easy (and extremely efficient) to compute the probability
+function, so it is easy to compute the probability
 of one's data conditioned on a given value of $\pmb{\mu}$ and $\pmb{\Sigma}$
 (i.e., the ``likelihood''; see Equation~\ref{eq:log-like} below).
 This can in turn be maximized
@@ -213,52 +341,53 @@ specify the covariance of the Gaussian process. GP-based inference
 entails optimizing or sampling over these few quantities, which in many
 cases can be done easily and efficiently.
 
-
 Which brings us, finally, to an important drawback of GPs when applied
 to modeling stellar spot-induced variability. While it is straightforward to derive
-posterior constraints on the hyperparameters of a GP, it is usually
+posterior constraints on the hyperparameters of a GP, it is often
 not obvious what those constraints actually tell us about the star
-or its surface. While the GP period $P$
-may sometimes be interpreted as the rotational period of the star,%
-\footnote{An exception to this is in the presence of strong differential
-    rotation, in which case many periods may be present in the data, or
-    when spots evolve coherently, which can also introduce weak periodicities
-    in the light curve.}
-the relationship between quantities like the amplitude $\sigma^2$
-and the timescale $\tau$ and physical properties of the spots is much fuzzier.
-It may be tempting to interpret $\sigma^2$ as some measure of the spot
+or its surface.
+Specifically, it is difficult to constrain the relationship between
+quantities like the amplitude $\sigma^2$
+and the timescale $\tau$ and physical properties of the surface.
+For instance, it may be tempting to interpret $\sigma^2$ as some measure of the spot
 contrast or the total number of spots, or $\tau$ as the timescale on which the
 spots evolve, but there are no guarantees these interpretations will
 hold in general. After all, the choice of kernel is quite often \emph{ad hoc},
 providing an \emph{effective}---as opposed to \emph{interpretable}---description
 of the physics.
-
-For this reason, GPs are usually employed to model stellar variability
+%
+There are two important exceptions to this: asteroseismic studies, in which the
+the GP hyperparameters can offer direct insight into
+the behavior of complex pulsation modes and thus physical properties of the
+stellar interior \citep[e.g.,][]{BrewerStello2009,ForemanMackey2017}; and
+stellar rotation period studies, in which the period hyperparameter $P$ can usually
+be associated with the rotation period of the star \citep[e.g.,][]{Angus2018}.%
+\footnote{An exception to this is in the presence of strong differential
+    rotation, in which case many periods may be present in the data, or
+    when spots evolve coherently, which can also introduce weak periodicities
+    in the light curve.}
+%
+For spot-induced variability, on the other hand,
+GPs are usually used
 when the variability itself is a nuisance parameter. For example, if the
-goal is to constrain properties of a transiting exoplanet, a GP might be
-used to remove (or, better yet, to marginalize over) the stellar signal.
+goal is to constrain the properties of a transiting exoplanet or to
+search for a planetary signal in a radial velocity dataset, a GP might be
+used to remove (or, better yet, to marginalize over) the stellar variability
+\citep[e.g.,][]{Haywood2014,Rajpaul2015,Luger2017b}.
 In this case, the physics behind the variability is irrelevant, so an
-effective model of this sort is generally sufficient. When the goal is to understand
-the variability itself, however, GPs have been far less useful to date. Instead,
-the usual approach has been to explicitly model the stellar signal: in the
-case of star spot-induced variability, one must construct a physical model
-for the stellar surface and for how it projects into the light curve as the
-star rotates. This might entail directly modeling the star spots,
-with free parameters controling the spot size, contrast, position,
-and temporal evolution of each of the $n$ spots, where $n$ is also
-a free parameter \xxx{(CITE ME)}. In addition to this being a numerically challenging
-problem for all but the smallest values of $n$, the problem is
-intrinsically ill-posed, meaning there are strong degeneracies at play
-that formally preclude a unique solution to the stellar map.
-After all, a stellar light curve is a one-dimensional representation of a
-two-dimensional (or, if the star evolves in time, three-dimensional)
-surface, and thus it simply cannot encode all the information about the stellar surface.
-In fact, the \emph{vast majority} of the modes on the stellar surface
-are in the \emph{null space}, the set of surface features that have identically
-zero effect on the light curve \citep[e.g.,][]{Cowan2013,Luger2019}.
-The underdetermined nature of the stellar mapping problem is therefore fundamental: it
-is simply not possible to uniquely determine the properties of all the spots on
-a star from its rotational light curve.
+effective model of this sort is generally sufficient.
+
+When the goal is to understand
+the the stellar surface itself, however, GPs have been less useful to date.
+Instead, the common approach is that discussed in the previous section:
+to forward model the stellar surface and its effect on the light curve, then
+seek to constrain the surface properties by solving the inverse problem.
+As we discussed above, however, a unique solution to the surface map of
+the star from a rotational light curve is not possible without the use of
+aggressive (and often \emph{ad hoc}) priors. The degeneracies at play
+make it effectively impossible for one to know the exact configuration
+of starspots and other features on the surface of a star from its rotational
+light curve alone.
 
 However, it is hardly ever the case that this is actually our end goal.
 After all, physics can be used to predict properties of stellar surfaces at a fairly
@@ -282,7 +411,7 @@ describing the distribution of all the spots as a whole.
 %In principle,
 %this would work even if our posterior distributions contain
 %strong degeneracies: as we will see, the statistical properties of
-%star spots have a much smaller null space than the properties of
+%starspots have a much smaller null space than the properties of
 %individual spots.
 We could do this in the usual way described above, by
 modeling the properties of each of the spots in a posterior sampling
@@ -299,11 +428,14 @@ quite hard (and expensive) to perform.
 If only we could use the elegant machinery of Gaussian processes to
 perform this marginalization for us!
 
+\subsection{Overview}
+\label{sec:intro:overview}
+
 \textbf{In this paper, we derive an exact, closed-form expression for
     the Gaussian approximation to the marginal likelihood of a light curve
-    conditioned on the statistical properties of star spots.} Our Gaussian
+    conditioned on the statistical properties of starspots.} Our Gaussian
 process analytically marginalizes over the (degenerate, often unknowable)
-distributions of properties of individual star spots, revealing the
+distributions of properties of individual starspots, revealing the
 constraints imposed on the bulk spot properties without the need to
 explicitly model or sample over properties of individual spots. It inherits
 the speed, ease-of-use, and all other properties of traditionally-used
@@ -315,7 +447,7 @@ The paper is organized as follows:
 we present an overview of the derivation of the GP in \S\ref{sec:gp}
 and a suite of tests on synthetic data to show the model is calibrated
 in \S\ref{sec:calibration}. We discuss our GP from an information
-theoretical perspective in \S\ref{sec:discussion}, focusing on
+theory perspective in \S\ref{sec:discussion}, focusing on
 the various degeneracies our model can and cannot break when applied
 to ensembles of light curves. In \S\ref{sec:implementation} we present
 our implementation of the algorithm in the open-source \starryprocess package
@@ -349,7 +481,7 @@ run on Azure Pipelines upon every commit of the code.%
 }
 
 
-\section{A Gaussian Process for Star Spots}
+\section{A Gaussian Process for starspots}
 \label{sec:main}
 
 In this section, we present an overview of the computation of our Gaussian
@@ -383,7 +515,7 @@ describe star spot distributions%
 \footnote{There are, of course, drawbacks to using this basis:
     in particular, the spherical harmonics are smooth, continuous functions that
     struggle (at finite degree $l$) to capture high resolution features such as
-    small star spots. We discuss this point at length in \S\ref{sec:tinyspots},
+    small starspots. We discuss this point at length in \S\ref{sec:tinyspots},
     where we show that our model is useful even when applied to stars with spots
     smaller than the effective resolution of the GP.}, as they will allow us to compute
 moments of the intensity distribution analytically. Of more immediate concern,
@@ -421,7 +553,7 @@ defined in units such that a star with no spots on it will have
 unit flux.
 Conditioned on the stellar inclination $I$, the rotational period $P$,
 a set of limb darkening coefficients $\mathbf{u}$, and
-on certain properties of the star spots $\pmb{\theta}_\bullet$
+on certain properties of the starspots $\pmb{\theta}_\bullet$
 (including their number, sizes, positions, and contrasts),
 we wish to compute the mean $\pmb{\mu}(I, P, \mathbf{u}, \pmb{\theta}_\bullet)$ and
 covariance $\pmb{\Sigma}(I, P, \mathbf{u}, \pmb{\theta}_\bullet)$
@@ -537,7 +669,7 @@ our default representation of the GP hyperparameters is
     \quad,
 \end{align}
 %
-where $n$ is the number of star spots, $c$ is their contrast,
+where $n$ is the number of starspots, $c$ is their contrast,
 $\mu_\phi$ and $\sigma_\phi$ are the mode and standard deviation
 of the spot latitude distribution, respectively, and $r$ is the radius
 of the spots.
@@ -558,7 +690,7 @@ In this paper, we assume that the parameters $\pmb{\theta}_\bullet$
 described above are the \emph{physically interesting} ones. That is,
 given a set of $M$ light curves
 $\left( \mathbf{f}_0 \,\, \mathbf{f}_1 \,\, \cdots \,\,  \mathbf{f}_{M-1} \right)^\top$,
-we wish to infer the statistical properties of the star spots, encoded in
+we wish to infer the statistical properties of the starspots, encoded in
 the entries of the vector $\pmb{\theta}_\bullet$.
 %
 This is typically a tall order, since it requires marginalizing over all
@@ -627,7 +759,7 @@ given the model. Typically, we are interested in the reverse: the probability
 of the \emph{model} given the \emph{data}, i.e., the posterior probability
 distribution. In later sections we present a comprehensive suite of
 posterior inference exercises demonstrating that our GP model is correctly
-calibrated, allowing one to efficiently infer statistical properties of star spots
+calibrated, allowing one to efficiently infer statistical properties of starspots
 from light curves with minimal bias.
 
 
@@ -1128,7 +1260,7 @@ Moreover, most of the terms in the expectation vectors and matrices may
 be computed recursively, and many may be pre-computed, as they do not
 depend on user inputs.
 %
-It is therefore possible to evaluate $\tilde{\pmb{\Sigma}}$ in an extremely
+It is therefore possible to evaluate $\tilde{\pmb{\Sigma}}$ in an
 efficient manner. In \S\ref{sec:implementation} we discuss our
 implementation of the algorithm in a user-friendly \Python package.
 
@@ -1531,6 +1663,10 @@ variational inference \citep[ADVI;][]{Kucukelbir2016,Blei2016}, and nested sampl
 We obtained the best performance using the nested sampling algorithm
 implemented in the \textsf{dynesty} package \citep{Speagle2020}, so that is what
 we will use below.
+
+% HACK HACK HACK HACK HACK
+\pagebreak
+% HACK HACK HACK HACK HACK
 
 Our sampling parameters are the number of spots $n$, their contrast $c$,
 their radius $r$, and the Beta distribution parameters $a$ and $b$ describing their
@@ -2017,6 +2153,10 @@ constraining of the spot properties at the population level. In the
 following section, we explore the role of ensemble analyses in breaking
 the degeneracies of the mapping problem in more detail.
 
+% HACK HACK HACK HACK HACK
+\pagebreak
+% HACK HACK HACK HACK HACK
+
 \subsection{Why ensemble analyses work}
 \label{sec:ensemble}
 
@@ -2499,6 +2639,10 @@ at different wavelengths, which could complicate this picture somewhat. An exten
 of the formalism in this paper to multi-band photometry, and a detailed investigation
 of the information content of such observations, is left to future work.
 
+% HACK HACK HACK HACK HACK
+\pagebreak
+% HACK HACK HACK HACK HACK
+
 \subsection{Comparison to other work}
 \label{sec:other-work}
 
@@ -2559,7 +2703,7 @@ configurations on the autocorrelation and covariance of stellar
 radial velocity (RV) measurements. The authors of that study compared the
 performance of various commonly used quasi-periodic kernels when applied
 to synthetic RV datasets, arguing that a new four-parameter quasi-periodic
-cosine kernel (QPC) can better capture the variability due to star spots.
+cosine kernel (QPC) can better capture the variability due to starspots.
 However, their study was empirical and related spot configurations to their
 effect on the covariance structure of the data primarily in a qualitative
 fashion. Their QPC kernel is a function of two interpretable hyperparameters
@@ -2796,7 +2940,7 @@ model will result in negligible overhead.
 
 Another big limitation of the base algorithm is the implicit assumption that
 stellar surfaces are static. Our GP hyperparameters $\pmb{\theta}_\bullet$
-describe the \emph{spatial} configuration of star spots, but they say nothing
+describe the \emph{spatial} configuration of starspots, but they say nothing
 about their evolution in time. We know from observations of the Sun and of
 \emph{Kepler} stars that temporal variability is extremely common: spots appear,
 disappear, and even migrate in latitude over time. While it may be possible to
@@ -2958,6 +3102,10 @@ different times (top) and the light curve sample over ten rotations (bottom).
 The flux variability is qualitatively similar to that seen in
 temporally-variable \emph{Kepler} light curves.
 
+% HACK HACK HACK HACK HACK
+\pagebreak
+% HACK HACK HACK HACK HACK
+
 \subsection{Marginalizing over period and limb darkening}
 \label{sec:other-marg}
 
@@ -2983,8 +3131,8 @@ the ensemble.
 %
 However, this procedure ignores any uncertainty in the period and limb darkening
 coefficients, which could be significant; it is also subject to bias due to
-the fact that theoretical models for limb darkening coefficients have been
-shown to be wrong, especially for low mass stars \citep{?}. A much better
+the fact that there may be systematic errors in theoretical models for the limb darkening
+coefficients, particularly for low mass stars \citep[e.g.,][]{Kervella2017}. A much better
 approach would be to analytically marginalize over these two quantities.
 
 Consider Equation~(\ref{eq:akT}) in the Appendix, from which the rows of the
@@ -3014,7 +3162,7 @@ yield the GP covariance marginalized over $\mathbf{u}$. It may be
 possible to compute the marginalized covariance even when parametrizing
 the quadratic limb darkening
 coefficients in terms of the uncorrelated $q_1$ and $q_2$ parameters from
-\citet{?}, which would allow us to incorporate hard constraints on positivity
+\citet{Kipping2013}, which would allow us to incorporate hard constraints on positivity
 and strict limb darkening (as opposed to brightening) directly into the prior.
 
 Given the complexity of the operations involved,
@@ -3340,7 +3488,7 @@ results presented in this paper:
     \item \textbf{Our GP can be used to model small, Sun-like spots.} The algorithm
           presented here is limited to a surface resolution of about $10^\circ$,
           corresponding to spots about an order of magnitude larger than typical
-          Sun spots. However, we have showed that when we apply our model to
+          sunspots. However, we have showed that when we apply our model to
           light curves of stars with small ($r \sim 3^\circ$) spots, we can
           still infer their latitudinal distribution without bias, as well as
           the presence of spots below our resolution limit.
@@ -3421,6 +3569,12 @@ presented here \testpassicon/\testfailicon.
 %
 %
 %
+
+\vspace{2em}
+
+We would like to thank David W. Hogg, Michael Gully-Santiago, and the
+Astronomical Data Group at the Center for Computational Astrophysics for
+many thought-provoking discussions that helped shape this paper.
 
 \bibliography{bib}
 
@@ -3759,7 +3913,7 @@ density function conditioned on hyperparameters $\pmb{\theta}_\bullet$,
 which describe the \emph{distribution} of the features on the surface
 of one or many stars.
 %
-As we are specifically interested in modeling the effect of star spots
+As we are specifically interested in modeling the effect of starspots
 on stellar light curves, we let
 %
 \begin{align}
