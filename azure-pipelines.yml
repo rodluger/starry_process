@@ -45,7 +45,7 @@ jobs:
       git add .nojekyll
       git add -f *
       git -c user.name='azure' -c user.email='azure' commit -m "building the docs"
-      git push -q -f https://$GITHUB_USER:$GITHUB_API_KEY@github.com/$GITHUB_USER/$(repo) HEAD:gh-pages >/dev/null 2>&1
+      git push -q -f https://$GITHUB_USER:$GITHUB_API_KEY@github.com/$GITHUB_USER/$(repo) HEAD:gh-pages
     displayName: 'Build the docs'
     env:
       GITHUB_API_KEY: $(GITHUB_API_KEY)
