@@ -22,6 +22,18 @@ jobs:
           python -m pip install -U pip
           python -m pip install .
           python -m pip install -U ipython
+      - name: Get theano compiledir
+        id: compiledir
+        run: |
+          python -c "import theano; print('::set-output name=compiledir::' + theano.config.compiledir.split('/')[-1])"
+      - name: "Cache ~/.theano"
+        uses: actions/cache@v2
+        with:
+          path: ~/.theano
+          key: tutorials-${{ steps.compiledir.outputs.compiledir }}
+          restore-keys: |
+            tutorials-${{ steps.compiledir.outputs.compiledir }}
+            tutorials-
       - name: Figures
         run: ls joss/figures/*.py | xargs -n 1 python
       - name: PDF
