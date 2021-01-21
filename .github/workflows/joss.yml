@@ -38,7 +38,9 @@ jobs:
             tutorials-
       - name: Figures
         shell: bash -l {0}
-        run: ls joss/figures/*.py | xargs -n 1 python
+        run: |
+          cd joss/figures
+          ls *.py | xargs -n 1 python
       - name: PDF
         uses: openjournals/openjournals-draft-action@master
         with:
