@@ -5,6 +5,10 @@ trigger:
     include:
     - master
 
+variables:
+- name: repo
+  value: starry_process
+
 jobs:
 - job: Default
   timeoutInMinutes: 120
@@ -20,28 +24,10 @@ jobs:
   - script: |
       sudo chown -R $USER $CONDA
       . $CONDA/etc/profile.d/conda.sh
-      conda create --yes --quiet --name starry_process python=3.7.3 pip
-    displayName: 'Setup conda'
-
-  - script: |
-      . $CONDA/etc/profile.d/conda.sh
-      conda activate starry_process
-      conda install -y -q numpy scipy mkl openblas=0.3.6 sympy nb_conda nb_conda_kernels
-      pip install theano
-      theano-cache purge
-      pip install -U pip
-      pip install -U setuptools
-      conda install -y -q -c conda-forge tectonic pandoc ipywidgets
-      pip install -U "nbconvert>=5.5"
-      pip install -U sphinx
-      pip install -U nbsphinx
-      pip install -U dynesty
-      pip install -U emcee
-      pip install -U corner
-      pip install -U "nbformat==5.0.8"
+      conda env create -f environment.yml
       jupyter nbextension enable --py widgetsnbextension
       sudo apt-get install ffmpeg
-    displayName: 'Install dependencies'
+    displayName: 'Setup conda'
 
   - script: |
       . $CONDA/etc/profile.d/conda.sh
@@ -59,7 +45,7 @@ jobs:
       git add .nojekyll
       git add -f *
       git -c user.name='azure' -c user.email='azure' commit -m "building the docs"
-      git push -q -f https://$GITHUB_USER:$GITHUB_API_KEY@github.com/rodluger/starry_process HEAD:gh-pages >/dev/null 2>&1
+      git push -q -f https://$GITHUB_USER:$GITHUB_API_KEY@github.com/$GITHUB_USER/$(repo) HEAD:gh-pages >/dev/null 2>&1
     displayName: 'Build the docs'
     env:
       GITHUB_API_KEY: $(GITHUB_API_KEY)
