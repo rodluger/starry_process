@@ -4,7 +4,6 @@ from scipy.integrate import quad
 from tqdm import tqdm
 from theano.tests.unittest_tools import verify_grad
 from theano.configparser import change_flags
-import pytest
 
 
 def test_size(ydeg=15, r=15.0, dr=5.0, rtol=1e-7, ftol=1e-7, **kwargs):

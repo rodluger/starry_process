@@ -1,5 +1,4 @@
 from starry_process import StarryProcess
-from starry_process.flux import FluxIntegral
 import starry
 import numpy as np
 from tqdm import tqdm

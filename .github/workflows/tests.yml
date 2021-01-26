@@ -16,9 +16,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pymc-version: ["pymc3==3.9.3", "pymc3==3.10", "pymc3==3.11"]
+        pymc-version: ["pymc3==3.10", "pymc3==3.11"]
+        starry-version: [""]
         include:
           - pymc-version: "https://github.com/pymc-devs/pymc3/archive/master.zip"
+            starry-version: ""
+          - pymc-version: "pymc3==3.9.3"
+            starry-version: "starry@git+https://github.com/rodluger/starry@master"
 
     steps:
       - uses: actions/checkout@v2
@@ -39,17 +43,22 @@ jobs:
           activate-environment: starry_process
           environment-file: environment.yml
 
-      - name: Install dependencies
+      - name: Set up environment
         shell: bash -l {0}
         run: |
           jupyter nbextension enable --py widgetsnbextension
           sudo apt-get update
           sudo apt-get install ffmpeg
+
+      - name: Install dependencies
+        shell: bash -l {0}
+        run: |
           python -m pip install -U pip
-          python -m pip install "${{ matrix.pymc-version }}"
+          python -m pip uninstall theano  # so that we know which version we're getting
+          python -m pip install ${{ matrix.pymc-version }} ${{ matrix.starry-version }}
           python -m pip install -e ".[app,tests]"
-          python -c 'import theano; print(theano.config.__str__(print_doc=False))'
- 
+          python -c 'import theano; print(theano.__version__)'
+
       - name: Run tests
         shell: bash -l {0}
         run: python -m pytest -sv tests --junitxml=junit/test-results.xml
@@ -61,9 +70,8 @@ jobs:
         run: |
           export JOB_ID=`echo $STRATEGY_CONTEXT | md5sum`
           echo "::set-output name=id::$JOB_ID"
-          
+
       - uses: actions/upload-artifact@v2
         with:
           name: test-results-${{ steps.unique-id.outputs.id }}
           path: juint/test-*.xml
-  

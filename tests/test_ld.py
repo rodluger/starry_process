@@ -1,12 +1,14 @@
 from starry_process.ops import rTA1LOp
 from starry_process import StarryProcess
-import starry
 import numpy as np
 from theano.tests.unittest_tools import verify_grad
 from theano.configparser import change_flags
-import theano
-import theano.tensor as tt
 import pytest
+
+try:
+    import starry
+except ImportError:
+    starry = None
 
 
 def test_rTA1L_grad():
@@ -17,6 +19,7 @@ def test_rTA1L_grad():
         )
 
 
+@pytest.mark.skipif(starry is None, reason="starry not installed")
 def test_compare_to_starry(ydeg=15, udeg=2):
 
     np.random.seed(0)
@@ -26,9 +29,6 @@ def test_compare_to_starry(ydeg=15, udeg=2):
     # This
     op = rTA1LOp(ydeg=ydeg, udeg=udeg)
     flux1 = op(u).eval() @ np.concatenate(((1,), y))
-
-    # Starry
-    import starry
 
     map = starry.Map(ydeg=ydeg, udeg=udeg)
     map[1:] = u

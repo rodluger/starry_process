@@ -175,4 +175,3 @@ def verify_grad(
         # get new random projection for next test
         if test_num < n_tests - 1:
             t_r.set_value(random_projection(), borrow=True)
-

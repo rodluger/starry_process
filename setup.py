@@ -22,7 +22,7 @@ setup(
         "setuptools_scm",
         "numpy>=1.19.2",
         "scipy>=1.5.0",
-        "theano==1.0.5",
+        "pymc3",
         "tqdm",
         "matplotlib",
     ],
@@ -35,8 +35,6 @@ setup(
             "pytest-dependency",
             "pytest-env",
             "corner",
-            "pymc3==3.9.0",
-            "starry@git+https://github.com/rodluger/starry@master",
         ],
     },
     entry_points={

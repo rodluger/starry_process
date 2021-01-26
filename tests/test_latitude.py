@@ -1,6 +1,5 @@
 from starry_process.latitude import LatitudeIntegral
 from starry_process.ops import LatitudeIntegralOp
-from starry_process.math import matrix_sqrt
 from starry_process.wigner import R
 from starry_process.defaults import defaults
 import numpy as np

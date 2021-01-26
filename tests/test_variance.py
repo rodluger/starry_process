@@ -1,6 +1,5 @@
 from starry_process import StarryProcess
 import numpy as np
-import pytest
 
 
 def test_variance():
