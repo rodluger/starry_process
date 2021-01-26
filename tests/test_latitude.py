@@ -7,6 +7,7 @@ from scipy.integrate import quad
 from scipy.stats import beta as Beta
 from tqdm import tqdm
 from theano.configparser import change_flags
+import theano.tensor as tt
 
 
 def test_latitude(

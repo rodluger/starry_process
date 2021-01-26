@@ -2,6 +2,7 @@ from starry_process.ops import rTA1LOp
 from starry_process import StarryProcess
 import numpy as np
 from theano.configparser import change_flags
+import theano.tensor as tt
 import pytest
 
 try:
