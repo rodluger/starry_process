@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from ..base_op import BaseOp
-from theano import gof
+from ...compat import Apply
 import theano
 import theano.tensor as tt
 
@@ -17,12 +17,22 @@ class RyOp(BaseOp):
             for arg in [theta]
         ]
         out_args = [
-            tt.TensorType(dtype=tt.config.floatX, broadcastable=[False,])(),
-            tt.TensorType(dtype=tt.config.floatX, broadcastable=[False,])(),
+            tt.TensorType(
+                dtype=tt.config.floatX,
+                broadcastable=[
+                    False,
+                ],
+            )(),
+            tt.TensorType(
+                dtype=tt.config.floatX,
+                broadcastable=[
+                    False,
+                ],
+            )(),
         ]
-        return gof.Apply(self, in_args, out_args)
+        return Apply(self, in_args, out_args)
 
-    def infer_shape(self, node, shapes):
+    def infer_shape(self, *args):
         nwig = (
             (self.ydeg + 1) * (2 * self.ydeg + 1) * (2 * self.ydeg + 3)
         ) // 3

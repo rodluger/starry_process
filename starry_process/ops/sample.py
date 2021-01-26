@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from theano import gof
 import theano.tensor as tt
+from ..compat import Op, Apply
 
 __all__ = ["SampleYlmTemporalOp"]
 
 
-class SampleYlmTemporalOp(tt.Op):
-    """
-
-    """
+class SampleYlmTemporalOp(Op):
+    """"""
 
     def make_node(self, *inputs):
         inputs = [
@@ -18,9 +16,10 @@ class SampleYlmTemporalOp(tt.Op):
             tt.as_tensor_variable(inputs[2]).astype(tt.config.floatX),
         ]
         outputs = [inputs[2].type()]
-        return gof.Apply(self, inputs, outputs)
+        return Apply(self, inputs, outputs)
 
-    def infer_shape(self, node, shapes):
+    def infer_shape(self, *args):
+        shapes = args[-1]
         return [shapes[-1]]
 
     def perform(self, node, inputs, outputs):

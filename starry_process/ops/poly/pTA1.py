@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from ..base_op import BaseOp
-from theano import gof
-import theano
+from ...compat import Apply
 import theano.tensor as tt
 
 __all__ = ["pTA1Op"]
@@ -22,9 +21,10 @@ class pTA1Op(BaseOp):
                 dtype=tt.config.floatX, broadcastable=[False, False]
             )()
         ]
-        return gof.Apply(self, in_args, out_args)
+        return Apply(self, in_args, out_args)
 
-    def infer_shape(self, node, shapes):
+    def infer_shape(self, *args):
+        shapes = args[-1]
         return ([shapes[0][0], self.N],)
 
     def grad(self, inputs, gradients):

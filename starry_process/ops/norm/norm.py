@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import theano
-from theano import gof
 import theano.tensor as tt
+
+from ...compat import Op, Apply
 
 __all__ = ["AlphaBetaOp"]
 
 
-class AlphaBetaOp(tt.Op):
-    """
-
-    """
+class AlphaBetaOp(Op):
+    """"""
 
     __props__ = ("N",)
 
@@ -23,9 +22,9 @@ class AlphaBetaOp(tt.Op):
             tt.TensorType(dtype=tt.config.floatX, broadcastable=[])()
             for n in range(4)
         ]
-        return gof.Apply(self, inputs, outputs)
+        return Apply(self, inputs, outputs)
 
-    def infer_shape(self, node, shapes):
+    def infer_shape(self, *args):
         return [(), (), (), ()]
 
     def perform(self, node, inputs, outputs):

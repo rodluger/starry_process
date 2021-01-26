@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from ..base_op import BaseOp
-from theano import gof
-import theano
+from ...compat import Apply
 import theano.tensor as tt
 
 __all__ = ["rTA1Op"]
@@ -14,11 +13,16 @@ class rTA1Op(BaseOp):
     def make_node(self):
         in_args = []
         out_args = [
-            tt.TensorType(dtype=tt.config.floatX, broadcastable=[False,])(),
+            tt.TensorType(
+                dtype=tt.config.floatX,
+                broadcastable=[
+                    False,
+                ],
+            )(),
         ]
-        return gof.Apply(self, in_args, out_args)
+        return Apply(self, in_args, out_args)
 
-    def infer_shape(self, node, shapes):
+    def infer_shape(self, *args):
         return ([self.N],)
 
     def grad(self, inputs, gradients):

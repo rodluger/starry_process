@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from ..base_op import BaseOp
-from theano import gof
-import theano
 import theano.tensor as tt
+from ...compat import Apply
 
 __all__ = ["LOp"]
 
@@ -20,7 +19,7 @@ class LOp(BaseOp):
                 dtype=tt.config.floatX, broadcastable=[False, False]
             )()
         ]
-        return gof.Apply(self, in_args, out_args)
+        return Apply(self, in_args, out_args)
 
-    def infer_shape(self, node, shapes):
+    def infer_shape(self, *args):
         return ([self.NLU, self.N],)

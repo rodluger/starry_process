@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from theano import gof
 import theano.tensor as tt
+from ..compat import Op, Apply
 
 __all__ = ["CheckBoundsOp", "CheckVectorSizeOp"]
 
 
-class CheckBoundsOp(tt.Op):
-    """
-
-    """
+class CheckBoundsOp(Op):
+    """"""
 
     __props__ = ("lower", "upper", "name")
 
@@ -25,10 +23,10 @@ class CheckBoundsOp(tt.Op):
     def make_node(self, *inputs):
         inputs = [tt.as_tensor_variable(inputs[0]).astype(tt.config.floatX)]
         outputs = [inputs[0].type()]
-        return gof.Apply(self, inputs, outputs)
+        return Apply(self, inputs, outputs)
 
-    def infer_shape(self, node, shapes):
-        return shapes
+    def infer_shape(self, *args):
+        return args[-1]
 
     def perform(self, node, inputs, outputs):
         outputs[0][0] = np.array(inputs[0])
@@ -74,10 +72,8 @@ class CheckBoundsOp(tt.Op):
         return self.grad(inputs, eval_points)
 
 
-class CheckVectorSizeOp(tt.Op):
-    """
-
-    """
+class CheckVectorSizeOp(Op):
+    """"""
 
     __props__ = ("name", "size")
 
@@ -91,10 +87,10 @@ class CheckVectorSizeOp(tt.Op):
     def make_node(self, *inputs):
         inputs = [tt.as_tensor_variable(inputs[0]).astype(tt.config.floatX)]
         outputs = [inputs[0].type()]
-        return gof.Apply(self, inputs, outputs)
+        return Apply(self, inputs, outputs)
 
-    def infer_shape(self, node, shapes):
-        return shapes
+    def infer_shape(self, *args):
+        return args[-1]
 
     def perform(self, node, inputs, outputs):
         outputs[0][0] = np.array(inputs[0])
