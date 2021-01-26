@@ -1,8 +1,10 @@
 from starry_process import StarryProcess
-import starry
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import pytest
+
+starry = pytest.importorskip("starry")
 
 
 def get_numerical_mean_and_cov(t, nsamples=10000):
