@@ -35,6 +35,7 @@ setup(
             "pytest-dependency",
             "pytest-env",
             "corner",
+            "pymc3==3.9.0",
             "starry@git+https://github.com/rodluger/starry@master",
         ],
     },

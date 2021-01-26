@@ -21,7 +21,6 @@ dependencies:
     - corner>=2.1.0
     - dynesty>=1.0.1
     - emcee>=3.0.2
-    - healpy>=1.14.0
     - ipywidgets>=7.5.1
     - matplotlib>=3.3.3
     - nbconvert>=5.5
@@ -29,11 +28,9 @@ dependencies:
     - nbsphinx>=0.8.0
     - nose>=1.3.7
     - parameterized>=0.8.1
-    - pymc3==3.9.0 # HACK; prevents starry from installing pymc3 3.10.0 and theano-pymc3
     - pytest>=6.2.1
     - pytest-dependency>=0.5.1
     - pytest-env>=0.6.2
-    - git+git://github.com/rodluger/starry.git#master
     - theano==1.0.5
     - tqdm>=4.56.0
     - xarray>=0.16.2
