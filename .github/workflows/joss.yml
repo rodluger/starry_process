@@ -22,7 +22,6 @@ jobs:
         shell: bash -l {0}
         run: |
           python -m pip install -U pip
-          python -m pip install "pymc3==3.9.3" "theano==1.0.5"
           python -m pip install .
       - name: Get theano compiledir
         id: compiledir
@@ -33,10 +32,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.theano
-          key: tutorials-${{ steps.compiledir.outputs.compiledir }}
+          key: joss-${{ steps.compiledir.outputs.compiledir }}
           restore-keys: |
-            tutorials-${{ steps.compiledir.outputs.compiledir }}
-            tutorials-
+            joss-
       - name: Figures
         shell: bash -l {0}
         run: |

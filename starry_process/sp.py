@@ -7,6 +7,7 @@ from .math import cho_factor, cho_solve, cast, is_tensor
 from .defaults import defaults
 from .visualize import mollweide_transform, latlon_transform, visualize
 from .ops import CheckBoundsOp, AlphaBetaOp, SampleYlmTemporalOp
+from .compat import RandomStream
 import theano.tensor as tt
 from theano.ifelse import ifelse
 import numpy as np
@@ -282,9 +283,7 @@ class StarryProcess(object):
         )
 
         # Seed the randomizer
-        self.random = tt.shared_randomstreams.RandomStreams(
-            kwargs.get("seed", 0)
-        )
+        self.random = RandomStream(kwargs.get("seed", 0))
 
     @special_property
     def a(self):
