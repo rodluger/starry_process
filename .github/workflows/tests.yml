@@ -11,16 +11,14 @@ on:
 
 jobs:
   tests:
-    name: "${{ matrix.pymc-version }} on py${{ matrix.python-version }}"
+    name: "${{ matrix.pymc-version }}"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8"]
         pymc-version: ["pymc3==3.9.3", "pymc3==3.10", "pymc3==3.11"]
         include:
-          - python-version: "3.8"
-            pymc-version: "https://github.com/pymc-devs/pymc3/archive/master.zip"
+          - pymc-version: "https://github.com/pymc-devs/pymc3/archive/master.zip"
 
     steps:
       - uses: actions/checkout@v2
@@ -31,11 +29,11 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: ~/.theano
-          key: ${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.pymc-version }}-${{ github.sha }}
+          key: ${{ runner.os }}-${{ matrix.pymc-version }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-py${{ matrix.python-version }}-${{ matrix.pymc-version }}-
+            ${{ runner.os }}-${{ matrix.pymc-version }}-
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: starry_process
