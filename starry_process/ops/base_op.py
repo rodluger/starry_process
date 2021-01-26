@@ -5,8 +5,7 @@ import theano
 import theano.tensor as tt
 import sys
 import pkg_resources
-import numpy as np
-from .compat import COp, Apply
+from ..compat import COp, Apply
 
 # Allow C code caching even in dev mode?
 try:
