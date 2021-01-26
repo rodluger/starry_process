@@ -74,4 +74,4 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: test-results-${{ steps.unique-id.outputs.id }}
-          path: juint/test-*.xml
+          path: junit/test-*.xml
