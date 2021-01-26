@@ -4,7 +4,6 @@ import numpy as np
 import theano.tensor as tt
 import theano
 import matplotlib.pyplot as plt
-from theano.tests.unittest_tools import verify_grad
 from theano.configparser import change_flags
 import pytest
 from tqdm import tqdm
@@ -116,16 +115,17 @@ def test_lnlike_grad(param, marginalize_over_inclination):
         if param in ["i", "p"]:
             if param == "i" and marginalize_over_inclination:
                 return
-            verify_grad(
+            tt.verify_grad(
                 lambda x: StarryProcess(
                     marginalize_over_inclination=marginalize_over_inclination,
                     normalized=False,
                 ).log_likelihood(t, flux, data_cov, **{param: x}),
                 (defaults[param],),
                 n_tests=1,
+                rng=np.random,
             )
         else:
-            verify_grad(
+            tt.verify_grad(
                 lambda x: StarryProcess(
                     marginalize_over_inclination=marginalize_over_inclination,
                     normalized=False,
@@ -133,4 +133,5 @@ def test_lnlike_grad(param, marginalize_over_inclination):
                 ).log_likelihood(t, flux, data_cov),
                 (defaults[param],),
                 n_tests=1,
+                rng=np.random,
             )

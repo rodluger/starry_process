@@ -1,4 +1,4 @@
-from theano.tests.unittest_tools import verify_grad
+import theano.tensor as tt
 from theano.configparser import change_flags
 from starry_process.ops import RxOp
 import numpy as np
@@ -9,11 +9,12 @@ def test_Rx_grad(
 ):
     with change_flags(compute_test_value="off"):
         op = RxOp(ydeg)
-        verify_grad(
+        tt.verify_grad(
             lambda theta: op(theta)[0],
             (theta,),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,
             eps=eps,
+            rng=np.random,
         )

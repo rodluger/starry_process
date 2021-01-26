@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from ..starry_process_version import __version__
 from ..defaults import defaults
-from theano import gof
 import theano
 import theano.tensor as tt
 import sys
 import pkg_resources
 import numpy as np
+from .compat import COp, Apply
 
 # Allow C code caching even in dev mode?
 try:
@@ -17,7 +17,7 @@ except:
 __all__ = ["BaseOp", "IntegralOp"]
 
 
-class BaseOp(gof.COp):
+class BaseOp(COp):
 
     __props__ = ("ydeg", "udeg", "compile_args")
     func_file = None
@@ -43,7 +43,10 @@ class BaseOp(gof.COp):
         self.compile_args = tuple(compile_args)
         super().__init__(self.func_file, self.func_name)
 
-    def c_code_cache_version(self):
+    def perform(self, *args):
+        raise NotImplementedError("Only C op is implemented")
+
+    def c_code_cache_version(self, *args, **kwargs):
         if ("dev" in __version__) and not CACHE_DEV_C_CODE:
             return ()
         else:
@@ -55,7 +58,7 @@ class BaseOp(gof.COp):
                     v.append(sv)
             return tuple(v)
 
-    def c_headers(self, compiler):
+    def c_headers(self, *args, **kwargs):
         return [
             "utils.h",
             "special.h",
@@ -67,7 +70,7 @@ class BaseOp(gof.COp):
             "vector",
         ]
 
-    def c_header_dirs(self, compiler):
+    def c_header_dirs(self, *args, **kwargs):
         dirs = [
             pkg_resources.resource_filename("starry_process", "ops/include")
         ]
@@ -78,7 +81,7 @@ class BaseOp(gof.COp):
         ]
         return dirs
 
-    def c_compile_args(self, compiler):
+    def c_compile_args(self, *args, **kwargs):
         args = ["-std=c++14", "-O2", "-DNDEBUG"]
         if sys.platform == "darwin":
             args += ["-stdlib=libc++", "-mmacosx-version-min=10.7"]
@@ -110,9 +113,9 @@ class IntegralOp(BaseOp):
                 dtype=tt.config.floatX, broadcastable=[False, False]
             )(),
         ]
-        return gof.Apply(self, in_args, out_args)
+        return Apply(self, in_args, out_args)
 
-    def infer_shape(self, node, shapes):
+    def infer_shape(self, *args):
         return (
             [self.N],
             [self.N],

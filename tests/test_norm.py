@@ -1,7 +1,6 @@
 from starry_process.ops import AlphaBetaOp
 from starry_process import StarryProcess
 import numpy as np
-from theano.tests.unittest_tools import verify_grad
 from theano.configparser import change_flags
 
 
@@ -11,8 +10,8 @@ def test_norm_grad():
         op = AlphaBetaOp(20)
         get_alpha = lambda z: op(z)[0]
         get_beta = lambda z: op(z)[1]
-        verify_grad(get_alpha, [z], n_tests=1)
-        verify_grad(get_beta, [z], n_tests=1)
+        tt.verify_grad(get_alpha, [z], n_tests=1, rng=np.random)
+        tt.verify_grad(get_beta, [z], n_tests=1, rng=np.random)
 
 
 def test_norm(ftol=0.05):
