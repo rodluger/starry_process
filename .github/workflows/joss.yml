@@ -1,7 +1,7 @@
 name: JOSS
 on:
   push:
-    branches: [master, joss]
+    branches: [master]
   pull_request:
     branches: [master]
 jobs:
@@ -45,7 +45,11 @@ jobs:
         with:
           journal: joss
           paper-path: joss/paper.md
+      - uses: actions/upload-artifact@v2
+        with:
+          path: joss
       - name: Push
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           git checkout --orphan joss-paper
           git rm --cached -rf .
