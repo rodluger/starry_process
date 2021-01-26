@@ -43,6 +43,7 @@ jobs:
         shell: bash -l {0}
         run: |
           jupyter nbextension enable --py widgetsnbextension
+          sudo apt-get update
           sudo apt-get install ffmpeg
           python -m pip install -U pip
           python -m pip install "${{ matrix.pymc-version }}"
