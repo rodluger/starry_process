@@ -22,7 +22,7 @@ setup(
         "setuptools_scm",
         "numpy>=1.19.2",
         "scipy>=1.5.0",
-        "theano>=1.0.4",
+        "theano==1.0.5",
         "tqdm",
         "matplotlib",
     ],
@@ -34,12 +34,8 @@ setup(
             "pytest",
             "pytest-dependency",
             "pytest-env",
-            "pymc3<3.10.0",
             "corner",
-            "pymc3-ext>=0.0.2",
             "starry@git+https://github.com/rodluger/starry@master",
-            "healpy",
-            "xarray==0.16.0",  # DEBUG: https://github.com/arviz-devs/arviz/issues/1387
         ],
     },
     entry_points={

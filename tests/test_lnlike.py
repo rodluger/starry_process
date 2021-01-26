@@ -3,8 +3,6 @@ from starry_process.defaults import defaults
 import numpy as np
 import theano.tensor as tt
 import theano
-import pymc3 as pm
-import exoplanet
 import matplotlib.pyplot as plt
 from theano.tests.unittest_tools import verify_grad
 from theano.configparser import change_flags
