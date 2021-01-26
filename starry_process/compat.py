@@ -8,6 +8,7 @@ __all__ = [
     "ParamsType",
     "Node",
     "RandomStream",
+    "random_normal",
 ]
 
 try:
@@ -22,7 +23,15 @@ except ImportError:
 
 try:
     from theano.tensor.random.utils import RandomStream
+
+    def random_normal(rng, shape):
+        return rng.normal(size=shape)
+
+
 except ImportError:
     from theano.tensor.shared_randomstreams import (
         RandomStreams as RandomStream,
     )
+
+    def random_normal(rng, shape):
+        return rng.normal(shape)
