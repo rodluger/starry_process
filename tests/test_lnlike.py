@@ -11,7 +11,9 @@ from tqdm import tqdm
 from itertools import product
 import os
 
-ON_AZURE = bool(int(os.getenv("ON_AZURE", "0")))
+ON_AZURE = bool(int(os.getenv("ON_AZURE", "0"))) or (
+    os.getenv("CI", "false") == "true"
+)
 
 
 def get_functions(marginalize_over_inclination=False, seed=42):
