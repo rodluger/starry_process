@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - theano-compat
   pull_request:
     branches:
       - master
