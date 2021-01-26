@@ -7,8 +7,12 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 from matplotlib.animation import FuncAnimation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from IPython.display import HTML
 import os
+
+try:
+    from IPython.display import HTML
+except:
+    pass
 
 
 def RAxisAngle(axis, theta):
