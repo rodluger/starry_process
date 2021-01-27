@@ -1,12 +1,12 @@
 from .math import matrix_sqrt
-from theano import gof
 import theano.tensor as tt
 from theano.ifelse import ifelse
 from .defaults import defaults
 import numpy as np
+from .compat import Op, Apply
 
 
-class PDFOp(tt.Op):
+class PDFOp(Op):
     def __init__(self, func):
         self.func = func
 
@@ -15,16 +15,17 @@ class PDFOp(tt.Op):
             tt.as_tensor_variable(i).astype(tt.config.floatX) for i in inputs
         ]
         outputs = [tt.TensorType(tt.config.floatX, (False,))()]
-        return gof.Apply(self, inputs, outputs)
+        return Apply(self, inputs, outputs)
 
-    def infer_shape(self, node, shapes):
+    def infer_shape(self, *args):
+        shapes = args[-1]
         return [shapes[0]]
 
     def perform(self, node, inputs, outputs):
         outputs[0][0] = self.func(*inputs)
 
 
-class SampleOp(tt.Op):
+class SampleOp(Op):
     def __init__(self, func, nsamples=1):
         self.func = func
         self.nsamples = nsamples
@@ -34,9 +35,9 @@ class SampleOp(tt.Op):
             tt.as_tensor_variable(i).astype(tt.config.floatX) for i in inputs
         ]
         outputs = [tt.TensorType(tt.config.floatX, (False,))()]
-        return gof.Apply(self, inputs, outputs)
+        return Apply(self, inputs, outputs)
 
-    def infer_shape(self, node, shapes):
+    def infer_shape(self, *args):
         return [(self.nsamples,)]
 
     def perform(self, node, inputs, outputs):

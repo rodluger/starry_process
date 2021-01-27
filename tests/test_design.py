@@ -3,7 +3,8 @@ from starry_process.defaults import defaults
 import theano.tensor as tt
 import numpy as np
 import pytest
-import starry
+
+starry = pytest.importorskip("starry")
 
 
 def test_design(ydeg=15, i=defaults["i"], p=defaults["p"], u=defaults["u"]):

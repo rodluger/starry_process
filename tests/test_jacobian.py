@@ -1,12 +1,9 @@
 from starry_process import StarryProcess
 from starry_process.latitude import beta2gauss
 import numpy as np
-from tqdm import tqdm
-import matplotlib.pyplot as plt
 import emcee
 import theano
 import theano.tensor as tt
-from tqdm import tqdm
 from scipy.stats import median_abs_deviation as mad
 
 

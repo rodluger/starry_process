@@ -2,9 +2,8 @@ from starry_process.size import SizeIntegral
 import numpy as np
 from scipy.integrate import quad
 from tqdm import tqdm
-from theano.tests.unittest_tools import verify_grad
 from theano.configparser import change_flags
-import pytest
+import theano.tensor as tt
 
 
 def test_size(ydeg=15, r=15.0, dr=5.0, rtol=1e-7, ftol=1e-7, **kwargs):
@@ -66,21 +65,23 @@ def test_size_grad(
         S = SizeIntegral(r, dr, ydeg=ydeg)
 
         # d/de
-        verify_grad(
+        tt.verify_grad(
             lambda r, dr: SizeIntegral(r, dr, ydeg=ydeg)._first_moment(),
             (r, dr),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,
             eps=eps,
+            rng=np.random,
         )
 
         # d/dE
-        verify_grad(
+        tt.verify_grad(
             lambda r, dr: SizeIntegral(r, dr, ydeg=ydeg)._second_moment(),
             (r, dr),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,
             eps=eps,
+            rng=np.random,
         )

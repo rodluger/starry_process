@@ -2,10 +2,10 @@ from .ops import EighOp
 import theano
 import theano.tensor as tt
 from theano.tensor import slinalg
-from theano.ifelse import ifelse
 import numpy as np
 import scipy.linalg
 from inspect import getmro
+from .compat import Node
 
 
 __all__ = ["is_tensor", "cho_solve", "cho_factor", "cast", "matrix_sqrt"]
@@ -20,7 +20,7 @@ def is_tensor(*objs):
     """Return ``True`` if any of ``objs`` is a ``Theano`` object."""
     for obj in objs:
         for c in getmro(type(obj)):
-            if c is theano.gof.graph.Node:
+            if c is Node:
                 return True
     return False
 
@@ -29,7 +29,7 @@ class Solve(slinalg.Solve):
     """
     Subclassing to override errors due to NaNs.
     Instead, just set the output to NaN.
-    
+
     """
 
     def perform(self, node, inputs, output_storage):
@@ -84,7 +84,7 @@ class Cholesky(slinalg.Cholesky):
     """
     Subclassing to override errors due to NaNs.
     Instead, just set the output to NaN.
-    
+
     """
 
     def perform(self, node, inputs, outputs):

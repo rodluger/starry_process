@@ -4,14 +4,6 @@ from starry_process.defaults import defaults
 from starry_process.size import Spot
 import numpy as np
 from tqdm import tqdm
-from scipy.stats import beta as Beta
-from scipy.stats import lognorm as LogNormal
-import theano
-from theano.tests.unittest_tools import verify_grad
-from theano.configparser import change_flags
-import theano.tensor as tt
-import pytest
-import starry
 
 
 def test_moments_by_sampling(rtol=1e-3, ftol=3e-2):
@@ -19,7 +11,6 @@ def test_moments_by_sampling(rtol=1e-3, ftol=3e-2):
     # Settings
     ydeg = defaults["ydeg"]
     ydeg_num = 5
-    atol = 1e-4
     np.random.seed(0)
     nsamples = int(1e5)
     r = defaults["r"]

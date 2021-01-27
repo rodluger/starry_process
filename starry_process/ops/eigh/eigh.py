@@ -1,11 +1,10 @@
 from ..base_op import BaseOp
+from ...compat import Op, Apply
 import theano
 import theano.tensor as tt
-from theano.tensor import slinalg
 from theano.tensor.nlinalg import Eig
 import numpy as np
 from functools import partial
-from theano.gof import Op, Apply
 from six.moves import xrange
 import scipy.linalg
 
@@ -46,7 +45,7 @@ class EighOp(Eig):
         eb6a4125c4f5617e74b10503afc3f334f17cf545/
         theano/tensor/nlinalg.py#L294
 
-    to 
+    to
 
         (1) implement faster and more numerically stable gradients
         (2) optionally `scipy.nlinalg.eigh` instead of `numpy.linalg.eigh`.
@@ -94,7 +93,8 @@ class EighOp(Eig):
         gw, gv = _zero_disconnected([w, v], g_outputs)
         return [self._grad_op(x, w, v, gw, gv)]
 
-    def infer_shape(self, node, shapes):
+    def infer_shape(self, *args):
+        shapes = args[-1]
         N = shapes[0][0]
         if self.neig is None:
             neig = N
@@ -135,7 +135,8 @@ class EighGrad(BaseOp):
         out = tt.dmatrix()
         return Apply(self, [x, w, v, gw, gv], [out])
 
-    def infer_shape(self, node, shapes):
+    def infer_shape(self, *args):
+        shapes = args[-1]
         return [shapes[0]]
 
 
@@ -211,5 +212,6 @@ class EighGradPython(Op):
         # upcasting in self.tri0.
         outputs[0][0] = np.asarray(out, dtype=node.outputs[0].dtype)
 
-    def infer_shape(self, node, shapes):
+    def infer_shape(self, *args):
+        shapes = args[-1]
         return [shapes[0]]

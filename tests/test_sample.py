@@ -1,6 +1,8 @@
 from starry_process import StarryProcess
 import numpy as np
-import starry
+import pytest
+
+starry = pytest.importorskip("starry")
 
 
 def test_sample_conditional():

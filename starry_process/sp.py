@@ -7,6 +7,7 @@ from .math import cho_factor, cho_solve, cast, is_tensor
 from .defaults import defaults
 from .visualize import mollweide_transform, latlon_transform, visualize
 from .ops import CheckBoundsOp, AlphaBetaOp, SampleYlmTemporalOp
+from .compat import RandomStream, random_normal
 import theano.tensor as tt
 from theano.ifelse import ifelse
 import numpy as np
@@ -282,9 +283,7 @@ class StarryProcess(object):
         )
 
         # Seed the randomizer
-        self.random = tt.shared_randomstreams.RandomStreams(
-            kwargs.get("seed", 0)
-        )
+        self.random = RandomStream(kwargs.get("seed", 0))
 
     @special_property
     def a(self):
@@ -506,14 +505,16 @@ class StarryProcess(object):
 
         """
         if t is None:
-            u = self.random.normal((self._nylm, nsamples))
+            u = random_normal(self.random, (self._nylm, nsamples))
             return tt.transpose(
                 self.mean_ylm[:, None] + tt.dot(self.cho_cov_ylm, u)
             )
         else:
             cov_t = self._temporal_kernel(t, t, self._tau)
             cho_cov_t = cho_factor(cov_t)
-            U = self.random.normal((nsamples, tt.shape(cov_t)[0], self._nylm))
+            U = random_normal(
+                self.random, (nsamples, tt.shape(cov_t)[0], self._nylm)
+            )
             return SampleYlmTemporalOp()(self._cho_cov_ylm, cho_cov_t, U)
 
     def sample_ylm_conditional(
@@ -629,7 +630,7 @@ class StarryProcess(object):
         cho_ycov = cho_factor(ycov)
 
         # Sample from it
-        u = self.random.normal((self._nylm, nsamples))
+        u = random_normal(self.random, (self._nylm, nsamples))
         return tt.transpose(ymu[:, None] + tt.dot(cho_ycov, u))
 
     def mean(
@@ -754,7 +755,7 @@ class StarryProcess(object):
         """
         if self._marginalize_over_inclination:
             t = cast(t)
-            U = self.random.normal((t.shape[0], nsamples))
+            U = random_normal(self.random, (t.shape[0], nsamples))
             cho_cov = cho_factor(
                 self.cov(t, i, p, u) + eps * tt.eye(t.shape[0])
             )

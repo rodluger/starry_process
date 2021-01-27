@@ -1,7 +1,7 @@
 name: JOSS
 on:
   push:
-    branches: [master, joss]
+    branches: [master]
   pull_request:
     branches: [master]
 jobs:
@@ -32,10 +32,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.theano
-          key: tutorials-${{ steps.compiledir.outputs.compiledir }}
+          key: joss-${{ steps.compiledir.outputs.compiledir }}
           restore-keys: |
-            tutorials-${{ steps.compiledir.outputs.compiledir }}
-            tutorials-
+            joss-
       - name: Figures
         shell: bash -l {0}
         run: |
@@ -46,7 +45,11 @@ jobs:
         with:
           journal: joss
           paper-path: joss/paper.md
+      - uses: actions/upload-artifact@v2
+        with:
+          path: joss
       - name: Push
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           git checkout --orphan joss-paper
           git rm --cached -rf .

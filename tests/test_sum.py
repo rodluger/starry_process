@@ -1,6 +1,8 @@
 from starry_process import StarryProcess, gauss2beta
-import starry
 import numpy as np
+import pytest
+
+starry = pytest.importorskip("starry")
 
 
 def test_sample(tol=5):

@@ -1,14 +1,13 @@
 from starry_process.latitude import LatitudeIntegral
 from starry_process.ops import LatitudeIntegralOp
-from starry_process.math import matrix_sqrt
 from starry_process.wigner import R
 from starry_process.defaults import defaults
 import numpy as np
 from scipy.integrate import quad
 from scipy.stats import beta as Beta
 from tqdm import tqdm
-from theano.tests.unittest_tools import verify_grad
 from theano.configparser import change_flags
+import theano.tensor as tt
 
 
 def test_latitude(
@@ -108,21 +107,23 @@ def test_latitude_grad(
         beta = np.exp(b * (b2 - b1) + b1)
 
         # d/dq
-        verify_grad(
+        tt.verify_grad(
             lambda alpha, beta: op(alpha, beta)[0],
             (alpha, beta),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,
             eps=eps,
+            rng=np.random,
         )
 
         # d/dQ
-        verify_grad(
+        tt.verify_grad(
             lambda alpha, beta: op(alpha, beta)[3],
             (alpha, beta),
             n_tests=1,
             abs_tol=abs_tol,
             rel_tol=rel_tol,
             eps=eps,
+            rng=np.random,
         )

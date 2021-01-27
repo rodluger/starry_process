@@ -1,6 +1,5 @@
 import pytest
 import theano
-import starry
 
 
 @pytest.fixture(autouse=True)
@@ -11,5 +10,10 @@ def theano_setup(*args):
 
 @pytest.fixture(autouse=True)
 def starry_setup(*args):
-    starry.config.lazy = False
+    try:
+        import starry
+    except ImportError:
+        pass
+    else:
+        starry.config.lazy = False
     yield
