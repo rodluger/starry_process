@@ -20,6 +20,7 @@ def run(
     plot_inclination_pdf=True,
     ncols=10,
     clip=False,
+    fail_on_kwargs_mismatch=True,
     **kwargs,
 ):
     if not os.path.exists(path):
@@ -34,9 +35,11 @@ def run(
     else:
         input_kwargs = defaults.update_with_defaults(**kwargs)
         saved_kwargs = json.load(open(os.path.join(path, "kwargs.json"), "r"))
-        assert (
-            input_kwargs == saved_kwargs
-        ), "Input kwargs don't match saved kwargs for this run."
+        if not (input_kwargs == saved_kwargs):
+            if fail_on_kwargs_mismatch:
+                raise ValueError(
+                    "Input kwargs don't match saved kwargs for this run."
+                )
         kwargs = saved_kwargs
 
     # Generate
