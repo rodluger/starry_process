@@ -2,12 +2,9 @@ name: Tests
 
 on:
   push:
-    branches:
-      - master
-      - theano-compat
+    branches: [master]
   pull_request:
-    branches:
-      - master
+    branches: [master]
 
 jobs:
   tests:
