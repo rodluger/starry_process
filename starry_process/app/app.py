@@ -731,7 +731,7 @@ class Application(object):
         self.gp.random.seed(238)
         self.sample_function = theano.function(
             [r, a, b, c, n],
-            [self.gp.sample_ylm(self.nmaps)],
+            [self.gp.sample_ylm(nsamples=self.nmaps)],
             no_default_updates=True,
         )
         self._compiled = True

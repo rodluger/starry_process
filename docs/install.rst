@@ -1,6 +1,16 @@
 Installation
 ============
 
+Stable version
+--------------
+
+Install the most recent stable version using :py:obj:`pip`:
+
+.. code-block:: bash
+
+    pip install starry_process
+
+
 Development version
 -------------------
 
