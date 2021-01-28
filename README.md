@@ -1,11 +1,14 @@
 <p align="center">
   <img width="450" src="starry_process.gif"/>
   <br/>
-  <a href="https://dev.azure.com/rodluger/starry_process/_build">
-    <img src="https://dev.azure.com/rodluger/starry_process/_apis/build/status/rodluger.starry_process?branchName=master"/>
+  <a href="https://github.com/rodluger/starry_process/actions?query=workflow%3Atests">
+    <img src="https://github.com/rodluger/starry_process/workflows/tests/badge.svg"/>
   </a>
-  <a href="https://luger.dev/starry_process">
-    <img src="https://img.shields.io/badge/read-the_docs-orange.svg?style=flat"/>
+  <a href="https://github.com/rodluger/starry_process/actions?query=workflow%3Adocs">
+    <img src="https://github.com/rodluger/starry_process/workflows/docs/badge.svg"/>
+  </a>
+  <a href="https://github.com/rodluger/starry_process/actions?query=workflow%3Ajoss%20paper">
+    <img src="https://github.com/rodluger/starry_process/workflows/joss%20paper/badge.svg"/>
   </a>
   <br/>
   <a href="https://github.com/rodluger/starry_process/raw/joss-paper/joss/paper.pdf">
