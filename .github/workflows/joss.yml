@@ -1,4 +1,4 @@
-name: Documentation
+name: JOSS
 
 on:
   push:
