@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="450" src="starry_process.gif"/>
+  <img width="450" src="https://raw.githubusercontent.com/rodluger/starry_process/master/starry_process.gif"/>
   <br/>
   <a href="https://github.com/rodluger/starry_process/actions?query=workflow%3Atests">
     <img src="https://github.com/rodluger/starry_process/workflows/tests/badge.svg"/>
