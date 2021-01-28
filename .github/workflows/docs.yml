@@ -61,7 +61,7 @@ jobs:
         shell: bash -l {0}
         run: |
           python docs/generate_readme_plots.py
-          mv docs/samples_*.png docs/_build/html/_images
+          mv samples_*.png docs/_build/html/_images
 
       - name: Push
         if: ${{ github.event_name != 'pull_request' }}
