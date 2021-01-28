@@ -4,15 +4,15 @@
   <a href="https://github.com/rodluger/starry_process/actions?query=workflow%3Atests">
     <img src="https://github.com/rodluger/starry_process/workflows/tests/badge.svg"/>
   </a>
-  <a href="https://github.com/rodluger/starry_process/actions?query=workflow%3Adocs">
+  <a href="https://luger.dev/starry_process">
     <img src="https://github.com/rodluger/starry_process/workflows/docs/badge.svg"/>
   </a>
-  <a href="https://github.com/rodluger/starry_process/actions?query=workflow%3Ajoss%20paper">
+  <a href="https://github.com/rodluger/starry_process/raw/joss-paper/joss/paper.pdf">
     <img src="https://github.com/rodluger/starry_process/workflows/joss%20paper/badge.svg"/>
   </a>
   <br/>
-  <a href="https://github.com/rodluger/starry_process/raw/joss-paper/joss/paper.pdf">
-    <img src="https://img.shields.io/badge/read-joss_paper-blue.svg?style=flat"/>
+  <a href="http://starry-process.flatironinstitute.org">
+    <img src="https://img.shields.io/badge/web-app.svg?style=flat"/>
   </a>
   <a href="https://github.com/rodluger/mapping_stellar_surfaces/raw/paper1-pdf/ms.pdf">
     <img src="https://img.shields.io/badge/read-paper_1-blue.svg?style=flat"/>
