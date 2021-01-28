@@ -6,72 +6,41 @@ on:
       - published
 
 jobs:
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-18.04, windows-latest, macos-latest]
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-          fetch-depth: 0
 
-      - uses: actions/setup-python@v2
-        name: Install Python
-        with:
-          python-version: "3.7"
-
-      - uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Install cibuildwheel
-        run: |
-          python -m pip install cibuildwheel==1.5.1
-      - name: Build wheels on Windows
-        if: runner.os == 'Windows'
-        run: python -m cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_BUILD: "cp3?-win_amd64"
-          DISTUTILS_USE_SDK: 1
-          MSSdk: 1
-
-      - name: Build wheels on Mac and Linux
-        if: runner.os != 'Windows'
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_BUILD: "cp3?-*"
-          CIBW_SKIP: "*-manylinux_i686"
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-
-      - uses: actions/upload-artifact@v2
-        with:
-          path: ./wheelhouse/*.whl
-
-  build_sdist:
+  build:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          submodules: true
-          fetch-depth: 0
 
       - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: "3.7"
+          python-version: "3.8"
 
-      - name: Build sdist
-        run: python setup.py sdist
+      - name: Build
+        run: |
+          python -m pip install -U pip pep517 twine setuptools_scm
+          python -m pep517.build .
+
+      - name: Test the sdist
+        run: |
+          python -m venv venv-sdist
+          venv-sdist/bin/python -m pip install dist/starry_process*.tar.gz
+          venv-sdist/bin/python -c "import starry_process;print(starry_process.__version__)"
+
+      - name: Test the wheel
+        run: |
+          python -m venv venv-wheel
+          venv-wheel/bin/python -m pip install dist/starry_process*.whl
+          venv-wheel/bin/python -c "import starry_process;print(starry_process.__version__)"
 
       - uses: actions/upload-artifact@v2
         with:
-          path: dist/*.tar.gz
+          path: dist/*
 
   upload_pypi:
-    needs: [build_wheels, build_sdist]
+    needs: [build]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:
