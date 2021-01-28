@@ -1009,8 +1009,8 @@ class StarryProcess(object):
                 as ``sample_ylm`` can thus be directly passed to this method.
             t (vector): The time array in arbitrary units.
             i (scalar, optional): The inclination of the star in degrees.
-                Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
-                is set, this argument is ignored.
+                Default is %%defaults["i"]%%. This option is accepted even
+                if ``marginalize_over_inclination`` is ``True``.
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
             u (vector, optional): The limb darkening coefficients for the
