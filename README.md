@@ -12,7 +12,7 @@
   </a>
   <br/>
   <a href="http://starry-process.flatironinstitute.org">
-    <img src="https://img.shields.io/badge/web-app.svg?style=flat"/>
+    <img src="https://img.shields.io/badge/web_app.svg?style=flat&color=orange"/>
   </a>
   <a href="https://github.com/rodluger/mapping_stellar_surfaces/raw/paper1-pdf/ms.pdf">
     <img src="https://img.shields.io/badge/read-paper_1-blue.svg?style=flat"/>
