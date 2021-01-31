@@ -5,9 +5,9 @@ on:
       - main
   pull_request:
     branches:
-  release:
-    types:
-      - published
+  #release:
+  #  types:
+  #    - published
 
 jobs:
   notebooks:
