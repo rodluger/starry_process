@@ -61,12 +61,6 @@ jobs:
           cd docs/notebooks
           for f in *.ipynb; do jupyter nbconvert --to notebook --execute $f --output $f; done
 
-      - name: Generate plots for README
-        shell: bash -l {0}
-        run: |
-          python docs/generate_readme_plots.py
-          mv samples_*.png docs/notebooks
-
       - uses: actions/upload-artifact@v2
         with:
           name: notebooks-for-${{ github.sha }}

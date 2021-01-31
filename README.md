@@ -79,7 +79,7 @@ flux = sp.flux(y, t, i=60).eval()
 plt.plot(t, flux)
 ```
 
-<img src="https://github.com/rodluger/starry_process/raw/gh-pages/_images/samples_0.png"/>
+<img src="https://raw.githubusercontent.com/rodluger/starry_process/master/docs/samples_0.png"/>
 
 Same as above, but for high-latitude spots:
 
@@ -87,7 +87,7 @@ Same as above, but for high-latitude spots:
 sp = StarryProcess(r=10, mu=0, sigma=10, c=0.1, n=10)
 ```
 
-<img src="https://github.com/rodluger/starry_process/raw/gh-pages/_images/samples_1.png"/>
+<img src="https://raw.githubusercontent.com/rodluger/starry_process/master/docs/samples_1.png"/>
 
 Large equatorial spots:
 
@@ -95,7 +95,7 @@ Large equatorial spots:
 sp = StarryProcess(r=30, mu=0, sigma=10, c=0.1, n=10)
 ```
 
-<img src="https://github.com/rodluger/starry_process/raw/gh-pages/_images/samples_2.png"/>
+<img src="https://raw.githubusercontent.com/rodluger/starry_process/master/docs/samples_2.png"/>
 
 Small, approximately isotropic spots:
 
@@ -103,7 +103,7 @@ Small, approximately isotropic spots:
 sp = StarryProcess(r=10, mu=0, sigma=40, c=0.1, n=10)
 ```
 
-<img src="https://github.com/rodluger/starry_process/raw/gh-pages/_images/samples_3.png"/>
+<img src="https://raw.githubusercontent.com/rodluger/starry_process/master/docs/samples_3.png"/>
 
 For more information check out the full
 [Quickstart tutorial](https://luger.dev/starry_process/notebooks/Quickstart.html) and
