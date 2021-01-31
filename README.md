@@ -57,6 +57,9 @@ from starry_process import StarryProcess
 Draw samples from a Gaussian process with small mid-latitude spots:
 
 ```python
+import numpy as np
+import matplotlib.pyplot as plt
+
 # Instantiate the GP
 sp = StarryProcess(
   r=10,               # spot radius in degrees
@@ -67,7 +70,7 @@ sp = StarryProcess(
 )
 
 # Draw & visualize a spherical harmonic sample
-y = sp.draw_ylm().eval()
+y = sp.sample_ylm().eval()
 sp.visualize(y)
 
 # Compute & plot the flux at some inclination
