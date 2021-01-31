@@ -4,8 +4,8 @@
   <a href="https://github.com/rodluger/starry_process/actions?query=workflow%3Atests">
     <img src="https://github.com/rodluger/starry_process/workflows/tests/badge.svg"/>
   </a>
-  <a href="https://luger.dev/starry_process">
-    <img src="https://github.com/rodluger/starry_process/workflows/docs/badge.svg"/>
+  <a href='https://starry-process.readthedocs.io/en/latest/?badge=latest'>
+    <img src='https://readthedocs.org/projects/starry-process/badge/?version=latest' alt='Documentation Status' />
   </a>
   <a href="https://github.com/rodluger/starry_process/raw/joss-paper/joss/paper.pdf">
     <img src="https://github.com/rodluger/starry_process/workflows/joss%20paper/badge.svg"/>
