@@ -36,6 +36,19 @@ setup(
             "pytest-env",
             "corner",
         ],
+        "docs": [
+            "sphinx>=1.7.5",
+            "pandoc",
+            "jupyter",
+            "jupytext",
+            "ipywidgets",
+            "nbformat",
+            "nbconvert",
+            "corner",
+            "emcee",
+            "rtds_action",
+            "nbsphinx",
+        ],
     },
     entry_points={
         "console_scripts": [
