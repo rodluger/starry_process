@@ -58,24 +58,19 @@ jobs:
       - name: Execute notebooks
         shell: bash -l {0}
         run: |
-          jupyter nbconvert --to notebook --execute docs/notebooks/*.ipynb
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: notebooks-for-${{ github.sha }}
-          path: docs/notebooks
+          cd docs/notebooks
+          for f in *.ipynb; do jupyter nbconvert --to notebook --execute $f --output $f; done
 
       - name: Generate plots for README
         shell: bash -l {0}
         run: |
           python docs/generate_readme_plots.py
-          mkdir readme-figures
-          mv samples_*.png readme-figures/
+          mv samples_*.png docs/notebooks
 
       - uses: actions/upload-artifact@v2
         with:
-          name: readme-figures-for-${{ github.sha }}
-          path: readme-figures
+          name: notebooks-for-${{ github.sha }}
+          path: docs/notebooks
 
       - name: Trigger RTDs build
         uses: dfm/rtds-action@v1.0.0
