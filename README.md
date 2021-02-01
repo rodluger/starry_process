@@ -44,7 +44,7 @@ and the inclination (or marginalize over the inclination if it is not known).
 The code is written in Python and relies on the
 [Theano package](https://theano-pymc.readthedocs.io/en/stable/index.html),
 so a little familiarity with that is recommended. Check out the crash
-course [here](https://luger.dev/starry_process/notebooks/Quickstart.html#Compiling-theano-functions).
+course [here](https://starry-process.readthedocs.io/en/latest/notebooks/Quickstart/#Compiling-theano-functions).
 
 # Quickstart
 
@@ -106,8 +106,8 @@ sp = StarryProcess(r=10, mu=0, sigma=40, c=0.1, n=10)
 <img src="https://raw.githubusercontent.com/rodluger/starry_process/master/docs/samples_3.png"/>
 
 For more information check out the full
-[Quickstart tutorial](https://luger.dev/starry_process/notebooks/Quickstart.html) and
-the complete [documentation](https://luger.dev).
+[Quickstart tutorial](https://starry-process.readthedocs.io/en/latest/notebooks/Quickstart) and
+the complete [documentation](https://starry-process.readthedocs.io/en/latest).
 
 # References & Attribution
 
