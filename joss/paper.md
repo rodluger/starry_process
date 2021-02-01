@@ -78,8 +78,8 @@ We implement our interpretable GP in the user-friendly `Python`
 package `starry_process`, which can be installed via `pip` or from source on
 [GitHub](https://github.com/rodluger/starry_process). The code is thoroughly
 [unit-tested](https://github.com/rodluger/starry_process/tree/master/tests)
-and [well documented](https://luger.dev/starry_process), with
-[examples](https://luger.dev/starry_process/examples.html)
+and [well documented](https://starry_process.readthedocs.io), with
+[examples](https://starry-process.readthedocs.io/en/latest/examples)
 on how to use the GP in custom
 inference problems. As discussed in the associated AAS Journals publication
 [@PaperII],
