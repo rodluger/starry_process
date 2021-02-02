@@ -61,10 +61,7 @@ jobs:
       - name: TeX
         uses: docker://openjournals/paperdraft:latest
         with:
-          args:
-            - joss/paper.md
-            - "--to=latex"
-            - "--output=paper.tex"
+          args: joss/paper.md --to=latex --output=paper.tex
         env:
           GIT_SHA: $GITHUB_SHA
           JOURNAL: joss
