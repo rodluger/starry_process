@@ -82,8 +82,8 @@ We implement our interpretable GP in the user-friendly `Python`
 package `starry_process`, which can be installed via `pip` or from source on
 [GitHub](https://github.com/rodluger/starry_process). The code is thoroughly
 [unit-tested](https://github.com/rodluger/starry_process/tree/master/tests)
-and [well documented](https://luger.dev/starry_process), with
-[examples](https://luger.dev/starry_process/examples.html)
+and [well documented](https://starry_process.readthedocs.io), with
+[examples](https://starry-process.readthedocs.io/en/latest/examples)
 on how to use the GP in custom
 inference problems. As discussed in the associated AAS Journals publication
 [@PaperII],
@@ -113,7 +113,8 @@ Figure \ref{fig:speed} shows the computational scaling of the `Python`
 implementation of the algorithm for the case where we condition the GP on a
 specific value of the inclination (blue) and the case where we marginalize over
 inclination (orange). Both curves show the time in seconds to compute the
-likelihood (averaged over many trials) as a function of the number of points $K$
+likelihood (averaged over many trials to obtain a robust estimate) 
+as a function of the number of points $K$
 in a single light curve. For $K \lesssim 100$, the computation time is constant
 at $10-30$ ms for both algorithms. This is the approximate time (on a typical
 modern laptop) taken to compute the GP covariance matrix given a set of
