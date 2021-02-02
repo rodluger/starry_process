@@ -66,7 +66,11 @@ ill-posed and computationally intractable, but in the associated AAS Journals
 publication submitted in parallel to this paper [@PaperII], we derive an interpretable
 effective Gaussian Process (GP) model for this problem that enables robust
 probabilistic characterization of stellar surfaces using photometric time series
-observations. Implementation of this model requires the efficient evaluation of
+observations.
+Our model builds on previous work by @Perger2020 on semi-interpretable
+Gaussian processes for stellar timeseries data and by @Morris2020b
+on approximate inference for large ensembles of stellar light curves.
+Implementation of our model requires the efficient evaluation of
 a set of special functions and recursion relations that are not readily
 available in existing probabilistic programming frameworks. The `starry_process`
 package provides the necessary elements to perform this analysis with existing
