@@ -124,34 +124,54 @@ If you make use of this code in your research, please cite
 
 ```
 @article{Luger2021a,
-  author  = {{Luger}, Rodrigo and {Foreman-Mackey}, Daniel and
-                  {Hedges}, Christina},
-  title   = {{Mapping stellar surfaces I: Degeneracies in the rotational light curve problem}},
-  journal = {in preparation},
-  year    = {2021},
-  url     = {https://github.com/rodluger/mapping_stellar_surfaces/raw/paper1-pdf/ms.pdf}
+  author        = {{Luger}, Rodrigo and {Foreman-Mackey}, Daniel and {Hedges}, Christina and {Hogg}, David W.},
+  title         = {{Mapping stellar surfaces I: Degeneracies in the rotational light curve problem}},
+  journal       = {arXiv e-prints},
+  keywords      = {Astrophysics - Solar and Stellar Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics},
+  year          = 2021,
+  month         = jan,
+  eid           = {arXiv:2102.00007},
+  pages         = {arXiv:2102.00007},
+  archiveprefix = {arXiv},
+  eprint        = {2102.00007},
+  primaryclass  = {astro-ph.SR},
+  adsurl        = {https://ui.adsabs.harvard.edu/abs/2021arXiv210200007L},
+  adsnote       = {Provided by the SAO/NASA Astrophysics Data System}
 }
 ```
 
 ```
 @article{Luger2021b,
-  author  = {{Luger}, Rodrigo and {Foreman-Mackey}, Daniel and
-                  {Hedges}, Christina},
-  title   = {{Mapping stellar surfaces II: An interpretable Gaussian process model for light curves}},
-  journal = {in preparation},
-  year    = {2021},
-  url     = {https://github.com/rodluger/mapping_stellar_surfaces/raw/paper2-pdf/ms.pdf}
+  author        = {{Luger}, Rodrigo and {Foreman-Mackey}, Daniel and {Hedges}, Christina},
+  title         = {{Mapping stellar surfaces II: An interpretable Gaussian process model for light curves}},
+  journal       = {arXiv e-prints},
+  keywords      = {Astrophysics - Solar and Stellar Astrophysics, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics},
+  year          = 2021,
+  month         = feb,
+  eid           = {arXiv:2102.01697},
+  pages         = {arXiv:2102.01697},
+  archiveprefix = {arXiv},
+  eprint        = {2102.01697},
+  primaryclass  = {astro-ph.SR},
+  adsurl        = {https://ui.adsabs.harvard.edu/abs/2021arXiv210201697L},
+  adsnote       = {Provided by the SAO/NASA Astrophysics Data System}
 }
 ```
 
 ```
 @article{Luger2021c,
-  author  = {{Luger}, Rodrigo and {Foreman-Mackey}, Daniel and
-                  {Hedges}, Christina},
-  title   = {{starry\_process: Interpretable Gaussian processes for stellar light curves}},
-  journal = {in preparation},
-  year    = {2021},
-  month   = {Jan},
-  url     = {https://github.com/rodluger/starry_process/raw/joss-paper/joss/paper.pdf}
+  author        = {{Luger}, Rodrigo and {Foreman-Mackey}, Daniel and {Hedges}, Christina},
+  title         = {{starry\_process: Interpretable Gaussian processes for stellar light curves}},
+  journal       = {arXiv e-prints},
+  keywords      = {Astrophysics - Solar and Stellar Astrophysics, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics},
+  year          = 2021,
+  month         = feb,
+  eid           = {arXiv:2102.01774},
+  pages         = {arXiv:2102.01774},
+  archiveprefix = {arXiv},
+  eprint        = {2102.01774},
+  primaryclass  = {astro-ph.SR},
+  adsurl        = {https://ui.adsabs.harvard.edu/abs/2021arXiv210201774L},
+  adsnote       = {Provided by the SAO/NASA Astrophysics Data System}
 }
 ```

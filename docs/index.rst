@@ -19,8 +19,10 @@ position, contrast, and number of star spots. The primary application
 of :py:mod:`starry_process` is to model stellar light curves
 with the goal of inferring their spot parameters.
 For more information, check out the
-`JOSS paper <https://github.com/rodluger/starry_process/raw/joss-paper/joss/paper.pdf>`_, the
-`Mapping Stellar Surfaces paper series <https://github.com/rodluger/mapping_stellar_surfaces>`_,
+`JOSS paper <https://ui.adsabs.harvard.edu/abs/2021arXiv210201774L>`_, the
+Mapping Stellar Surfaces paper series
+(`Paper I <https://ui.adsabs.harvard.edu/abs/2021arXiv210200007L>`_,
+`Paper II <https://ui.adsabs.harvard.edu/abs/2021arXiv210201697L>`_),
 as well as this `interactive live demo <http://starry-process.flatironinstitute.org>`_.
 
 
@@ -34,7 +36,7 @@ as well as this `interactive live demo <http://starry-process.flatironinstitute.
     Live demo <http://starry-process.flatironinstitute.org>
     GitHub <https://github.com/rodluger/starry_process>
     Submit an issue <https://github.com/rodluger/starry_process/issues>
-    Read the JOSS paper <https://github.com/rodluger/starry_process/raw/joss-paper/joss/paper.pdf>
+    Read the JOSS paper <https://ui.adsabs.harvard.edu/abs/2021arXiv210201774L>
 
 Indices and tables
 ==================
