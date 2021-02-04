@@ -58,11 +58,21 @@ jobs:
           cd joss/figures
           ls *.py | xargs -n 1 python
 
-      - name: PDF
-        uses: openjournals/openjournals-draft-action@master
+      - name: TeX
+        uses: docker://openjournals/paperdraft:latest
         with:
-          journal: joss
-          paper-path: joss/paper.md
+          args: joss/paper.md --defaults=metadata.yaml --to=latex --output=paper.tex
+        env:
+          GIT_SHA: $GITHUB_SHA
+          JOURNAL: joss
+
+      - name: PDF
+        uses: docker://openjournals/paperdraft:latest
+        with:
+          args: joss/paper.md --defaults=metadata.yaml
+        env:
+          GIT_SHA: $GITHUB_SHA
+          JOURNAL: joss
 
       - uses: actions/upload-artifact@v2
         with:
