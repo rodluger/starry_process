@@ -548,17 +548,26 @@ class StarryProcess(object):
                 may alternatively set the ``baseline_mean`` parameter to
                 reflect that.
                 Note that if the ``normalized`` keyword passed to this class
-                is ``False`` (not recommended for real data), then the flux
+                is ``False``, then the flux
                 should instead be normalized to the true baseline (i.e., the
-                counts one would measure if the star had no spots).
+                counts one would measure if the star had no spots). This is
+                usually not known, so it should be modeled as a latent
+                variable.
             data_cov (scalar, vector, or matrix): The data covariance
                 matrix. This may be a scalar equal to the (homoscedastic)
                 variance of the data, a vector equal to the variance of each
                 observation, or a matrix equal to the full covariance of the
                 dataset.
             i (scalar, optional): The inclination of the star in degrees.
-                Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
-                is set, this argument is ignored.
+                Default is %%defaults["i"]%%. This option is accepted even
+                if ``marginalize_over_inclination`` is ``True``. If the
+                inclination is not known, draw it from an isotropic prior
+                by running, e.g.,
+
+                    .. code-block:: python
+
+                        i = np.arccos(np.random.random()) * 180 / np.pi
+
             p (scalar, optional): The rotational period of the star in the same
                 units as ``t``. Default is %%defaults["p"]%%.
             u (vector, optional): The limb darkening coefficients for the
@@ -578,7 +587,7 @@ class StarryProcess(object):
         Returns:
             An array of samples of shape ``(nsamples, nylm)``.
 
-        .. note ::
+        .. note::
 
             This method is not implemented for ``normalized``
             or time-variable light curves. In those cases, the
@@ -613,66 +622,24 @@ class StarryProcess(object):
         # `baseline_var` to *every* entry in the covariance matrix
         C += baseline_var
 
+        # Compute C^-1 . A
         cho_C = cho_factor(C)
+        A = self._flux.design_matrix(t, i, p, u)
+        CInvA = cho_solve(cho_C, A)
 
-        if self._marginalize_over_inclination:
+        # Compute W = A^T . C^-1 . A + L^-1
+        W = tt.dot(tt.transpose(A), CInvA) + self._LInv
 
-            # Sample the inclination
-            i = (
-                tt.arccos(random_uniform(self.random, (nsamples,)))
-                * 180
-                / np.pi
-            )
+        # Compute the conditional mean and covariance
+        cho_W = cho_factor(W)
+        M = cho_solve(cho_W, tt.transpose(CInvA))
+        ymu = tt.dot(M, flux - baseline_mean) + cho_solve(cho_W, self._LInvmu)
+        ycov = cho_solve(cho_W, tt.eye(cho_W.shape[0]))
+        cho_ycov = cho_factor(ycov)
 
-            # Random normal variables
-            u = random_normal(self.random, (self._nylm, nsamples))
-
-            # TODO: This for loop is probably VERY inefficient!
-            samples = [None for j in range(nsamples)]
-            for j in range(nsamples):
-
-                # Compute C^-1 . A
-                A = self._flux.design_matrix(t, i[j], p, u)
-                CInvA = cho_solve(cho_C, A)
-
-                # Compute W = A^T . C^-1 . A + L^-1
-                W = tt.dot(tt.transpose(A), CInvA) + self._LInv
-
-                # Compute the conditional mean and covariance
-                cho_W = cho_factor(W)
-                M = cho_solve(cho_W, tt.transpose(CInvA))
-                ymu = tt.dot(M, flux - baseline_mean) + cho_solve(
-                    cho_W, self._LInvmu
-                )
-                ycov = cho_solve(cho_W, tt.eye(cho_W.shape[0]))
-                cho_ycov = cho_factor(ycov)
-
-                # Sample from it
-                samples[j] = tt.transpose(ymu + tt.dot(cho_ycov, u[:, j]))
-
-            return tt.as_tensor_variable(samples)
-
-        else:
-
-            # Compute C^-1 . A
-            A = self._flux.design_matrix(t, i, p, u)
-            CInvA = cho_solve(cho_C, A)
-
-            # Compute W = A^T . C^-1 . A + L^-1
-            W = tt.dot(tt.transpose(A), CInvA) + self._LInv
-
-            # Compute the conditional mean and covariance
-            cho_W = cho_factor(W)
-            M = cho_solve(cho_W, tt.transpose(CInvA))
-            ymu = tt.dot(M, flux - baseline_mean) + cho_solve(
-                cho_W, self._LInvmu
-            )
-            ycov = cho_solve(cho_W, tt.eye(cho_W.shape[0]))
-            cho_ycov = cho_factor(ycov)
-
-            # Sample from it
-            u = random_normal(self.random, (self._nylm, nsamples))
-            return tt.transpose(ymu[:, None] + tt.dot(cho_ycov, u))
+        # Sample from it
+        u = random_normal(self.random, (self._nylm, nsamples))
+        return tt.transpose(ymu[:, None] + tt.dot(cho_ycov, u))
 
     def mean(
         self,
@@ -806,7 +773,7 @@ class StarryProcess(object):
                 tt.dot(self._flux.design_matrix(t, i, p, u), tt.transpose(ylm))
             )
 
-    def sample_conditional(
+    def predict(
         self,
         t,
         flux,
@@ -817,11 +784,9 @@ class StarryProcess(object):
         u=defaults["u"][: defaults["udeg"]],
         baseline_mean=defaults["baseline_mean"],
         baseline_var=defaults["baseline_var"],
-        nsamples=1,
-        eps=defaults["eps"],
     ):
         """
-        Draw samples from the distribution over light curves
+        Return the mean and covariance of the distribution over light curves
         conditioned on observed flux values.
 
         Args:
@@ -841,17 +806,19 @@ class StarryProcess(object):
                 may alternatively set the ``baseline_mean`` parameter to
                 reflect that.
                 Note that if the ``normalized`` keyword passed to this class
-                is ``False`` (not recommended for real data), then the flux
+                is ``False``, then the flux
                 should instead be normalized to the true baseline (i.e., the
-                counts one would measure if the star had no spots).
+                counts one would measure if the star had no spots). This
+                is usually not known, so it should be modeled as a latent
+                variable.
             data_cov (scalar, vector, or matrix): The data covariance
                 matrix. This may be a scalar equal to the (homoscedastic)
                 variance of the data, a vector equal to the variance of each
                 observation, or a matrix equal to the full covariance of the
                 dataset.
-            t_sample (vector, optional): The time array on which to sample
-                the flux distribution. If ``None`` (default), returns samples
-                evaluated on the input time array ``t``.
+            t_sample (vector, optional): The time array on which to compute
+                the flux distribution. If ``None`` (default), evaluates the
+                mean and covariance on the input time array ``t``.
             i (scalar, optional): The inclination of the star in degrees.
                 Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
                 is set, this argument is ignored.
@@ -869,19 +836,16 @@ class StarryProcess(object):
                 matrix specifying the covariance due to additional correlated
                 noise unrelated to star spot variability. Default is
                 %%defaults["baseline_var"]%%.
-            nsamples (int, optional): The number of samples to draw. Default 1.
-            eps (float, optional): A small number added to the diagonal of the
-                flux covariance matrix for extra stability.
-                If this method returns ``NaN`` values, try
-                increasing this value. Default is %%defaults["eps"]%%.
 
         Returns:
-            An array of samples of shape ``(nsamples, ntimes)``.
 
-        .. note ::
+            The mean vector and covariance matrix of the flux
+            distribution conditioned on the observations.
+
+        .. note::
 
             This method is not yet implemented for ``normalized`` light curves.
-            We recommend not normalizing the light curve and fitting for
+            We recommend not normalizing the light curve and instead fitting for
             a latent amplitude with ``normalize = False``.
 
         """
@@ -945,12 +909,105 @@ class StarryProcess(object):
         K = K_ts_ts - tt.dot(
             K_ts_t, cho_solve(cho_K_t_t, tt.transpose(K_ts_t))
         )
+        return mu, K
+
+    def sample_conditional(
+        self,
+        t,
+        flux,
+        data_cov,
+        t_sample=None,
+        i=defaults["i"],
+        p=defaults["p"],
+        u=defaults["u"][: defaults["udeg"]],
+        baseline_mean=defaults["baseline_mean"],
+        baseline_var=defaults["baseline_var"],
+        nsamples=1,
+        eps=defaults["eps"],
+    ):
+        """
+        Draw samples from the distribution over light curves
+        conditioned on observed flux values.
+
+        Args:
+            t (vector): The time array in arbitrary units at which the flux is
+                measured.
+            flux (vector): The array of observed flux values in arbitrary
+                units. In general, the flux should be either mean- or
+                median-normalized with zero baseline. If the raw photometry
+                is measured in ``counts``, users should compute the ``flux``
+                from
+
+                    .. code-block:: python
+
+                        flux = counts / np.mean(counts) - 1
+
+                If the baseline is something else (such as unity), users
+                may alternatively set the ``baseline_mean`` parameter to
+                reflect that.
+                Note that if the ``normalized`` keyword passed to this class
+                is ``False``, then the flux
+                should instead be normalized to the true baseline (i.e., the
+                counts one would measure if the star had no spots). This is
+                usually not known, so it should be modeled as a latent variable.
+            data_cov (scalar, vector, or matrix): The data covariance
+                matrix. This may be a scalar equal to the (homoscedastic)
+                variance of the data, a vector equal to the variance of each
+                observation, or a matrix equal to the full covariance of the
+                dataset.
+            t_sample (vector, optional): The time array on which to sample
+                the flux distribution. If ``None`` (default), returns samples
+                evaluated on the input time array ``t``.
+            i (scalar, optional): The inclination of the star in degrees.
+                Default is %%defaults["i"]%%. If ``marginalize_over_inclination``
+                is set, this argument is ignored.
+            p (scalar, optional): The rotational period of the star in the same
+                units as ``t``. Default is %%defaults["p"]%%.
+            u (vector, optional): The limb darkening coefficients for the
+                star. Default is %%defaults["u"]%%.
+            baseline_mean (scalar or vector, optional): The flux baseline to
+                subtract when computing the GP likelihood. Default is
+                %%defaults["baseline_mean"]%%.
+            baseline_var (scalar or matrix): The variance (square of the
+                uncertainty) on the true value of the baseline. This is added
+                to every element of the GP covariance matrix in order to
+                marginalize over the baseline uncertainty. This may also be a
+                matrix specifying the covariance due to additional correlated
+                noise unrelated to star spot variability. Default is
+                %%defaults["baseline_var"]%%.
+            nsamples (int, optional): The number of samples to draw. Default 1.
+            eps (float, optional): A small number added to the diagonal of the
+                flux covariance matrix for extra stability.
+                If this method returns ``NaN`` values, try
+                increasing this value. Default is %%defaults["eps"]%%.
+
+        Returns:
+            An array of samples of shape ``(nsamples, ntimes)``.
+
+        .. note::
+
+            This method is not yet implemented for ``normalized`` light curves.
+            We recommend not normalizing the light curve and instead fitting for
+            a latent amplitude with ``normalize = False``.
+
+        """
+        # Predict
+        mu, K = self.predict(
+            t,
+            flux,
+            data_cov,
+            t_sample=t_sample,
+            i=i,
+            p=p,
+            u=u,
+            baseline_mean=baseline_mean,
+            baseline_var=baseline_var,
+        )
         cho_K = cho_factor(K + eps * tt.eye(tt.shape(K)[0]))
 
         # Draw samples
         U = random_normal(self.random, (ts.shape[0], nsamples))
         samples = tt.transpose(mu[:, None] + tt.dot(cho_K, U))
-
         return samples
 
     def log_jac(self):
@@ -1031,9 +1088,11 @@ class StarryProcess(object):
                 may alternatively set the ``baseline_mean`` parameter to
                 reflect that.
                 Note that if the ``normalized`` keyword passed to this class
-                is ``False`` (not recommended for real data), then the flux
+                is ``False``, then the flux
                 should instead be normalized to the true baseline (i.e., the
-                counts one would measure if the star had no spots).
+                counts one would measure if the star had no spots). This
+                quantity is typically not known, so it should be treated as
+                a latent variable of the model.
                 Note, finally, that ``flux`` may also be a matrix, in which
                 case each of its ``M`` rows is assumed to be the light curve
                 of a different star whose periods, limb darkening coefficients,
