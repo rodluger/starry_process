@@ -9,6 +9,7 @@ __all__ = [
     "Node",
     "RandomStream",
     "random_normal",
+    "random_uniform",
 ]
 
 try:
@@ -27,6 +28,9 @@ try:
     def random_normal(rng, shape):
         return rng.normal(size=shape)
 
+    def random_uniform(rng, shape):
+        return rng.uniform(size=shape)
+
 
 except ImportError:
     from theano.tensor.shared_randomstreams import (
@@ -35,3 +39,6 @@ except ImportError:
 
     def random_normal(rng, shape):
         return rng.normal(shape)
+
+    def random_uniform(rng, shape):
+        return rng.uniform(shape)
