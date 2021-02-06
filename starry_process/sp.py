@@ -715,17 +715,17 @@ class StarryProcess(object):
         j = tt.ones((K, 1))
         m = tt.mean(Sig)
         q = tt.dot(Sig, j) / (K * m)
-        z = m / mu ** 2
+        self._z = m / mu ** 2
         p = j - q
-        alpha, beta, _, _ = self._get_alpha_beta(z)
+        alpha, beta, _, _ = self._get_alpha_beta(self._z)
 
         # We're done
         ppT = tt.dot(p, tt.transpose(p))
         qqT = tt.dot(q, tt.transpose(q))
-        normSig = (alpha / mu ** 2) * Sig + z * (
+        normSig = (alpha / mu ** 2) * Sig + self._z * (
             (alpha + beta) * ppT - alpha * qqT
         )
-        return ifelse(tt.gt(z, self._normzmax), Sig * np.inf, normSig)
+        return normSig
 
     def sample(
         self,
@@ -1181,8 +1181,20 @@ class StarryProcess(object):
         lnlike -= M * tt.sum(tt.log(tt.diag(cho_gp_cov)))
         lnlike -= 0.5 * K * M * tt.log(2 * np.pi)
 
-        # NANs --> -inf
-        return ifelse(tt.isnan(lnlike), -np.inf, lnlike)
+        # If we're modeling a normalized process, return -np.inf log likelihood
+        # if we're outside the regime where the GP is a good approximation
+        # to normalized data.
+        if self._normalized:
+            lnlike = tt.switch(
+                tt.gt(self._z, self._normzmax),
+                -np.inf * tt.ones_like(lnlike),
+                lnlike,
+            )
+
+        # Ensure that NANs get corrected to -inf
+        return tt.switch(
+            tt.isnan(lnlike), -np.inf * tt.ones_like(lnlike), lnlike
+        )
 
     def __add__(self, other):
         return StarryProcessSum(self, other)

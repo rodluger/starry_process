@@ -4,6 +4,8 @@ import numpy as np
 from tqdm import tqdm
 import os
 
+starry.config.quiet = True
+
 
 class Star(object):
     def __init__(
@@ -177,6 +179,6 @@ def generate(**kwargs):
 
     # Return a dict
     data = dict(
-        t=t, flux0=flux0, flux=flux, ferr=ferr, period=period, incs=incs, y=y,
+        t=t, flux0=flux0, flux=flux, ferr=ferr, period=period, incs=incs, y=y
     )
     return data
