@@ -758,20 +758,12 @@ class StarryProcess(object):
             An array of samples of shape ``(nsamples, ntimes)``.
 
         """
-        if self._marginalize_over_inclination:
-            t = cast(t)
-            U = random_normal(self.random, (t.shape[0], nsamples))
-            cho_cov = cho_factor(
-                self.cov(t, i, p, u) + eps * tt.eye(t.shape[0])
-            )
-            return tt.transpose(
-                self.mean(t, i, p, u)[:, None] + tt.dot(cho_cov, U)
-            )
-        else:
-            ylm = self.sample_ylm(nsamples=nsamples)
-            return tt.transpose(
-                tt.dot(self._flux.design_matrix(t, i, p, u), tt.transpose(ylm))
-            )
+        t = cast(t)
+        U = random_normal(self.random, (t.shape[0], nsamples))
+        cho_cov = cho_factor(self.cov(t, i, p, u) + eps * tt.eye(t.shape[0]))
+        return tt.transpose(
+            self.mean(t, i, p, u)[:, None] + tt.dot(cho_cov, U)
+        )
 
     def predict(
         self,
