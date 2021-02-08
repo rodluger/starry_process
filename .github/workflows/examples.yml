@@ -51,7 +51,7 @@ jobs:
         run: |
           python -m pip install -U pip
           python -m pip uninstall -y theano  # so that we know which version we're getting
-          python -m pip install ${{ matrix.pymc-version }} ${{ matrix.starry-version }}
+          python -m pip install ${{ matrix.pymc-version }} ${{ matrix.starry-version }} pymc3-ext
           python -m pip install -e ".[docs]"
           python -c 'import theano; print(theano.__version__)'
 

@@ -26,6 +26,7 @@ metadata.json
 starry_process/starry_process_version.py
 scratch/
 tex/figures/data
+*.dev.ipynb
 
 # TeX
 *latexindent*

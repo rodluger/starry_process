@@ -28,7 +28,6 @@ dependencies:
     - nbsphinx>=0.8.0
     - nose>=1.3.7
     - parameterized>=0.8.1
-    - pymc3-ext>=0.0.2
     - pytest>=6.2.1
     - pytest-dependency>=0.5.1
     - pytest-env>=0.6.2
