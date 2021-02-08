@@ -590,10 +590,11 @@ class StarryProcess(object):
         .. note::
 
             This method is not implemented for ``normalized``
-            or time-variable light curves. In those cases, the
+            or time-variable light curves. In the former case, the
             transformation between spherical harmonic coefficients and flux
             is nonlinear, so sampling from the distribution over surfaces
-            must be done numerically.
+            must be done numerically. The latter case may be implemented
+            in the future.
 
         """
         if self._normalized:
