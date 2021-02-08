@@ -16,3 +16,4 @@ an example or tutorial by
    Inferring spot latitudes <notebooks/Latitude.ipynb>
    Modeling time variability <notebooks/TimeVariability.ipynb>
    Using a starry process as a prior  <notebooks/Prior.ipynb>
+   Ensemble analyses <notebooks/Ensemble.ipynb>
