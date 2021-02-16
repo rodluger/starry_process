@@ -22,7 +22,7 @@ mci = MCMCInterface(model=model)
 
 # Generate initial samples (centered at the test point)
 nwalkers = 100
-p0 = mci.get_initial_state(nwalkers=nwalkers)
+p0 = mci.get_initial_state(nwalkers=nwalkers, var=1.0)
 
 # Check that we can compute logp everywhere
 for k in range(nwalkers):
