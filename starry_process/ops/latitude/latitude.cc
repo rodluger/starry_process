@@ -24,7 +24,7 @@ int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
                              PyArrayObject **output3, // Q
                              PyArrayObject **output4, // dQ / dalpha
                              PyArrayObject **output5  // dQ / dbeta
-                             ) {
+) {
 
   using namespace sp::theano;
   using namespace sp::latitude;
@@ -44,8 +44,8 @@ int APPLY_SPECIFIC(latitude)(PyArrayObject *input0,   // alpha
     PyErr_Format(PyExc_ValueError, "beta must be a scalar");
     return 1;
   }
-  DI0 alpha = *alpha_in;
-  DI1 beta = *beta_in;
+  DI0 alpha = *alpha_in > 0.0 ? *alpha_in : 0.0;
+  DI1 beta = *beta_in > 0.0 ? *beta_in : 0.0;
 
   // Allocate the outputs
   int ndim_q = 1;

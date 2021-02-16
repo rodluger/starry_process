@@ -9,12 +9,12 @@ __all__ = ["CheckBoundsOp", "CheckVectorSizeOp"]
 class CheckBoundsOp(Op):
     """"""
 
-    __props__ = ("lower", "upper", "name")
+    __props__ = ("lower", "upper", "name", "tol")
 
-    def __init__(self, lower=-np.inf, upper=np.inf, name=None, inclusive=True):
+    def __init__(self, lower=-np.inf, upper=np.inf, name=None, tol=1e-6):
         self.lower = lower
         self.upper = upper
-        self.inclusive = inclusive
+        self.tol = tol
         if name is None:
             self.name = "parameter"
         else:
@@ -30,38 +30,23 @@ class CheckBoundsOp(Op):
 
     def perform(self, node, inputs, outputs):
         outputs[0][0] = np.array(inputs[0])
-        if self.inclusive:
-            if np.any((inputs[0] < self.lower) | (inputs[0] > self.upper)):
-                low = np.where((inputs[0] < self.lower))[0]
-                high = np.where((inputs[0] > self.upper))[0]
-                if len(low):
-                    value = np.atleast_1d(inputs[0])[low[0]]
-                    sign = "<"
-                    bound = self.lower
-                else:
-                    value = np.atleast_1d(inputs[0])[high[0]]
-                    sign = ">"
-                    bound = self.upper
-                raise ValueError(
-                    "%s out of bounds: %f %s %f"
-                    % (self.name, value, sign, bound)
-                )
-        else:
-            if np.any((inputs[0] <= self.lower) | (inputs[0] >= self.upper)):
-                low = np.where((inputs[0] <= self.lower))[0]
-                high = np.where((inputs[0] >= self.upper))[0]
-                if len(low):
-                    value = np.atleast_1d(inputs[0])[low[0]]
-                    sign = "<="
-                    bound = self.lower
-                else:
-                    value = np.atleast_1d(inputs[0])[high[0]]
-                    sign = ">="
-                    bound = self.upper
-                raise ValueError(
-                    "%s out of bounds: %f %s %f"
-                    % (self.name, value, sign, bound)
-                )
+        if np.any(
+            (inputs[0] < self.lower - self.tol)
+            | (inputs[0] > self.upper + self.tol)
+        ):
+            low = np.where((inputs[0] < self.lower - self.tol))[0]
+            high = np.where((inputs[0] > self.upper + self.tol))[0]
+            if len(low):
+                value = np.atleast_1d(inputs[0])[low[0]]
+                sign = "<="
+                bound = self.lower
+            else:
+                value = np.atleast_1d(inputs[0])[high[0]]
+                sign = ">="
+                bound = self.upper
+            raise ValueError(
+                "%s out of bounds: %f %s %f" % (self.name, value, sign, bound)
+            )
 
     def grad(self, inputs, gradients):
         return [1.0 * gradients[0]]
