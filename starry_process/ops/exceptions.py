@@ -11,7 +11,7 @@ class CheckBoundsOp(Op):
 
     __props__ = ("lower", "upper", "name", "tol")
 
-    def __init__(self, lower=-np.inf, upper=np.inf, name=None, tol=1e-15):
+    def __init__(self, lower=-np.inf, upper=np.inf, name=None, tol=1e-6):
         self.lower = lower
         self.upper = upper
         self.tol = tol
