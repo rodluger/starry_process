@@ -1,13 +1,13 @@
 name: examples
+
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
   release:
     types:
       - published
+  push:
+    paths:
+      - 'docs/notebooks/*.ipynb'
+      - '!docs/notebooks/*.dev.ipynb'
 
 jobs:
   notebooks:
