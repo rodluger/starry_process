@@ -1,10 +1,10 @@
 name: examples
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
+  paths:
+    include:
+      - 'docs/notebooks/*.ipynb'
+    exclude:
+      - 'docs/notebooks/*.dev.ipynb'
   release:
     types:
       - published
