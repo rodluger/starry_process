@@ -1,13 +1,15 @@
 name: examples
+
 on:
-  paths:
-    include:
-      - 'docs/notebooks/*.ipynb'
-    exclude:
-      - 'docs/notebooks/*.dev.ipynb'
   release:
     types:
       - published
+  push:
+    paths:
+      include:
+        - 'docs/notebooks/*.ipynb'
+      exclude:
+        - 'docs/notebooks/*.dev.ipynb'
 
 jobs:
   notebooks:
