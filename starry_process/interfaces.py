@@ -70,7 +70,7 @@ class MCMCInterface:
         return self.mean
 
     def get_initial_state(
-        self, nwalkers=30, var=1.0, check_finite=True, max_tries=100
+        self, nwalkers=30, var=None, check_finite=True, max_tries=100
     ):
         """
         Generate random initial points for sampling.
@@ -78,25 +78,35 @@ class MCMCInterface:
         If the `optimize` method was called beforehand, this method
         returns samples from a multidimensional Gaussian centered on
         the maximum a posteriori (MAP) solution with covariance equal
-        to the inverse of the Hessian matrix at that point. Otherwise,
-        it returns samples from a Gaussian with mean equal to the
+        to the inverse of the Hessian matrix at that point, unless
+        `var` is provided, in which case that is used instead.
+        If the optimizer was not called, this method
+        returns samples from a Gaussian with mean equal to the
         model's test point (`model.test_point`) and variance equal to
         `var`.
 
         Args:
-            var (float, array, or matrix, optional): Variance when sampling
-                from the prior. Default is `1.0`.
+            var (float, array, or matrix, optional): Variance of the
+                multidimensional Gaussian used to draw samples.
+                This quantity is optional if `optimize` was called
+                beforehand, otherwise it must be provided.
+                Default is `None`.
 
         Returns:
             An array of shape `(nwalkers, ndim)` where `ndim`
             is the number of free model parameters.
 
         """
-        if self.mean is not None and self.cov is not None:
-            # User ran `optimize`, so let's sample from
-            # the Laplacian approximation at the MAP point
-            mean = self.mean
-            cov = self.cov
+        if var is None:
+            if self.mean is not None and self.cov is not None:
+                # User ran `optimize`, so let's sample from
+                # the Laplacian approximation at the MAP point
+                mean = self.mean
+                cov = self.cov
+            else:
+                raise ValueError(
+                    "Please provide a variance `var`, or run `optimize` before calling this method."
+                )
         else:
             # We'll just draw from the prior
             mean = self.bij.map(self.start)
