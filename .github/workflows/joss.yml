@@ -2,9 +2,8 @@ name: joss paper
 
 on:
   push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+    branches-ignore:
+      - '**'
 
 jobs:
   tests:
