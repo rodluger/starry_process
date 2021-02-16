@@ -108,8 +108,13 @@ class MCMCInterface:
                     "Please provide a variance `var`, or run `optimize` before calling this method."
                 )
         else:
-            # We'll just draw from the prior
-            mean = self.bij.map(self.start)
+            if self.mean is not None:
+                # User ran `optimize`, so let's sample around
+                # the MAP point
+                mean = self.mean
+            else:
+                # Sample around the test value
+                mean = self.bij.map(self.start)
             cov = var * np.eye(len(mean))
 
         # Sample from the Gaussian
@@ -123,7 +128,7 @@ class MCMCInterface:
                     if n > max_tries:
                         raise ValueError(
                             "Unable to initialize walkers at a point with finite `logp`. "
-                            "Try reducing `var` or re-running `optimize()`."
+                            "Try reducing `var` or running `optimize()`."
                         )
                     p0[k] = p.random.multivariate_normal(mean, cov)
 
