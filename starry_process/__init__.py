@@ -19,6 +19,7 @@ from . import (
     sp,
     ops,
     integrals,
+    interfaces,
     latitude,
     size,
     longitude,
@@ -28,5 +29,6 @@ from . import (
     visualize,
 )
 from .sp import StarryProcess
+from .interfaces import MCMCInterface
 from .latitude import gauss2beta, beta2gauss
 from .temporal import *
