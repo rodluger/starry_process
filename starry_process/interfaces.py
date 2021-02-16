@@ -18,12 +18,12 @@ __all__ = ["MCMCInterface"]
 
 class MCMCInterface:
     """
-    An interface for using a `pymc3` model with a plain vanilla MCMC sampler.
+    An interface for using a ``pymc3`` model with a plain vanilla MCMC sampler.
 
 
 
     Args:
-        model (optional): The `pymc3` model. If `None` (default), uses the
+        model (optional): The ``pymc3`` model. If ``None`` (default), uses the
             current model on the stack.
 
     """
@@ -51,10 +51,10 @@ class MCMCInterface:
 
     def optimize(self, **kwargs):
         """
-        Maximize the log probability of a `pymc3` model.
+        Maximize the log probability of a ``pymc3`` model.
 
-        This routine wraps `pymc3_ext.optimize`, which in turn
-        wraps the `scipy.optimize.minimize` function. This method
+        This routine wraps ``pymc3_ext.optimize``, which in turn
+        wraps the ``scipy.optimize.minimize`` function. This method
         accepts any of the keywords accepted by either of those
         two functions.
 
@@ -75,25 +75,25 @@ class MCMCInterface:
         """
         Generate random initial points for sampling.
 
-        If the `optimize` method was called beforehand, this method
+        If the ``optimize`` method was called beforehand, this method
         returns samples from a multidimensional Gaussian centered on
         the maximum a posteriori (MAP) solution with covariance equal
         to the inverse of the Hessian matrix at that point, unless
-        `var` is provided, in which case that is used instead.
+        ``var`` is provided, in which case that is used instead.
         If the optimizer was not called, this method
         returns samples from a Gaussian with mean equal to the
-        model's test point (`model.test_point`) and variance equal to
-        `var`.
+        model's test point (``model.test_point``) and variance equal to
+        ``var``.
 
         Args:
             var (float, array, or matrix, optional): Variance of the
                 multidimensional Gaussian used to draw samples.
-                This quantity is optional if `optimize` was called
+                This quantity is optional if ``optimize`` was called
                 beforehand, otherwise it must be provided.
-                Default is `None`.
+                Default is ``None``.
 
         Returns:
-            An array of shape `(nwalkers, ndim)` where `ndim`
+            An array of shape ``(nwalkers, ndim)`` where ``ndim``
             is the number of free model parameters.
 
         """
@@ -142,7 +142,7 @@ class MCMCInterface:
             x (array): The array of parameter values.
 
         Returns:
-            The value of the log probability function evaluated at `x`.
+            The value of the log probability function evaluated at ``x``.
         """
         try:
             res = self.func(
@@ -168,14 +168,14 @@ class MCMCInterface:
             samples (array or matrix): The set of points to transform.
             varnames (list, optional): The names of the parameters to
                 transform to. These may either be strings or the actual
-                `pymc3` model variables. If `None` (default), these
+                ``pymc3`` model variables. If ``None`` (default), these
                 are determined automatically and may be accessed as the
-                `varnames` attribute of this class.
-            progress (bool, optional): Display a progress bar? Default `True`.
+                ``varnames`` attribute of this class.
+            progress (bool, optional): Display a progress bar? Default ``True``.
 
         Returns:
-            An array of shape `(..., len(varnames))`, where
-            `... = samples.shape[:-1]`, containing the transformed
+            An array of shape ``(..., len(varnames))``, where
+            ``... = samples.shape[:-1]``, containing the transformed
             samples.
         """
         is_1d = len(np.shape(samples)) == 1
