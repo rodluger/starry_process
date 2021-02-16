@@ -55,7 +55,7 @@ class MCMCInterface:
 
         This routine wraps `pymc3_ext.optimize`, which in turn
         wraps the `scipy.optimize.minimize` function. This method
-        accepts any of the keywords accepted by either of those 
+        accepts any of the keywords accepted by either of those
         two functions.
 
         Returns:
@@ -151,7 +151,7 @@ class MCMCInterface:
 
         Args:
             samples (array or matrix): The set of points to transform.
-            varnames (list, optional): The names of the parameters to 
+            varnames (list, optional): The names of the parameters to
                 transform to. These may either be strings or the actual
                 `pymc3` model variables. If `None` (default), these
                 are determined automatically and may be accessed as the
@@ -159,7 +159,7 @@ class MCMCInterface:
             progress (bool, optional): Display a progress bar? Default `True`.
 
         Returns:
-            An array of shape `(..., len(varnames))`, where 
+            An array of shape `(..., len(varnames))`, where
             `... = samples.shape[:-1]`, containing the transformed
             samples.
         """
