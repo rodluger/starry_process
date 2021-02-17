@@ -23,6 +23,7 @@ setup(
         "numpy>=1.19.2",
         "scipy>=1.5.0",
         "pymc3",
+        "pymc3-ext",
         "tqdm",
         "matplotlib",
     ],

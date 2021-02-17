@@ -92,4 +92,4 @@ napoleon_use_ivar = True
 rtds_action_github_repo = "rodluger/starry_process"
 rtds_action_path = "notebooks"
 rtds_action_artifact_prefix = "notebooks-for-"
-rtds_action_github_token = os.environ["GITHUB_TOKEN"]
+rtds_action_github_token = os.environ.get("GITHUB_TOKEN", "")
