@@ -17,3 +17,4 @@ an example or tutorial by
    Modeling time variability <notebooks/TimeVariability.ipynb>
    Using a starry process as a prior  <notebooks/Prior.ipynb>
    Ensemble analyses <notebooks/Ensemble.ipynb>
+   Inference on time-variable stars <notebooks/TimeVariabilityInference.ipynb>
