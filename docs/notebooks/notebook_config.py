@@ -6,6 +6,14 @@ import warnings
 from IPython.display import set_matplotlib_formats
 from IPython import get_ipython
 
+# Disable deprecation warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings(
+    "ignore", category=matplotlib.MatplotlibDeprecationWarning
+)
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning, module="theano")
+
 # Inline hi-res plots
 get_ipython().run_line_magic("matplotlib", "inline")
 set_matplotlib_formats("retina")
@@ -27,19 +35,9 @@ try:
     plt.rcParams["mathtext.fallback"] = "cm"
 except KeyError:
     plt.rcParams["mathtext.fallback_to_cm"] = True
-plt.rcParams["mathtext.fallback_to_cm"] = True
 
 # Short arrays when printing
 np.set_printoptions(threshold=0)
-
-# Disable theano deprecation warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-warnings.filterwarnings(
-    "ignore", category=matplotlib.MatplotlibDeprecationWarning
-)
-warnings.filterwarnings("ignore", category=FutureWarning)
-warnings.filterwarnings("ignore", category=UserWarning, module="theano")
-
 
 # Override `corner.py` with some tweaks
 def corner(*args, **kwargs):
