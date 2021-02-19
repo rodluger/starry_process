@@ -22,7 +22,7 @@ setup(
         "setuptools_scm",
         "numpy>=1.19.2",
         "scipy>=1.5.0",
-        "pymc3",
+        "pymc3<=3.11.1",
         "pymc3-ext",
         "tqdm",
         "matplotlib",
