@@ -16,6 +16,7 @@ jobs:
         include:
           - pymc-version: "pymc3==3.9.3"
             starry-version: "starry@git+https://github.com/rodluger/starry@master"
+            arviz-version: "arviz==0.11.1"
 
     steps:
       - uses: actions/checkout@v2
@@ -55,7 +56,7 @@ jobs:
         run: |
           python -m pip install -U pip
           python -m pip uninstall -y theano  # so that we know which version we're getting
-          python -m pip install ${{ matrix.pymc-version }} ${{ matrix.starry-version }} pymc3-ext
+          python -m pip install ${{ matrix.pymc-version }} ${{ matrix.starry-version }} ${{ matrix.arviz-version }} pymc3-ext
           python -m pip install -e ".[docs]"
           python -c 'import theano; print(theano.__version__)'
 

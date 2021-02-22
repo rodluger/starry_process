@@ -13,13 +13,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pymc-version: ["pymc3==3.10", "pymc3==3.11"]
-        starry-version: [""]
         include:
           - pymc-version: "https://github.com/pymc-devs/pymc3/archive/master.zip"
             starry-version: ""
+            arviz-version: ""
+          - pymc-version: "pymc3==3.11"
+            starry-version: ""
+            arviz-version: ""
+          - pymc-version: "pymc3==3.10"
+            starry-version: ""
+            arviz-version: "arviz==0.11.1"
           - pymc-version: "pymc3==3.9.3"
             starry-version: "starry@git+https://github.com/rodluger/starry@master"
+            arviz-version: "arviz==0.11.1"
 
     steps:
       - uses: actions/checkout@v2
@@ -52,7 +58,7 @@ jobs:
         run: |
           python -m pip install -U pip
           python -m pip uninstall -y theano  # so that we know which version we're getting
-          python -m pip install ${{ matrix.pymc-version }} ${{ matrix.starry-version }}
+          python -m pip install ${{ matrix.pymc-version }} ${{ matrix.starry-version }} ${{ matrix.arviz-version }}
           python -m pip install -e ".[app,tests]"
           python -c 'import theano; print(theano.__version__)'
 
