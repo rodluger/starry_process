@@ -46,6 +46,14 @@ The code is written in Python and relies on the
 so a little familiarity with that is recommended. Check out the crash
 course [here](https://starry-process.readthedocs.io/en/latest/notebooks/Quickstart/#Compiling-theano-functions).
 
+# Installation
+
+```bash
+pip install starry-process
+```
+
+The `starry_process` package requires Python 3.6 or later.
+
 # Quickstart
 
 Import the main interface:

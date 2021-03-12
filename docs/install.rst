@@ -19,6 +19,19 @@ web app locally, do
 
 To run the web app, just execute :py:obj:`starry-process` on the command line.
 
+.. note ::
+
+   The ``starry_process`` package requires Python 3.6 or later.
+
+Additional requirements (installed if not present) are:
+
+- ``numpy>=1.19.2``
+- ``scipy>=1.5.0``
+- ``matplotlib``
+- ``pymc3``
+- ``pymc3-ext``
+- ``tqdm``
+
 
 Development version
 -------------------
