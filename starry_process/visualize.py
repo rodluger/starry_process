@@ -257,7 +257,8 @@ def visualize(image, **kwargs):
                 # Try and see what happens!
                 ani.save(file, dpi=dpi, bitrate=bitrate)
             if not custom_ax:
-                plt.close()
+                if not plt.isinteractive():
+                    plt.close()
         else:  # if not custom_ax:
             try:
                 if "zmqshell" in str(type(get_ipython())):
@@ -280,7 +281,8 @@ def visualize(image, **kwargs):
                     raise NameError("")
             except NameError:
                 plt.show()
-                plt.close()
+                if not plt.isinteractive():
+                    plt.close()
 
         # Matplotlib generates an annoying empty
         # file when producing an animation. Delete it.
@@ -293,6 +295,7 @@ def visualize(image, **kwargs):
         if (file is not None) and (file != ""):
             fig.savefig(file, bbox_inches="tight")
             if not custom_ax:
-                plt.close()
+                if not plt.isinteractive():
+                    plt.close()
         elif not custom_ax:
             plt.show()

@@ -1331,7 +1331,7 @@ class StarryProcess(object):
             img = np.reshape(img, (1, *img.shape))
         while len(img.shape) > 3:
             img = img[0]
-        visualize(img, **kwargs)
+        return visualize(img, **kwargs)
 
 
 class StarryProcessSum(StarryProcess):
