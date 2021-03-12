@@ -14,9 +14,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - pymc-version: "https://github.com/pymc-devs/pymc3/archive/master.zip"
-            starry-version: ""
-            arviz-version: ""
+          # TODO:
+          #- pymc-version: "https://github.com/pymc-devs/pymc3/archive/master.zip"
+          #  starry-version: ""
+          #  arviz-version: ""
           - pymc-version: "pymc3==3.11"
             starry-version: ""
             arviz-version: ""
