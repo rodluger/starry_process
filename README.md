@@ -48,11 +48,13 @@ course [here](https://starry-process.readthedocs.io/en/latest/notebooks/Quicksta
 
 # Installation
 
+The quickest way is via `pip`:
+
 ```bash
 pip install starry-process
 ```
 
-The `starry_process` package requires Python 3.6 or later.
+Note that the `starry_process` package requires Python 3.6 or later.
 
 # Quickstart
 
