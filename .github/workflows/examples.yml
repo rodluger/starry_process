@@ -69,6 +69,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.pymc-version }}-
 
+      # TODO: Think about how to exclude failed runs from the cache
       - name: Execute notebooks
         shell: bash -l {0}
         run: |
