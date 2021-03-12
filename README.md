@@ -83,7 +83,7 @@ sp.visualize(y)
 
 # Compute & plot the flux at some inclination
 t = np.linspace(0, 4, 1000)
-flux = sp.flux(y, t, i=60).eval()
+flux = sp.flux(y, t, i=60).eval()[0]
 plt.plot(t, flux)
 ```
 
