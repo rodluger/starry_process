@@ -8,11 +8,6 @@ from inspect import getmro
 __all__ = ["is_tensor", "cho_solve", "cho_factor", "cast", "matrix_sqrt"]
 
 
-# Force double precision in Theano
-tt.config.floatX = "float64"
-tt.config.cast_policy = "numpy+floatX"
-
-
 def is_tensor(*objs):
     """Return ``True`` if any of ``objs`` is a ``Theano`` object."""
     for obj in objs:

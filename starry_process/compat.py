@@ -30,6 +30,7 @@ COp = op.ExternalCOp
 Params = params_type.Params
 ParamsType = params_type.ParamsType
 theano.config.floatX = "float64"
+theano.config.cast_policy = "numpy+floatX"
 
 if USE_AESARA:
 
