@@ -1,5 +1,5 @@
 from ..base_op import BaseOp
-from ...compat import Op, Apply, theano, tt
+from ...compat import Op, Apply, theano, tt, floatX
 import numpy as np
 from functools import partial
 from six.moves import xrange
@@ -113,11 +113,11 @@ class EighGrad(BaseOp):
         super().__init__(compile_args=compile_args)
 
     def make_node(self, x, w, v, gw, gv):
-        x = tt.as_tensor_variable(x).astype(tt.config.floatX)
-        w = tt.as_tensor_variable(w).astype(tt.config.floatX)
-        v = tt.as_tensor_variable(v).astype(tt.config.floatX)
-        gw = tt.as_tensor_variable(gw).astype(tt.config.floatX)
-        gv = tt.as_tensor_variable(gv).astype(tt.config.floatX)
+        x = tt.as_tensor_variable(x).astype(floatX)
+        w = tt.as_tensor_variable(w).astype(floatX)
+        v = tt.as_tensor_variable(v).astype(floatX)
+        gw = tt.as_tensor_variable(gw).astype(floatX)
+        gv = tt.as_tensor_variable(gv).astype(floatX)
         assert x.ndim == 2
         assert w.ndim == 1
         assert v.ndim == 2

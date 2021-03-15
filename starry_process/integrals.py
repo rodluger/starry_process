@@ -1,5 +1,5 @@
 from .math import matrix_sqrt
-from .compat import tt, ifelse, Op, Apply
+from .compat import tt, ifelse, Op, Apply, floatX
 from .defaults import defaults
 import numpy as np
 
@@ -9,10 +9,8 @@ class PDFOp(Op):
         self.func = func
 
     def make_node(self, *inputs):
-        inputs = [
-            tt.as_tensor_variable(i).astype(tt.config.floatX) for i in inputs
-        ]
-        outputs = [tt.TensorType(tt.config.floatX, (False,))()]
+        inputs = [tt.as_tensor_variable(i).astype(floatX) for i in inputs]
+        outputs = [tt.TensorType(floatX, (False,))()]
         return Apply(self, inputs, outputs)
 
     def infer_shape(self, *args):
@@ -29,10 +27,8 @@ class SampleOp(Op):
         self.nsamples = nsamples
 
     def make_node(self, *inputs):
-        inputs = [
-            tt.as_tensor_variable(i).astype(tt.config.floatX) for i in inputs
-        ]
-        outputs = [tt.TensorType(tt.config.floatX, (False,))()]
+        inputs = [tt.as_tensor_variable(i).astype(floatX) for i in inputs]
+        outputs = [tt.TensorType(floatX, (False,))()]
         return Apply(self, inputs, outputs)
 
     def infer_shape(self, *args):

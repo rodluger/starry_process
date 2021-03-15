@@ -11,7 +11,7 @@ def test_tensordotRz_grad(ydeg=2, abs_tol=1e-5, rel_tol=1e-5, eps=1e-7):
             np.array([0.0, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0]) * np.pi / 180.0
         )
         M = np.ones((len(theta), (ydeg + 1) ** 2))
-        tt.verify_grad(
+        theano.gradient.verify_grad(
             op,
             (M, theta),
             n_tests=1,
@@ -33,7 +33,7 @@ def test_special_tensordotRz_grad(
         )
         M = np.random.random(((ydeg + 1) ** 2, (ydeg + 1) ** 2))
         T = np.random.random(((ydeg + 1) ** 2, (ydeg + 1) ** 2))
-        tt.verify_grad(
+        theano.gradient.verify_grad(
             lambda M, theta: op(T, M, theta),
             (M, theta),
             n_tests=1,

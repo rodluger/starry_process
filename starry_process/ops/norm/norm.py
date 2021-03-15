@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from ...compat import theano, tt
-from ...compat import Op, Apply
+from ...compat import theano, tt, Op, Apply, floatX
 
 __all__ = ["AlphaBetaOp"]
 
@@ -15,10 +14,9 @@ class AlphaBetaOp(Op):
         self.N = N
 
     def make_node(self, z):
-        inputs = [tt.as_tensor_variable(z).astype(tt.config.floatX)]
+        inputs = [tt.as_tensor_variable(z).astype(floatX)]
         outputs = [
-            tt.TensorType(dtype=tt.config.floatX, broadcastable=[])()
-            for n in range(4)
+            tt.TensorType(dtype=floatX, broadcastable=[])() for n in range(4)
         ]
         return Apply(self, inputs, outputs)
 

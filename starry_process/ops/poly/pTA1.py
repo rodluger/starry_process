@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from ..base_op import BaseOp
-from ...compat import Apply
-from ...compat import theano, tt
+from ...compat import Apply, theano, tt, floatX
 
 __all__ = ["pTA1Op"]
 
@@ -12,14 +11,12 @@ class pTA1Op(BaseOp):
 
     def make_node(self, x, y, z):
         in_args = [
-            tt.as_tensor_variable(x).astype(tt.config.floatX),
-            tt.as_tensor_variable(y).astype(tt.config.floatX),
-            tt.as_tensor_variable(z).astype(tt.config.floatX),
+            tt.as_tensor_variable(x).astype(floatX),
+            tt.as_tensor_variable(y).astype(floatX),
+            tt.as_tensor_variable(z).astype(floatX),
         ]
         out_args = [
-            tt.TensorType(
-                dtype=tt.config.floatX, broadcastable=[False, False]
-            )()
+            tt.TensorType(dtype=floatX, broadcastable=[False, False])()
         ]
         return Apply(self, in_args, out_args)
 

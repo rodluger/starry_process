@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from ..compat import tt, Op, Apply
+from ..compat import tt, Op, Apply, floatX
 
 __all__ = ["SampleYlmTemporalOp"]
 
@@ -10,9 +10,9 @@ class SampleYlmTemporalOp(Op):
 
     def make_node(self, *inputs):
         inputs = [
-            tt.as_tensor_variable(inputs[0]).astype(tt.config.floatX),
-            tt.as_tensor_variable(inputs[1]).astype(tt.config.floatX),
-            tt.as_tensor_variable(inputs[2]).astype(tt.config.floatX),
+            tt.as_tensor_variable(inputs[0]).astype(floatX),
+            tt.as_tensor_variable(inputs[1]).astype(floatX),
+            tt.as_tensor_variable(inputs[2]).astype(floatX),
         ]
         outputs = [inputs[2].type()]
         return Apply(self, inputs, outputs)

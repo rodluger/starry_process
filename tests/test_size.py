@@ -65,7 +65,7 @@ def test_size_grad(
         S = SizeIntegral(r, dr, ydeg=ydeg)
 
         # d/de
-        tt.verify_grad(
+        theano.gradient.verify_grad(
             lambda r, dr: SizeIntegral(r, dr, ydeg=ydeg)._first_moment(),
             (r, dr),
             n_tests=1,
@@ -76,7 +76,7 @@ def test_size_grad(
         )
 
         # d/dE
-        tt.verify_grad(
+        theano.gradient.verify_grad(
             lambda r, dr: SizeIntegral(r, dr, ydeg=ydeg)._second_moment(),
             (r, dr),
             n_tests=1,

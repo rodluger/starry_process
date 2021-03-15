@@ -114,7 +114,7 @@ def test_lnlike_grad(param, marginalize_over_inclination):
         if param in ["i", "p"]:
             if param == "i" and marginalize_over_inclination:
                 return
-            tt.verify_grad(
+            theano.gradient.verify_grad(
                 lambda x: StarryProcess(
                     marginalize_over_inclination=marginalize_over_inclination,
                     normalized=False,
@@ -124,7 +124,7 @@ def test_lnlike_grad(param, marginalize_over_inclination):
                 rng=np.random,
             )
         else:
-            tt.verify_grad(
+            theano.gradient.verify_grad(
                 lambda x: StarryProcess(
                     marginalize_over_inclination=marginalize_over_inclination,
                     normalized=False,
