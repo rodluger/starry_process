@@ -1,11 +1,8 @@
 from .ops import EighOp
-import theano
-import theano.tensor as tt
-from theano.tensor import slinalg
+from .compat import theano, tt, slinalg, Node
 import numpy as np
 import scipy.linalg
 from inspect import getmro
-from .compat import Node
 
 
 __all__ = ["is_tensor", "cho_solve", "cho_factor", "cast", "matrix_sqrt"]

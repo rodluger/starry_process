@@ -30,6 +30,7 @@ Additional requirements (installed if not present) are:
 - ``matplotlib``
 - ``pymc3``
 - ``pymc3-ext``
+- ``aesara-theano-fallback``
 - ``tqdm``
 
 

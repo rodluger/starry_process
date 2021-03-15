@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import theano
-import theano.tensor as tt
-
+from ...compat import theano, tt
 from ...compat import Op, Apply
 
 __all__ = ["AlphaBetaOp"]

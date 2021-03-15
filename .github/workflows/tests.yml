@@ -14,19 +14,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # TODO:
-          #- pymc-version: "https://github.com/pymc-devs/pymc3/archive/master.zip"
-          #  starry-version: ""
-          #  arviz-version: ""
-          - pymc-version: "pymc3==3.11"
-            starry-version: ""
-            arviz-version: ""
-          - pymc-version: "pymc3==3.10"
-            starry-version: ""
-            arviz-version: "arviz==0.11.1"
           - pymc-version: "pymc3==3.9.3"
-            starry-version: "starry@git+https://github.com/rodluger/starry@master"
             arviz-version: "arviz==0.11.1"
+          - pymc-version: "pymc3==3.10"
+            arviz-version: "arviz==0.11.1"
+          - pymc-version: "pymc3==3.11"
+            arviz-version: ""
+          - pymc-version: "https://github.com/pymc-devs/pymc3/archive/master.zip"
+            arviz-version: ""
 
     steps:
       - uses: actions/checkout@v2
@@ -42,28 +37,23 @@ jobs:
             ${{ runner.os }}-${{ matrix.pymc-version }}-
 
       - name: Set up Python
+        id: setup_python
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: starry_process
           environment-file: environment.yml
 
-      - name: Set up environment
-        shell: bash -l {0}
-        run: |
-          jupyter nbextension enable --py widgetsnbextension
-          sudo apt-get update
-          sudo apt-get install ffmpeg
-
       - name: Install dependencies
+        id: install
+        if: steps.setup_python.outcome == 'success'
         shell: bash -l {0}
         run: |
           python -m pip install -U pip
-          python -m pip uninstall -y theano  # so that we know which version we're getting
-          python -m pip install ${{ matrix.pymc-version }} ${{ matrix.starry-version }} ${{ matrix.arviz-version }}
+          python -m pip install ${{ matrix.pymc-version }} ${{ matrix.arviz-version }}
           python -m pip install -e ".[app,tests]"
-          python -c 'import theano; print(theano.__version__)'
 
       - name: Run tests
+        if: steps.install.outcome == 'success'
         shell: bash -l {0}
         run: python -m pytest -v tests --junitxml=junit/test-results.xml
 

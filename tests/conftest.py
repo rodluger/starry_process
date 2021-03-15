@@ -1,5 +1,5 @@
 import pytest
-import theano
+from starry_process.compat import theano
 
 
 @pytest.fixture(autouse=True)

@@ -4,8 +4,8 @@ channels:
   - defaults
 dependencies:
   - mkl-service>=2.3.0
-  - nb_conda
-  - nb_conda_kernels
+  - nb_conda>=2.2.1
+  - nb_conda_kernels>=2.3.0
   - numpy>=1.19.2
   - openblas=0.3.6
   - pandoc>=2.10
@@ -15,6 +15,7 @@ dependencies:
   - setuptools>=51.3.3
   - sympy>=1.7.1
   - tectonic>=0.1.12
+  - ffmpeg>=4.3.1
   - pip:
     - arviz>=0.11.0
     - astropy>=4.2

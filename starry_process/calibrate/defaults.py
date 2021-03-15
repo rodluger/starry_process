@@ -6,7 +6,7 @@ PATH = os.path.abspath(os.path.dirname(__file__))
 DEFAULTS = os.path.join(PATH, "defaults.json")
 
 
-def _update(inputs, defaults):
+def _update(inputs, defaults, ignore_invalid=True):
     """
     
     """
@@ -14,15 +14,21 @@ def _update(inputs, defaults):
     for key, value in defaults.items():
         if key in inputs:
             if type(value) is dict:
-                defaults[key] = _update(inputs[key], value)
+                # Allow anything in these dicts (passed directly to dynesty)
+                if key in ["run_nested_kwargs", "sampler_kwargs"]:
+                    defaults[key] = _update(inputs[key], value, False)
+                else:
+                    defaults[key] = _update(inputs[key], value)
             else:
                 defaults[key] = inputs[key]
 
     # Check for invalid entries in `inputs`
     for key, value in inputs.items():
         if key not in defaults:
-            warn("Invalid keyword: {}. Ignoring.".format(key))
-
+            if ignore_invalid:
+                warn("Invalid keyword: {}. Ignoring.".format(key))
+            else:
+                defaults[key] = value
     return defaults
 
 

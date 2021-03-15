@@ -1,9 +1,7 @@
 from .. import StarryProcess
 from ..math import cho_factor, cho_solve
+from ..compat import theano, tt, ifelse
 import numpy as np
-import theano
-import theano.tensor as tt
-from theano.ifelse import ifelse
 
 
 def get_log_prob(

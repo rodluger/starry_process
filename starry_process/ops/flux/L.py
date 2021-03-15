@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from ..base_op import BaseOp
-import theano.tensor as tt
+from ...compat import theano, tt
 from ...compat import Apply
 
 __all__ = ["LOp"]

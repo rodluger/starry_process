@@ -2,7 +2,7 @@
 from ..base_op import BaseOp
 from ...compat import Apply
 from .special_tensordotRz_rev import special_tensordotRzRevOp
-import theano.tensor as tt
+from ...compat import theano, tt
 
 __all__ = ["special_tensordotRzOp"]
 
@@ -21,23 +21,14 @@ class special_tensordotRzOp(BaseOp):
             for arg in [T, M, theta]
         ]
         out_args = [
-            tt.TensorType(
-                dtype=tt.config.floatX,
-                broadcastable=[
-                    False,
-                ],
-            )(),
+            tt.TensorType(dtype=tt.config.floatX, broadcastable=[False])()
         ]
         return Apply(self, in_args, out_args)
 
     def infer_shape(self, *args):
         shapes = args[-1]
         K = shapes[2][0]
-        return (
-            [
-                K,
-            ],
-        )
+        return ([K],)
 
     def grad(self, inputs, gradients):
         return [tt.zeros((self.N, self.N))] + self.grad_op(

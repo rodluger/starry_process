@@ -2,7 +2,7 @@ from starry_process.math import matrix_sqrt
 from starry_process.ops import EighOp, LatitudeIntegralOp
 import numpy as np
 from theano.configparser import change_flags
-import theano.tensor as tt
+from starry_process.compat import theano, tt
 import pytest
 
 
@@ -24,17 +24,11 @@ def test_eigh_grad():
         eigh = EighOp()
         # Test the eigenvalues
         tt.verify_grad(
-            lambda x: tt.sum(eigh(x)[0]),
-            (Q,),
-            n_tests=1,
-            rng=np.random,
+            lambda x: tt.sum(eigh(x)[0]), (Q,), n_tests=1, rng=np.random
         )
         # Test the eigenvectors
         tt.verify_grad(
-            lambda x: tt.sum(eigh(x)[1]),
-            (Q,),
-            n_tests=1,
-            rng=np.random,
+            lambda x: tt.sum(eigh(x)[1]), (Q,), n_tests=1, rng=np.random
         )
 
 
@@ -76,11 +70,7 @@ def test_eigh_grad_low_rank():
         Q = Q @ Q.T
         eigh = EighOp(neig=3)
         # Test the eigenvalues
-        tt.verify_grad(
-            lambda x: tt.sum(eigh(x)[0]),
-            (Q,),
-            n_tests=1,
-        )
+        tt.verify_grad(lambda x: tt.sum(eigh(x)[0]), (Q,), n_tests=1)
         # Test the eigenvectors
         tt.verify_grad(
             lambda x: eigh(x)[1][0, 0], (Q,), n_tests=1, rng=np.random

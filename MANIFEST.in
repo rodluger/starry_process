@@ -1,5 +1,2 @@
-include starry.png
+include starry_process.gif
 include starry_process/app/data/*.npz
-include starry_process/transforms/cache/*.npz
-recursive-exclude tex *
-recursive-exclude scratch *

@@ -1,8 +1,7 @@
 from starry_process import StarryProcess
 from starry_process.defaults import defaults
 import numpy as np
-import theano.tensor as tt
-import theano
+from starry_process.compat import theano, tt
 import matplotlib.pyplot as plt
 from theano.configparser import change_flags
 import pytest

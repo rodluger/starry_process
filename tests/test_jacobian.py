@@ -2,8 +2,7 @@ from starry_process import StarryProcess
 from starry_process.latitude import beta2gauss
 import numpy as np
 import emcee
-import theano
-import theano.tensor as tt
+from starry_process.compat import theano, tt
 from scipy.stats import median_abs_deviation as mad
 
 

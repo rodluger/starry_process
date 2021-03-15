@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ..base_op import BaseOp
 from ...compat import Apply
-import theano.tensor as tt
+from ...compat import theano, tt
 
 __all__ = ["tensordotRzRevOp"]
 
@@ -19,21 +19,11 @@ class tensordotRzRevOp(BaseOp):
             tt.TensorType(
                 dtype=tt.config.floatX, broadcastable=[False, False]
             )(),
-            tt.TensorType(
-                dtype=tt.config.floatX,
-                broadcastable=[
-                    False,
-                ],
-            )(),
+            tt.TensorType(dtype=tt.config.floatX, broadcastable=[False])(),
         ]
         return Apply(self, in_args, out_args)
 
     def infer_shape(self, *args):
         shapes = args[-1]
         K = shapes[0][0]
-        return (
-            [K, self.N],
-            [
-                K,
-            ],
-        )
+        return ([K, self.N], [K])

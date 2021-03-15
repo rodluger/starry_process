@@ -7,9 +7,7 @@ from .math import cho_factor, cho_solve, cast, is_tensor
 from .defaults import defaults
 from .visualize import mollweide_transform, latlon_transform, visualize
 from .ops import CheckBoundsOp, AlphaBetaOp, SampleYlmTemporalOp
-from .compat import RandomStream, random_normal, random_uniform
-import theano.tensor as tt
-from theano.ifelse import ifelse
+from .compat import tt, ifelse, RandomStream, random_normal, random_uniform
 import numpy as np
 
 

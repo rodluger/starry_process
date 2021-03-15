@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import theano.tensor as tt
-from ..compat import Op, Apply
+from ..compat import tt, Op, Apply
 
 __all__ = ["SampleYlmTemporalOp"]
 

@@ -2,7 +2,7 @@
 from ..base_op import BaseOp
 from ...compat import Apply
 from .tensordotRz_rev import tensordotRzRevOp
-import theano.tensor as tt
+from ...compat import theano, tt
 
 __all__ = ["tensordotRzOp"]
 
@@ -23,7 +23,7 @@ class tensordotRzOp(BaseOp):
         out_args = [
             tt.TensorType(
                 dtype=tt.config.floatX, broadcastable=[False, False]
-            )(),
+            )()
         ]
         return Apply(self, in_args, out_args)
 

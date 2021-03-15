@@ -3,7 +3,7 @@ import numpy as np
 from scipy.integrate import quad
 from tqdm import tqdm
 from theano.configparser import change_flags
-import theano.tensor as tt
+from starry_process.compat import theano, tt
 
 
 def test_size(ydeg=15, r=15.0, dr=5.0, rtol=1e-7, ftol=1e-7, **kwargs):

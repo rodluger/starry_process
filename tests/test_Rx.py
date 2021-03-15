@@ -1,4 +1,4 @@
-import theano.tensor as tt
+from starry_process.compat import theano, tt
 from theano.configparser import change_flags
 from starry_process.ops import RxOp
 import numpy as np

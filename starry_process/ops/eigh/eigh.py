@@ -1,8 +1,5 @@
 from ..base_op import BaseOp
-from ...compat import Op, Apply
-import theano
-import theano.tensor as tt
-from theano.tensor.nlinalg import Eig
+from ...compat import Op, Apply, theano, tt
 import numpy as np
 from functools import partial
 from six.moves import xrange
@@ -16,10 +13,7 @@ def _numpy_eigh(x, neig):
         eigvals, eigvecs = np.linalg.eigh(x)
     except np.linalg.LinAlgError:
         # Fail silently
-        return (
-            np.ones(neig) * np.nan,
-            np.ones((x.shape[0], neig)) * np.nan,
-        )
+        return (np.ones(neig) * np.nan, np.ones((x.shape[0], neig)) * np.nan)
     return (
         np.ascontiguousarray(eigvals[-neig:]),
         np.ascontiguousarray(eigvecs[:, -neig:]),
@@ -29,13 +23,10 @@ def _numpy_eigh(x, neig):
 def _scipy_eigh(x, neig):
     N = x.shape[0]
     eigvals, eigvecs = scipy.linalg.eigh(x, subset_by_index=(N - neig, N - 1))
-    return (
-        np.ascontiguousarray(eigvals),
-        np.ascontiguousarray(eigvecs),
-    )
+    return (np.ascontiguousarray(eigvals), np.ascontiguousarray(eigvecs))
 
 
-class EighOp(Eig):
+class EighOp(tt.nlinalg.Eig):
     """
     Return the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
 

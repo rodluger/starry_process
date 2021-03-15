@@ -24,6 +24,7 @@ setup(
         "scipy>=1.5.0",
         "pymc3",
         "pymc3-ext",
+        "aesara-theano-fallback>=0.0.4",
         "tqdm",
         "matplotlib",
     ],
@@ -36,6 +37,7 @@ setup(
             "pytest-dependency",
             "pytest-env",
             "corner",
+            "starry",
         ],
         "docs": [
             "sphinx>=1.7.5",

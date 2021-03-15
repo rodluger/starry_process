@@ -1,9 +1,7 @@
 from .math import matrix_sqrt
-import theano.tensor as tt
-from theano.ifelse import ifelse
+from .compat import tt, ifelse, Op, Apply
 from .defaults import defaults
 import numpy as np
-from .compat import Op, Apply
 
 
 class PDFOp(Op):

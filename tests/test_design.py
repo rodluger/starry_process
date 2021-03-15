@@ -1,6 +1,6 @@
 from starry_process.flux import FluxIntegral
 from starry_process.defaults import defaults
-import theano.tensor as tt
+from starry_process.compat import theano, tt
 import numpy as np
 import pytest
 

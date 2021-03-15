@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ..base_op import BaseOp
 from ...compat import Apply
-import theano.tensor as tt
+from ...compat import theano, tt
 
 __all__ = ["pTA1Op"]
 

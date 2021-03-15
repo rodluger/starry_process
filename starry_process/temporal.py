@@ -1,4 +1,4 @@
-import theano.tensor as tt
+from .compat import tt
 import numpy as np
 
 

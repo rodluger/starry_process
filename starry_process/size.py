@@ -1,9 +1,8 @@
 from .integrals import MomentIntegral
 from .ops import CheckBoundsOp
-import theano.tensor as tt
+from .compat import tt, ifelse
 import numpy as np
 from scipy.special import legendre as P
-from theano.ifelse import ifelse
 from .math import matrix_sqrt
 
 

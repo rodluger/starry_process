@@ -1,7 +1,7 @@
 from .ops import CheckBoundsOp
 from .defaults import defaults
 from .math import cast
-import theano.tensor as tt
+from .compat import tt
 import numpy as np
 
 

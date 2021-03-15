@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ..base_op import BaseOp
 from ...compat import Apply
-import theano.tensor as tt
+from ...compat import theano, tt
 
 __all__ = ["rTA1LOp"]
 
@@ -19,12 +19,7 @@ class rTA1LOp(BaseOp):
             tt.as_tensor_variable(arg).astype(tt.config.floatX) for arg in [u]
         ]
         out_args = [
-            tt.TensorType(
-                dtype=tt.config.floatX,
-                broadcastable=[
-                    False,
-                ],
-            )()
+            tt.TensorType(dtype=tt.config.floatX, broadcastable=[False])()
         ]
         return Apply(self, in_args, out_args)
 
@@ -45,12 +40,7 @@ class rTA1LRevOp(BaseOp):
             for arg in [u, bf]
         ]
         out_args = [
-            tt.TensorType(
-                dtype=tt.config.floatX,
-                broadcastable=[
-                    False,
-                ],
-            )(),
+            tt.TensorType(dtype=tt.config.floatX, broadcastable=[False])()
         ]
         return Apply(self, in_args, out_args)
 

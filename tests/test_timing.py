@@ -1,7 +1,6 @@
 from starry_process import StarryProcess
 from starry_process.defaults import defaults
-import theano
-import theano.tensor as tt
+from starry_process.compat import theano, tt
 import timeit
 import numpy as np
 import pytest
@@ -37,7 +36,7 @@ def test_profile(gradient, profile, ydeg=15, npts=1000):
     else:
         g = lambda f, x: f
     func = theano.function(
-        [r, a, b, c, n, i, p, t, flux, data_cov,],
+        [r, a, b, c, n, i, p, t, flux, data_cov],
         [
             g(gp.log_likelihood(t, flux, data_cov, i=i, p=p), a)
         ],  # wrt a for definiteness
@@ -72,7 +71,7 @@ def test_profile(gradient, profile, ydeg=15, npts=1000):
 
         # Time the execution
         number = 100
-        time = timeit.timeit(run, number=number,) / number
+        time = timeit.timeit(run, number=number) / number
         print("time elapsed: {:.4f} s".format(time))
         if (gradient and time > 0.2) or (not gradient and time > 0.1):
             warnings.warn("too slow! ({:.4f} s)".format(time))
@@ -106,7 +105,7 @@ def test_profile_marg(gradient, profile, ydeg=15, npts=1000):
     else:
         g = lambda f, x: f
     func = theano.function(
-        [r, a, b, c, n, p, t, flux, data_cov,],
+        [r, a, b, c, n, p, t, flux, data_cov],
         [
             g(gp.log_likelihood(t, flux, data_cov, p=p), a)
         ],  # wrt a for definiteness
@@ -140,7 +139,7 @@ def test_profile_marg(gradient, profile, ydeg=15, npts=1000):
 
         # Time the execution
         number = 100
-        time = timeit.timeit(run, number=number,) / number
+        time = timeit.timeit(run, number=number) / number
         print("time elapsed: {:.4f} s".format(time))
         if (gradient and time > 0.2) or (not gradient and time > 0.1):
             warnings.warn("too slow! ({:.4f} s)".format(time))

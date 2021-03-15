@@ -1,7 +1,6 @@
 from .ops import pTA1Op
+from .compat import tt
 import numpy as np
-import theano
-import theano.tensor as tt
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import colors

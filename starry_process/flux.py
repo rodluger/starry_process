@@ -10,11 +10,9 @@ from .ops import (
 from .wigner import R
 from .defaults import defaults
 from .math import cast
+from .compat import theano, tt, ifelse
 from scipy.special import gamma, hyp2f1
 import numpy as np
-import theano
-import theano.tensor as tt
-from theano.ifelse import ifelse
 from tqdm import tqdm
 import os
 

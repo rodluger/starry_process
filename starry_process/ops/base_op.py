@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from ..starry_process_version import __version__
 from ..defaults import defaults
-import theano
-import theano.tensor as tt
+from ..compat import theano, tt, COp, Apply
 import sys
 import pkg_resources
-from ..compat import COp, Apply
 
 # Allow C code caching even in dev mode?
 try:

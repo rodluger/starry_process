@@ -5,8 +5,7 @@ from starry_process import StarryProcess
 from starry_process.latitude import gauss2beta, beta2gauss
 import numpy as np
 from numpy.linalg import LinAlgError
-import theano
-import theano.tensor as tt
+from starry_process.compat import theano, tt
 import sys
 import os
 import time
