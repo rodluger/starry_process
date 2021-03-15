@@ -3,8 +3,7 @@ from .integrals import WignerIntegral
 from .ops import LatitudeIntegralOp, CheckBoundsOp
 from .defaults import defaults
 from .math import is_tensor
-import theano.tensor as tt
-from theano.ifelse import ifelse
+from .compat import tt, ifelse
 from scipy.stats import beta as Beta
 import numpy as np
 

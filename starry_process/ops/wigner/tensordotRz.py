@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from ..base_op import BaseOp
-from ...compat import Apply
+from ...compat import Apply, theano, tt, floatX
 from .tensordotRz_rev import tensordotRzRevOp
-import theano.tensor as tt
 
 __all__ = ["tensordotRzOp"]
 
@@ -17,13 +16,10 @@ class tensordotRzOp(BaseOp):
 
     def make_node(self, M, theta):
         in_args = [
-            tt.as_tensor_variable(arg).astype(tt.config.floatX)
-            for arg in [M, theta]
+            tt.as_tensor_variable(arg).astype(floatX) for arg in [M, theta]
         ]
         out_args = [
-            tt.TensorType(
-                dtype=tt.config.floatX, broadcastable=[False, False]
-            )(),
+            tt.TensorType(dtype=floatX, broadcastable=[False, False])()
         ]
         return Apply(self, in_args, out_args)
 

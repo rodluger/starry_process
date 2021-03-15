@@ -7,8 +7,7 @@ from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from starry_process import StarryProcess
 from starry_process.latitude import beta2gauss, gauss2beta
 import starry
-import theano
-import theano.tensor as tt
+from starry_process.compat import theano, tt
 import numpy as np
 from scipy.stats import norm as Normal
 import dynesty.plotting as dyplot

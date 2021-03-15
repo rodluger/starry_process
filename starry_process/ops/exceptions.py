@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import theano.tensor as tt
-from ..compat import Op, Apply
+from ..compat import tt, Op, Apply, floatX
 
 __all__ = ["CheckBoundsOp", "CheckVectorSizeOp"]
 
@@ -21,7 +20,7 @@ class CheckBoundsOp(Op):
             self.name = name
 
     def make_node(self, *inputs):
-        inputs = [tt.as_tensor_variable(inputs[0]).astype(tt.config.floatX)]
+        inputs = [tt.as_tensor_variable(inputs[0]).astype(floatX)]
         outputs = [inputs[0].type()]
         return Apply(self, inputs, outputs)
 
@@ -70,7 +69,7 @@ class CheckVectorSizeOp(Op):
             self.name = name
 
     def make_node(self, *inputs):
-        inputs = [tt.as_tensor_variable(inputs[0]).astype(tt.config.floatX)]
+        inputs = [tt.as_tensor_variable(inputs[0]).astype(floatX)]
         outputs = [inputs[0].type()]
         return Apply(self, inputs, outputs)
 

@@ -2,7 +2,7 @@ from starry_process.ops import rTA1LOp
 from starry_process import StarryProcess
 import numpy as np
 from theano.configparser import change_flags
-import theano.tensor as tt
+from starry_process.compat import theano, tt
 import pytest
 
 try:
@@ -14,7 +14,7 @@ except ImportError:
 def test_rTA1L_grad():
     with change_flags(compute_test_value="off"):
         op = rTA1LOp(ydeg=1, udeg=3)
-        tt.verify_grad(
+        theano.gradient.verify_grad(
             lambda u1, u2, u3: op([u1, u2, u3]),
             [0.5, 0.25, 0.1],
             n_tests=1,

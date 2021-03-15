@@ -45,6 +45,8 @@ The code is written in Python and relies on the
 [Theano package](https://theano-pymc.readthedocs.io/en/stable/index.html),
 so a little familiarity with that is recommended. Check out the crash
 course [here](https://starry-process.readthedocs.io/en/latest/notebooks/Quickstart/#Compiling-theano-functions).
+If you would like to report an issue or contribute to the project, please
+check out [CONTRIBUTING.md](CONTRIBUTING.md).
 
 # Installation
 

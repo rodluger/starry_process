@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from ..base_op import BaseOp
-from ...compat import Apply
-import theano.tensor as tt
+from ...compat import theano, tt, floatX, Apply
 
 __all__ = ["rTA1LOp"]
 
@@ -15,17 +14,8 @@ class rTA1LOp(BaseOp):
         super(rTA1LOp, self).__init__(*args, **kwargs)
 
     def make_node(self, u):
-        in_args = [
-            tt.as_tensor_variable(arg).astype(tt.config.floatX) for arg in [u]
-        ]
-        out_args = [
-            tt.TensorType(
-                dtype=tt.config.floatX,
-                broadcastable=[
-                    False,
-                ],
-            )()
-        ]
+        in_args = [tt.as_tensor_variable(arg).astype(floatX) for arg in [u]]
+        out_args = [tt.TensorType(dtype=floatX, broadcastable=[False])()]
         return Apply(self, in_args, out_args)
 
     def infer_shape(self, *args):
@@ -41,17 +31,9 @@ class rTA1LRevOp(BaseOp):
 
     def make_node(self, u, bf):
         in_args = [
-            tt.as_tensor_variable(arg).astype(tt.config.floatX)
-            for arg in [u, bf]
+            tt.as_tensor_variable(arg).astype(floatX) for arg in [u, bf]
         ]
-        out_args = [
-            tt.TensorType(
-                dtype=tt.config.floatX,
-                broadcastable=[
-                    False,
-                ],
-            )(),
-        ]
+        out_args = [tt.TensorType(dtype=floatX, broadcastable=[False])()]
         return Apply(self, in_args, out_args)
 
     def infer_shape(self, *args):

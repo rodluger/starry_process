@@ -1,8 +1,5 @@
 from ..base_op import BaseOp
-from ...compat import Op, Apply
-import theano
-import theano.tensor as tt
-from theano.tensor.nlinalg import Eig
+from ...compat import Op, Apply, theano, tt, floatX
 import numpy as np
 from functools import partial
 from six.moves import xrange
@@ -16,10 +13,7 @@ def _numpy_eigh(x, neig):
         eigvals, eigvecs = np.linalg.eigh(x)
     except np.linalg.LinAlgError:
         # Fail silently
-        return (
-            np.ones(neig) * np.nan,
-            np.ones((x.shape[0], neig)) * np.nan,
-        )
+        return (np.ones(neig) * np.nan, np.ones((x.shape[0], neig)) * np.nan)
     return (
         np.ascontiguousarray(eigvals[-neig:]),
         np.ascontiguousarray(eigvecs[:, -neig:]),
@@ -29,13 +23,10 @@ def _numpy_eigh(x, neig):
 def _scipy_eigh(x, neig):
     N = x.shape[0]
     eigvals, eigvecs = scipy.linalg.eigh(x, subset_by_index=(N - neig, N - 1))
-    return (
-        np.ascontiguousarray(eigvals),
-        np.ascontiguousarray(eigvecs),
-    )
+    return (np.ascontiguousarray(eigvals), np.ascontiguousarray(eigvecs))
 
 
-class EighOp(Eig):
+class EighOp(tt.nlinalg.Eig):
     """
     Return the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
 
@@ -122,11 +113,11 @@ class EighGrad(BaseOp):
         super().__init__(compile_args=compile_args)
 
     def make_node(self, x, w, v, gw, gv):
-        x = tt.as_tensor_variable(x).astype(tt.config.floatX)
-        w = tt.as_tensor_variable(w).astype(tt.config.floatX)
-        v = tt.as_tensor_variable(v).astype(tt.config.floatX)
-        gw = tt.as_tensor_variable(gw).astype(tt.config.floatX)
-        gv = tt.as_tensor_variable(gv).astype(tt.config.floatX)
+        x = tt.as_tensor_variable(x).astype(floatX)
+        w = tt.as_tensor_variable(w).astype(floatX)
+        v = tt.as_tensor_variable(v).astype(floatX)
+        gw = tt.as_tensor_variable(gw).astype(floatX)
+        gv = tt.as_tensor_variable(gv).astype(floatX)
         assert x.ndim == 2
         assert w.ndim == 1
         assert v.ndim == 2

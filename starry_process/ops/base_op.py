@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from ..starry_process_version import __version__
 from ..defaults import defaults
-import theano
-import theano.tensor as tt
+from ..compat import theano, tt, COp, Apply, floatX
 import sys
 import pkg_resources
-from ..compat import COp, Apply
 
 # Allow C code caching even in dev mode?
 try:
@@ -95,22 +93,15 @@ class BaseOp(COp):
 class IntegralOp(BaseOp):
     def make_node(self, alpha, beta):
         in_args = [
-            tt.as_tensor_variable(arg).astype(tt.config.floatX)
-            for arg in [alpha, beta]
+            tt.as_tensor_variable(arg).astype(floatX) for arg in [alpha, beta]
         ]
         out_args = [
-            tt.TensorType(dtype=tt.config.floatX, broadcastable=[False])(),
-            tt.TensorType(dtype=tt.config.floatX, broadcastable=[False])(),
-            tt.TensorType(dtype=tt.config.floatX, broadcastable=[False])(),
-            tt.TensorType(
-                dtype=tt.config.floatX, broadcastable=[False, False]
-            )(),
-            tt.TensorType(
-                dtype=tt.config.floatX, broadcastable=[False, False]
-            )(),
-            tt.TensorType(
-                dtype=tt.config.floatX, broadcastable=[False, False]
-            )(),
+            tt.TensorType(dtype=floatX, broadcastable=[False])(),
+            tt.TensorType(dtype=floatX, broadcastable=[False])(),
+            tt.TensorType(dtype=floatX, broadcastable=[False])(),
+            tt.TensorType(dtype=floatX, broadcastable=[False, False])(),
+            tt.TensorType(dtype=floatX, broadcastable=[False, False])(),
+            tt.TensorType(dtype=floatX, broadcastable=[False, False])(),
         ]
         return Apply(self, in_args, out_args)
 

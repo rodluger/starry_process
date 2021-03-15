@@ -1,7 +1,12 @@
+from .compat import USE_AESARA
 import pymc3 as pm
 from pymc3.blocking import ArrayOrdering, DictToArrayBijection
 from pymc3.model import Point
-from pymc3.theanof import inputvars
+
+if USE_AESARA:
+    from pymc3.aesaraf import inputvars
+else:
+    from pymc3.theanof import inputvars
 import pymc3_ext as pmx
 from pymc3_ext import (
     optimize,

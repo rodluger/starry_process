@@ -1,19 +1,11 @@
 from .ops import EighOp
-import theano
-import theano.tensor as tt
-from theano.tensor import slinalg
+from .compat import theano, tt, slinalg, Node, floatX
 import numpy as np
 import scipy.linalg
 from inspect import getmro
-from .compat import Node
 
 
 __all__ = ["is_tensor", "cho_solve", "cho_factor", "cast", "matrix_sqrt"]
-
-
-# Force double precision in Theano
-tt.config.floatX = "float64"
-tt.config.cast_policy = "numpy+floatX"
 
 
 def is_tensor(*objs):
@@ -112,23 +104,18 @@ def cast(*args, vectorize=False):
     if vectorize:
         if len(args) == 1:
             return tt.reshape(
-                tt.as_tensor_variable(args[0]).astype(tt.config.floatX), (-1,)
+                tt.as_tensor_variable(args[0]).astype(floatX), (-1,)
             )
         else:
             return [
-                tt.reshape(
-                    tt.as_tensor_variable(arg).astype(tt.config.floatX), (-1,)
-                )
+                tt.reshape(tt.as_tensor_variable(arg).astype(floatX), (-1,))
                 for arg in args
             ]
     else:
         if len(args) == 1:
-            return tt.as_tensor_variable(args[0]).astype(tt.config.floatX)
+            return tt.as_tensor_variable(args[0]).astype(floatX)
         else:
-            return [
-                tt.as_tensor_variable(arg).astype(tt.config.floatX)
-                for arg in args
-            ]
+            return [tt.as_tensor_variable(arg).astype(floatX) for arg in args]
 
 
 def matrix_sqrt(Q, neig=None, driver="numpy", mindiff=1e-15):

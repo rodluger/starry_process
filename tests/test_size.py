@@ -3,7 +3,7 @@ import numpy as np
 from scipy.integrate import quad
 from tqdm import tqdm
 from theano.configparser import change_flags
-import theano.tensor as tt
+from starry_process.compat import theano, tt
 
 
 def test_size(ydeg=15, r=15.0, dr=5.0, rtol=1e-7, ftol=1e-7, **kwargs):
@@ -65,7 +65,7 @@ def test_size_grad(
         S = SizeIntegral(r, dr, ydeg=ydeg)
 
         # d/de
-        tt.verify_grad(
+        theano.gradient.verify_grad(
             lambda r, dr: SizeIntegral(r, dr, ydeg=ydeg)._first_moment(),
             (r, dr),
             n_tests=1,
@@ -76,7 +76,7 @@ def test_size_grad(
         )
 
         # d/dE
-        tt.verify_grad(
+        theano.gradient.verify_grad(
             lambda r, dr: SizeIntegral(r, dr, ydeg=ydeg)._second_moment(),
             (r, dr),
             n_tests=1,

@@ -7,7 +7,7 @@ from scipy.integrate import quad
 from scipy.stats import beta as Beta
 from tqdm import tqdm
 from theano.configparser import change_flags
-import theano.tensor as tt
+from starry_process.compat import theano, tt
 
 
 def test_latitude(
@@ -107,7 +107,7 @@ def test_latitude_grad(
         beta = np.exp(b * (b2 - b1) + b1)
 
         # d/dq
-        tt.verify_grad(
+        theano.gradient.verify_grad(
             lambda alpha, beta: op(alpha, beta)[0],
             (alpha, beta),
             n_tests=1,
@@ -118,7 +118,7 @@ def test_latitude_grad(
         )
 
         # d/dQ
-        tt.verify_grad(
+        theano.gradient.verify_grad(
             lambda alpha, beta: op(alpha, beta)[3],
             (alpha, beta),
             n_tests=1,

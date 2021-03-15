@@ -14,6 +14,7 @@ logger.setLevel(logging.INFO)
 
 # Main imports
 from . import (
+    compat,
     math,
     flux,
     sp,
