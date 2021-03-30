@@ -51,6 +51,7 @@ setup(
             "emcee",
             "rtds_action",
             "nbsphinx",
+            "starry",
         ],
     },
     entry_points={
