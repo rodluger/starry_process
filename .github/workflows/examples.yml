@@ -57,20 +57,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.pymc-version }}-
 
-      # TODO: Think about how to exclude failed runs from the cache
       - name: Execute notebooks
         shell: bash -l {0}
         run: |
           cd docs/notebooks
-          RUN_NOTEBOOKS=$([[ $(git log -1 --pretty=format:"%s") == *"[run-notebooks]"* ]] && echo 1 || echo 0)
-          echo "RUN_NOTEBOOKS:" $RUN_NOTEBOOKS
-          NOTEBOOKS_CHANGED=$([[ $(git diff --name-only HEAD^ HEAD) == *notebooks* ]] && echo 1 || echo 0)
-          echo "NOTEBOOKS_CHANGED:" $NOTEBOOKS_CHANGED
-          NEW_TAG=$([[ $GITHUB_REF == "refs/tags/v"* ]] && echo 1 || echo 0)
-          echo "NEW_TAG:" $NEW_TAG
-          if [[ $NOTEBOOKS_CHANGED == 1 || $RUN_NOTEBOOKS == 1 || NEW_TAG == 1 ]]; then
-            for f in *.ipynb; do jupyter nbconvert --to notebook --execute $f --output $f; done
-          fi
+          for f in *.ipynb; do jupyter nbconvert --to notebook --execute $f --output $f; done
 
       - uses: actions/upload-artifact@v2
         with:
