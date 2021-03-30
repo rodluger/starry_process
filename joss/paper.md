@@ -113,7 +113,7 @@ Figure \ref{fig:speed} shows the computational scaling of the `Python`
 implementation of the algorithm for the case where we condition the GP on a
 specific value of the inclination (blue) and the case where we marginalize over
 inclination (orange). Both curves show the time in seconds to compute the
-likelihood (averaged over many trials to obtain a robust estimate) 
+likelihood (averaged over many trials to obtain a robust estimate)
 as a function of the number of points $K$
 in a single light curve. For $K \lesssim 100$, the computation time is constant
 at $10-30$ ms for both algorithms. This is the approximate time (on a typical
@@ -128,7 +128,7 @@ thanks to the tricks discussed in @PaperII.
 function of the number of points $K$ in each light curve when conditioning on a
 value of the inclination (blue) and when marginalizing over the inclination
 (orange). At $l_\mathrm{max} = 15$, computation of the covariance matrix of the
-GP takes about 20ms on a typical laptop. The dashed line shows the asymptotic
+GP takes between 30ms and 60ms on a typical laptop. The dashed line shows the asymptotic
 scaling of the algorithm, which is due to the Cholesky factorization and solve
 operations.\label{fig:speed}](figures/speed.pdf)
 
