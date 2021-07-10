@@ -23,6 +23,8 @@ affiliations:
   - name: NASA Ames Research Center, Moffett Field, CA
     index: 4
 date: 21 January 2021
+aas-doi: 10.3847/1538-3881/abfdb9 
+aas-journal: Astronomical Journal
 bibliography: bib.bib
 ---
 
