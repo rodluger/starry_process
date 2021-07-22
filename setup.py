@@ -50,7 +50,7 @@ setup(
             "corner",
             "emcee",
             "rtds_action",
-            "nbsphinx",
+            "nbsphinx>=0.8.6",
             "starry",
         ],
     },
