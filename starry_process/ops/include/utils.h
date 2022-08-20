@@ -70,6 +70,7 @@ template <class Bounds0, class F> void for_constexpr(F &&f) {
       std::make_index_sequence<Bounds0::upper - Bounds0::lower>{});
 }
 
+#ifndef STARRY_NO_EXCEPTIONS
 /**
  * Generic starry exception class.
  */
@@ -105,6 +106,7 @@ public:
 
   virtual const char *what() const throw() { return m_msg.c_str(); }
 };
+#endif
 
 } // namespace utils
 } // namespace sp

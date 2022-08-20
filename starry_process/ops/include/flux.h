@@ -285,9 +285,11 @@ inline void computeA1Inv(int deg, const Eigen::SparseMatrix<Scalar> &A1,
   Eigen::SparseLU<Eigen::SparseMatrix<Scalar>> solver;
   solver.compute(A1);
 
+#ifndef STARRY_NO_EXCEPTIONS
   if (solver.info() != Eigen::Success)
     throw std::runtime_error(
         "Error computing the change of basis matrix `A1Inv`.");
+#endif
   Eigen::SparseMatrix<Scalar> I =
       RowMatrix<Scalar, Dynamic, Dynamic>::Identity(N, N).sparseView();
   A1Inv = solver.solve(I);
@@ -498,9 +500,11 @@ public:
   template <typename ROWVECTOR>
   void computerTA1L(const Vector<Scalar, SP__UMAX> &u, ROWVECTOR &rTA1L) {
 
+#ifndef STARRY_NO_EXCEPTIONS
     if (SP__UMAX == 0) {
       throw std::runtime_error("Limb darkening is currently disabled.");
     }
+#endif
 
     // Compute the limb darkening polynomial
     Vector<Scalar, SP__UMAX + 1> u_;
@@ -526,9 +530,11 @@ public:
   void computerTA1L(const Vector<Scalar, SP__UMAX> &u, ROWVECTOR &bf,
                     VECTOR &bu) {
 
+#ifndef STARRY_NO_EXCEPTIONS
     if (SP__UMAX == 0) {
       throw std::runtime_error("Limb darkening is currently disabled.");
     }
+#endif
 
     // Compute the limb darkening polynomial
     Vector<Scalar, SP__UMAX + 1> u_;
@@ -560,9 +566,11 @@ public:
   template <typename ROWMATRIX>
   void computeL(const Vector<Scalar, SP__UMAX> &u, ROWMATRIX &L) {
 
+#ifndef STARRY_NO_EXCEPTIONS
     if (SP__UMAX == 0) {
       throw std::runtime_error("Limb darkening is currently disabled.");
     }
+#endif
 
     // Compute the limb darkening polynomial
     Vector<Scalar, SP__UMAX + 1> u_;

@@ -223,7 +223,9 @@ inline T hyp2f1(const T &a_, const T &b_, const T &c_, const T &z, T &dfdb,
           << "(value = " << std::setprecision(9) << dfdc
           << ", frac. error = " << abs(dtermdc / dfdc) << ").";
     }
+#ifndef STARRY_NO_EXCEPTIONS
     throw StarryProcessException(msg.str(), "special.h", "hyp2f1", args.str());
+#endif  
   }
 
   return value;

@@ -79,7 +79,7 @@ class BaseOp(COp):
         return dirs
 
     def c_compile_args(self, *args, **kwargs):
-        args = ["-std=c++14", "-O2", "-DNDEBUG"]
+        args = ["-std=c++14", "-O2", "-DNDEBUG", "-DSTARRY_NO_EXCEPTIONS"]
         if sys.platform == "darwin":
             args += ["-stdlib=libc++", "-mmacosx-version-min=10.7"]
         args += ["-DSP__LMAX={0}".format(self.ydeg)]

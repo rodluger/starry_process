@@ -20,7 +20,7 @@ setup(
     },
     install_requires=[
         "setuptools_scm",
-        "numpy>=1.19.2",
+        "numpy>=1.19.2,<=1.20.3",
         "scipy>=1.5.0",
         "pymc3",
         "pymc3-ext",
