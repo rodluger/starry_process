@@ -135,7 +135,7 @@ class MCMCInterface:
                             "Unable to initialize walkers at a point with finite `logp`. "
                             "Try reducing `var` or running `optimize()`."
                         )
-                    p0[k] = p.random.multivariate_normal(mean, cov)
+                    p0[k] = np.random.multivariate_normal(mean, cov)
 
         return p0
 

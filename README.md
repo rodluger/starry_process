@@ -7,8 +7,8 @@
   <a href='https://starry-process.readthedocs.io/en/latest/?badge=latest'>
     <img src='https://readthedocs.org/projects/starry-process/badge/?version=latest' alt='Documentation Status' />
   </a>
-  <a href="https://github.com/rodluger/starry_process/raw/joss-paper/joss/paper.pdf">
-    <img src="https://github.com/rodluger/starry_process/workflows/joss%20paper/badge.svg"/>
+  <a style="border-width:0" href="https://doi.org/10.21105/joss.03071">
+    <img src="https://joss.theoj.org/papers/10.21105/joss.03071/status.svg" alt="DOI badge" >
   </a>
   <br/>
   <a href="http://starry-process.flatironinstitute.org">

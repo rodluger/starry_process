@@ -50,8 +50,9 @@ setup(
             "corner",
             "emcee",
             "rtds_action",
-            "nbsphinx",
+            "nbsphinx>=0.8.6",
             "starry",
+            "Jinja2==2.11"
         ],
     },
     entry_points={
